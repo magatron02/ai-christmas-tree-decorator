@@ -147,16 +147,22 @@ that at runtime rather than trusting the table.
 
 ### Housekeeping
 
-Nothing deletes stored images during normal operation — history points at them and a paid-for
-result must stay reachable. Cleanup is a command:
+Nothing is deleted during normal operation — history points at it and a paid-for result must
+stay reachable. Cleanup is a command:
 
 ```bash
 .venv/Scripts/python -m backend.services.storage prune --dry-run
 ```
 
-It only removes files no request row refers to, and only once they are at least 24 hours old,
-so a cut-out preview that exists on disk before its request does is never taken out from
-under a live session.
+It removes two things, both at least 24 hours old so nothing is taken out from under a live
+session:
+
+- **requests left at `pending`** — prepared, then cancelled at the confirm dialog. A pending
+  row is one the state machine never let past `claim()`, so it provably never reached the API
+  and cost nothing; deleting it destroys no evidence. Every other state is kept forever,
+  because every other state is the spend record.
+- **files no surviving request refers to** — rejected cut-outs, and the uploads belonging to
+  the abandoned requests just removed.
 
 ### Fonts
 
