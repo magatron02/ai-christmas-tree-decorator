@@ -1,0 +1,44 @@
+The first image is a photograph of a real bare Christmas tree in a shop. Return that same
+photograph with decorations added to the tree. Nothing else about it may change.
+
+This is an edit of an existing photo, not a new picture of a similar tree. Preserve exactly:
+- the tree itself — its height, width, silhouette, branch structure, species, how full or
+  sparse it is, how it leans, where its gaps are
+- its position and scale within the frame, the camera angle, the focal length, the crop
+- the background, the floor, and anything else in the shot
+- the photographic character: the same grain, focus, white balance, exposure and colour
+
+If the returned tree could be told apart from the tree in the first image with the
+decorations removed, the result is wrong.
+
+The second image is the decoration to add. It is a cut-out on a transparent background and
+it is the only decoration that may appear.
+
+Placement
+- Distribute copies over the whole tree: top, middle and bottom, left and right.
+- Do not cluster them in one area and do not arrange them in a grid, ring or spiral.
+- Hang each copy where a real decoration would sit: resting on or hanging from an existing
+  branch, slightly tucked into the foliage, never floating in front of the tree or in mid-air.
+- Vary the depth. Some copies sit closer to the trunk and are partly hidden by branches.
+- Work around the tree that is there. Do not add, move or thicken branches to make a copy sit
+  better.
+
+Density
+- A naturally decorated tree, not a covered one: roughly 12 to 20 copies for a full-height
+  tree, fewer if the element is large.
+- Leave visible gaps of bare branch between copies.
+
+Scale
+- Keep every copy in proportion to the tree, as if it were the real object hanging there.
+- Copies further back are slightly smaller, copies at the front slightly larger; no other
+  size variation between copies.
+
+Lighting and material
+- Match the lighting direction, colour temperature, contrast and softness of the first image.
+- Add contact shadows where a copy touches a branch, and a soft cast shadow on the foliage
+  behind it.
+- Keep the element's own material: if it is glossy it picks up a highlight from the scene's
+  light, if it is matte it does not.
+
+Do not add any decoration that is not the supplied element. No extra ornaments, no lights,
+no ribbon, no star, no tinsel, no snow, no gifts, no text, no watermark.

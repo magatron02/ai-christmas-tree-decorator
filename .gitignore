@@ -1,0 +1,13 @@
+.env
+data/
+storage/
+*.db
+*.db-wal
+*.db-shm
+
+scripts/risk_gate_output.png
+
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/

@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+python-multipart
+python-dotenv
+openai
+pillow
+rembg[cpu]
+
+# test only
+pytest
+httpx

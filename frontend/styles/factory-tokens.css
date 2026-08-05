@@ -1,0 +1,48 @@
+/* Factory design system — section 1, verbatim.
+   This is the contract. The literal colour values live here and nowhere else;
+   every other stylesheet and component uses var(--token) only (Rule 1). */
+
+:root {
+  color-scheme: dark;
+
+  /* surface */
+  --bg:              #101010;   /* canvas, chrome, input fields */
+  --bg-elevated:     #1d1a18;   /* hover, active row, dividers  */
+  --border:          #3d3a39;   /* every hairline — always 1px  */
+
+  /* text */
+  --text:            #eeeeee;   /* primary     "Bone"           */
+  --text-2:          #b8b3b0;   /* secondary   "Pale Stone"     */
+  --text-3:          #8a8380;   /* quietest    "Warm Granite"   */
+
+  /* accent — two, and only for meaning */
+  --accent-positive: #a0ca92;   /* metric green: done, clean, fine */
+  --accent-warning:  #ee6018;   /* signal orange: running, stale, destructive */
+
+  /* button ramp */
+  --btn-bg:               #1d1a18;
+  --btn-hover-bg:         #28241f;
+  --btn-primary-bg:       #fafafa;
+  --btn-primary-hover-bg: #ececec;
+  --btn-primary-text:     #101010;
+
+  /* shape */
+  --radius-sm: 3px;    /* buttons, inputs, chips, nav rows */
+  --radius-lg: 10px;   /* cards, panels                    */
+  --shadow:    none;
+
+  /* type */
+  --font-ui:   Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  --weight-heading:   500;
+  --tracking-heading: -0.02em;
+
+  font-family: var(--font-ui);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-weight: 400;
+}

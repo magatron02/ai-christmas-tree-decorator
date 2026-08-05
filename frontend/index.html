@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tree Decorator</title>
+<link rel="stylesheet" href="/static/styles/factory-tokens.css">
+<link rel="stylesheet" href="/static/styles/factory.css">
+</head>
+<body>
+
+<header class="topbar">
+  <span class="logo">TREE DECORATOR</span>
+  <span class="spacer"></span>
+  <div class="tile">
+    <span class="k caption">Credits</span>
+    <span class="v" id="credits">–</span>
+  </div>
+  <nav>
+    <a class="row active" href="/">Decorate</a>
+    <a class="row" href="/history">History</a>
+  </nav>
+</header>
+
+<main class="page stack">
+
+  <section class="card stack">
+    <span class="caption">Step 1 — bare tree (input a)</span>
+    <input class="input" type="file" id="tree-file" accept="image/jpeg,image/png">
+    <img class="thumb" id="tree-preview" alt="Bare tree" hidden>
+  </section>
+
+  <section class="card stack">
+    <span class="caption">Step 2 — decoration element (input b)</span>
+    <input class="input" type="file" id="element-file" accept="image/jpeg,image/png">
+    <div class="btn-row">
+      <button class="btn" id="cut-btn" disabled>Remove background</button>
+      <span class="hint" id="cut-hint">Runs locally. Costs nothing.</span>
+    </div>
+    <img class="thumb checker" id="element-preview" alt="Element with background removed" hidden>
+    <div class="btn-row" id="element-actions" hidden>
+      <button class="btn" id="accept-btn">Use this cut-out</button>
+      <button class="btn danger" id="reject-btn">Discard and upload another</button>
+    </div>
+  </section>
+
+  <section class="card stack">
+    <span class="caption">Step 3 — output size</span>
+    <select class="input option-name" id="size-select" disabled></select>
+    <span class="hint">Every option is divisible by 16, as gpt-image-2 requires.</span>
+  </section>
+
+  <section class="card stack">
+    <span class="caption">Step 4 — generate</span>
+    <div class="chip" id="status-chip">Waiting for both images</div>
+    <div class="btn-row">
+      <button class="btn primary" id="generate-btn" disabled>Generate</button>
+      <span class="hint">Asks for confirmation first. 1 credit, charged only if it succeeds.</span>
+    </div>
+  </section>
+
+  <div class="notice" id="error-box" hidden></div>
+
+  <section class="card stack" id="result" hidden>
+    <span class="caption">Result</span>
+    <div class="triptych">
+      <figure>
+        <figcaption class="caption">Bare tree</figcaption>
+        <img class="thumb" id="out-tree" alt="Bare tree">
+      </figure>
+      <figure>
+        <figcaption class="caption">Element</figcaption>
+        <img class="thumb checker" id="out-element" alt="Element">
+      </figure>
+      <figure>
+        <figcaption class="caption">Decorated</figcaption>
+        <img class="thumb" id="out-result" alt="Decorated tree">
+      </figure>
+    </div>
+    <div class="btn-row">
+      <a class="btn" id="download-btn" download>Download the result</a>
+      <span class="hint mono" id="result-meta"></span>
+    </div>
+  </section>
+
+</main>
+
+<dialog id="confirm-dialog">
+  <h2>Generate this image?</h2>
+  <p id="confirm-body"></p>
+  <div class="btn-row">
+    <button class="btn" id="confirm-btn">Yes, generate</button>
+    <button class="btn danger" id="cancel-btn">Cancel</button>
+  </div>
+</dialog>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

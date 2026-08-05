@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tree Decorator — History</title>
+<link rel="stylesheet" href="/static/styles/factory-tokens.css">
+<link rel="stylesheet" href="/static/styles/factory.css">
+</head>
+<body>
+
+<header class="topbar">
+  <span class="logo">TREE DECORATOR</span>
+  <span class="spacer"></span>
+  <div class="tile">
+    <span class="k caption">Credits</span>
+    <span class="v" id="credits">–</span>
+  </div>
+  <nav>
+    <a class="row" href="/">Decorate</a>
+    <a class="row active" href="/history">History</a>
+  </nav>
+</header>
+
+<main class="page stack">
+  <section class="card stack">
+    <span class="caption">Every request, newest first</span>
+    <span class="hint">
+      If a generation succeeded on the server but never reached the browser, the image is
+      still here and the credit is accounted for. Nothing is retried automatically.
+    </span>
+    <div class="notice" id="error-box" hidden></div>
+    <table>
+      <thead>
+        <tr>
+          <th class="caption">When</th>
+          <th class="caption">Request</th>
+          <th class="caption">Size</th>
+          <th class="caption">State</th>
+          <th class="caption">Credit</th>
+          <th class="caption">Result</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <span class="hint" id="empty" hidden>Nothing generated yet.</span>
+  </section>
+</main>
+
+<script src="/static/history.js"></script>
+</body>
+</html>

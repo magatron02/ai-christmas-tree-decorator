@@ -1,0 +1,76 @@
+/* The reconciliation surface (Spec.md 7.3).
+ *
+ * A row stuck at api_success means the server produced and charged for an image the browser
+ * never confirmed receiving. A row stuck at calling_api means the process died mid-call.
+ * Both are visible here rather than being retried behind the user's back. */
+
+const $ = (id) => document.getElementById(id);
+
+const CHIP_CLASS = {
+  pending: "chip",
+  calling_api: "chip running",
+  api_success: "chip done",
+  api_failed: "chip failed",
+  delivered: "chip done",
+};
+
+function cell(row, text, className) {
+  const td = document.createElement("td");
+  if (className) td.className = className;
+  td.textContent = text;
+  row.append(td);
+  return td;
+}
+
+async function load() {
+  let data;
+  try {
+    const response = await fetch("/api/history");
+    data = await response.json();
+    if (!response.ok) throw new Error(data.error || response.statusText);
+  } catch (err) {
+    $("error-box").textContent = err.message;
+    $("error-box").hidden = false;
+    return;
+  }
+
+  $("credits").textContent = data.credits;
+  $("empty").hidden = data.requests.length > 0;
+
+  const body = $("rows");
+  body.innerHTML = "";
+  for (const request of data.requests) {
+    const row = document.createElement("tr");
+    cell(row, request.created_at, "mono");
+    cell(row, request.request_id.slice(0, 8), "mono");
+    cell(row, request.size, "mono");
+
+    const state = document.createElement("td");
+    const chip = document.createElement("span");
+    chip.className = CHIP_CLASS[request.status] || "chip";
+    chip.textContent = request.status;
+    chip.title = request.error || "";
+    state.append(chip);
+    row.append(state);
+
+    cell(row, request.charged ? "1" : "—", "mono");
+
+    const result = document.createElement("td");
+    result.className = "shrink";
+    if (request.output_url) {
+      const link = document.createElement("a");
+      link.href = request.output_url;
+      link.download = "";
+      link.className = "btn";
+      link.textContent = "Download";
+      result.append(link);
+    } else {
+      result.textContent = "—";
+    }
+    row.append(result);
+
+    body.append(row);
+  }
+}
+
+load();
