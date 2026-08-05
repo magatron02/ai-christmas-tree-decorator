@@ -80,9 +80,9 @@ click loses the race and gets a 409.
 
 ### What a generation cost
 
-A credit is one generation whatever the output size. The money is not: a 2048×1152 image
-costs more than a 1024×1024 one. So the API's own token accounting for each image is stored
-on its request row and returned by `/api/generate` and `/api/history` as `usage`:
+A credit is one generation whatever the output size. The API's own token accounting for each
+image is stored on its request row and returned by `/api/generate` and `/api/history` as
+`usage`:
 
 ```json
 {"input_tokens": 2674, "input_tokens_details": {"image_tokens": 2126, "text_tokens": 548},
@@ -90,8 +90,24 @@ on its request row and returned by `/api/generate` and `/api/history` as `usage`
 ```
 
 Pricing a credit is still open in Product.md 6. This is the raw material for it — real
-per-image numbers rather than a dashboard average. Note that `text_tokens` is the prompt, so
-editing `compositing_prompt.txt` moves the cost a little.
+per-image numbers rather than a dashboard average.
+
+Measured on identical inputs, one run each, only the output size differing:
+
+| size | pixels | input | output | total |
+|---|---|---|---|---|
+| 4:5 (1536×1920) | 2,949,120 | 2674 | 565 | 3239 |
+| 1:1 (1024×1024) | 1,048,576 | 2674 | 781 | 3455 |
+
+Input tokens are identical, so they depend on the uploaded images and the prompt, not on the
+output size. Output tokens do **not** track pixel count — the smaller image cost more — and
+the totals differ by about 7%. A flat one-credit-per-generation charge is therefore a close
+approximation across sizes, which is the assumption the billing code already makes.
+
+That is two samples, one per size. Whether output tokens are deterministic per size or vary
+run to run is not established; repeating one size would settle it.
+
+`text_tokens` is the prompt, so editing `compositing_prompt.txt` moves the cost slightly.
 
 ### Reconciliation
 
