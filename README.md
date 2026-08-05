@@ -92,20 +92,29 @@ image is stored on its request row and returned by `/api/generate` and `/api/his
 Pricing a credit is still open in Product.md 6. This is the raw material for it — real
 per-image numbers rather than a dashboard average.
 
-Measured on identical inputs, one run each, only the output size differing:
+Measured on byte-identical inputs and the same prompt, varying only the output size:
 
-| size | pixels | input | output | total |
-|---|---|---|---|---|
-| 4:5 (1536×1920) | 2,949,120 | 2674 | 565 | 3239 |
-| 1:1 (1024×1024) | 1,048,576 | 2674 | 781 | 3455 |
+| run | size | pixels | input | output | total |
+|---|---|---|---|---|---|
+| 1 | 4:5 (1536×1920) | 2,949,120 | 2674 | 565 | 3239 |
+| 2 | 1:1 (1024×1024) | 1,048,576 | 2674 | 781 | 3455 |
+| 3 | 4:5 (1536×1920) | 2,949,120 | 2674 | 1030 | 3704 |
 
-Input tokens are identical, so they depend on the uploaded images and the prompt, not on the
-output size. Output tokens do **not** track pixel count — the smaller image cost more — and
-the totals differ by about 7%. A flat one-credit-per-generation charge is therefore a close
-approximation across sizes, which is the assumption the billing code already makes.
+**Input tokens are deterministic** — 2674 on every run — so they follow the uploaded images
+and the prompt exactly.
 
-That is two samples, one per size. Whether output tokens are deterministic per size or vary
-run to run is not established; repeating one size would settle it.
+**Output tokens are not.** Runs 1 and 3 are the same size with the same inputs and differ by
+1.8×. That spread is wider than the gap between the two different sizes, so output cost
+cannot be attributed to size from this data, and probably cannot be attributed to size at
+all: per-size pricing would be false precision dressed up as accounting.
+
+This is why the credit is one generation flat. Not because sizes cost the same, but because
+the per-image cost is not predictable in advance, so any formula would be a worse estimate
+than an average of what actually happened. Budget from observed totals, not from a model.
+
+Three samples is enough to establish the non-determinism and not enough to give a mean worth
+quoting. The AC-5 quality run will generate 30 real images and record `usage` for every one
+of them; take the cost distribution from there rather than buying more samples now.
 
 `text_tokens` is the prompt, so editing `compositing_prompt.txt` moves the cost slightly.
 
