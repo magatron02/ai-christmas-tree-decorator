@@ -114,6 +114,10 @@ def main():
     out.write_bytes(raw)
 
     print(f"      OK — {len(raw)} bytes, {got[0]}x{got[1]}, saved to {out}")
+    usage = getattr(result, "usage", None)
+    if usage is not None:
+        print(f"      usage — {usage.model_dump()}")
+        print("      (this is what one 4:5 generation costs; price a credit off it)")
     if f"{got[0]}x{got[1]}" != SIZE:
         print(f"      WARN — asked for {SIZE}, got {got[0]}x{got[1]}. Raise this before building on it.")
         return 1

@@ -11,6 +11,7 @@ The log is also the reconciliation record: if the browser never receives the res
 row is still api_success with an output path, and /api/history hands it back (Spec.md 7.3).
 """
 
+import json
 import sqlite3
 import uuid
 from datetime import datetime, timezone
@@ -38,6 +39,7 @@ CREATE TABLE IF NOT EXISTS requests (
     output_path  TEXT,
     size         TEXT NOT NULL,
     error        TEXT,
+    usage_json   TEXT,
     created_at   TEXT NOT NULL,
     updated_at   TEXT NOT NULL
 );
@@ -58,6 +60,10 @@ def connect(path=None):
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA busy_timeout=5000")
     conn.executescript(SCHEMA)
+    # databases created before usage accounting existed keep their rows and gain the column
+    existing = {row["name"] for row in conn.execute("PRAGMA table_info(requests)")}
+    if "usage_json" not in existing:
+        conn.execute("ALTER TABLE requests ADD COLUMN usage_json TEXT")
     conn.execute("INSERT OR IGNORE INTO account (id, credits) VALUES (1, 0)")
     conn.commit()
     return conn
@@ -96,8 +102,17 @@ def claim(conn, request_id):
     return _transition(conn, request_id, PENDING, CALLING_API)
 
 
-def mark_success(conn, request_id, output_path):
-    return _transition(conn, request_id, CALLING_API, API_SUCCESS, output_path=output_path)
+def mark_success(conn, request_id, output_path, usage=None):
+    """`usage` is the API's own token accounting for this one image, stored verbatim so the
+    cost of a generation is a recorded fact rather than something reconstructed later."""
+    return _transition(
+        conn,
+        request_id,
+        CALLING_API,
+        API_SUCCESS,
+        output_path=output_path,
+        usage_json=json.dumps(usage) if usage else None,
+    )
 
 
 def mark_failed(conn, request_id, error):

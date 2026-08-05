@@ -93,10 +93,18 @@ class Spy:
         return len(self.calls)
 
 
+FAKE_USAGE = {
+    "input_tokens": 340,
+    "output_tokens": 6208,
+    "total_tokens": 6548,
+    "input_tokens_details": {"text_tokens": 212, "image_tokens": 128},
+}
+
+
 @pytest.fixture
 def fake_gen(monkeypatch):
-    """Stands in for the one paid call in the app."""
-    spy = Spy(result=png_bytes((32, 40)))
+    """Stands in for the one paid call in the app: (image bytes, token usage)."""
+    spy = Spy(result=(png_bytes((32, 40)), FAKE_USAGE))
     monkeypatch.setattr(image_gen, "generate", spy)
     return spy
 

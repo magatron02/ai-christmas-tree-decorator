@@ -16,6 +16,7 @@ Endpoints are plain `def`, so FastAPI runs them in its threadpool — rembg and 
 are blocking and slow, and a single-user internal tool has nothing to gain from async.
 """
 
+import json
 import re
 import uuid
 
@@ -107,6 +108,7 @@ def _row_json(row):
         "charged": bool(row["charged"]),
         "size": row["size"],
         "error": row["error"],
+        "usage": json.loads(row["usage_json"]) if row["usage_json"] else None,
         "created_at": row["created_at"],
         "updated_at": row["updated_at"],
         "tree_url": _url(row["tree_path"]),
@@ -230,7 +232,7 @@ def api_generate(request_id: str):
         # just ImageGenError — an unexpected failure is still a failure the user paid nothing
         # for and should be able to run again.
         try:
-            output = image_gen.generate(
+            output, usage = image_gen.generate(
                 tree_path.read_bytes(), element_path.read_bytes(), width, height
             )
             name = _store(output, "output", "png")
@@ -239,7 +241,7 @@ def api_generate(request_id: str):
             detail = exc if isinstance(exc, ImageGenError) else f"{type(exc).__name__}: {exc}"
             raise HTTPException(502, f"Generation failed, no credit was used. {detail}") from exc
 
-        request_log.mark_success(conn, request_id, name)
+        request_log.mark_success(conn, request_id, name, usage)
         credit.charge_for(conn, request_id)  # the only charge site in the app
 
         return _row_json(request_log.get(conn, request_id)) | {"credits": credit.balance(conn)}

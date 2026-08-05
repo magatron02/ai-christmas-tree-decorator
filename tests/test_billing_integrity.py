@@ -5,6 +5,7 @@ MVP run, so "no credit was taken" has to be provable, not assumed. Every test he
 one question — did the balance move, and was it allowed to?
 """
 
+import json
 import threading
 
 import pytest
@@ -79,6 +80,36 @@ def test_api_failure_never_charges(client, conn, funded, fake_gen, fake_rembg, f
     row = request_log.get(conn, request_id)
     assert row["status"] == request_log.API_FAILED
     assert row["charged"] == 0
+
+
+def test_what_a_generation_cost_is_recorded_with_it(client, conn, funded, fake_gen, fake_rembg):
+    """A credit is one generation whatever the output size, but the money is not. Pricing a
+    credit (Product.md 6, still open) needs the real per-image numbers, so they are stored
+    next to the charge instead of being reconstructed from a dashboard later."""
+    from conftest import FAKE_USAGE
+
+    request_id = prepare(client)
+    response = client.post(f"/api/generate/{request_id}")
+
+    assert response.json()["usage"] == FAKE_USAGE
+    stored = json.loads(request_log.get(conn, request_id)["usage_json"])
+    assert stored["total_tokens"] == FAKE_USAGE["total_tokens"]
+
+    entry = next(
+        item
+        for item in client.get("/api/history").json()["requests"]
+        if item["request_id"] == request_id
+    )
+    assert entry["usage"]["output_tokens"] == FAKE_USAGE["output_tokens"]
+
+
+def test_a_failed_generation_records_no_cost(client, conn, funded, fake_gen, fake_rembg):
+    fake_gen.error = ImageGenError("APITimeoutError: Request timed out.")
+    request_id = prepare(client)
+
+    client.post(f"/api/generate/{request_id}")
+
+    assert request_log.get(conn, request_id)["usage_json"] is None
 
 
 def test_an_unexpected_crash_still_ends_the_request(client, conn, funded, fake_gen, fake_rembg):

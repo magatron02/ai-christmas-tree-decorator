@@ -36,7 +36,13 @@ def _part(name, data):
 
 
 def generate(tree_image, element_png, width, height):
-    """Composite the transparent element onto the bare tree. Returns PNG bytes."""
+    """Composite the transparent element onto the bare tree.
+
+    Returns (png_bytes, usage). `usage` is whatever token accounting the API reported, kept
+    because it is the only per-image record of what a generation actually cost — the credit
+    unit is one generation regardless of output size, but the money is not, and Product.md
+    still has to price a credit off real numbers rather than a dashboard average.
+    """
     from openai import OpenAI
 
     try:
@@ -57,4 +63,6 @@ def generate(tree_image, element_png, width, height):
     payload = getattr(response.data[0], "b64_json", None)
     if not payload:
         raise ImageGenError("The API response carried no image data.")
-    return base64.b64decode(payload)
+
+    usage = getattr(response, "usage", None)
+    return base64.b64decode(payload), (usage.model_dump() if usage else None)

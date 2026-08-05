@@ -78,6 +78,21 @@ A double-click cannot buy two images: the confirm dialog is bound to one `reques
 `claim()` moves that row `pending → calling_api` in a single guarded `UPDATE`. The second
 click loses the race and gets a 409.
 
+### What a generation cost
+
+A credit is one generation whatever the output size. The money is not: a 2048×1152 image
+costs more than a 1024×1024 one. So the API's own token accounting for each image is stored
+on its request row and returned by `/api/generate` and `/api/history` as `usage`:
+
+```json
+{"input_tokens": 2674, "input_tokens_details": {"image_tokens": 2126, "text_tokens": 548},
+ "output_tokens": 565, "total_tokens": 3239}
+```
+
+Pricing a credit is still open in Product.md 6. This is the raw material for it — real
+per-image numbers rather than a dashboard average. Note that `text_tokens` is the prompt, so
+editing `compositing_prompt.txt` moves the cost a little.
+
 ### Reconciliation
 
 Credit is taken *after* the API returns an image, so "charged" and "an image exists" are the
