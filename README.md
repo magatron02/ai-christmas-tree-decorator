@@ -28,11 +28,7 @@ Before anything else, confirm the engine actually works. Spec.md 5 flags a repor
 This makes one real, billed generation. If it fails, stop and take the printed error back to
 the Architect — do not switch models to get past it.
 
-Give the account some credit, then start the server:
-
-```bash
-.venv/Scripts/python -m backend.services.credit topup 10
-```
+Start the server:
 
 ```bash
 .venv/Scripts/python -m uvicorn backend.main:app --port 8000
@@ -52,8 +48,8 @@ run on every change.
 ```
 frontend/          static HTML + vanilla JS, Factory design system, no build step
 backend/main.py    four endpoints, one of which costs money
-backend/services/  credit · image_gen · background_removal
-backend/models/    request_log — the SQLite state machine
+backend/services/  image_gen · background_removal · storage
+backend/models/    request_log — the SQLite state machine and the spend record
 backend/prompts/   compositing_prompt.txt, read fresh on every generation
 ```
 
@@ -63,34 +59,43 @@ The pipeline is deliberately split so the expensive step is never reached by acc
 |---|---|---|
 | remove the element's background, user approves the cut-out | `POST /api/remove-bg` | free |
 | validate everything, write a `pending` request | `POST /api/prepare` | free |
-| confirm dialog, then the actual generation | `POST /api/generate/{id}` | 1 credit, on success only |
+| confirm dialog, then the actual generation | `POST /api/generate/{id}` | billed by OpenAI, on success only |
 | browser confirms it rendered the result | `POST /api/delivered/{id}` | free |
 
 ### Where the money is
 
-`backend/services/credit.py` is the only module in the repo that changes the balance, and
-`charge_for()` is the only function that takes one. Both of its preconditions — the request
-reached `api_success`, and it has never been charged — are in the SQL `WHERE` clause, so
-calling it twice, early, or on a failed request simply does nothing.
-`tests/test_billing_integrity.py` greps the tree to keep it the only such file.
+There is no local credit balance. Money lives in the OpenAI account, and OpenAI is the only
+thing that can say whether any is left — it exposes no remaining-balance endpoint to an API
+key, so a number here would be maintained by hand and wrong the moment the key is used
+anywhere else. When the account is out, the generation call fails with a billing error and
+`image_gen` turns that into a message naming what to do about it.
+
+What survives is the property the balance was standing in for, stated directly:
+
+> a confirmed request may cause at most one billable API call,
+> and a request that fails must cause none at all.
 
 A double-click cannot buy two images: the confirm dialog is bound to one `request_id`, and
 `claim()` moves that row `pending → calling_api` in a single guarded `UPDATE`. The second
-click loses the race and gets a 409.
+click loses the race and gets a 409. `tests/test_billing_integrity.py` counts calls to the
+generator — every one of them would have been real money — and asserts nothing in the tree
+has grown a local balance again.
 
 ### What a generation cost
 
-A credit is one generation whatever the output size. The API's own token accounting for each
-image is stored on its request row and returned by `/api/generate` and `/api/history` as
-`usage`:
+The API's own token accounting for each image is stored on its request row and returned by
+`/api/generate` and `/api/history` as `usage`. `/api/usage` sums it. A row carrying `usage`
+is a row that cost money and a row without one is not, so `billed` is derived rather than
+stored and cannot drift out of step with what happened:
 
 ```json
 {"input_tokens": 2674, "input_tokens_details": {"image_tokens": 2126, "text_tokens": 548},
  "output_tokens": 565, "total_tokens": 3239}
 ```
 
-Pricing a credit is still open in Product.md 6. This is the raw material for it — real
-per-image numbers rather than a dashboard average.
+Product.md 6 wanted a credit priced from real API cost. There is no credit any more, but the
+underlying question — what does one generation cost — is answered by these numbers rather
+than by a dashboard average.
 
 Measured on byte-identical inputs and the same prompt, varying only the output size:
 
@@ -108,9 +113,9 @@ and the prompt exactly.
 cannot be attributed to size from this data, and probably cannot be attributed to size at
 all: per-size pricing would be false precision dressed up as accounting.
 
-This is why the credit is one generation flat. Not because sizes cost the same, but because
-the per-image cost is not predictable in advance, so any formula would be a worse estimate
-than an average of what actually happened. Budget from observed totals, not from a model.
+Per-image cost is therefore not predictable in advance. Budget from observed totals, not from
+a model — which is a second reason a local pre-paid balance was the wrong shape: it would
+have had to guess a price per image that does not exist.
 
 Three samples is enough to establish the non-determinism and not enough to give a mean worth
 quoting. The AC-5 quality run will generate 30 real images and record `usage` for every one
@@ -120,15 +125,18 @@ of them; take the cost distribution from there rather than buying more samples n
 
 ### Reconciliation
 
-Credit is taken *after* the API returns an image, so "charged" and "an image exists" are the
-same event. If the browser never receives the response, the row stays at `api_success` and
-the image is still on disk and downloadable from `/history` — no retry queue, no background
-worker, which is the right size for a single-user local-disk MVP (Spec.md 7).
+Cost is recorded *after* the API returns an image, so "this was billed" and "an image exists"
+are the same event. If the browser never receives the response, the row stays at
+`api_success` and the image is still on disk and downloadable from `/history` — no retry
+queue, no background worker, which is the right size for a single-user local-disk MVP
+(Spec.md 7).
 
 A request left at `calling_api` means the process died mid-call. It stays visible in the
-history rather than being retried automatically.
+history rather than being retried automatically. Note that this is the one state where the
+log cannot be trusted about money: the call may or may not have reached OpenAI before the
+process died. The OpenAI usage page is the tiebreaker.
 
-Cancelling the confirm dialog leaves a `pending` row behind. It is never charged and never
+Cancelling the confirm dialog leaves a `pending` row behind. It is never billed and never
 resumes; it is just a record that you started and changed your mind.
 
 ### Output size

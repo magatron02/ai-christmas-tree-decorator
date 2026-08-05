@@ -56,6 +56,13 @@ def generate(tree_image, element_png, width, height):
             size=f"{width}x{height}",
         )
     except Exception as exc:
+        # OpenAI's own billing limit is what stops a run when the account is out of money;
+        # there is no local balance to check first, so make that answer readable
+        if "billing_hard_limit" in str(exc):
+            raise ImageGenError(
+                "OpenAI stopped the request: the account has hit its billing limit. "
+                "Top up or raise the limit at platform.openai.com. Nothing was generated."
+            ) from exc
         raise ImageGenError(f"{type(exc).__name__}: {exc}") from exc
 
     if not response.data:

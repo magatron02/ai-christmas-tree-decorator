@@ -1,12 +1,11 @@
 """Reconciliation — Spec.md 7.
 
-The case being defended against: the API succeeds, the credit is taken, and the response
+The case being defended against: the API succeeds, the account is billed, and the response
 never reaches the browser. The design answer for a single-user MVP is not a retry queue —
 it is that the state log always knows, and the history page always shows.
 """
 
 from backend.models import request_log
-from backend.services import credit
 
 from helpers import png_bytes, upload
 
@@ -53,8 +52,8 @@ def test_a_terminal_request_cannot_be_reopened(conn):
     assert request_log.mark_success(conn, request_id, "c_output.png") is False
 
 
-def test_an_undelivered_success_is_still_recoverable(client, conn, funded, fake_gen, fake_rembg):
-    """The network drops before the browser sees the image. The credit is spent, so the
+def test_an_undelivered_success_is_still_recoverable(client, conn, fake_gen, fake_rembg):
+    """The network drops before the browser sees the image. The account was billed, so the
     image has to still be reachable — this is the whole point of the history page."""
     cut = client.post("/api/remove-bg", files=[upload(png_bytes(), "element.png")])
     ready = client.post(
@@ -68,17 +67,17 @@ def test_an_undelivered_success_is_still_recoverable(client, conn, funded, fake_
 
     row = request_log.get(conn, request_id)
     assert row["status"] == request_log.API_SUCCESS
-    assert row["charged"] == 1
+    assert row["usage_json"] is not None
 
     history = client.get("/api/history").json()
     entry = next(item for item in history["requests"] if item["request_id"] == request_id)
     assert entry["status"] == request_log.API_SUCCESS
     assert entry["output_url"], "the paid-for image must be downloadable after the fact"
-    assert entry["charged"] is True
-    assert history["credits"] == funded - 1
+    assert entry["billed"] is True
+    assert history["totals"]["generations"] == 1
 
 
-def test_marking_delivered_does_not_charge_again(client, conn, funded, fake_gen, fake_rembg):
+def test_marking_delivered_does_not_bill_again(client, conn, fake_gen, fake_rembg):
     cut = client.post("/api/remove-bg", files=[upload(png_bytes(), "element.png")])
     ready = client.post(
         "/api/prepare",
@@ -91,7 +90,8 @@ def test_marking_delivered_does_not_charge_again(client, conn, funded, fake_gen,
     client.post(f"/api/delivered/{request_id}")
     client.post(f"/api/delivered/{request_id}")
 
-    assert credit.balance(conn) == funded - 1
+    assert fake_gen.count == 1
+    assert request_log.usage_totals(conn)["generations"] == 1
     assert request_log.get(conn, request_id)["status"] == request_log.DELIVERED
 
 
@@ -104,7 +104,7 @@ def test_a_request_stuck_mid_call_stays_visible(client, conn):
     history = client.get("/api/history").json()
     entry = next(item for item in history["requests"] if item["request_id"] == request_id)
     assert entry["status"] == request_log.CALLING_API
-    assert entry["charged"] is False
+    assert entry["billed"] is False
 
 
 def test_history_is_newest_first(conn, client):

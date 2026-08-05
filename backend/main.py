@@ -5,12 +5,18 @@ deliberate act:
 
     /api/remove-bg   free   background removal, user sees the preview and can reject it
     /api/prepare     free   validates, writes a `pending` row, returns what the dialog shows
-    /api/generate    PAID   claims the row, calls gpt-image-2, charges on success only
+    /api/generate    PAID   claims the row, calls gpt-image-2, records what it cost
     /api/delivered   free   the browser confirms it actually rendered the result
 
 Nothing chains automatically: a failed background removal cannot walk into a paid call,
 because the paid call is a different request that only exists after the user confirms
-(NonGoals.md #3 and #4, AC-4).
+(NonGoals.md #3, AC-4).
+
+There is no local credit balance. The money lives in the OpenAI account, and OpenAI is the
+only thing that can say whether any is left — it refuses the call with a billing error when
+there is not. The integrity requirement that survives is narrower and sharper: one confirmed
+request may produce at most one billable API call, and a request that fails must produce
+none at all.
 
 Endpoints are plain `def`, so FastAPI runs them in its threadpool — rembg and the image API
 are blocking and slow, and a single-user internal tool has nothing to gain from async.
@@ -27,7 +33,7 @@ from fastapi.staticfiles import StaticFiles
 
 from backend import config, validation
 from backend.models import request_log
-from backend.services import background_removal, credit, image_gen
+from backend.services import background_removal, image_gen
 from backend.services.background_removal import BackgroundRemovalError
 from backend.services.image_gen import ImageGenError
 from backend.validation import ValidationError
@@ -105,7 +111,9 @@ def _row_json(row):
     return {
         "request_id": row["request_id"],
         "status": row["status"],
-        "charged": bool(row["charged"]),
+        # billed is derived, not stored: a row that carries usage is a row that cost money,
+        # so there is no flag that can disagree with the record of what happened
+        "billed": row["usage_json"] is not None,
         "size": row["size"],
         "error": row["error"],
         "usage": json.loads(row["usage_json"]) if row["usage_json"] else None,
@@ -146,11 +154,16 @@ def api_config():
     }
 
 
-@app.get("/api/balance")
-def api_balance():
+@app.get("/api/usage")
+def api_usage():
+    """What has been spent so far, summed from the log.
+
+    Deliberately not a balance. OpenAI exposes no remaining-balance endpoint to an API key,
+    so anything claiming to be one here would be a guess maintained by hand.
+    """
     conn = _db()
     try:
-        return {"credits": credit.balance(conn)}
+        return request_log.usage_totals(conn)
     finally:
         conn.close()
 
@@ -186,7 +199,6 @@ def api_prepare(
     conn = _db()
     try:
         request_id = request_log.create(conn, tree_name, element_path.name, size)
-        credits = credit.balance(conn)
     finally:
         conn.close()
 
@@ -197,8 +209,6 @@ def api_prepare(
         "height": height,
         "tree_url": _url(tree_name),
         "element_url": _url(element_path.name),
-        "credits": credits,
-        "cost": 1,
     }
 
 
@@ -219,18 +229,14 @@ def api_generate(request_id: str):
                 f"This request is already {row['status']}. It will not be generated twice.",
             )
 
-        if not credit.has_credit(conn):
-            request_log.mark_failed(conn, request_id, "not enough credit")
-            raise HTTPException(402, "Not enough credit. Top up before generating.")
-
         width, height = validation.resolve_size(row["size"])
         tree_path = _stored_path(row["tree_path"])
         element_path = _stored_path(row["element_path"])
 
         # Once the request is claimed it must reach a terminal state on every path, or it is
         # stranded at calling_api and can never be retried. So this catches everything, not
-        # just ImageGenError — an unexpected failure is still a failure the user paid nothing
-        # for and should be able to run again.
+        # just ImageGenError — an unexpected failure is still a failure that produced no
+        # image and should be runnable again.
         try:
             output, usage = image_gen.generate(
                 tree_path.read_bytes(), element_path.read_bytes(), width, height
@@ -239,12 +245,13 @@ def api_generate(request_id: str):
         except Exception as exc:
             request_log.mark_failed(conn, request_id, exc)
             detail = exc if isinstance(exc, ImageGenError) else f"{type(exc).__name__}: {exc}"
-            raise HTTPException(502, f"Generation failed, no credit was used. {detail}") from exc
+            raise HTTPException(502, f"Generation failed. {detail}") from exc
 
         request_log.mark_success(conn, request_id, name, usage)
-        credit.charge_for(conn, request_id)  # the only charge site in the app
 
-        return _row_json(request_log.get(conn, request_id)) | {"credits": credit.balance(conn)}
+        return _row_json(request_log.get(conn, request_id)) | {
+            "totals": request_log.usage_totals(conn)
+        }
     finally:
         conn.close()
 
@@ -252,7 +259,7 @@ def api_generate(request_id: str):
 @app.post("/api/delivered/{request_id}")
 def api_delivered(request_id: str):
     """The browser saying it rendered the result. Purely a reconciliation marker: a row left
-    at api_success is one the user paid for but may never have seen (Spec.md 7)."""
+    at api_success is one that was paid for but may never have been seen (Spec.md 7)."""
     conn = _db()
     try:
         if request_log.get(conn, request_id) is None:
@@ -266,11 +273,11 @@ def api_delivered(request_id: str):
 @app.get("/api/history")
 def api_history(limit: int = 100):
     """Every request ever made, with its output. This is the reconciliation surface: if the
-    browser dropped the response, the image is still here and the credit is accounted for."""
+    browser dropped the response, the image is still here and the spend is still recorded."""
     conn = _db()
     try:
         return {
-            "credits": credit.balance(conn),
+            "totals": request_log.usage_totals(conn),
             "requests": [_row_json(row) for row in request_log.recent(conn, limit)],
         }
     finally:

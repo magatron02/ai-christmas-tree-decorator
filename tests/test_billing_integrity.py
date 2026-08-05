@@ -1,8 +1,15 @@
-"""Billing integrity — TestPlan.md section 1, AC-4, NonGoals.md #4.
+"""Billing integrity — TestPlan.md section 1, AC-4.
 
-Highest-priority suite in the project: pay-per-generation spends real money from the first
-MVP run, so "no credit was taken" has to be provable, not assumed. Every test here answers
-one question — did the balance move, and was it allowed to?
+The local credit balance was removed: money lives in the OpenAI account and OpenAI is the
+only thing that knows how much is left. So the property under test is no longer "the balance
+moved by one". It is the thing the balance was standing in for, stated directly:
+
+    a confirmed request may cause at most one billable API call,
+    and a request that fails must cause none at all.
+
+That is still the highest-priority suite in the project, because it is still the only thing
+between a double-click and a second image nobody asked for. `fake_gen.count` is the meter —
+every call to it would have been real money.
 """
 
 import json
@@ -13,7 +20,6 @@ from fastapi.testclient import TestClient
 
 from backend import config, main
 from backend.models import request_log
-from backend.services import credit
 from backend.services.image_gen import ImageGenError
 
 from helpers import png_bytes, upload
@@ -34,30 +40,17 @@ def prepare(client, size="4:5"):
     return ready.json()["request_id"]
 
 
-def test_successful_generation_charges_exactly_one_credit(client, conn, funded, fake_gen, fake_rembg):
+def test_a_confirmed_request_bills_exactly_once(client, conn, fake_gen, fake_rembg):
     request_id = prepare(client)
 
     response = client.post(f"/api/generate/{request_id}")
 
     assert response.status_code == 200, response.text
     assert fake_gen.count == 1
-    assert credit.balance(conn) == funded - 1
     row = request_log.get(conn, request_id)
     assert row["status"] == request_log.API_SUCCESS
-    assert row["charged"] == 1
     assert row["output_path"]
-
-
-def test_charge_is_idempotent(conn, funded):
-    """The guard is in the SQL, so calling the charge site again cannot take a second credit."""
-    request_id = request_log.create(conn, "a_tree.png", "b_element.png", "4:5")
-    request_log.claim(conn, request_id)
-    request_log.mark_success(conn, request_id, "c_output.png")
-
-    assert credit.charge_for(conn, request_id) is True
-    assert credit.charge_for(conn, request_id) is False
-    assert credit.charge_for(conn, request_id) is False
-    assert credit.balance(conn) == funded - 1
+    assert response.json()["billed"] is True
 
 
 @pytest.mark.parametrize(
@@ -68,51 +61,37 @@ def test_charge_is_idempotent(conn, funded):
     ],
     ids=["timeout", "api_error"],
 )
-def test_api_failure_never_charges(client, conn, funded, fake_gen, fake_rembg, failure):
+def test_a_failed_generation_records_no_cost(client, conn, fake_gen, fake_rembg, failure):
     fake_gen.error = failure
     request_id = prepare(client)
 
     response = client.post(f"/api/generate/{request_id}")
 
     assert response.status_code == 502
-    assert "no credit was used" in response.json()["error"]
-    assert credit.balance(conn) == funded
     row = request_log.get(conn, request_id)
     assert row["status"] == request_log.API_FAILED
-    assert row["charged"] == 0
+    assert row["usage_json"] is None, "a failure must not look like a cost in the log"
+    assert request_log.usage_totals(conn)["generations"] == 0
 
 
-def test_what_a_generation_cost_is_recorded_with_it(client, conn, funded, fake_gen, fake_rembg):
-    """A credit is one generation whatever the output size, but the money is not. Pricing a
-    credit (Product.md 6, still open) needs the real per-image numbers, so they are stored
-    next to the charge instead of being reconstructed from a dashboard later."""
-    from conftest import FAKE_USAGE
-
+def test_an_exhausted_account_is_reported_readably(client, conn, fake_gen, fake_rembg):
+    """With no local balance, OpenAI's billing limit is what says 'out of money'. It has to
+    arrive as something a person can act on, not a raw error code."""
+    fake_gen.error = ImageGenError(
+        "OpenAI stopped the request: the account has hit its billing limit. "
+        "Top up or raise the limit at platform.openai.com. Nothing was generated."
+    )
     request_id = prepare(client)
+
     response = client.post(f"/api/generate/{request_id}")
 
-    assert response.json()["usage"] == FAKE_USAGE
-    stored = json.loads(request_log.get(conn, request_id)["usage_json"])
-    assert stored["total_tokens"] == FAKE_USAGE["total_tokens"]
-
-    entry = next(
-        item
-        for item in client.get("/api/history").json()["requests"]
-        if item["request_id"] == request_id
-    )
-    assert entry["usage"]["output_tokens"] == FAKE_USAGE["output_tokens"]
+    assert response.status_code == 502
+    assert "billing limit" in response.json()["error"]
+    assert request_log.get(conn, request_id)["status"] == request_log.API_FAILED
+    assert request_log.usage_totals(conn)["generations"] == 0
 
 
-def test_a_failed_generation_records_no_cost(client, conn, funded, fake_gen, fake_rembg):
-    fake_gen.error = ImageGenError("APITimeoutError: Request timed out.")
-    request_id = prepare(client)
-
-    client.post(f"/api/generate/{request_id}")
-
-    assert request_log.get(conn, request_id)["usage_json"] is None
-
-
-def test_an_unexpected_crash_still_ends_the_request(client, conn, funded, fake_gen, fake_rembg):
+def test_an_unexpected_crash_still_ends_the_request(client, conn, fake_gen, fake_rembg):
     """Anything thrown after the claim has to land the row in a terminal state. A request
     stranded at calling_api can never be retried, and this is exactly how a missing API key
     behaved before the handler was widened."""
@@ -122,26 +101,11 @@ def test_an_unexpected_crash_still_ends_the_request(client, conn, funded, fake_g
     response = client.post(f"/api/generate/{request_id}")
 
     assert response.status_code == 502
-    assert "no credit was used" in response.json()["error"]
-    assert credit.balance(conn) == funded
     assert request_log.get(conn, request_id)["status"] == request_log.API_FAILED
+    assert request_log.usage_totals(conn)["generations"] == 0
 
 
-def test_charge_is_impossible_before_success(conn, funded):
-    """Every state that is not api_success is refused at the charge site itself."""
-    request_id = request_log.create(conn, "a_tree.png", "b_element.png", "4:5")
-
-    assert credit.charge_for(conn, request_id) is False  # pending
-    request_log.claim(conn, request_id)
-    assert credit.charge_for(conn, request_id) is False  # calling_api
-    request_log.mark_failed(conn, request_id, "boom")
-    assert credit.charge_for(conn, request_id) is False  # api_failed
-    assert credit.balance(conn) == funded
-
-
-def test_rembg_failure_charges_nothing_and_stops_the_pipeline(
-    client, conn, funded, fake_gen, fake_rembg
-):
+def test_rembg_failure_bills_nothing_and_stops_the_pipeline(client, conn, fake_gen, fake_rembg):
     from backend.services.background_removal import BackgroundRemovalError
 
     fake_rembg.error = BackgroundRemovalError("could not separate the element")
@@ -152,10 +116,9 @@ def test_rembg_failure_charges_nothing_and_stops_the_pipeline(
     assert "could not separate the element" in response.json()["error"]
     assert fake_gen.count == 0, "background removal must never fall through to the paid call"
     assert request_log.recent(conn) == []
-    assert credit.balance(conn) == funded
 
 
-def test_double_click_through_confirm_charges_once(client, conn, funded, fake_gen, fake_rembg):
+def test_double_click_through_confirm_bills_once(client, conn, fake_gen, fake_rembg):
     """Two clicks land on the same request_id, and only one of them can claim it."""
     request_id = prepare(client)
 
@@ -165,10 +128,10 @@ def test_double_click_through_confirm_charges_once(client, conn, funded, fake_ge
     assert first.status_code == 200
     assert second.status_code == 409
     assert fake_gen.count == 1
-    assert credit.balance(conn) == funded - 1
+    assert request_log.usage_totals(conn)["generations"] == 1
 
 
-def test_concurrent_double_click_charges_once(conn, funded, fake_gen, fake_rembg):
+def test_concurrent_double_click_bills_once(conn, fake_gen, fake_rembg):
     """The same thing when the two clicks genuinely race, rather than arriving in order."""
     fake_gen.delay = 0.25  # hold the first call open so the second arrives mid-flight
 
@@ -190,32 +153,77 @@ def test_concurrent_double_click_charges_once(conn, funded, fake_gen, fake_rembg
 
     assert sorted(results.values()) == [200, 409]
     assert fake_gen.count == 1
-    assert credit.balance(conn) == funded - 1
+    assert request_log.usage_totals(conn)["generations"] == 1
 
 
-def test_no_credit_means_no_api_call(client, conn, fake_gen, fake_rembg):
-    """Zero balance is caught before the money is spent, not after."""
+def test_a_finished_request_can_never_be_rerun(client, conn, fake_gen, fake_rembg):
+    """Replaying the URL is not a way to buy a second image."""
     request_id = prepare(client)
+    client.post(f"/api/generate/{request_id}")
+    client.post(f"/api/delivered/{request_id}")
 
+    replay = client.post(f"/api/generate/{request_id}")
+
+    assert replay.status_code == 409
+    assert fake_gen.count == 1
+
+
+def test_the_free_steps_call_nothing_billable(client, conn, fake_gen, fake_rembg):
+    prepare(client)
+
+    assert fake_gen.count == 0
+    assert request_log.usage_totals(conn) == {
+        "generations": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+    }
+
+
+def test_what_a_generation_cost_is_recorded_with_it(client, conn, fake_gen, fake_rembg):
+    """With no balance to read, the log is the only spend record there is (Product.md 6)."""
+    from conftest import FAKE_USAGE
+
+    request_id = prepare(client)
     response = client.post(f"/api/generate/{request_id}")
 
-    assert response.status_code == 402
-    assert fake_gen.count == 0
-    assert credit.balance(conn) == 0
-    assert request_log.get(conn, request_id)["status"] == request_log.API_FAILED
+    assert response.json()["usage"] == FAKE_USAGE
+    stored = json.loads(request_log.get(conn, request_id)["usage_json"])
+    assert stored["total_tokens"] == FAKE_USAGE["total_tokens"]
 
+    totals = request_log.usage_totals(conn)
+    assert totals["generations"] == 1
+    assert totals["total_tokens"] == FAKE_USAGE["total_tokens"]
 
-def test_free_steps_never_touch_the_balance(client, conn, funded, fake_gen, fake_rembg):
-    prepare(client)
-    assert credit.balance(conn) == funded
-    assert client.get("/api/balance").json()["credits"] == funded
-
-
-def test_the_balance_is_only_written_in_one_module():
-    """AC-4 should be auditable by reading one file. Keep it that way."""
-    offenders = sorted(
-        path.relative_to(config.ROOT).as_posix()
-        for path in (config.ROOT / "backend").rglob("*.py")
-        if "UPDATE account" in path.read_text(encoding="utf-8")
+    entry = next(
+        item
+        for item in client.get("/api/history").json()["requests"]
+        if item["request_id"] == request_id
     )
-    assert offenders == ["backend/services/credit.py"]
+    assert entry["usage"]["output_tokens"] == FAKE_USAGE["output_tokens"]
+
+
+def test_totals_only_count_generations_that_happened(client, conn, fake_gen, fake_rembg):
+    """One success and one failure must total as one, or the spend record overstates itself."""
+    from conftest import FAKE_USAGE
+
+    client.post(f"/api/generate/{prepare(client)}")
+    fake_gen.error = ImageGenError("APITimeoutError: Request timed out.")
+    client.post(f"/api/generate/{prepare(client)}")
+
+    totals = request_log.usage_totals(conn)
+    assert totals["generations"] == 1
+    assert totals["total_tokens"] == FAKE_USAGE["total_tokens"]
+
+
+def test_nothing_claims_to_know_the_remaining_balance():
+    """OpenAI exposes no remaining-balance endpoint to an API key. Anything here that looked
+    like one would be a hand-maintained number, wrong as soon as the key is used elsewhere —
+    which is the reason the local credit system was removed rather than reworked."""
+    sources = list((config.ROOT / "backend").rglob("*.py")) + list(
+        (config.FRONTEND_DIR).glob("*.js")
+    )
+    for path in sources:
+        text = path.read_text(encoding="utf-8")
+        assert "credits" not in text, f"{path.name} still tracks a local credit balance"
+        assert "/api/balance" not in text, f"{path.name} still queries a balance endpoint"

@@ -9,6 +9,10 @@ backstop behind the confirm dialog.
 
 The log is also the reconciliation record: if the browser never receives the response, the
 row is still api_success with an output path, and /api/history hands it back (Spec.md 7.3).
+
+Since the local credit balance was removed, this log is additionally the only record of
+spending: a row that carries `usage_json` is a row that cost money, and one that does not
+did not. There is no separate charged flag to drift out of step with that.
 """
 
 import json
@@ -26,14 +30,9 @@ DELIVERED = "delivered"
 STATUSES = (PENDING, CALLING_API, API_SUCCESS, API_FAILED, DELIVERED)
 
 SCHEMA = """
-CREATE TABLE IF NOT EXISTS account (
-    id      INTEGER PRIMARY KEY CHECK (id = 1),
-    credits INTEGER NOT NULL DEFAULT 0
-);
 CREATE TABLE IF NOT EXISTS requests (
     request_id   TEXT PRIMARY KEY,
     status       TEXT NOT NULL,
-    charged      INTEGER NOT NULL DEFAULT 0,
     tree_path    TEXT NOT NULL,
     element_path TEXT NOT NULL,
     output_path  TEXT,
@@ -64,7 +63,6 @@ def connect(path=None):
     existing = {row["name"] for row in conn.execute("PRAGMA table_info(requests)")}
     if "usage_json" not in existing:
         conn.execute("ALTER TABLE requests ADD COLUMN usage_json TEXT")
-    conn.execute("INSERT OR IGNORE INTO account (id, credits) VALUES (1, 0)")
     conn.commit()
     return conn
 
@@ -133,3 +131,19 @@ def recent(conn, limit=100):
     return conn.execute(
         "SELECT * FROM requests ORDER BY created_at DESC, rowid DESC LIMIT ?", (limit,)
     ).fetchall()
+
+
+def usage_totals(conn):
+    """What has been spent, summed from the rows that actually cost something.
+
+    This replaces the credit balance. It counts what happened rather than predicting what
+    is left — OpenAI does not expose a remaining balance to an API key, so the account page
+    is the only place a figure for that exists.
+    """
+    totals = {"generations": 0, "input_tokens": 0, "output_tokens": 0, "total_tokens": 0}
+    for (raw,) in conn.execute("SELECT usage_json FROM requests WHERE usage_json IS NOT NULL"):
+        usage = json.loads(raw)
+        totals["generations"] += 1
+        for key in ("input_tokens", "output_tokens", "total_tokens"):
+            totals[key] += usage.get(key) or 0
+    return totals

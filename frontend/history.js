@@ -1,8 +1,10 @@
-/* The reconciliation surface (Spec.md 7.3).
+/* The reconciliation surface (Spec.md 7.3), and now also the spend record.
  *
- * A row stuck at api_success means the server produced and charged for an image the browser
+ * A row stuck at api_success means the server produced and paid for an image the browser
  * never confirmed receiving. A row stuck at calling_api means the process died mid-call.
- * Both are visible here rather than being retried behind the user's back. */
+ * Both are visible here rather than being retried behind the user's back.
+ *
+ * The token column is what the request actually cost. A row without one cost nothing. */
 
 const $ = (id) => document.getElementById(id);
 
@@ -34,7 +36,8 @@ async function load() {
     return;
   }
 
-  $("credits").textContent = data.credits;
+  $("generations").textContent = data.totals.generations;
+  $("tokens").textContent = data.totals.total_tokens.toLocaleString();
   $("empty").hidden = data.requests.length > 0;
 
   const body = $("rows");
@@ -53,7 +56,7 @@ async function load() {
     state.append(chip);
     row.append(state);
 
-    cell(row, request.charged ? "1" : "—", "mono");
+    cell(row, request.usage ? request.usage.total_tokens.toLocaleString() : "—", "mono");
 
     const result = document.createElement("td");
     result.className = "shrink";

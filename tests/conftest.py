@@ -31,7 +31,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 from backend import main  # noqa: E402
 from backend.models import request_log  # noqa: E402
-from backend.services import background_removal, credit, image_gen  # noqa: E402
+from backend.services import background_removal, image_gen  # noqa: E402
 
 from helpers import png_bytes, transparent_png_bytes  # noqa: E402
 
@@ -114,10 +114,3 @@ def fake_rembg(monkeypatch):
     spy = Spy(result=transparent_png_bytes())
     monkeypatch.setattr(background_removal, "remove_background", spy)
     return spy
-
-
-@pytest.fixture
-def funded(conn):
-    """A balance to spend, so a missing credit never masks a billing bug."""
-    credit.topup(conn, 5)
-    return 5

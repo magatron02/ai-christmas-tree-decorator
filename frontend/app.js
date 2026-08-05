@@ -7,6 +7,10 @@
  *  - Preparing before the dialog is deliberate. The dialog is bound to one request_id, so
  *    a double-click on Confirm hits the same id and the server refuses the second call.
  *    Preparing after the dialog would mint a second id and buy a second image.
+ *
+ * The tiles show what has been spent, not what is left. OpenAI does not tell an API key how
+ * much money remains in the account, so a "balance" here would be a number kept by hand and
+ * wrong the moment anything else used the same key.
  */
 
 const $ = (id) => document.getElementById(id);
@@ -14,8 +18,8 @@ const $ = (id) => document.getElementById(id);
 const STATE_LABEL = {
   pending: ["", "Ready to generate"],
   calling_api: ["running", "Calling gpt-image-2…"],
-  api_success: ["done", "Image generated — 1 credit used"],
-  api_failed: ["failed", "Generation failed — no credit used"],
+  api_success: ["done", "Image generated"],
+  api_failed: ["failed", "Generation failed — nothing was billed"],
   delivered: ["done", "Delivered"],
 };
 
@@ -66,9 +70,14 @@ function resetRun() {
   refreshGenerateButton();
 }
 
-async function refreshBalance() {
+function showTotals(totals) {
+  $("generations").textContent = totals.generations;
+  $("tokens").textContent = totals.total_tokens.toLocaleString();
+}
+
+async function refreshTotals() {
   try {
-    $("credits").textContent = (await call("/api/balance")).credits;
+    showTotals(await call("/api/usage"));
   } catch (err) {
     showError(err.message);
   }
@@ -166,11 +175,10 @@ $("generate-btn").addEventListener("click", async () => {
     const prepared = await call("/api/prepare", { method: "POST", body });
     state.requestId = prepared.request_id;
     setStatus("pending");
-    $("credits").textContent = prepared.credits;
     $("confirm-body").textContent =
       `This calls gpt-image-2 and produces one ${prepared.width} × ${prepared.height} image. ` +
-      `It costs ${prepared.cost} credit, charged only if the image comes back. ` +
-      `You have ${prepared.credits}.`;
+      `It is billed to your OpenAI account, and only if the image comes back. ` +
+      `Nothing else in this tool spends money.`;
     $("confirm-btn").disabled = false;
     $("confirm-dialog").showModal();
   } catch (err) {
@@ -195,12 +203,13 @@ $("confirm-btn").addEventListener("click", async () => {
 
   try {
     const result = await call(`/api/generate/${state.requestId}`, { method: "POST" });
-    $("credits").textContent = result.credits;
+    showTotals(result.totals);
     $("out-tree").src = result.tree_url;
     $("out-element").src = result.element_url;
     $("out-result").src = result.output_url;
     $("download-btn").href = result.output_url;
-    $("result-meta").textContent = `${result.request_id} · ${result.size}`;
+    $("result-meta").textContent =
+      `${result.request_id} · ${result.size} · ${result.usage ? result.usage.total_tokens.toLocaleString() + " tokens" : "cost not reported"}`;
     $("result").hidden = false;
     setStatus("api_success");
 
@@ -214,9 +223,9 @@ $("confirm-btn").addEventListener("click", async () => {
   } finally {
     state.busy = false;
     refreshGenerateButton();
-    refreshBalance();
+    refreshTotals();
   }
 });
 
 loadConfig().catch((err) => showError(err.message));
-refreshBalance();
+refreshTotals();
