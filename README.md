@@ -168,7 +168,24 @@ session:
 
 Self-hosted and committed, no CDN. See `frontend/fonts/README.md`.
 
-## Not built yet
+## AC-5, the quality run
 
-AC-5 — the 30-image run measuring the ≥70% "good enough to sell" rate — is a measurement to
-take once the system is running, not part of this build.
+The ≥70% "realistic enough to sell" bar over 30 images is a measurement, not a feature.
+`scripts/run_quality_batch.py` is the harness for it:
+
+```bash
+.venv/Scripts/python scripts/run_quality_batch.py ac5-source/pairs.txt --stamp pilot-1
+```
+
+`pairs.txt` lists one `tree<TAB>element` per line. Each line is one billed generation, so run
+three before running thirty — the thing most likely to be wrong is the inputs, not the model.
+
+It writes `ac5-results/<stamp>/` with every image, an `index.html` laying each run out as
+bare tree → element → result, and a `results.csv` with an empty `passes` column to fill in.
+Nothing is scored automatically: "good enough to sell" is a judgement by someone who sells
+these, and a model grading its own output would not be evidence of anything.
+
+**On input choice.** Product.md specifies Input A as a bare tree *photographed at the shop*.
+Product-catalogue renders on white are a different distribution — cleaner lighting, no
+clutter, and any text or price tag left in a crop is something the model may reproduce. A
+score measured on catalogue crops answers a different question than the one AC-5 asks.

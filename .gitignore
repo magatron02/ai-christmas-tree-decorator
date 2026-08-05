@@ -7,6 +7,11 @@ storage/
 
 scripts/risk_gate_output.png
 
+# AC-5 material: catalogue exports in, generated results out. Both are large image sets,
+# and the verdicts that matter live in results.csv, which you can copy out by hand.
+ac5-source/
+ac5-results/
+
 .venv/
 __pycache__/
 *.pyc
