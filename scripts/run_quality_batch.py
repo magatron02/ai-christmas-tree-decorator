@@ -145,6 +145,12 @@ def main():
     results = []
     body = []
 
+    def write_reports():
+        """Called after every pair. A generation that has been paid for must survive a bug
+        further down this script — the first version of it lost one to a KeyError."""
+        (out / "index.html").write_text(INDEX_HEAD + "".join(body) + "\n</main>\n", encoding="utf-8")
+        (out / "results.json").write_text(json.dumps(results, indent=1), encoding="utf-8")
+
     for n, (tree, element) in enumerate(pairs, 1):
         print(f"[{n}/{len(pairs)}] {tree.name} + {element.name} ... ", end="", flush=True)
         result = run_one(client, args.base, tree, element, args.size)
@@ -153,17 +159,16 @@ def main():
         if result["stage"] != "done":
             print(f"FAILED at {result['stage']}: {result['error']}")
             body.append(FAILED.format(n=n, **result))
+            write_reports()
             continue
 
-        for key, suffix in (("tree_url", "tree"), ("element_url", "element"), ("output_url", "result")):
+        for key, suffix in (("tree_url", "tree"), ("element_url", "element"), ("output_url", "output")):
             name = f"{n:02d}_{suffix}.png"
             fetch(args.base, result[key], out / name)
             result[f"{suffix}_file"] = name
         print(f"ok — {result['tokens']} tokens")
         body.append(RUN.format(n=n, **result))
-
-    (out / "index.html").write_text(INDEX_HEAD + "".join(body) + "\n</main>\n", encoding="utf-8")
-    (out / "results.json").write_text(json.dumps(results, indent=1), encoding="utf-8")
+        write_reports()
 
     with (out / "results.csv").open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
