@@ -16,3 +16,6 @@ ac5-results/
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# catalog/products.json IS committed on purpose: it is the deliverable of Product.md 8.1,
+# and the 200 MB PDF it comes from is not in the repo, so this file is the data.
