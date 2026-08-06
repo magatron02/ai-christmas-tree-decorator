@@ -26,8 +26,15 @@ def read(path):
     return path.read_text(encoding="utf-8")
 
 
-def strip_comments(css):
-    return re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+def strip_comments(source):
+    """Block and line comments both. A comment explaining why a colour was avoided is not a
+    colour, and the first version of this only stripped /* */ — so the word "green" in a
+    line comment failed the no-literal-colour rule.
+
+    The lookbehind keeps https:// intact.
+    """
+    source = re.sub(r"/\*.*?\*/", "", source, flags=re.S)
+    return re.sub(r"(?<!:)//[^\n]*", "", source)
 
 
 def component_sources():

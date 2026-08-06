@@ -273,8 +273,114 @@ $("reference-clear").addEventListener("click", () => {
   $("reference-file").value = "";
   $("reference-preview").hidden = true;
   $("reference-actions").hidden = true;
+  $("identify-results").innerHTML = "";
+  $("identify-note").hidden = true;
   resetRun();
 });
+
+/* ---- what of this does the shop sell? ----
+ * Deliberately not automatic: it is a billed call, and NonGoals forbids suggestions the
+ * user did not ask for. The results are labelled as the closest products rather than as an
+ * identification — measured, a nutcracker matches a Santa at 0.82, so a high score is not
+ * the same as the right product. */
+$("identify-btn").addEventListener("click", async () => {
+  if (!state.reference) return;
+  const button = $("identify-btn");
+  button.disabled = true;
+  button.textContent = "Looking through the catalogue…";
+  showError("");
+
+  try {
+    const treeCode = $("tree-code").value.trim();
+    const query = treeCode ? `?tree_code=${encodeURIComponent(treeCode)}` : "";
+    const result = await call(`/api/reference/${state.reference}/analyse${query}`, {
+      method: "POST",
+    });
+    renderIdentified(result);
+  } catch (err) {
+    showError(err.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Identify decorations in it";
+  }
+});
+
+function renderIdentified(result) {
+  $("identify-note").textContent = result.note;
+  $("identify-note").hidden = false;
+
+  const host = $("identify-results");
+  host.innerHTML = "";
+
+  for (const entry of result.decorations) {
+    const block = document.createElement("div");
+    block.className = "found";
+
+    const header = document.createElement("div");
+    header.className = "seen";
+    const chip = document.createElement("span");
+    if (entry.refused) {
+      chip.className = "chip failed";
+      chip.textContent = "nothing close";
+    } else {
+      // Deliberately the neutral chip. Green would say "this is right", and measured, three
+      // of ten matches were wrong at scores as high as the correct ones. The kind field is
+      // too coarse to tell them apart — "figure" covers Santa, snowman and nutcracker alike
+      // — so nothing here can honestly claim correctness.
+      chip.className = "chip";
+      chip.textContent = "closest in the catalogue";
+    }
+    const said = document.createElement("span");
+    said.textContent = entry.seen.summary;
+    header.append(chip, said);
+    block.append(header);
+
+    if (entry.quantity) {
+      const quantity = document.createElement("span");
+      quantity.className = "hint";
+      quantity.textContent =
+        `About ${entry.quantity.low}–${entry.quantity.high} of these for this tree ` +
+        `(${Math.round(entry.quantity.element_mm)} mm on a ${Math.round(entry.quantity.tree_mm)} mm tree).`;
+      block.append(quantity);
+    } else if (entry.quantity_note) {
+      const note = document.createElement("span");
+      note.className = "hint";
+      note.textContent = entry.quantity_note;
+      block.append(note);
+    }
+
+    const row = document.createElement("div");
+    row.className = "candidates";
+    for (const candidate of entry.candidates) {
+      const card = document.createElement("div");
+      card.className = "candidate";
+      if (candidate.image) {
+        const photo = document.createElement("img");
+        photo.src = `/catalog/${candidate.image}`;
+        photo.alt = candidate.summary || candidate.code;
+        card.append(photo);
+      }
+      const code = document.createElement("div");
+      code.className = "code";
+      code.textContent = `${candidate.code} · ${candidate.score.toFixed(2)}`;
+      const why = document.createElement("div");
+      why.className = "why";
+      why.textContent = `${candidate.kind || ""} · page ${candidate.pdf_page}`;
+      card.append(code, why);
+      // shape is the field that discriminates: kind lumps every figure together, so a
+      // nutcracker and a Santa agree on kind and disagree on shape
+      if (candidate.shape_agrees === false) {
+        const warn = document.createElement("div");
+        warn.className = "chip stale";
+        warn.textContent = `shaped like a ${candidate.shape || "different thing"}`;
+        card.append(warn);
+      }
+      row.append(card);
+    }
+    block.append(row);
+    host.append(block);
+  }
+}
 
 /* ---- step 4 + 5: prepare, confirm, generate ---- */
 $("generate-btn").addEventListener("click", async () => {

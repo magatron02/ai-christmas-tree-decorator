@@ -47,6 +47,12 @@ app = FastAPI(title="AI Christmas Tree Decorator")
 app.mount("/files", StaticFiles(directory=config.STORAGE_DIR), name="files")
 app.mount("/static", StaticFiles(directory=config.FRONTEND_DIR), name="static")
 
+# catalogue product crops, so a proposed code can be shown as a picture. Mounted only if the
+# index has been built — the app works without it, minus the reference matching.
+CATALOG_IMAGES = config.CATALOG_PATH.parent / "images"
+if CATALOG_IMAGES.is_dir():
+    app.mount("/catalog", StaticFiles(directory=CATALOG_IMAGES), name="catalog")
+
 STORED_NAME = re.compile(r"^[0-9a-f]{32}_(tree|element|output|reference)\.(png|jpg)$")
 EXT_FOR_FORMAT = {"PNG": "png", "JPEG": "jpg"}
 

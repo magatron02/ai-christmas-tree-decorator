@@ -68,9 +68,13 @@
     </span>
     <input class="input" type="file" id="reference-file" accept="image/jpeg,image/png">
     <div class="btn-row" id="reference-actions" hidden>
+      <button class="btn" id="identify-btn">Identify decorations in it</button>
       <button class="btn danger" id="reference-clear">Remove reference</button>
     </div>
     <img class="thumb" id="reference-preview" alt="Reference setting" hidden>
+
+    <div class="notice" id="identify-note" hidden></div>
+    <div class="stack" id="identify-results"></div>
   </section>
 
   <section class="card stack">
