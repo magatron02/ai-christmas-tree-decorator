@@ -18,6 +18,8 @@ from functools import lru_cache
 from backend import config
 from backend.validation import ValidationError
 
+__all__ = ["find", "search", "longest_side_mm", "describe", "require_size", "scale_sentence"]
+
 
 @lru_cache(maxsize=1)
 def _rows():
@@ -119,14 +121,16 @@ def scale_sentence(tree_code, element_code):
     tree_mm, element_mm = require_size(tree), require_size(element)
     ratio = tree_mm / element_mm
 
-    # What this buys, measured on real generations of the same tree and bauble:
-    #   no sizes given   baubles ranged 22-53 px, median 0.52x the true ratio
-    #   sizes given      baubles ranged 48-61 px, median 0.60x
-    # So stating the size makes every copy in a picture the same size, which was one of the
-    # AC-5 defects. It does not make them the right size — the model draws roughly 60% of
-    # whatever it is told, and a longer version of this text spelling the ratio out as a
-    # visible fraction with a bias warning measured 0.58x, i.e. no different. The extra
-    # words were removed rather than kept for the look of them.
+    # Measured over four generations of the same tree and bauble:
+    #   nothing stated        0.59x the true ratio, sizes within one picture spread 1.86x
+    #   true size stated      0.70x, spread 1.38x
+    #   same, longer wording  0.67x, spread 1.12x
+    #   ratio pre-corrected   0.55x, spread 1.19x
+    #
+    # So stating the size makes the copies match each other, which was one of the AC-5
+    # defects. It does not make them the true size, and asking for a larger fraction to
+    # compensate made them smaller — the rendered size does not track the instructed
+    # fraction. The honest number is the one that stays.
     return (
         f"These are real products and their real sizes are known. The tree is "
         f"{describe(tree)}, {tree_mm:.0f} mm tall. The decoration is {describe(element)}, "

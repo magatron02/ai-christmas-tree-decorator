@@ -7,6 +7,7 @@ not a plausible number.
 
 import pytest
 
+from backend import config
 from backend.services import catalog
 from backend.validation import ValidationError
 
@@ -38,6 +39,17 @@ def test_the_scale_sentence_states_the_real_ratio():
     assert "1524 mm" in sentence
     assert "80 mm" in sentence
     assert "19th" in sentence
+
+
+def test_the_stated_ratio_is_the_true_one_not_a_corrected_one():
+    """Asking for a larger fraction to compensate for the model drawing small was tried and
+    measured worse than not correcting at all (0.55x against 0.70x). The sentence states the
+    real ratio, and this test stops a compensation factor creeping back in unmeasured."""
+    sentence = catalog.scale_sentence("05021-1", "017-06")
+
+    assert "one 19th" in sentence          # 1524 / 80, the truth
+    assert "one 11th" not in sentence      # the correction that made it worse
+    assert not hasattr(config, "RENDER_SCALE_BIAS")
 
 
 def test_scale_falls_back_to_words_when_no_codes_are_given():

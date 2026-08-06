@@ -38,6 +38,13 @@ SIZE_PRESETS = {
 }
 DEFAULT_SIZE = "4:5"
 
+# There is deliberately no scale-correction constant here. gpt-image-2 renders decorations
+# at roughly 0.55-0.70 of the fraction it is told, so correcting for it looks obvious: ask
+# for 1/11 to get a true 1/19. Measured, that produced 0.55x — smaller than the uncorrected
+# 0.70x, not larger. The instructed fraction does not control the rendered size linearly, so
+# a correction factor would be a knob that implies control it does not have.
+# scripts/measure_scale.py is the check if this is ever worth revisiting.
+
 MAX_DIMENSION = (3840, 2160)
 DIMENSION_MULTIPLE = 16
 MIN_RATIO = 1 / 3
