@@ -152,6 +152,38 @@ def page_history():
 # ---------------------------------------------------------------- api
 
 
+@app.get("/settings", include_in_schema=False)
+def page_settings():
+    return FileResponse(config.FRONTEND_DIR / "settings.html")
+
+
+@app.get("/api/settings")
+def api_settings():
+    """Whether a key is configured — never the key itself (NonGoals.md 10)."""
+    from backend.services import settings
+
+    return {
+        "api_key_set": settings.is_set(),
+        "env_path": str(settings.ENV_PATH),
+        "model": config.IMAGE_MODEL,
+        "vision_model": config.VISION_MODEL,
+        "catalog_products": config.CATALOG_PATH.is_file(),
+        "catalog_searchable": (config.CATALOG_PATH.parent / "embeddings.npy").is_file(),
+    }
+
+
+@app.post("/api/settings/api-key")
+def api_set_key(request: Request, api_key: str = Form(...)):
+    """Write a new key to .env. Localhost only: reachable from elsewhere this is a way to
+    replace someone's credentials, and the auth for that does not exist."""
+    from backend.services import settings
+
+    if not settings.is_local(request):
+        raise HTTPException(403, "The API key can only be set from the machine running this.")
+    settings.set_key(api_key)
+    return {"api_key_set": True}
+
+
 @app.get("/api/config")
 def api_config():
     """So the frontend never re-declares limits that live in config.py."""

@@ -40,6 +40,32 @@
   font-family: var(--font-ui);
 }
 
+/* Light variant (Product.md 8.4).
+   Section 8 of the design system says both accents fail AA on a light background and have to
+   be re-derived. Measured, they do fail raw — 1.77 for the green, 3.18 for the orange — but
+   every accent used as text already goes through color-mix(… 55%, var(--text)), and --text
+   flips with the theme. With --text at #0a0a0a that mix lands at 4.93 and 7.67 on this
+   background, so the accent tokens are unchanged and there is no sixth colour.
+   tests/test_theme_contrast.py recomputes all of this. */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg:          #fafafa;
+  --bg-elevated: #f0ecea;   /* still the warmer neutral, now the darker one */
+  --border:      #c0bab8;
+
+  --text:        #0a0a0a;
+  --text-2:      #46413f;
+  --text-3:      #6b6663;
+
+  /* primary is maximum contrast either way round: near-black on near-white here */
+  --btn-bg:               #f0ecea;
+  --btn-hover-bg:         #e5dfdc;
+  --btn-primary-bg:       #141414;
+  --btn-primary-hover-bg: #2a2a2a;
+  --btn-primary-text:     #fafafa;
+}
+
 body {
   margin: 0;
   background: var(--bg);

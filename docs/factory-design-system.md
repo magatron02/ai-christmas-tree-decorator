@@ -274,6 +274,23 @@ becomes the *lighter* neutral, and both accents need re-tuning — `#ee6018`
 fails AA as small text on a light background too, and `#a0ca92` fails badly.
 Re-derive them with the same `color-mix` rule and check both before shipping.
 
+> **Measured 2026-08-05 — the accents did not need re-tuning.** Built and checked
+> against a real light theme (`tests/test_theme_contrast.py`).
+>
+> The raw accents fail exactly as warned: on `#fafafa`, `#a0ca92` is **1.77:1**
+> and `#ee6018` is **3.18:1**. But Rule 3 already routes every accent-as-text
+> through `color-mix(in srgb, … 55%, var(--text))`, and `--text` flips with the
+> theme. With `--text: #0a0a0a` that mix lands at **4.93:1** and **7.67:1** —
+> both AA — with the accent tokens untouched.
+>
+> So the light variant needs no sixth colour, which is what section 8 asks for
+> in the first place. What it does need is `--text` dark enough: at `#141414`
+> the green mix is 4.64:1, passing by 3%, which is too thin to rely on.
+>
+> The raw `#ee6018` is still used as a border (`.chip.failed`, `.notice`) and
+> holds at 3.18:1 against a light background, above the 3:1 a border needs.
+> `#a0ca92` is never a border, so its 1.77:1 does not matter.
+
 Keeping this **portable across projects**: the tokens are the contract, the
 component CSS is a suggestion. Copy section 1 verbatim; rewrite section 4 in
 whatever your project already speaks.
