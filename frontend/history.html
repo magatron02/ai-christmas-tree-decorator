@@ -21,37 +21,42 @@
     <span class="k caption">Tokens spent</span>
     <span class="v" id="tokens">–</span>
   </div>
-  <nav>
+</header>
+
+<div class="frame">
+  <nav class="sidebar">
     <a class="row" href="/">Decorate</a>
     <a class="row active" href="/history">History</a>
     <a class="row" href="/settings">Settings</a>
   </nav>
-</header>
 
-<main class="page stack">
-  <section class="card stack">
-    <span class="caption">Every request, newest first</span>
-    <span class="hint">
-      If a generation succeeded on the server but never reached the browser, the image is
-      still here and its cost is still recorded. Nothing is retried automatically.
-    </span>
-    <div class="notice" id="error-box" hidden></div>
-    <table>
-      <thead>
-        <tr>
-          <th class="caption">When</th>
-          <th class="caption">Request</th>
-          <th class="caption">Size</th>
-          <th class="caption">State</th>
-          <th class="caption">Tokens</th>
-          <th class="caption">Result</th>
-        </tr>
-      </thead>
-      <tbody id="rows"></tbody>
-    </table>
-    <span class="hint" id="empty" hidden>Nothing generated yet.</span>
-  </section>
-</main>
+  <main class="page">
+    <section class="card stack">
+      <span class="caption">Every request, newest first</span>
+      <span class="hint">
+        If a generation succeeded on the server but never reached the browser, the image is
+        still here and its cost is still recorded. Nothing is retried automatically.
+      </span>
+      <div class="notice" id="error-box" hidden></div>
+      <div class="scroll-x">
+      <table>
+        <thead>
+          <tr>
+            <th class="caption">When</th>
+            <th class="caption">Request</th>
+            <th class="caption">Size</th>
+            <th class="caption">State</th>
+            <th class="caption">Tokens</th>
+            <th class="caption">Result</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      </div>
+      <span class="hint" id="empty" hidden>Nothing generated yet.</span>
+    </section>
+  </main>
+</div>
 
 <script src="/static/history.js"></script>
 </body>

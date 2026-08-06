@@ -275,6 +275,7 @@ $("reference-clear").addEventListener("click", () => {
   $("reference-actions").hidden = true;
   $("identify-results").innerHTML = "";
   $("identify-note").hidden = true;
+  $("identify-panel").hidden = true;
   resetRun();
 });
 
@@ -306,6 +307,7 @@ $("identify-btn").addEventListener("click", async () => {
 });
 
 function renderIdentified(result) {
+  $("identify-panel").hidden = false;
   $("identify-note").textContent = result.note;
   $("identify-note").hidden = false;
 

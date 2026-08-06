@@ -21,104 +21,117 @@
     <span class="k caption">Tokens spent</span>
     <span class="v" id="tokens">–</span>
   </div>
-  <nav>
+</header>
+
+<div class="frame">
+  <nav class="sidebar">
     <a class="row active" href="/">Decorate</a>
     <a class="row" href="/history">History</a>
     <a class="row" href="/settings">Settings</a>
   </nav>
-</header>
 
-<main class="page stack">
+  <main class="page">
+    <div class="workspace">
 
-  <section class="card stack">
-    <span class="caption">Step 1 — bare tree (input a)</span>
-    <input class="input" type="file" id="tree-file" accept="image/jpeg,image/png">
-    <input class="input" id="tree-code" list="tree-code-list" autocomplete="off"
-           placeholder="Product code — optional, e.g. 05021-1">
-    <datalist id="tree-code-list"></datalist>
-    <span class="hint" id="tree-code-hint">Give both codes and the real size goes into the prompt.</span>
-    <img class="thumb" id="tree-preview" alt="Bare tree" hidden>
-  </section>
+      <div class="column inputs">
 
-  <section class="card stack">
-    <span class="caption">Step 2 — decorations (input b)</span>
-    <span class="hint" id="element-count-hint">Add up to 5. Each one is cut out separately so you can check it.</span>
+        <section class="card stack">
+          <span class="caption">1 — bare tree</span>
+          <input class="input" type="file" id="tree-file" accept="image/jpeg,image/png">
+          <input class="input" id="tree-code" list="tree-code-list" autocomplete="off"
+                 placeholder="Product code — optional, e.g. 05021-1">
+          <datalist id="tree-code-list"></datalist>
+          <span class="hint" id="tree-code-hint">Give every code and the real sizes go into the prompt.</span>
+          <img class="thumb" id="tree-preview" alt="Bare tree" hidden>
+        </section>
 
-    <ul class="accepted" id="accepted-elements"></ul>
+        <section class="card stack">
+          <span class="caption">2 — decorations</span>
+          <span class="hint" id="element-count-hint">Add up to 5. Each one is cut out separately so you can check it.</span>
 
-    <input class="input" type="file" id="element-file" accept="image/jpeg,image/png">
-    <input class="input" id="element-code" list="element-code-list" autocomplete="off"
-           placeholder="Product code — optional, e.g. 017-06">
-    <datalist id="element-code-list"></datalist>
-    <span class="hint" id="element-code-hint"></span>
-    <div class="btn-row">
-      <button class="btn" id="cut-btn" disabled>Remove background</button>
-      <span class="hint" id="cut-hint">Runs locally. Costs nothing.</span>
+          <ul class="accepted" id="accepted-elements"></ul>
+
+          <input class="input" type="file" id="element-file" accept="image/jpeg,image/png">
+          <input class="input" id="element-code" list="element-code-list" autocomplete="off"
+                 placeholder="Product code — optional, e.g. 017-06">
+          <datalist id="element-code-list"></datalist>
+          <span class="hint" id="element-code-hint"></span>
+          <div class="btn-row">
+            <button class="btn" id="cut-btn" disabled>Remove background</button>
+            <span class="hint" id="cut-hint">Runs locally. Costs nothing.</span>
+          </div>
+          <img class="thumb checker" id="element-preview" alt="Decoration with background removed" hidden>
+          <div class="btn-row" id="element-actions" hidden>
+            <button class="btn" id="accept-btn">Add this decoration</button>
+            <button class="btn danger" id="reject-btn">Discard and try another</button>
+          </div>
+        </section>
+
+        <section class="card stack">
+          <span class="caption">3 — setting (optional)</span>
+          <span class="hint">
+            A photo of the kind of place this should look like. Only its light and mood are
+            used — no object from it is copied. Leave empty to keep the tree's own background.
+          </span>
+          <input class="input" type="file" id="reference-file" accept="image/jpeg,image/png">
+          <div class="btn-row" id="reference-actions" hidden>
+            <button class="btn" id="identify-btn">Identify decorations in it</button>
+            <button class="btn danger" id="reference-clear">Remove reference</button>
+          </div>
+          <img class="thumb" id="reference-preview" alt="Reference setting" hidden>
+        </section>
+
+        <section class="card stack">
+          <span class="caption">4 — output size</span>
+          <select class="input option-name" id="size-select" disabled></select>
+          <span class="hint">Every option is divisible by 16, as gpt-image-2 requires.</span>
+        </section>
+
+      </div>
+
+      <div class="column output">
+
+        <section class="card stack">
+          <span class="caption">5 — generate</span>
+          <div class="chip" id="status-chip">Waiting for a tree and at least one decoration</div>
+          <div class="btn-row">
+            <button class="btn primary" id="generate-btn" disabled>Generate</button>
+            <span class="hint">Asks first. This is the only step that spends money.</span>
+          </div>
+          <div class="notice" id="error-box" hidden></div>
+        </section>
+
+        <section class="card stack" id="result" hidden>
+          <span class="caption">Result</span>
+          <img class="thumb" id="out-result" alt="Decorated tree">
+          <div class="btn-row">
+            <a class="btn" id="download-btn" download>Download</a>
+            <span class="hint mono" id="result-meta"></span>
+          </div>
+          <span class="caption">What went in</span>
+          <div class="triptych">
+            <figure>
+              <figcaption class="caption">Bare tree</figcaption>
+              <img class="thumb" id="out-tree" alt="Bare tree">
+            </figure>
+            <figure>
+              <figcaption class="caption">Decorations</figcaption>
+              <div id="out-elements"></div>
+            </figure>
+          </div>
+        </section>
+
+        <section class="card stack" id="identify-panel" hidden>
+          <span class="caption">What of this we sell</span>
+          <div class="notice" id="identify-note" hidden></div>
+          <div class="stack" id="identify-results"></div>
+        </section>
+
+      </div>
+
     </div>
-    <img class="thumb checker" id="element-preview" alt="Decoration with background removed" hidden>
-    <div class="btn-row" id="element-actions" hidden>
-      <button class="btn" id="accept-btn">Add this decoration</button>
-      <button class="btn danger" id="reject-btn">Discard and try another</button>
-    </div>
-  </section>
-
-  <section class="card stack">
-    <span class="caption">Step 3 — setting (optional)</span>
-    <span class="hint">
-      A photo of the kind of place this should look like. Only its light and mood are used —
-      no object from it is copied. Leave empty to keep the tree's own background.
-    </span>
-    <input class="input" type="file" id="reference-file" accept="image/jpeg,image/png">
-    <div class="btn-row" id="reference-actions" hidden>
-      <button class="btn" id="identify-btn">Identify decorations in it</button>
-      <button class="btn danger" id="reference-clear">Remove reference</button>
-    </div>
-    <img class="thumb" id="reference-preview" alt="Reference setting" hidden>
-
-    <div class="notice" id="identify-note" hidden></div>
-    <div class="stack" id="identify-results"></div>
-  </section>
-
-  <section class="card stack">
-    <span class="caption">Step 4 — output size</span>
-    <select class="input option-name" id="size-select" disabled></select>
-    <span class="hint">Every option is divisible by 16, as gpt-image-2 requires.</span>
-  </section>
-
-  <section class="card stack">
-    <span class="caption">Step 5 — generate</span>
-    <div class="chip" id="status-chip">Waiting for both images</div>
-    <div class="btn-row">
-      <button class="btn primary" id="generate-btn" disabled>Generate</button>
-      <span class="hint">Asks for confirmation first. This is the only step that spends money.</span>
-    </div>
-  </section>
-
-  <div class="notice" id="error-box" hidden></div>
-
-  <section class="card stack" id="result" hidden>
-    <span class="caption">Result</span>
-    <div class="triptych">
-      <figure>
-        <figcaption class="caption">Bare tree</figcaption>
-        <img class="thumb" id="out-tree" alt="Bare tree">
-      </figure>
-      <figure>
-        <figcaption class="caption">Decorations</figcaption>
-        <div id="out-elements"></div>
-      </figure>
-      <figure>
-        <figcaption class="caption">Decorated</figcaption>
-        <img class="thumb" id="out-result" alt="Decorated tree">
-      </figure>
-    </div>
-    <div class="btn-row">
-      <a class="btn" id="download-btn" download>Download the result</a>
-      <span class="hint mono" id="result-meta"></span>
-    </div>
-  </section>
-
-</main>
+  </main>
+</div>
 
 <dialog id="confirm-dialog">
   <h2>Generate this image?</h2>
