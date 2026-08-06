@@ -51,15 +51,20 @@ def abandoned(conn, older_than_hours=24):
 
 def referenced(conn, exclude=()):
     """Filenames the surviving requests point at, in any state — including failed ones, whose
-    inputs are what you would re-run from. `exclude` is the set about to be deleted."""
+    inputs are what you would re-run from. `exclude` is the set about to be deleted.
+
+    Reads the decorations through request_log.elements_of rather than the element_path
+    column: a request can carry up to five, and element_path only holds the first. Missing
+    the rest would have made them look like orphans and deleted the inputs of a request that
+    still exists.
+    """
     exclude = set(exclude)
     names = set()
-    for row in conn.execute(
-        "SELECT request_id, tree_path, element_path, output_path FROM requests"
-    ):
+    for row in conn.execute("SELECT * FROM requests"):
         if row["request_id"] in exclude:
             continue
-        names.update(row[key] for key in ("tree_path", "element_path", "output_path") if row[key])
+        names.update(row[key] for key in ("tree_path", "output_path") if row[key])
+        names.update(e["path"] for e in request_log.elements_of(row) if e.get("path"))
     return names
 
 

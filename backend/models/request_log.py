@@ -38,6 +38,10 @@ CREATE TABLE IF NOT EXISTS requests (
     output_path  TEXT,
     size         TEXT NOT NULL,
     tree_code    TEXT,
+    -- elements_json is the truth: [{"path": ..., "code": ...}, ...], one to five of them.
+    -- element_path and element_code hold the first entry so rows written before
+    -- multi-element still read, and so the history thumbnail has something to point at.
+    elements_json TEXT,
     element_code TEXT,
     error        TEXT,
     usage_json   TEXT,
@@ -64,25 +68,35 @@ def connect(path=None):
     # older databases keep their rows and gain whatever columns arrived since — the log is
     # the spend record, so it outlives schema changes rather than being rebuilt
     existing = {row["name"] for row in conn.execute("PRAGMA table_info(requests)")}
-    for column in ("usage_json", "tree_code", "element_code"):
+    for column in ("usage_json", "tree_code", "element_code", "elements_json"):
         if column not in existing:
             conn.execute(f"ALTER TABLE requests ADD COLUMN {column} TEXT")
     conn.commit()
     return conn
 
 
-def create(conn, tree_path, element_path, size, tree_code=None, element_code=None):
+def create(conn, tree_path, elements, size, tree_code=None):
+    """`elements` is a list of {"path": ..., "code": ...}, one to five of them."""
     request_id = uuid.uuid4().hex
     stamp = now()
+    first = elements[0]
     with conn:
         conn.execute(
-            "INSERT INTO requests (request_id, status, tree_path, element_path, size,"
-            " tree_code, element_code, created_at, updated_at)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (request_id, PENDING, tree_path, element_path, size,
-             tree_code, element_code, stamp, stamp),
+            "INSERT INTO requests (request_id, status, tree_path, element_path,"
+            " elements_json, size, tree_code, element_code, created_at, updated_at)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (request_id, PENDING, tree_path, first["path"], json.dumps(elements), size,
+             tree_code, first.get("code"), stamp, stamp),
         )
     return request_id
+
+
+def elements_of(row):
+    """The decorations on a request, whichever schema the row was written under."""
+    raw = row["elements_json"] if "elements_json" in row.keys() else None
+    if raw:
+        return json.loads(raw)
+    return [{"path": row["element_path"], "code": row["element_code"]}]
 
 
 def _transition(conn, request_id, from_status, to_status, **fields):

@@ -44,7 +44,7 @@ def test_referenced_files_are_never_removed(conn):
     tree = write("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa_tree.png")
     element = write("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb_element.png")
     output = write("cccccccccccccccccccccccccccccccc_output.png")
-    request_id = request_log.create(conn, tree.name, element.name, "4:5")
+    request_id = request_log.create(conn, tree.name, [{"path": element.name}], "4:5")
     request_log.claim(conn, request_id)
     request_log.mark_success(conn, request_id, output.name)
     age_request(conn, request_id)
@@ -57,7 +57,7 @@ def test_a_failed_requests_inputs_are_kept(conn):
     """You re-run from them, so they are not rubbish just because the generation failed."""
     tree = write("dddddddddddddddddddddddddddddddd_tree.png")
     element = write("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee_element.png")
-    request_id = request_log.create(conn, tree.name, element.name, "4:5")
+    request_id = request_log.create(conn, tree.name, [{"path": element.name}], "4:5")
     request_log.claim(conn, request_id)
     request_log.mark_failed(conn, request_id, "timeout")
     age_request(conn, request_id)
@@ -82,7 +82,7 @@ def test_an_abandoned_pending_request_is_removed_with_its_uploads(conn):
     """Cancelling the confirm dialog leaves this behind. It never reached the API."""
     tree = write("11111111111111111111111111111111_tree.png")
     element = write("22222222222222222222222222222222_element.png")
-    request_id = request_log.create(conn, tree.name, element.name, "4:5")
+    request_id = request_log.create(conn, tree.name, [{"path": element.name}], "4:5")
     age_request(conn, request_id)
 
     requests, files = storage.prune(conn)
@@ -97,7 +97,7 @@ def test_a_fresh_pending_request_survives(conn):
     """It is `pending` because the user is looking at the confirm dialog right now."""
     tree = write("33333333333333333333333333333333_tree.png", age_hours=0)
     element = write("44444444444444444444444444444444_element.png", age_hours=0)
-    request_id = request_log.create(conn, tree.name, element.name, "4:5")
+    request_id = request_log.create(conn, tree.name, [{"path": element.name}], "4:5")
 
     assert storage.prune(conn) == ([], [])
     assert request_log.get(conn, request_id) is not None
@@ -107,7 +107,7 @@ def test_requests_that_cost_money_are_never_removed(conn):
     """Only `pending` is deletable. Everything else is the spend record."""
     kept = []
     for status in ("calling_api", "api_success", "api_failed", "delivered"):
-        request_id = request_log.create(conn, "a_tree.png", "b_element.png", "4:5")
+        request_id = request_log.create(conn, "a_tree.png", [{"path": "b_element.png"}], "4:5")
         request_log.claim(conn, request_id)
         if status == "api_success":
             request_log.mark_success(conn, request_id, "c_output.png", {"total_tokens": 1})
@@ -127,10 +127,10 @@ def test_requests_that_cost_money_are_never_removed(conn):
 
 def test_pruning_does_not_change_the_spend_record(conn):
     """Whatever else it removes, the totals must survive it untouched."""
-    paid = request_log.create(conn, "a_tree.png", "b_element.png", "4:5")
+    paid = request_log.create(conn, "a_tree.png", [{"path": "b_element.png"}], "4:5")
     request_log.claim(conn, paid)
     request_log.mark_success(conn, paid, "c_output.png", {"total_tokens": 3239})
-    abandoned_id = request_log.create(conn, "d_tree.png", "e_element.png", "4:5")
+    abandoned_id = request_log.create(conn, "d_tree.png", [{"path": "e_element.png"}], "4:5")
     age_request(conn, paid)
     age_request(conn, abandoned_id)
 
@@ -143,7 +143,7 @@ def test_pruning_does_not_change_the_spend_record(conn):
 
 def test_dry_run_reports_without_deleting(conn):
     stray = write("99999999999999999999999999999999_output.png")
-    request_id = request_log.create(conn, "f_tree.png", "g_element.png", "4:5")
+    request_id = request_log.create(conn, "f_tree.png", [{"path": "g_element.png"}], "4:5")
     age_request(conn, request_id)
 
     requests, files = storage.prune(conn, dry_run=True)

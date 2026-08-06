@@ -23,6 +23,11 @@ CATALOG_PATH = ROOT / "catalog" / "products.json"
 
 # Spec.md 3. gpt-image-2's own per-file ceiling is higher; this is ours.
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+
+# Decorations per image (Product.md 8.2). Five is the product's number, not a technical
+# limit — each one is another reference image the model has to keep straight, and the
+# quality of a five-way mix is what AC-7 has to establish.
+MAX_ELEMENTS = 5
 ALLOWED_EXT = {".jpg", ".jpeg", ".png"}
 ALLOWED_MIME = {"image/jpeg", "image/png"}
 ALLOWED_FORMATS = {"JPEG", "PNG"}  # what Pillow reports after sniffing the actual bytes

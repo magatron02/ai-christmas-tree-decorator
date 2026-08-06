@@ -11,7 +11,7 @@ from helpers import png_bytes, upload
 
 
 def make(conn, size="4:5"):
-    return request_log.create(conn, "a_tree.png", "b_element.png", size)
+    return request_log.create(conn, "a_tree.png", [{"path": "b_element.png", "code": None}], size)
 
 
 def test_the_happy_path_walks_the_states_in_order(conn):

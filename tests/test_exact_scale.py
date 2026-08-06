@@ -64,7 +64,7 @@ def test_one_code_alone_is_rejected(client, fake_gen, fake_rembg):
     response = prepare(client, tree_code="05021-1")
 
     assert response.status_code == 422
-    assert "both" in response.json()["error"]
+    assert "partial set" in response.json()["error"]
 
 
 def test_the_prompt_template_still_carries_the_substitution():

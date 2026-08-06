@@ -19,9 +19,11 @@ class ValidationError(ValueError):
 
 
 def exactly_one(files, field):
-    """Input A = 1 file, Input B = 1 file (Product.md: one element per run).
+    """One file per upload. The tree is one image, and elements are background-removed one
+    at a time even when several go into the same picture — each needs its own preview and
+    its own accept or reject (AC-2).
 
-    More than one is rejected outright rather than silently using the first — AC-1 requires
+    More than one is rejected outright rather than silently using the first: AC-1 requires
     the behaviour to be a choice, and a rejection is the one the user can actually see.
     """
     if not files:
@@ -29,9 +31,23 @@ def exactly_one(files, field):
     if len(files) > 1:
         raise ValidationError(
             f"{field}: {len(files)} files uploaded, but exactly 1 is allowed. "
-            "This tool composites one element per run."
+            "Upload decorations one at a time so you can check each cut-out."
         )
     return files[0]
+
+
+def element_count(elements):
+    """1 to MAX_ELEMENTS decorations per picture (Product.md 8.2)."""
+    if not elements:
+        raise ValidationError("Add at least one decoration before generating.")
+    if len(elements) > config.MAX_ELEMENTS:
+        raise ValidationError(
+            f"{len(elements)} decorations selected, but at most {config.MAX_ELEMENTS} "
+            "can go into one picture."
+        )
+    if len(set(elements)) != len(elements):
+        raise ValidationError("The same decoration was added twice. Each one may appear once.")
+    return elements
 
 
 def check_size(nbytes, field):

@@ -100,25 +100,51 @@ def require_size(row):
     return millimetres
 
 
-def scale_sentence(tree_code, element_code):
+def scale_sentence(tree_code, element_codes):
     """The paragraph that replaces 'keep it in proportion' with actual numbers.
 
-    Returns a generic instruction when no codes were given — the caller always gets usable
-    prompt text, and never gets an invented measurement.
+    `element_codes` is a list, one per decoration. Returns a generic instruction when no
+    codes were given — the caller always gets usable prompt text, and never gets an invented
+    measurement.
     """
-    if not tree_code and not element_code:
+    if isinstance(element_codes, str) or element_codes is None:
+        element_codes = [element_codes] if element_codes else []
+    element_codes = [code for code in element_codes if code]
+
+    if not tree_code and not element_codes:
         return (
             "Keep every copy in proportion to the tree, as if it were the real object "
             "hanging there."
         )
-    if not (tree_code and element_code):
+    if not tree_code or not element_codes:
         raise ValidationError(
-            "Give a product code for both the tree and the decoration, or for neither — "
-            "one alone is not enough to work out the real scale."
+            "Give a product code for the tree and for every decoration, or for none of "
+            "them — a partial set is not enough to work out the real scale."
         )
 
-    tree, element = find(tree_code), find(element_code)
-    tree_mm, element_mm = require_size(tree), require_size(element)
+    tree = find(tree_code)
+    tree_mm = require_size(tree)
+    elements = [(find(code), require_size(find(code))) for code in element_codes]
+
+    if len(elements) > 1:
+        lines = [
+            f"These are real products and their real sizes are known. The tree is "
+            f"{describe(tree)}, {tree_mm:.0f} mm tall. Each decoration has its own size and "
+            f"they are not interchangeable:"
+        ]
+        for row, millimetres in elements:
+            lines.append(
+                f"- {describe(row)}: {millimetres:.0f} mm across, one "
+                f"{tree_mm / millimetres:.0f}th of the tree's height."
+            )
+        lines.append(
+            "Draw each kind at its own size. A smaller product must look smaller than a "
+            "larger one in the picture, by that much. Judge every copy against the whole "
+            "tree, not against the branch it sits on."
+        )
+        return "\n".join(lines)
+
+    element, element_mm = elements[0]
     ratio = tree_mm / element_mm
 
     # Measured over four generations of the same tree and bauble:

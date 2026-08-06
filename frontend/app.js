@@ -23,9 +23,11 @@ const STATE_LABEL = {
   delivered: ["done", "Delivered"],
 };
 
+const MAX_ELEMENTS = 5;
+
 const state = {
   treeFile: null,
-  elementName: null, // set once the user accepts the cut-out
+  elements: [], // {name, url, code} — one entry per accepted cut-out, up to MAX_ELEMENTS
   requestId: null,
   busy: false,
 };
@@ -56,7 +58,41 @@ async function call(url, options) {
 }
 
 function refreshGenerateButton() {
-  $("generate-btn").disabled = !(state.treeFile && state.elementName) || state.busy;
+  $("generate-btn").disabled = !(state.treeFile && state.elements.length) || state.busy;
+}
+
+/* The accepted decorations, each removable. Shown as a list rather than a count so it is
+ * obvious which five went in — a wrong one costs a whole generation to discover. */
+function renderElements() {
+  const list = $("accepted-elements");
+  list.innerHTML = "";
+  state.elements.forEach((element, index) => {
+    const item = document.createElement("li");
+    const thumb = document.createElement("img");
+    thumb.src = element.url;
+    thumb.className = "checker";
+    thumb.alt = `Decoration ${index + 1}`;
+    const label = document.createElement("span");
+    label.className = "mono";
+    label.textContent = element.code || `#${index + 1}`;
+    const drop = document.createElement("button");
+    drop.className = "btn danger";
+    drop.textContent = "remove";
+    drop.addEventListener("click", () => {
+      state.elements.splice(index, 1);
+      renderElements();
+      resetRun();
+    });
+    item.append(thumb, label, drop);
+    list.append(item);
+  });
+
+  const room = MAX_ELEMENTS - state.elements.length;
+  $("element-count-hint").textContent = room
+    ? `${state.elements.length} of ${MAX_ELEMENTS} added. Each one is cut out separately so you can check it.`
+    : `${MAX_ELEMENTS} of ${MAX_ELEMENTS} added — remove one to swap it.`;
+  $("element-file").disabled = room === 0;
+  $("element-code").disabled = room === 0;
 }
 
 /* The chip shows the pipeline state of the current run, so it is only reset when the user
@@ -65,8 +101,8 @@ function resetRun() {
   state.requestId = null;
   $("result").hidden = true;
   showError("");
-  if (state.treeFile && state.elementName) setStatus("pending");
-  else setStatus("waiting", "Waiting for both images");
+  if (state.treeFile && state.elements.length) setStatus("pending");
+  else setStatus("waiting", "Waiting for a tree and at least one decoration");
   refreshGenerateButton();
 }
 
@@ -137,6 +173,7 @@ function wireCodePicker(inputId, listId, hintId) {
 
 wireCodePicker("tree-code", "tree-code-list", "tree-code-hint");
 wireCodePicker("element-code", "element-code-list", "element-code-hint");
+renderElements();
 
 /* ---- step 1: bare tree ---- */
 $("tree-file").addEventListener("change", (event) => {
@@ -150,11 +187,9 @@ $("tree-file").addEventListener("change", (event) => {
 
 /* ---- step 2: element, background removed, previewed, accepted or discarded ---- */
 $("element-file").addEventListener("change", (event) => {
-  const file = event.target.files[0] || null;
-  $("cut-btn").disabled = !file;
+  $("cut-btn").disabled = !event.target.files[0];
   $("element-preview").hidden = true;
   $("element-actions").hidden = true;
-  state.elementName = null;
   resetRun();
 });
 
@@ -183,15 +218,26 @@ $("cut-btn").addEventListener("click", async () => {
 });
 
 $("accept-btn").addEventListener("click", () => {
-  state.elementName = $("element-preview").dataset.name;
+  const preview = $("element-preview");
+  state.elements.push({
+    name: preview.dataset.name,
+    url: preview.src,
+    code: $("element-code").value.trim(),
+  });
+  // clear the slot so the next decoration starts from nothing
+  $("element-file").value = "";
+  $("element-code").value = "";
+  $("element-code-hint").textContent = "";
+  preview.hidden = true;
   $("element-actions").hidden = true;
+  $("cut-btn").disabled = true;
+  renderElements();
   resetRun();
 });
 
 /* AC-2: a bad cut-out is a dead end the user can back out of, not something they have to
  * ride to the end of the pipeline. */
 $("reject-btn").addEventListener("click", () => {
-  state.elementName = null;
   $("element-file").value = "";
   $("element-preview").hidden = true;
   $("element-actions").hidden = true;
@@ -209,20 +255,25 @@ $("generate-btn").addEventListener("click", async () => {
   try {
     const body = new FormData();
     body.append("files", state.treeFile);
-    body.append("element", state.elementName);
     body.append("size", $("size-select").value);
     body.append("tree_code", $("tree-code").value.trim());
-    body.append("element_code", $("element-code").value.trim());
+    for (const element of state.elements) {
+      body.append("element", element.name);
+      body.append("element_code", element.code);
+    }
 
     const prepared = await call("/api/prepare", { method: "POST", body });
     state.requestId = prepared.request_id;
     setStatus("pending");
+    const many = prepared.element_count > 1
+      ? `${prepared.element_count} decorations mixed together`
+      : `1 decoration`;
     $("confirm-body").textContent =
-      `This calls gpt-image-2 and produces one ${prepared.width} × ${prepared.height} image. ` +
-      `It is billed to your OpenAI account, and only if the image comes back. ` +
+      `This calls gpt-image-2 and produces one ${prepared.width} × ${prepared.height} image ` +
+      `with ${many}. It is billed to your OpenAI account, and only if the image comes back. ` +
       (prepared.exact_scale
-        ? `Scale comes from the catalogue: ${prepared.scale}`
-        : `No product codes given, so the size is left to the model's judgement.`);
+        ? `Sizes come from the catalogue.`
+        : `No product codes given, so the sizes are left to the model's judgement.`);
     $("confirm-btn").disabled = false;
     $("confirm-dialog").showModal();
   } catch (err) {
@@ -249,7 +300,15 @@ $("confirm-btn").addEventListener("click", async () => {
     const result = await call(`/api/generate/${state.requestId}`, { method: "POST" });
     showTotals(result.totals);
     $("out-tree").src = result.tree_url;
-    $("out-element").src = result.element_url;
+    const strip = $("out-elements");
+    strip.innerHTML = "";
+    for (const element of result.elements) {
+      const thumb = document.createElement("img");
+      thumb.className = "thumb checker";
+      thumb.src = element.url;
+      thumb.alt = element.code || "Decoration";
+      strip.append(thumb);
+    }
     $("out-result").src = result.output_url;
     $("download-btn").href = result.output_url;
     $("result-meta").textContent =

@@ -61,8 +61,27 @@ def test_scale_falls_back_to_words_when_no_codes_are_given():
 def test_one_code_alone_is_refused():
     """Half the information cannot produce a ratio, and a ratio is the whole point."""
     with pytest.raises(ValidationError) as caught:
-        catalog.scale_sentence("05021-1", "")
-    assert "both" in str(caught.value)
+        catalog.scale_sentence("05021-1", [])
+    assert "partial set" in str(caught.value)
+
+
+def test_several_decorations_each_get_their_own_ratio():
+    """A 40 mm bauble and a 300 mm one must not come out the same size, which is the whole
+    reason multi-element needs the catalogue rather than one shared instruction."""
+    sentence = catalog.scale_sentence("05021-1", ["017-06", "018-02"])
+
+    assert "80 mm across, one 19th" in sentence
+    assert "40 mm across, one 38th" in sentence
+    assert "not interchangeable" in sentence
+
+
+def test_a_decoration_without_a_size_blocks_the_whole_set():
+    """Four known sizes and one unknown cannot produce a consistent instruction, and
+    guessing the fifth is what NonGoals 8 forbids."""
+    sizeless = next(row for row in catalog._rows() if row["size"] is None)
+
+    with pytest.raises(ValidationError):
+        catalog.scale_sentence("05021-1", ["017-06", sizeless["code"]])
 
 
 def test_a_product_with_no_printed_size_is_refused_not_estimated():

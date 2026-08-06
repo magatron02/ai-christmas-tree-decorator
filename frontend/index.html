@@ -39,7 +39,11 @@
   </section>
 
   <section class="card stack">
-    <span class="caption">Step 2 — decoration element (input b)</span>
+    <span class="caption">Step 2 — decorations (input b)</span>
+    <span class="hint" id="element-count-hint">Add up to 5. Each one is cut out separately so you can check it.</span>
+
+    <ul class="accepted" id="accepted-elements"></ul>
+
     <input class="input" type="file" id="element-file" accept="image/jpeg,image/png">
     <input class="input" id="element-code" list="element-code-list" autocomplete="off"
            placeholder="Product code — optional, e.g. 017-06">
@@ -49,10 +53,10 @@
       <button class="btn" id="cut-btn" disabled>Remove background</button>
       <span class="hint" id="cut-hint">Runs locally. Costs nothing.</span>
     </div>
-    <img class="thumb checker" id="element-preview" alt="Element with background removed" hidden>
+    <img class="thumb checker" id="element-preview" alt="Decoration with background removed" hidden>
     <div class="btn-row" id="element-actions" hidden>
-      <button class="btn" id="accept-btn">Use this cut-out</button>
-      <button class="btn danger" id="reject-btn">Discard and upload another</button>
+      <button class="btn" id="accept-btn">Add this decoration</button>
+      <button class="btn danger" id="reject-btn">Discard and try another</button>
     </div>
   </section>
 
@@ -81,8 +85,8 @@
         <img class="thumb" id="out-tree" alt="Bare tree">
       </figure>
       <figure>
-        <figcaption class="caption">Element</figcaption>
-        <img class="thumb checker" id="out-element" alt="Element">
+        <figcaption class="caption">Decorations</figcaption>
+        <div id="out-elements"></div>
       </figure>
       <figure>
         <figcaption class="caption">Decorated</figcaption>

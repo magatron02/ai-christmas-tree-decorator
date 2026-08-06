@@ -11,8 +11,7 @@ This is an edit of an existing photo, not a new picture of a similar tree. Prese
 If the returned tree could be told apart from the tree in the first image with the
 decorations removed, the result is wrong.
 
-The second image is the decoration to add. It is a cut-out on a transparent background and
-it is the only decoration that may appear.
+{elements}
 
 Placement
 - Distribute copies over the whole tree: top, middle and bottom, left and right.
@@ -24,9 +23,9 @@ Placement
   better.
 
 Density
-- A naturally decorated tree, not a covered one: roughly 12 to 20 copies for a full-height
-  tree, fewer if the element is large.
-- Leave visible gaps of bare branch between copies.
+- A naturally decorated tree, not a covered one: roughly 12 to 20 decorations in total for a
+  full-height tree, counting every kind together, fewer if they are large.
+- Leave visible gaps of bare branch between them.
 
 Scale
 - {scale}
@@ -40,5 +39,5 @@ Lighting and material
 - Keep the element's own material: if it is glossy it picks up a highlight from the scene's
   light, if it is matte it does not.
 
-Do not add any decoration that is not the supplied element. No extra ornaments, no lights,
-no ribbon, no star, no tinsel, no snow, no gifts, no text, no watermark.
+Do not add any decoration that was not supplied. No extra ornaments, no lights, no ribbon,
+no star, no tinsel, no snow, no gifts, no text, no watermark.

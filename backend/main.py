@@ -108,9 +108,11 @@ def _db():
 
 
 def _row_json(row):
+    elements = request_log.elements_of(row)
     return {
         "request_id": row["request_id"],
         "status": row["status"],
+        "elements": [{"url": _url(e["path"]), "code": e.get("code")} for e in elements],
         # billed is derived, not stored: a row that carries usage is a row that cost money,
         # so there is no flag that can disagree with the record of what happened
         "billed": row["usage_json"] is not None,
@@ -204,32 +206,43 @@ def api_remove_bg(files: list[UploadFile] = File(...)):
 @app.post("/api/prepare")
 def api_prepare(
     files: list[UploadFile] = File(...),
-    element: str = Form(...),
+    element: list[str] = Form(...),
     size: str = Form(config.DEFAULT_SIZE),
     tree_code: str = Form(""),
-    element_code: str = Form(""),
+    element_code: list[str] = Form(default=[]),
 ):
-    """Input A + an accepted element -> a `pending` request. Still free; still no API call.
+    """Input A + one to five accepted decorations -> a `pending` request. Still free; still
+    no API call.
 
-    The product codes are optional but come in pairs: with both, the prompt gets the real
-    millimetres (Product.md 8.2). Codes are resolved here rather than at generation time so
-    an unknown code costs nothing and is caught before the confirm dialog.
+    Product codes are optional but all-or-nothing: with the tree and every decoration named,
+    the prompt gets each one's real millimetres (Product.md 8.2). Codes are resolved here
+    rather than at generation time so an unknown code costs nothing and is caught before the
+    confirm dialog.
     """
     upload = validation.exactly_one(files, "Tree image")
     data = _read(upload, "Tree image")
     fmt, _dimensions = validation.check_image(data, upload.filename, upload.content_type, "Tree image")
 
     width, height = validation.resolve_size(size)
-    element_path = _stored_path(element)
-    tree_code, element_code = tree_code.strip(), element_code.strip()
-    scale = catalog.scale_sentence(tree_code, element_code)
+    names = validation.element_count([e.strip() for e in element if e.strip()])
+    paths = [_stored_path(name) for name in names]
+
+    tree_code = tree_code.strip()
+    codes = [c.strip() for c in element_code][: len(paths)]
+    codes += [""] * (len(paths) - len(codes))
+    if any(codes) and not all(codes):
+        raise ValidationError(
+            "Some decorations have a product code and some do not. Give a code for every "
+            "one, or for none — a partial set cannot produce real sizes."
+        )
+
+    scale = catalog.scale_sentence(tree_code, codes)
     tree_name = _store(data, "tree", EXT_FOR_FORMAT[fmt])
+    elements = [{"path": p.name, "code": c or None} for p, c in zip(paths, codes)]
 
     conn = _db()
     try:
-        request_id = request_log.create(
-            conn, tree_name, element_path.name, size, tree_code or None, element_code or None
-        )
+        request_id = request_log.create(conn, tree_name, elements, size, tree_code or None)
     finally:
         conn.close()
 
@@ -239,9 +252,10 @@ def api_prepare(
         "width": width,
         "height": height,
         "tree_url": _url(tree_name),
-        "element_url": _url(element_path.name),
+        "element_urls": [_url(e["path"]) for e in elements],
+        "element_count": len(elements),
         "scale": scale,
-        "exact_scale": bool(tree_code and element_code),
+        "exact_scale": bool(tree_code and all(codes)),
     }
 
 
@@ -264,17 +278,19 @@ def api_generate(request_id: str):
 
         width, height = validation.resolve_size(row["size"])
         tree_path = _stored_path(row["tree_path"])
-        element_path = _stored_path(row["element_path"])
+        elements = request_log.elements_of(row)
+        element_paths = [_stored_path(e["path"]) for e in elements]
+        scale = catalog.scale_sentence(row["tree_code"], [e.get("code") for e in elements])
 
         # Once the request is claimed it must reach a terminal state on every path, or it is
         # stranded at calling_api and can never be retried. So this catches everything, not
         # just ImageGenError — an unexpected failure is still a failure that produced no
         # image and should be runnable again.
-        scale = catalog.scale_sentence(row["tree_code"], row["element_code"])
-
         try:
             output, usage = image_gen.generate(
-                tree_path.read_bytes(), element_path.read_bytes(), width, height, scale
+                tree_path.read_bytes(),
+                [path.read_bytes() for path in element_paths],
+                width, height, scale,
             )
             name = _store(output, "output", "png")
         except Exception as exc:
