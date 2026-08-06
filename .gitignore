@@ -17,5 +17,8 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
-# catalog/products.json IS committed on purpose: it is the deliverable of Product.md 8.1,
-# and the 200 MB PDF it comes from is not in the repo, so this file is the data.
+# catalog/products.json and product_images.json ARE committed on purpose: they are the
+# deliverable of Product.md 8.1, and the 200 MB PDF they come from is not in the repo.
+# The crops are not — 105 MB of pictures that scripts/build_product_index.py regenerates
+# from the PDF, and the JSON already records which crop belongs to which code.
+catalog/images/
