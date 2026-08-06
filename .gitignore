@@ -22,3 +22,6 @@ __pycache__/
 # The crops are not — 105 MB of pictures that scripts/build_product_index.py regenerates
 # from the PDF, and the JSON already records which crop belongs to which code.
 catalog/images/
+# embeddings are a derived binary rebuilt by scripts/embed_catalog.py from descriptions.json
+catalog/embeddings.npy
+catalog/embedding_codes.json

@@ -220,6 +220,52 @@ def api_reference(files: list[UploadFile] = File(...)):
     return {"reference": name, "reference_url": _url(name)}
 
 
+@app.post("/api/reference/{name}/analyse")
+def api_analyse_reference(name: str, tree_code: str = ""):
+    """Read the decorations in a reference photo and look for them in the catalogue.
+
+    Product.md 8.3c. Every proposal comes as three candidates with their scores and their
+    catalogue photo, and `refused` is set when nothing scored well enough — the shop orders
+    from these, so a confident single answer is how the wrong box arrives (NonGoals.md 7).
+    """
+    from backend.services import matching, vision
+
+    path = _stored_path(name)
+    try:
+        described, usage = vision.describe_reference(path.read_bytes())
+    except Exception as exc:
+        raise HTTPException(502, f"Could not read the reference photo. {type(exc).__name__}: {exc}")
+
+    found = []
+    for decoration in described.decorations:
+        text = vision.as_text(decoration)
+        matches, refused = matching.find(text)
+        entry = {
+            "seen": decoration.model_dump(),
+            "text": text,
+            "refused": refused,
+            "candidates": matches,
+        }
+        if tree_code.strip() and not refused:
+            try:
+                entry["quantity"] = matching.suggest_quantity(
+                    tree_code.strip(), matches[0]["code"]
+                )
+            except ValidationError as exc:
+                entry["quantity_note"] = str(exc)
+        found.append(entry)
+
+    return {
+        "reference_url": _url(path.name),
+        "decorations": found,
+        "usage": usage,
+        "note": (
+            "Each candidate shows the catalogue photo it came from. That pairing is derived "
+            "from page layout and is not verified — check the photo before quoting the code."
+        ),
+    }
+
+
 @app.post("/api/prepare")
 def api_prepare(
     files: list[UploadFile] = File(...),

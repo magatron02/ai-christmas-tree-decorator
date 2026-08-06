@@ -12,6 +12,13 @@ BACKEND_DIR = Path(__file__).resolve().parent
 ROOT = BACKEND_DIR.parent
 
 IMAGE_MODEL = "gpt-image-2"
+
+# Reading what a decoration is, for the reference-photo matching in Product.md 8.3c. A
+# separate, much cheaper model than the image one: this only has to name a colour, a finish
+# and a shape, and it runs 1,053 times to index the catalogue.
+VISION_MODEL = "gpt-5.4-mini"
+EMBEDDING_MODEL = "text-embedding-3-small"
+
 API_TIMEOUT_S = 300.0
 
 DATA_DIR = ROOT / "data"

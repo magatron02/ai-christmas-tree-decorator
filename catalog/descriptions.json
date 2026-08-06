@@ -1,0 +1,2526 @@
+{
+ "01801-1": {
+  "code": "01801-1",
+  "pdf_page": 4,
+  "image": "01801-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "tree",
+   "pattern": "plain",
+   "packaging": "single",
+   "summary": "A green artificial Christmas tree with a full, fluffy shape."
+  },
+  "text": "tree, green, natural, tree, plain, single",
+  "tokens": 536
+ },
+ "01202-2": {
+  "code": "01202-2",
+  "pdf_page": 4,
+  "image": "01202-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "purple",
+   "other_colours": [
+    "silver"
+   ],
+   "finish": "glitter",
+   "shape": "cone",
+   "pattern": "fuzzy",
+   "packaging": "single",
+   "summary": "A small purple glittery Christmas tree with a silver base."
+  },
+  "text": "tree, purple, silver, glitter, cone, fuzzy, single",
+  "tokens": 497
+ },
+ "01201-4": {
+  "code": "01201-4",
+  "pdf_page": 4,
+  "image": "01201-4.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "silver"
+   ],
+   "finish": "transparent",
+   "shape": "christmas tree",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "Green tinsel Christmas tree with a silver stand."
+  },
+  "text": "tree, green, silver, transparent, christmas tree, single",
+  "tokens": 524
+ },
+ "09000-1": {
+  "code": "09000-1",
+  "pdf_page": 4,
+  "image": "09000-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "gold",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "cone",
+   "pattern": "none",
+   "packaging": "single",
+   "summary": "A gold glitter tabletop Christmas tree in a pot."
+  },
+  "text": "tree, gold, glitter, cone, single",
+  "tokens": 521
+ },
+ "01810-1": {
+  "code": "01810-1",
+  "pdf_page": 4,
+  "image": "01810-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "brown",
+    "white"
+   ],
+   "finish": "natural",
+   "shape": "mini tree",
+   "pattern": "snow-dusted",
+   "packaging": "single",
+   "summary": "Small snow-dusted green Christmas tree in a burlap-style base."
+  },
+  "text": "tree, green, brown, white, natural, mini tree, snow-dusted, single",
+  "tokens": 545
+ },
+ "01201-1": {
+  "code": "01201-1",
+  "pdf_page": 4,
+  "image": "01201-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "black"
+   ],
+   "finish": "natural",
+   "shape": "miniature tree",
+   "pattern": "plain",
+   "packaging": "single",
+   "summary": "A small green artificial Christmas tree with a black base."
+  },
+  "text": "tree, green, black, natural, miniature tree, plain, single",
+  "tokens": 539
+ },
+ "01203-1": {
+  "code": "01203-1",
+  "pdf_page": 4,
+  "image": "01203-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "pink",
+   "other_colours": [
+    "gold"
+   ],
+   "finish": "frosted",
+   "shape": "cone",
+   "pattern": "none",
+   "packaging": "single",
+   "summary": "A slim pink tinsel Christmas tree with a gold base."
+  },
+  "text": "tree, pink, gold, frosted, cone, single",
+  "tokens": 497
+ },
+ "02002-1": {
+  "code": "02002-1",
+  "pdf_page": 4,
+  "image": "02002-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "conical",
+   "pattern": "single",
+   "packaging": "single",
+   "summary": "Green artificial Christmas tree with a conical shape."
+  },
+  "text": "tree, green, natural, conical, single, single",
+  "tokens": 521
+ },
+ "01200-1": {
+  "code": "01200-1",
+  "pdf_page": 4,
+  "image": "01200-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "purple",
+   "other_colours": [
+    "pink"
+   ],
+   "finish": "glitter",
+   "shape": "mini christmas tree",
+   "pattern": "flocked branches",
+   "packaging": "multipack",
+   "summary": "Mini glitter Christmas tree decoration in purple with a pink base."
+  },
+  "text": "tree, purple, pink, glitter, mini christmas tree, flocked branches, multipack",
+  "tokens": 781
+ },
+ "11204-3": {
+  "code": "11204-3",
+  "pdf_page": 4,
+  "image": "11204-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "red",
+   "other_colours": [
+    "gold"
+   ],
+   "finish": "glitter",
+   "shape": "cone",
+   "pattern": "tree",
+   "packaging": "single",
+   "summary": "A red glitter tinsel Christmas tree with gold baubles and gift decorations."
+  },
+  "text": "tree, red, gold, glitter, cone, tree, single",
+  "tokens": 513
+ },
+ "01201-2": {
+  "code": "01201-2",
+  "pdf_page": 4,
+  "image": "01201-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "purple",
+   "other_colours": [
+    "black"
+   ],
+   "finish": "frosted",
+   "shape": "cone",
+   "pattern": "unclear",
+   "packaging": "single",
+   "summary": "A small fuzzy purple Christmas tree decoration with a dark base."
+  },
+  "text": "tree, purple, black, frosted, cone, unclear, single",
+  "tokens": 614
+ },
+ "02000-2": {
+  "code": "02000-2",
+  "pdf_page": 4,
+  "image": "02000-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "black"
+   ],
+   "finish": "natural",
+   "shape": "conical",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "Small artificial Christmas tree in green with a black base stand."
+  },
+  "text": "tree, green, black, natural, conical, single",
+  "tokens": 508
+ },
+ "03003-1": {
+  "code": "03003-1",
+  "pdf_page": 5,
+  "image": "03003-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "black"
+   ],
+   "finish": "natural",
+   "shape": "cone",
+   "pattern": "single",
+   "packaging": "single",
+   "summary": "A green artificial Christmas tree with a cone shape and black stand."
+  },
+  "text": "tree, green, black, natural, cone, single, single",
+  "tokens": 510
+ },
+ "02007-2": {
+  "code": "02007-2",
+  "pdf_page": 5,
+  "image": "02007-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "brown",
+    "tan"
+   ],
+   "finish": "natural",
+   "shape": "cone",
+   "pattern": "unstyled",
+   "packaging": "single",
+   "summary": "Small artificial pine tree with a brown burlap-style base covering."
+  },
+  "text": "tree, green, brown, tan, natural, cone, unstyled, single",
+  "tokens": 541
+ },
+ "40212-1": {
+  "code": "40212-1",
+  "pdf_page": 5,
+  "image": "40212-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "frosted",
+   "shape": "cone",
+   "pattern": "snow-dusted branches",
+   "packaging": "single",
+   "summary": "Snow-dusted artificial Christmas tree with a frosted green look."
+  },
+  "text": "tree, green, white, frosted, cone, snow-dusted branches, single",
+  "tokens": 544
+ },
+ "02003-2": {
+  "code": "02003-2",
+  "pdf_page": 5,
+  "image": "02003-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "red",
+   "other_colours": [
+    "green"
+   ],
+   "finish": "frosted",
+   "shape": "cone",
+   "pattern": "tinsel",
+   "packaging": "single",
+   "summary": "Flocked tabletop Christmas tree with a cone shape and green stand."
+  },
+  "text": "tree, red, green, frosted, cone, tinsel, single",
+  "tokens": 632
+ },
+ "02007-3": {
+  "code": "02007-3",
+  "pdf_page": 5,
+  "image": "02007-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "brown",
+    "white"
+   ],
+   "finish": "natural",
+   "shape": "fir tree",
+   "pattern": "frosted tips",
+   "packaging": "single",
+   "summary": "A small artificial fir tree with green branches, brown trunk, and snowy white frosted tips."
+  },
+  "text": "tree, green, brown, white, natural, fir tree, frosted tips, single",
+  "tokens": 537
+ },
+ "02012-2": {
+  "code": "02012-2",
+  "pdf_page": 5,
+  "image": "02012-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "mixed",
+   "shape": "cone",
+   "pattern": "packaging",
+   "packaging": "single",
+   "summary": "A slim green artificial Christmas tree with a tapered cone shape."
+  },
+  "text": "tree, green, mixed, cone, packaging, single",
+  "tokens": 537
+ },
+ "03007-3": {
+  "code": "03007-3",
+  "pdf_page": 5,
+  "image": "03007-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "brown"
+   ],
+   "finish": "natural",
+   "shape": "Christmas tree",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "A small green Christmas tree with a brown base."
+  },
+  "text": "tree, green, brown, natural, Christmas tree, single",
+  "tokens": 521
+ },
+ "02013-1": {
+  "code": "02013-1",
+  "pdf_page": 5,
+  "image": "02013-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "white",
+    "black"
+   ],
+   "finish": "frosted",
+   "shape": "conical tree",
+   "pattern": "snow-dusted branches",
+   "packaging": "single",
+   "summary": "Small snow-dusted artificial Christmas tree with a black stand."
+  },
+  "text": "tree, green, white, black, frosted, conical tree, snow-dusted branches, single",
+  "tokens": 518
+ },
+ "03013-1": {
+  "code": "03013-1",
+  "pdf_page": 5,
+  "image": "03013-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "white",
+    "black"
+   ],
+   "finish": "frosted",
+   "shape": "cone",
+   "pattern": "branchy",
+   "packaging": "single",
+   "summary": "Small frosted green artificial Christmas tree with a black stand."
+  },
+  "text": "tree, green, white, black, frosted, cone, branchy, single",
+  "tokens": 514
+ },
+ "03020-1": {
+  "code": "03020-1",
+  "pdf_page": 5,
+  "image": "03020-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "silver",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "frosted",
+   "shape": "conical tree",
+   "pattern": "branchy",
+   "packaging": "single",
+   "summary": "A silver-white frosted artificial Christmas tree with a full conical shape."
+  },
+  "text": "tree, silver, white, frosted, conical tree, branchy, single",
+  "tokens": 532
+ },
+ "03002-1": {
+  "code": "03002-1",
+  "pdf_page": 5,
+  "image": "03002-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "black"
+   ],
+   "finish": "natural",
+   "shape": "conical",
+   "pattern": "plain",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with a black stand."
+  },
+  "text": "tree, green, black, natural, conical, plain, single",
+  "tokens": 493
+ },
+ "01212-1": {
+  "code": "01212-1",
+  "pdf_page": 5,
+  "image": "01212-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "gold"
+   ],
+   "finish": "mixed",
+   "shape": "conical tree",
+   "pattern": "natural",
+   "packaging": "single",
+   "summary": "A small green artificial Christmas tree with a gold base wrap."
+  },
+  "text": "tree, green, gold, mixed, conical tree, natural, single",
+  "tokens": 540
+ },
+ "02012-1": {
+  "code": "02012-1",
+  "pdf_page": 5,
+  "image": "02012-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "gold"
+   ],
+   "finish": "natural",
+   "shape": "small conical tree",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "A small green artificial Christmas tree with a gold base wrap."
+  },
+  "text": "tree, green, gold, natural, small conical tree, single",
+  "tokens": 540
+ },
+ "03012-1": {
+  "code": "03012-1",
+  "pdf_page": 5,
+  "image": "03012-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "gold"
+   ],
+   "finish": "natural",
+   "shape": "mini christmas tree",
+   "pattern": "none",
+   "packaging": "single",
+   "summary": "A small green Christmas tree with a gold base wrap."
+  },
+  "text": "tree, green, gold, natural, mini christmas tree, single",
+  "tokens": 539
+ },
+ "03002-3": {
+  "code": "03002-3",
+  "pdf_page": 5,
+  "image": "03002-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "white",
+   "other_colours": [
+    "green"
+   ],
+   "finish": "frosted",
+   "shape": "cone",
+   "pattern": "flocked branches",
+   "packaging": "single",
+   "summary": "A small frosted white decorative Christmas tree with a conical shape and green accents."
+  },
+  "text": "tree, white, green, frosted, cone, flocked branches, single",
+  "tokens": 504
+ },
+ "03020-2": {
+  "code": "03020-2",
+  "pdf_page": 5,
+  "image": "03020-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "gold",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "conical tree",
+   "pattern": "none",
+   "packaging": "single",
+   "summary": "A slim conical gold glitter Christmas tree decoration."
+  },
+  "text": "tree, gold, glitter, conical tree, single",
+  "tokens": 494
+ },
+ "12004-6": {
+  "code": "12004-6",
+  "pdf_page": 5,
+  "image": "12004-6.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "white",
+    "black"
+   ],
+   "finish": "frosted",
+   "shape": "conical",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "Artificial Christmas tree with green branches and white frosted tips, on a black stand."
+  },
+  "text": "tree, green, white, black, frosted, conical, single",
+  "tokens": 532
+ },
+ "11201-2": {
+  "code": "11201-2",
+  "pdf_page": 6,
+  "image": "11201-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "gold"
+   ],
+   "finish": "mixed",
+   "shape": "tree",
+   "pattern": "decorated",
+   "packaging": "single",
+   "summary": "A small decorated Christmas tree with gold accents and a gold pot base."
+  },
+  "text": "tree, green, gold, mixed, tree, decorated, single",
+  "tokens": 512
+ },
+ "19001-1": {
+  "code": "19001-1",
+  "pdf_page": 6,
+  "image": "19001-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "silver"
+   ],
+   "finish": "glitter",
+   "shape": "cone",
+   "pattern": "unclear",
+   "packaging": "single",
+   "summary": "Small glittery green Christmas tree decoration with silver tinsel-like branches."
+  },
+  "text": "tree, green, silver, glitter, cone, unclear, single",
+  "tokens": 542
+ },
+ "19000-1": {
+  "code": "19000-1",
+  "pdf_page": 6,
+  "image": "19000-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "gold",
+   "other_colours": [
+    "green"
+   ],
+   "finish": "glitter",
+   "shape": "cone",
+   "pattern": "decorated with tinsel and small baubles",
+   "packaging": "single",
+   "summary": "Gold glitter cone Christmas tree decoration with green accents and a hanging ribbon."
+  },
+  "text": "tree, gold, green, glitter, cone, decorated with tinsel and small baubles, single",
+  "tokens": 687
+ },
+ "11202-3": {
+  "code": "11202-3",
+  "pdf_page": 6,
+  "image": "11202-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "gold",
+    "red"
+   ],
+   "finish": "natural",
+   "shape": "christmas tree",
+   "pattern": "decorated with garland and baubles",
+   "packaging": "single",
+   "summary": "Decorated artificial Christmas tree with gold garlands and red-and-gold baubles on a black stand."
+  },
+  "text": "tree, green, gold, red, natural, christmas tree, decorated with garland and baubles, single",
+  "tokens": 529
+ },
+ "19004-1": {
+  "code": "19004-1",
+  "pdf_page": 6,
+  "image": "19004-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "gold",
+   "other_colours": [
+    "red"
+   ],
+   "finish": "glitter",
+   "shape": "tree",
+   "pattern": "unclear",
+   "packaging": "single",
+   "summary": "Small gold tinsel Christmas tree with red accents in a gold base."
+  },
+  "text": "tree, gold, red, glitter, tree, unclear, single",
+  "tokens": 528
+ },
+ "11202-4": {
+  "code": "11202-4",
+  "pdf_page": 6,
+  "image": "11202-4.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "red",
+    "gold",
+    "black"
+   ],
+   "finish": "mixed",
+   "shape": "cone",
+   "pattern": "decorated tabletop christmas tree",
+   "packaging": "single",
+   "summary": "Small decorated Christmas tree with red bow, gold garland and baubles on a black stand."
+  },
+  "text": "tree, green, red, gold, black, mixed, cone, decorated tabletop christmas tree, single",
+  "tokens": 524
+ },
+ "11001-1": {
+  "code": "11001-1",
+  "pdf_page": 6,
+  "image": "11001-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "purple",
+   "other_colours": [
+    "pink",
+    "white"
+   ],
+   "finish": "glitter",
+   "shape": "small tabletop tree",
+   "pattern": "dense flocked branches",
+   "packaging": "single",
+   "summary": "Purple glitter tabletop Christmas tree with pink and white flocked branches."
+  },
+  "text": "tree, purple, pink, white, glitter, small tabletop tree, dense flocked branches, single",
+  "tokens": 533
+ },
+ "11203-3": {
+  "code": "11203-3",
+  "pdf_page": 6,
+  "image": "11203-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "gold",
+    "red",
+    "white"
+   ],
+   "finish": "mixed",
+   "shape": "mini Christmas tree",
+   "pattern": "decorated with baubles and tinsel",
+   "packaging": "single",
+   "summary": "A small decorated Christmas tree in a burlap-style base with gold, red, and white decorations."
+  },
+  "text": "tree, green, gold, red, white, mixed, mini Christmas tree, decorated with baubles and tinsel, single",
+  "tokens": 530
+ },
+ "19002-1": {
+  "code": "19002-1",
+  "pdf_page": 6,
+  "image": "19002-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "red",
+    "gold"
+   ],
+   "finish": "mixed",
+   "shape": "cone",
+   "pattern": "tinsel",
+   "packaging": "single",
+   "summary": "Small decorated Christmas tree with red bows and a gold base wrap."
+  },
+  "text": "tree, green, red, gold, mixed, cone, tinsel, single",
+  "tokens": 528
+ },
+ "11814-1": {
+  "code": "11814-1",
+  "pdf_page": 7,
+  "image": "11814-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "red"
+   ],
+   "finish": "mixed",
+   "shape": "tree",
+   "pattern": "decorated with bows and gift boxes",
+   "packaging": "single",
+   "summary": "Artificial Christmas tree decorated with red bows and small gift-box ornaments, topped with a star."
+  },
+  "text": "tree, green, red, mixed, tree, decorated with bows and gift boxes, single",
+  "tokens": 536
+ },
+ "11203-4": {
+  "code": "11203-4",
+  "pdf_page": 7,
+  "image": "11203-4.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "yellow",
+    "gold",
+    "red"
+   ],
+   "finish": "mixed",
+   "shape": "conical",
+   "pattern": "decorated with bows and baubles, topped with star",
+   "packaging": "single",
+   "summary": "Small decorated Christmas tree with ribbons, baubles, and a star topper."
+  },
+  "text": "tree, green, yellow, gold, red, mixed, conical, decorated with bows and baubles, topped with star, single",
+  "tokens": 599
+ },
+ "12010-3": {
+  "code": "12010-3",
+  "pdf_page": 7,
+  "image": "12010-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "pink",
+   "other_colours": [
+    "white",
+    "gold",
+    "purple"
+   ],
+   "finish": "glitter",
+   "shape": "tree",
+   "pattern": "frosted",
+   "packaging": "single",
+   "summary": "A pink glittery Christmas tree with white flocking, gold tips, and purple baubles."
+  },
+  "text": "tree, pink, white, gold, purple, glitter, tree, frosted, single",
+  "tokens": 538
+ },
+ "11203-2": {
+  "code": "11203-2",
+  "pdf_page": 7,
+  "image": "11203-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "gold"
+   ],
+   "finish": "mixed",
+   "shape": "cone",
+   "pattern": "decorated christmas tree",
+   "packaging": "single",
+   "summary": "Decorated Christmas tree with green branches and gold ribbon, bows, and ornaments."
+  },
+  "text": "tree, green, gold, mixed, cone, decorated christmas tree, single",
+  "tokens": 545
+ },
+ "11814-2": {
+  "code": "11814-2",
+  "pdf_page": 7,
+  "image": "11814-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "gold",
+   "other_colours": [
+    "green"
+   ],
+   "finish": "metallic",
+   "shape": "star",
+   "pattern": "star topper on a Christmas tree",
+   "packaging": "single",
+   "summary": "Gold star tree topper on a decorated Christmas tree."
+  },
+  "text": "tree topper, gold, green, metallic, star, star topper on a Christmas tree, single",
+  "tokens": 530
+ },
+ "11500-1": {
+  "code": "11500-1",
+  "pdf_page": 7,
+  "image": "11500-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "silver",
+   "other_colours": [
+    "green"
+   ],
+   "finish": "frosted",
+   "shape": "tree",
+   "pattern": "tinsel",
+   "packaging": "single",
+   "summary": "A small silver tinsel Christmas tree with a frosted, shimmering look."
+  },
+  "text": "tree, silver, green, frosted, tree, tinsel, single",
+  "tokens": 530
+ },
+ "12015-1": {
+  "code": "12015-1",
+  "pdf_page": 7,
+  "image": "12015-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "brown",
+    "red"
+   ],
+   "finish": "natural",
+   "shape": "tree",
+   "pattern": "pine",
+   "packaging": "single",
+   "summary": "A small artificial Christmas tree with green branches and pinecones."
+  },
+  "text": "tree, green, brown, red, natural, tree, pine, single",
+  "tokens": 540
+ },
+ "11204-2": {
+  "code": "11204-2",
+  "pdf_page": 7,
+  "image": "11204-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "gold",
+    "red"
+   ],
+   "finish": "mixed",
+   "shape": "tree",
+   "pattern": "decorated with ornaments",
+   "packaging": "single",
+   "summary": "Small decorated Christmas tree with gold accents and a red ornament."
+  },
+  "text": "tree, green, gold, red, mixed, tree, decorated with ornaments, single",
+  "tokens": 529
+ },
+ "11814-3": {
+  "code": "11814-3",
+  "pdf_page": 7,
+  "image": "11814-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "red",
+    "gold"
+   ],
+   "finish": "mixed",
+   "shape": "tree",
+   "pattern": "decorated with ornaments and bow",
+   "packaging": "single",
+   "summary": "A small decorated Christmas tree with a red bow topper and assorted ornaments."
+  },
+  "text": "tree, green, red, gold, mixed, tree, decorated with ornaments and bow, single",
+  "tokens": 533
+ },
+ "11806-1": {
+  "code": "11806-1",
+  "pdf_page": 7,
+  "image": "11806-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "silver",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "glitter",
+   "shape": "cone",
+   "pattern": "snowy",
+   "packaging": "single",
+   "summary": "A slim silver tinsel Christmas tree with a star topper and white baubles."
+  },
+  "text": "tree, silver, white, glitter, cone, snowy, single",
+  "tokens": 515
+ },
+ "11205-2": {
+  "code": "11205-2",
+  "pdf_page": 7,
+  "image": "11205-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "gold",
+   "other_colours": [
+    "white",
+    "blue"
+   ],
+   "finish": "glitter",
+   "shape": "tree",
+   "pattern": "unclear",
+   "packaging": "single",
+   "summary": "Gold glitter Christmas tree decoration with blue accents and a white star topper."
+  },
+  "text": "tree, gold, white, blue, glitter, tree, unclear, single",
+  "tokens": 544
+ },
+ "12006-1": {
+  "code": "12006-1",
+  "pdf_page": 7,
+  "image": "12006-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "brown"
+   ],
+   "finish": "natural",
+   "shape": "conical tree",
+   "pattern": "full branched",
+   "packaging": "single",
+   "summary": "A small artificial Christmas tree in a brown pot, with a natural-looking green finish."
+  },
+  "text": "tree, green, brown, natural, conical tree, full branched, single",
+  "tokens": 533
+ },
+ "12015-1/D": {
+  "code": "12015-1/D",
+  "pdf_page": 7,
+  "image": "12015-1_D.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "brown",
+    "red"
+   ],
+   "finish": "natural",
+   "shape": "conical",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "Small artificial Christmas tree with pine cones and red berry accents."
+  },
+  "text": "tree, green, brown, red, natural, conical, single",
+  "tokens": 539
+ },
+ "02007-3/D1": {
+  "code": "02007-3/D1",
+  "pdf_page": 8,
+  "image": "02007-3_D1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "white",
+    "gold"
+   ],
+   "finish": "mixed",
+   "shape": "cone",
+   "pattern": "snow-dusted with gold baubles and bows",
+   "packaging": "single",
+   "summary": "A small snow-dusted artificial Christmas tree decorated with gold baubles and bows."
+  },
+  "text": "tree, green, white, gold, mixed, cone, snow-dusted with gold baubles and bows, single",
+  "tokens": 552
+ },
+ "12002-4": {
+  "code": "12002-4",
+  "pdf_page": 8,
+  "image": "12002-4.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "red",
+    "gold"
+   ],
+   "finish": "mixed",
+   "shape": "christmas tree",
+   "pattern": "decorated miniature tree",
+   "packaging": "single",
+   "summary": "A small decorated Christmas tree with red and gold ornaments and a red bow topper in a gold pot."
+  },
+  "text": "tree, green, red, gold, mixed, christmas tree, decorated miniature tree, single",
+  "tokens": 539
+ },
+ "12016-3": {
+  "code": "12016-3",
+  "pdf_page": 8,
+  "image": "12016-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "gold",
+    "silver",
+    "red",
+    "white"
+   ],
+   "finish": "mixed",
+   "shape": "cone",
+   "pattern": "decorated tabletop Christmas tree",
+   "packaging": "single",
+   "summary": "Decorated tabletop Christmas tree with a gold bow topper and assorted ornaments."
+  },
+  "text": "tree, green, gold, silver, red, white, mixed, cone, decorated tabletop Christmas tree, single",
+  "tokens": 536
+ },
+ "12004-3": {
+  "code": "12004-3",
+  "pdf_page": 8,
+  "image": "12004-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "red",
+    "gold"
+   ],
+   "finish": "mixed",
+   "shape": "mini christmas tree",
+   "pattern": "decorated with bows and baubles",
+   "packaging": "single",
+   "summary": "A small artificial Christmas tree decorated with red and gold bows and baubles."
+  },
+  "text": "tree, green, red, gold, mixed, mini christmas tree, decorated with bows and baubles, single",
+  "tokens": 522
+ },
+ "02007-3/D2": {
+  "code": "02007-3/D2",
+  "pdf_page": 8,
+  "image": "02007-3_D2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "white",
+    "red",
+    "silver",
+    "gold"
+   ],
+   "finish": "natural",
+   "shape": "pine tree",
+   "pattern": "snowy",
+   "packaging": "single",
+   "summary": "A small flocked green Christmas tree in a pot, decorated with red and silver baubles and star ornaments."
+  },
+  "text": "tree, green, white, red, silver, gold, natural, pine tree, snowy, single",
+  "tokens": 556
+ },
+ "13000-1": {
+  "code": "13000-1",
+  "pdf_page": 8,
+  "image": "13000-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "gold",
+    "red",
+    "white",
+    "purple"
+   ],
+   "finish": "mixed",
+   "shape": "conical tree",
+   "pattern": "decorated with ornaments and a star topper",
+   "packaging": "single",
+   "summary": "Decorated artificial Christmas tree with a red and gold topper."
+  },
+  "text": "tree, green, gold, red, white, purple, mixed, conical tree, decorated with ornaments and a star topper, single",
+  "tokens": 539
+ },
+ "12016-1": {
+  "code": "12016-1",
+  "pdf_page": 8,
+  "image": "12016-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "red",
+    "gold",
+    "white"
+   ],
+   "finish": "natural",
+   "shape": "cone",
+   "pattern": "decorated artificial Christmas tree",
+   "packaging": "single",
+   "summary": "Decorated artificial Christmas tree with red-and-gold topper, baubles, and gift ornaments."
+  },
+  "text": "tree, green, red, gold, white, natural, cone, decorated artificial Christmas tree, single",
+  "tokens": 553
+ },
+ "12004-7": {
+  "code": "12004-7",
+  "pdf_page": 8,
+  "image": "12004-7.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "gold",
+    "yellow",
+    "red"
+   ],
+   "finish": "mixed",
+   "shape": "christmas tree",
+   "pattern": "decorated",
+   "packaging": "single",
+   "summary": "A small decorated Christmas tree on a stand with gold and yellow bows and baubles."
+  },
+  "text": "tree, green, gold, yellow, red, mixed, christmas tree, decorated, single",
+  "tokens": 521
+ },
+ "13011-1": {
+  "code": "13011-1",
+  "pdf_page": 8,
+  "image": "13011-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "red",
+    "yellow",
+    "gold",
+    "white"
+   ],
+   "finish": "mixed",
+   "shape": "triangular tree",
+   "pattern": "decorated with a red bow topper and small gift ornaments",
+   "packaging": "single",
+   "summary": "A small artificial Christmas tree decorated with a red bow topper and colorful mini gift ornaments."
+  },
+  "text": "tree, green, red, yellow, gold, white, mixed, triangular tree, decorated with a red bow topper and small gift ornaments, single",
+  "tokens": 547
+ },
+ "12016-2": {
+  "code": "12016-2",
+  "pdf_page": 8,
+  "image": "12016-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "gold"
+   ],
+   "finish": "mixed",
+   "shape": "christmas tree",
+   "pattern": "decorated with star topper",
+   "packaging": "single",
+   "summary": "A decorated artificial Christmas tree with gold ornaments and a star topper."
+  },
+  "text": "tree, green, gold, mixed, christmas tree, decorated with star topper, single",
+  "tokens": 531
+ },
+ "13011-2": {
+  "code": "13011-2",
+  "pdf_page": 9,
+  "image": "13011-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "gold",
+    "red",
+    "white",
+    "black"
+   ],
+   "finish": "mixed",
+   "shape": "mini Christmas tree",
+   "pattern": "decorated with ornaments and topper",
+   "packaging": "single",
+   "summary": "A small artificial Christmas tree decorated with red and gold ornaments and a festive topper."
+  },
+  "text": "tree, green, gold, red, white, black, mixed, mini Christmas tree, decorated with ornaments and topper, single",
+  "tokens": 512
+ },
+ "13002-1": {
+  "code": "13002-1",
+  "pdf_page": 9,
+  "image": "13002-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "gold",
+   "other_colours": [
+    "green"
+   ],
+   "finish": "glitter",
+   "shape": "tree",
+   "pattern": "decorated",
+   "packaging": "single",
+   "summary": "A gold glitter artificial Christmas tree with a star topper and a few gold baubles."
+  },
+  "text": "tree, gold, green, glitter, tree, decorated, single",
+  "tokens": 531
+ },
+ "16000-1": {
+  "code": "16000-1",
+  "pdf_page": 9,
+  "image": "16000-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "red",
+    "gold",
+    "silver"
+   ],
+   "finish": "mixed",
+   "shape": "cone",
+   "pattern": "spiral",
+   "packaging": "single",
+   "summary": "A slim cone-shaped decorative Christmas tree with green tinsel, red baubles, and gold accents."
+  },
+  "text": "tree, green, red, gold, silver, mixed, cone, spiral, single",
+  "tokens": 494
+ },
+ "13012-1": {
+  "code": "13012-1",
+  "pdf_page": 9,
+  "image": "13012-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "red",
+    "gold"
+   ],
+   "finish": "mixed",
+   "shape": "cone",
+   "pattern": "decorated Christmas tree",
+   "packaging": "single",
+   "summary": "Small decorated Christmas tree with red bows and gold accents, topped with a large red bow."
+  },
+  "text": "tree, green, red, gold, mixed, cone, decorated Christmas tree, single",
+  "tokens": 520
+ },
+ "13013-1": {
+  "code": "13013-1",
+  "pdf_page": 9,
+  "image": "13013-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "gold"
+   ],
+   "finish": "natural",
+   "shape": "tree",
+   "pattern": "decorated with garland and small gold accents",
+   "packaging": "single",
+   "summary": "Decorated green Christmas tree with gold garland and small gold accents."
+  },
+  "text": "tree, green, gold, natural, tree, decorated with garland and small gold accents, single",
+  "tokens": 519
+ },
+ "12014-1": {
+  "code": "12014-1",
+  "pdf_page": 9,
+  "image": "12014-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "red",
+    "white",
+    "gold"
+   ],
+   "finish": "natural",
+   "shape": "slim cone",
+   "pattern": "decorated with berries and pinecones",
+   "packaging": "single",
+   "summary": "A slim green Christmas tree decoration with red berries, pinecones, and mixed festive accents."
+  },
+  "text": "tree, green, red, white, gold, natural, slim cone, decorated with berries and pinecones, single",
+  "tokens": 499
+ },
+ "13014-1": {
+  "code": "13014-1",
+  "pdf_page": 9,
+  "image": "13014-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "gold",
+    "red",
+    "silver"
+   ],
+   "finish": "mixed",
+   "shape": "cone",
+   "pattern": "decorated Christmas tree",
+   "packaging": "single",
+   "summary": "Artificial Christmas tree decorated with gold ornaments and red accents, topped with a gold star."
+  },
+  "text": "tree, green, gold, red, silver, mixed, cone, decorated Christmas tree, single",
+  "tokens": 507
+ },
+ "13004-3": {
+  "code": "13004-3",
+  "pdf_page": 9,
+  "image": "13004-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "white",
+   "other_colours": [
+    "silver",
+    "blue",
+    "pink",
+    "red",
+    "green"
+   ],
+   "finish": "frosted",
+   "shape": "christmas tree",
+   "pattern": "decorated with ornaments and topper",
+   "packaging": "single",
+   "summary": "White artificial Christmas tree decorated with assorted baubles, bows, and a star topper."
+  },
+  "text": "tree, white, silver, blue, pink, red, green, frosted, christmas tree, decorated with ornaments and topper, single",
+  "tokens": 531
+ },
+ "17014-1": {
+  "code": "17014-1",
+  "pdf_page": 9,
+  "image": "17014-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "red",
+    "gold",
+    "brown"
+   ],
+   "finish": "natural",
+   "shape": "tree",
+   "pattern": "mixed foliage with cones and berries",
+   "packaging": "single",
+   "summary": "A small decorated Christmas tree with plaid bow, pinecones, and red berries."
+  },
+  "text": "tree, green, red, gold, brown, natural, tree, mixed foliage with cones and berries, single",
+  "tokens": 522
+ },
+ "05021-1": {
+  "code": "05021-1",
+  "pdf_page": 10,
+  "image": "05021-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "black"
+   ],
+   "finish": "natural",
+   "shape": "fir tree",
+   "pattern": "n/a",
+   "packaging": "single",
+   "summary": "Artificial green fir-style Christmas tree with a black cross stand."
+  },
+  "text": "tree, green, black, natural, fir tree, single",
+  "tokens": 511
+ },
+ "07021-1": {
+  "code": "07021-1",
+  "pdf_page": 10,
+  "image": "07021-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "black"
+   ],
+   "finish": "natural",
+   "shape": "fir tree",
+   "pattern": "unknown",
+   "packaging": "single",
+   "summary": "Artificial green fir-style Christmas tree with a black folding stand."
+  },
+  "text": "tree, green, black, natural, fir tree, unknown, single",
+  "tokens": 510
+ },
+ "04031-6": {
+  "code": "04031-6",
+  "pdf_page": 10,
+  "image": "04031-6.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "black"
+   ],
+   "finish": "natural",
+   "shape": "conical",
+   "pattern": "dense branch",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with a black stand."
+  },
+  "text": "tree, green, black, natural, conical, dense branch, single",
+  "tokens": 508
+ },
+ "05031-6": {
+  "code": "05031-6",
+  "pdf_page": 10,
+  "image": "05031-6.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "black"
+   ],
+   "finish": "natural",
+   "shape": "conical",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with a black stand."
+  },
+  "text": "tree, green, black, natural, conical, single",
+  "tokens": 505
+ },
+ "06031-6": {
+  "code": "06031-6",
+  "pdf_page": 10,
+  "image": "06031-6.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "black"
+   ],
+   "finish": "natural",
+   "shape": "christmas tree",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with black stand."
+  },
+  "text": "tree, green, black, natural, christmas tree, single",
+  "tokens": 505
+ },
+ "07031-6": {
+  "code": "07031-6",
+  "pdf_page": 10,
+  "image": "07031-6.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "black"
+   ],
+   "finish": "natural",
+   "shape": "conical",
+   "pattern": "tree",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with a black stand."
+  },
+  "text": "tree, green, black, natural, conical, tree, single",
+  "tokens": 507
+ },
+ "04031-1": {
+  "code": "04031-1",
+  "pdf_page": 11,
+  "image": "04031-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "black",
+    "blue"
+   ],
+   "finish": "natural",
+   "shape": "christmas tree",
+   "pattern": "dense flocked branches",
+   "packaging": "single",
+   "summary": "Artificial Christmas tree with dense green branches and a dark stand."
+  },
+  "text": "tree, green, black, blue, natural, christmas tree, dense flocked branches, single",
+  "tokens": 531
+ },
+ "05031-1": {
+  "code": "05031-1",
+  "pdf_page": 11,
+  "image": "05031-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "blue",
+    "white"
+   ],
+   "finish": "natural",
+   "shape": "full Christmas tree",
+   "pattern": "snow-dusted foliage",
+   "packaging": "single",
+   "summary": "A full green Christmas tree with snow-dusted branches and a blue stand."
+  },
+  "text": "tree, green, blue, white, natural, full Christmas tree, snow-dusted foliage, single",
+  "tokens": 534
+ },
+ "06031-1": {
+  "code": "06031-1",
+  "pdf_page": 11,
+  "image": "06031-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "blue"
+   ],
+   "finish": "natural",
+   "shape": "conical",
+   "pattern": "dense bristle branches",
+   "packaging": "single",
+   "summary": "Green artificial Christmas tree with dense, bushy branches and a blue metal-looking stand."
+  },
+  "text": "tree, green, blue, natural, conical, dense bristle branches, single",
+  "tokens": 533
+ },
+ "07031-1": {
+  "code": "07031-1",
+  "pdf_page": 11,
+  "image": "07031-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "blue"
+   ],
+   "finish": "natural",
+   "shape": "fir tree",
+   "pattern": "dense branches",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with dense branch tips and a blue stand."
+  },
+  "text": "tree, green, blue, natural, fir tree, dense branches, single",
+  "tokens": 527
+ },
+ "08031-1": {
+  "code": "08031-1",
+  "pdf_page": 11,
+  "image": "08031-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "blue"
+   ],
+   "finish": "natural",
+   "shape": "christmas tree",
+   "pattern": "plain",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with a blue stand."
+  },
+  "text": "tree, green, blue, natural, christmas tree, plain, single",
+  "tokens": 523
+ },
+ "05092-1": {
+  "code": "05092-1",
+  "pdf_page": 11,
+  "image": "05092-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "brown"
+   ],
+   "finish": "natural",
+   "shape": "conical tree",
+   "pattern": "dense branches",
+   "packaging": "single",
+   "summary": "Artificial Christmas tree with full green branches and a slim brown trunk."
+  },
+  "text": "tree, green, brown, natural, conical tree, dense branches, single",
+  "tokens": 528
+ },
+ "06092-1": {
+  "code": "06092-1",
+  "pdf_page": 11,
+  "image": "06092-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "dark green"
+   ],
+   "finish": "natural",
+   "shape": "Christmas tree",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with dense branches and a pointed top."
+  },
+  "text": "tree, green, dark green, natural, Christmas tree, single",
+  "tokens": 524
+ },
+ "07092-1": {
+  "code": "07092-1",
+  "pdf_page": 11,
+  "image": "07092-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "brown"
+   ],
+   "finish": "natural",
+   "shape": "christmas tree",
+   "pattern": "mixed green branches",
+   "packaging": "single",
+   "summary": "Artificial Christmas tree with dense mixed green branches and a visible central trunk."
+  },
+  "text": "tree, green, brown, natural, christmas tree, mixed green branches, single",
+  "tokens": 530
+ },
+ "08092-1": {
+  "code": "08092-1",
+  "pdf_page": 11,
+  "image": "08092-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "dark green"
+   ],
+   "finish": "natural",
+   "shape": "conical",
+   "pattern": "branches",
+   "packaging": "single",
+   "summary": "Artificial Christmas tree with dense green branches and a conical shape."
+  },
+  "text": "tree, green, dark green, natural, conical, branches, single",
+  "tokens": 527
+ },
+ "04032-1": {
+  "code": "04032-1",
+  "pdf_page": 12,
+  "image": "04032-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "conical Christmas tree",
+   "pattern": "dense leafy branches",
+   "packaging": "single",
+   "summary": "A full green artificial Christmas tree with dense branches."
+  },
+  "text": "tree, green, natural, conical Christmas tree, dense leafy branches, single",
+  "tokens": 525
+ },
+ "05032-1": {
+  "code": "05032-1",
+  "pdf_page": 12,
+  "image": "05032-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "conical Christmas tree",
+   "pattern": "dense branches",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with a dense conical shape."
+  },
+  "text": "tree, green, natural, conical Christmas tree, dense branches, single",
+  "tokens": 525
+ },
+ "06032-1": {
+  "code": "06032-1",
+  "pdf_page": 12,
+  "image": "06032-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "silver",
+    "white"
+   ],
+   "finish": "natural",
+   "shape": "conical",
+   "pattern": "dense branches",
+   "packaging": "single",
+   "summary": "Artificial Christmas tree with dense green branches and silver-white flocked accents."
+  },
+  "text": "tree, green, silver, white, natural, conical, dense branches, single",
+  "tokens": 530
+ },
+ "07032-1": {
+  "code": "07032-1",
+  "pdf_page": 12,
+  "image": "07032-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "Christmas tree",
+   "pattern": "full tree",
+   "packaging": "single",
+   "summary": "Artificial Christmas tree with dense green branches."
+  },
+  "text": "tree, green, natural, Christmas tree, full tree, single",
+  "tokens": 520
+ },
+ "08032-1": {
+  "code": "08032-1",
+  "pdf_page": 12,
+  "image": "08032-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "black"
+   ],
+   "finish": "natural",
+   "shape": "conical",
+   "pattern": "dense branched",
+   "packaging": "single",
+   "summary": "Artificial Christmas tree with dense green branches and a conical shape."
+  },
+  "text": "tree, green, black, natural, conical, dense branched, single",
+  "tokens": 513
+ },
+ "25022-4": {
+  "code": "25022-4",
+  "pdf_page": 12,
+  "image": "25022-4.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "cone",
+   "pattern": "unclear",
+   "packaging": "single",
+   "summary": "A green artificial Christmas tree with a full conical shape."
+  },
+  "text": "tree, green, natural, cone, unclear, single",
+  "tokens": 523
+ },
+ "25022-3": {
+  "code": "25022-3",
+  "pdf_page": 12,
+  "image": "25022-3.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "mixed",
+   "shape": "tree",
+   "pattern": "packaging",
+   "packaging": "single",
+   "summary": "Green artificial Christmas tree with a full, layered shape."
+  },
+  "text": "tree, green, mixed, tree, packaging, single",
+  "tokens": 522
+ },
+ "26022-3": {
+  "code": "26022-3",
+  "pdf_page": 12,
+  "image": "26022-3.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "cone",
+   "pattern": "unclear",
+   "packaging": "single",
+   "summary": "A green artificial Christmas tree with a full conical shape."
+  },
+  "text": "tree, green, natural, cone, unclear, single",
+  "tokens": 523
+ },
+ "27022-3": {
+  "code": "27022-3",
+  "pdf_page": 12,
+  "image": "27022-3.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "cone",
+   "pattern": "plain",
+   "packaging": "single",
+   "summary": "A full green artificial Christmas tree with a conical shape."
+  },
+  "text": "tree, green, natural, cone, plain, single",
+  "tokens": 522
+ },
+ "28022-3": {
+  "code": "28022-3",
+  "pdf_page": 12,
+  "image": "28022-3.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "yellow"
+   ],
+   "finish": "natural",
+   "shape": "conical tree",
+   "pattern": "dense bristles",
+   "packaging": "single",
+   "summary": "A dense artificial Christmas tree with a natural green look and yellow-tipped branches."
+  },
+  "text": "tree, green, yellow, natural, conical tree, dense bristles, single",
+  "tokens": 532
+ },
+ "04032-6": {
+  "code": "04032-6",
+  "pdf_page": 13,
+  "image": "04032-6.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "tree",
+   "pattern": "realistic fir tree",
+   "packaging": "single",
+   "summary": "Artificial green fir-style Christmas tree with full dense branches."
+  },
+  "text": "tree, green, natural, tree, realistic fir tree, single",
+  "tokens": 524
+ },
+ "05032-6": {
+  "code": "05032-6",
+  "pdf_page": 13,
+  "image": "05032-6.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "conical",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with a conical shape and full branches."
+  },
+  "text": "tree, green, natural, conical, single",
+  "tokens": 522
+ },
+ "06032-6": {
+  "code": "06032-6",
+  "pdf_page": 13,
+  "image": "06032-6.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "fir tree",
+   "pattern": "fuzzy bristles",
+   "packaging": "single",
+   "summary": "Artificial green fir tree with a dense, full shape."
+  },
+  "text": "tree, green, natural, fir tree, fuzzy bristles, single",
+  "tokens": 525
+ },
+ "07032-6": {
+  "code": "07032-6",
+  "pdf_page": 13,
+  "image": "07032-6.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "fir tree",
+   "pattern": "none",
+   "packaging": "single",
+   "summary": "Artificial green fir Christmas tree"
+  },
+  "text": "tree, green, natural, fir tree, single",
+  "tokens": 516
+ },
+ "86032-1": {
+  "code": "86032-1",
+  "pdf_page": 13,
+  "image": "86032-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "mixed",
+   "shape": "conical",
+   "pattern": "dense branches",
+   "packaging": "single",
+   "summary": "A tall green artificial Christmas tree with a conical shape and metal stand."
+  },
+  "text": "tree, green, mixed, conical, dense branches, single",
+  "tokens": 484
+ },
+ "87032-1": {
+  "code": "87032-1",
+  "pdf_page": 13,
+  "image": "87032-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "mixed",
+   "shape": "conical artificial christmas tree",
+   "pattern": "lush branchy",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with a full conical shape and stand."
+  },
+  "text": "tree, green, mixed, conical artificial christmas tree, lush branchy, single",
+  "tokens": 486
+ },
+ "86031-1": {
+  "code": "86031-1",
+  "pdf_page": 13,
+  "image": "86031-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "conical tree",
+   "pattern": "dense bristled branches",
+   "packaging": "single",
+   "summary": "Tall slim artificial Christmas tree in green with a dense conical shape."
+  },
+  "text": "tree, green, natural, conical tree, dense bristled branches, single",
+  "tokens": 472
+ },
+ "87031-1": {
+  "code": "87031-1",
+  "pdf_page": 13,
+  "image": "87031-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "white",
+    "blue"
+   ],
+   "finish": "natural",
+   "shape": "conical tree",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "A slim green Christmas tree with a conical shape and snowy white accents."
+  },
+  "text": "tree, green, white, blue, natural, conical tree, single",
+  "tokens": 471
+ },
+ "01035-2": {
+  "code": "01035-2",
+  "pdf_page": 14,
+  "image": "01035-2.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "mixed",
+   "shape": "conical",
+   "pattern": "full Christmas tree with branches",
+   "packaging": "single",
+   "summary": "Green artificial Christmas tree with a full conical shape."
+  },
+  "text": "tree, green, mixed, conical, full Christmas tree with branches, single",
+  "tokens": 511
+ },
+ "01035-1": {
+  "code": "01035-1",
+  "pdf_page": 14,
+  "image": "01035-1.png",
+  "match": "above_far",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "conical tree",
+   "pattern": "dense branches",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree in a conical spruce shape."
+  },
+  "text": "tree, green, natural, conical tree, dense branches, single",
+  "tokens": 524
+ },
+ "01235-1": {
+  "code": "01235-1",
+  "pdf_page": 14,
+  "image": "01235-1.png",
+  "match": "no_rule_fitted",
+  "attributes": {
+   "kind": "banner",
+   "primary_colour": "red",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "matte",
+   "shape": "rectangular banner",
+   "pattern": "text only",
+   "packaging": "single",
+   "summary": "Red rectangular product banner with white text listing item numbers and lengths."
+  },
+  "text": "banner, red, white, matte, rectangular banner, text only, single",
+  "tokens": 529
+ },
+ "01535-1": {
+  "code": "01535-1",
+  "pdf_page": 14,
+  "image": "01535-1.png",
+  "match": "no_rule_fitted",
+  "attributes": {
+   "kind": "banner",
+   "primary_colour": "red",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "matte",
+   "shape": "rectangular pennant",
+   "pattern": "text printed on banner",
+   "packaging": "single",
+   "summary": "A red rectangular product banner with white printed item numbers and foot-length options."
+  },
+  "text": "banner, red, white, matte, rectangular pennant, text printed on banner, single",
+  "tokens": 534
+ },
+ "02035-1": {
+  "code": "02035-1",
+  "pdf_page": 14,
+  "image": "02035-1.png",
+  "match": "no_rule_fitted",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "red",
+    "gold",
+    "white"
+   ],
+   "finish": "mixed",
+   "shape": "conical christmas tree",
+   "pattern": "dense decorated branches",
+   "packaging": "single",
+   "summary": "Tall artificial Christmas tree heavily decorated with red, gold and white ornaments and lights, topped with a star."
+  },
+  "text": "tree, green, red, gold, white, mixed, conical christmas tree, dense decorated branches, single",
+  "tokens": 584
+ },
+ "81035-3": {
+  "code": "81035-3",
+  "pdf_page": 14,
+  "image": "81035-3.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "conical",
+   "pattern": "plain",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with a conical shape and full branches."
+  },
+  "text": "tree, green, natural, conical, plain, single",
+  "tokens": 524
+ },
+ "06072-2": {
+  "code": "06072-2",
+  "pdf_page": 15,
+  "image": "06072-2.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "black"
+   ],
+   "finish": "natural",
+   "shape": "conical tree",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with a conical shape and black stand."
+  },
+  "text": "tree, green, black, natural, conical tree, single",
+  "tokens": 496
+ },
+ "04072-1": {
+  "code": "04072-1",
+  "pdf_page": 15,
+  "image": "04072-1.png",
+  "match": "above_far",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "gold"
+   ],
+   "finish": "mixed",
+   "shape": "conical",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "Artificial Christmas tree in green with gold-tipped branches."
+  },
+  "text": "tree, green, gold, mixed, conical, single",
+  "tokens": 522
+ },
+ "07012-2": {
+  "code": "07012-2",
+  "pdf_page": 19,
+  "image": "07012-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "banner",
+   "primary_colour": "green",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "matte",
+   "shape": "word art",
+   "pattern": "text logo",
+   "packaging": "single",
+   "summary": "Green-and-white decorative text banner reading “Flocked Rose Merry” in a festive script."
+  },
+  "text": "banner, green, white, matte, word art, text logo, single",
+  "tokens": 475
+ },
+ "08012-2": {
+  "code": "08012-2",
+  "pdf_page": 15,
+  "image": "08012-2.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "black"
+   ],
+   "finish": "natural",
+   "shape": "conical",
+   "pattern": "plain",
+   "packaging": "single",
+   "summary": "Green artificial Christmas tree with a conical shape and black metal stand."
+  },
+  "text": "tree, green, black, natural, conical, plain, single",
+  "tokens": 498
+ },
+ "05572-1": {
+  "code": "05572-1",
+  "pdf_page": 15,
+  "image": "05572-1.png",
+  "match": "above_far",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "gold",
+    "black"
+   ],
+   "finish": "natural",
+   "shape": "conical christmas tree",
+   "pattern": "n/a",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with a full conical shape and natural-looking branch tips."
+  },
+  "text": "tree, green, gold, black, natural, conical christmas tree, single",
+  "tokens": 534
+ },
+ "07512-2": {
+  "code": "07512-2",
+  "pdf_page": 15,
+  "image": "07512-2.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "conical tree",
+   "pattern": "dense branches",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with dense branches and a conical shape."
+  },
+  "text": "tree, green, natural, conical tree, dense branches, single",
+  "tokens": 511
+ },
+ "07032-4": {
+  "code": "07032-4",
+  "pdf_page": 16,
+  "image": "07032-4.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "conical tree",
+   "pattern": "dense bristly branches",
+   "packaging": "single",
+   "summary": "A dense green artificial Christmas tree with a conical shape."
+  },
+  "text": "tree, green, natural, conical tree, dense bristly branches, single",
+  "tokens": 513
+ },
+ "41092-1": {
+  "code": "41092-1",
+  "pdf_page": 16,
+  "image": "41092-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "mixed",
+   "shape": "tree",
+   "pattern": "plain",
+   "packaging": "single",
+   "summary": "Artificial green Norway pine tree text graphic."
+  },
+  "text": "tree, green, mixed, tree, plain, single",
+  "tokens": 460
+ },
+ "41592-1": {
+  "code": "41592-1",
+  "pdf_page": 16,
+  "image": "41592-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "matte",
+   "shape": "pine tree silhouette",
+   "pattern": "plain text logo",
+   "packaging": "single",
+   "summary": "Green Norway Pine Tree lettering in a simple matte finish."
+  },
+  "text": "tree, green, matte, pine tree silhouette, plain text logo, single",
+  "tokens": 468
+ },
+ "42092-1": {
+  "code": "42092-1",
+  "pdf_page": 16,
+  "image": "42092-1.png",
+  "match": "above_far",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "matte",
+   "shape": "tree",
+   "pattern": "text logo",
+   "packaging": "single",
+   "summary": "Green Norway pine tree text in bold italic lettering."
+  },
+  "text": "tree, green, matte, tree, text logo, single",
+  "tokens": 464
+ },
+ "27022-4": {
+  "code": "27022-4",
+  "pdf_page": 17,
+  "image": "27022-4.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "conical tree",
+   "pattern": "snow-dusted tips",
+   "packaging": "single",
+   "summary": "A snow-dusted artificial Christmas tree with a full conical shape."
+  },
+  "text": "tree, green, natural, conical tree, snow-dusted tips, single",
+  "tokens": 529
+ },
+ "25022-2": {
+  "code": "25022-2",
+  "pdf_page": 17,
+  "image": "25022-2.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "other",
+   "primary_colour": "green",
+   "other_colours": [
+    "grey"
+   ],
+   "finish": "matte",
+   "shape": "assorted festive motifs",
+   "pattern": "trees, leaves, snowflakes, holly leaves, berries",
+   "packaging": "unclear",
+   "summary": "Assorted Christmas motif decoration print with green and grey festive shapes."
+  },
+  "text": "other, green, grey, matte, assorted festive motifs, trees, leaves, snowflakes, holly leaves, berries, unclear",
+  "tokens": 469
+ },
+ "26022-2": {
+  "code": "26022-2",
+  "pdf_page": 19,
+  "image": "26022-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "banner",
+   "primary_colour": "green",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "matte",
+   "shape": "rectangular text banner",
+   "pattern": "text with star/snowflake motifs",
+   "packaging": "single",
+   "summary": "Green festive text banner with white decorative star and snowflake accents."
+  },
+  "text": "banner, green, white, matte, rectangular text banner, text with star/snowflake motifs, single",
+  "tokens": 477
+ },
+ "27022-2": {
+  "code": "27022-2",
+  "pdf_page": 17,
+  "image": "27022-2.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "banner",
+   "primary_colour": "green",
+   "other_colours": [
+    "grey"
+   ],
+   "finish": "matte",
+   "shape": "assorted festive sprigs and tree motifs",
+   "pattern": "assorted",
+   "packaging": "single",
+   "summary": "A slim hanging paper decoration panel with assorted green and grey Christmas motifs."
+  },
+  "text": "banner, green, grey, matte, assorted festive sprigs and tree motifs, assorted, single",
+  "tokens": 463
+ },
+ "28022-2": {
+  "code": "28022-2",
+  "pdf_page": 17,
+  "image": "28022-2.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "other",
+   "primary_colour": "green",
+   "other_colours": [
+    "grey"
+   ],
+   "finish": "matte",
+   "shape": "assorted festive motifs",
+   "pattern": "trees, leaves, snowflakes, holly",
+   "packaging": "unclear",
+   "summary": "Assorted Christmas motif decoration print in green and grey."
+  },
+  "text": "other, green, grey, matte, assorted festive motifs, trees, leaves, snowflakes, holly, unclear",
+  "tokens": 464
+ },
+ "06012-3": {
+  "code": "06012-3",
+  "pdf_page": 18,
+  "image": "06012-3.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "conical",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "Artificial Christmas tree with dense green foliage and a conical shape."
+  },
+  "text": "tree, green, natural, conical, single",
+  "tokens": 522
+ },
+ "08012-3": {
+  "code": "08012-3",
+  "pdf_page": 18,
+  "image": "08012-3.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "conical tree",
+   "pattern": "dense faux pine branches",
+   "packaging": "single",
+   "summary": "Artificial Christmas tree with dense green pine-style branches."
+  },
+  "text": "tree, green, natural, conical tree, dense faux pine branches, single",
+  "tokens": 525
+ }
+}
