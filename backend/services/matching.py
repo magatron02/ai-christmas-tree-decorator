@@ -24,9 +24,19 @@ import numpy as np
 from backend import config
 from backend.validation import ValidationError
 
-# Calibrated in scripts/calibrate_matching.py against products that are in the catalogue and
-# a query that deliberately is not. Below this, "nothing close" is the honest answer.
-MIN_SCORE = 0.55
+# Measured by scripts/calibrate_matching.py, 2026-08-05, over 1,053 described products:
+#
+#   things a Christmas photo really contains   0.564 to 0.793
+#   things nobody sells here                   0.273 to 0.463   (mug, chair, shoes, laptop)
+#
+# The groups separate by 0.101, so a threshold between them can refuse honestly. 0.51 sits
+# in the middle of that gap. An earlier guess of 0.55 was only 0.008 above the weakest real
+# match and would have refused genuine products for no reason.
+#
+# Re-run the calibration if the catalogue or the description schema changes: a threshold
+# that no longer separates the groups means the search cannot refuse, and NonGoals.md 7 says
+# it must not then be shipped as a recommender.
+MIN_SCORE = 0.51
 TOP_N = 3
 
 
@@ -66,12 +76,22 @@ def embed(texts):
     return matrix / np.linalg.norm(matrix, axis=1, keepdims=True)
 
 
-def find(query_text, top_n=TOP_N, min_score=MIN_SCORE):
-    """Best catalogue matches for one described decoration.
+def find(query_text, top_n=TOP_N, min_score=MIN_SCORE, query_kind=None, query_shape=None):
+    """Closest catalogue products to one described decoration.
 
-    Returns (matches, refused). `refused` is True when nothing cleared the threshold, and in
-    that case `matches` is still populated so a person can see what was closest and judge —
-    but the caller must present it as "nothing close", not as a recommendation.
+    This is a nearest-neighbour search, not an identification. Measured on a real photo it
+    reliably finds the right category — a wreath finds wreaths, a Santa finds Santas — and
+    within a category it can be wrong about the thing that matters: a nutcracker scored 0.820
+    against a Santa, a star ornament 0.812 against a round bauble. The threshold separates
+    "a Christmas decoration" from "a coffee mug"; it does not separate one Christmas
+    decoration from another.
+
+    So the score is not the whole answer. `kind_agrees` and `shape_agrees` are returned per
+    candidate, because the disagreements are exactly the cases a person needs to catch, and
+    a number in the nineties reads as certainty when it is not.
+
+    Returns (matches, refused). When refused, `matches` is still filled in so the closest
+    rows can be seen — but the caller must present them as "nothing close".
     """
     codes, matrix = _vectors()
     by_code = {row["code"]: row for row in _descriptions()}
@@ -83,11 +103,18 @@ def find(query_text, top_n=TOP_N, min_score=MIN_SCORE):
     for position in order:
         code = codes[position]
         row = by_code.get(code, {})
+        attributes = row.get("attributes", {})
         matches.append({
             "code": code,
             "score": round(float(scores[position]), 4),
             "text": row.get("text"),
-            "summary": row.get("attributes", {}).get("summary"),
+            "summary": attributes.get("summary"),
+            "kind": attributes.get("kind"),
+            "shape": attributes.get("shape"),
+            "kind_agrees": None if query_kind is None else attributes.get("kind") == query_kind,
+            "shape_agrees": None if query_shape is None else (
+                (attributes.get("shape") or "").lower() == query_shape.lower()
+            ),
             "image": row.get("image"),
             "pdf_page": row.get("pdf_page"),
             # the code-to-photo pairing is a geometric guess, not a verified fact

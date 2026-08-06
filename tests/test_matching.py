@@ -130,6 +130,13 @@ def test_quantity_refuses_when_a_size_is_unknown():
         matching.suggest_quantity("05021-1", sizeless["code"])
 
 
+def test_the_threshold_sits_inside_the_measured_gap():
+    """Calibrated 2026-08-05: real products scored 0.564 and up, things nobody sells scored
+    0.463 and down. A threshold outside that gap either refuses genuine products or accepts
+    a coffee mug, and both are silent failures."""
+    assert 0.463 < matching.MIN_SCORE < 0.564
+
+
 def test_the_embedded_catalogue_matches_the_descriptions():
     """A stale embedding file would answer from a catalogue that no longer exists, silently."""
     codes, matrix = matching._vectors()

@@ -118,6 +118,8 @@ def as_text(decoration):
         decoration.pattern,
         decoration.packaging,
     ]
-    # models occasionally return the string "null" for an empty optional field, which would
-    # then be embedded as if it were a colour
-    return ", ".join(p for p in parts if p and p.strip().lower() not in {"null", "none", "n/a"})
+    # models fill an empty optional field with a placeholder rather than leaving it out —
+    # seen so far: "null", "?", "unclear". Embedded as-is they become a fake attribute that
+    # every other placeholder-carrying product then matches on.
+    empty = {"null", "none", "n/a", "?", "unknown", "unclear", "-", ""}
+    return ", ".join(p for p in parts if p and p.strip().lower() not in empty)

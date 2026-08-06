@@ -239,12 +239,17 @@ def api_analyse_reference(name: str, tree_code: str = ""):
     found = []
     for decoration in described.decorations:
         text = vision.as_text(decoration)
-        matches, refused = matching.find(text)
+        matches, refused = matching.find(
+            text, query_kind=decoration.kind, query_shape=decoration.shape
+        )
         entry = {
             "seen": decoration.model_dump(),
             "text": text,
             "refused": refused,
             "candidates": matches,
+            # a top candidate that disagrees on what the thing even is scores high anyway;
+            # measured, a nutcracker matched a Santa at 0.820
+            "same_kind": bool(matches) and matches[0]["kind_agrees"],
         }
         if tree_code.strip() and not refused:
             try:
@@ -260,8 +265,11 @@ def api_analyse_reference(name: str, tree_code: str = ""):
         "decorations": found,
         "usage": usage,
         "note": (
-            "Each candidate shows the catalogue photo it came from. That pairing is derived "
-            "from page layout and is not verified — check the photo before quoting the code."
+            "These are the closest products in the catalogue, not an identification. The "
+            "search finds the right category reliably and can still be wrong inside it — a "
+            "nutcracker matched a Santa at 0.82 in testing. Every candidate carries the "
+            "catalogue photo it came from, and that photo-to-code pairing is itself derived "
+            "from page layout and unverified. Look at the photo before quoting the code."
         ),
     }
 
