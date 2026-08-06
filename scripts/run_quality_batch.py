@@ -48,9 +48,12 @@ def read_pairs(path):
     return pairs
 
 
-def run_one(client, base, tree, element, size):
+def run_one(client, base, tree, element, size, tree_code="", element_code=""):
     """One pair through the whole pipeline. Returns a result dict, never raises."""
-    result = {"tree": tree.name, "element": element.name, "size": size}
+    result = {
+        "tree": tree.name, "element": element.name, "size": size,
+        "tree_code": tree_code or None, "element_code": element_code or None,
+    }
 
     cut = client.post(
         f"{base}/api/remove-bg",
@@ -63,12 +66,17 @@ def run_one(client, base, tree, element, size):
     ready = client.post(
         f"{base}/api/prepare",
         files=[("files", (tree.name, tree.read_bytes(), "image/png"))],
-        data={"element": element_name, "size": size},
+        data={
+            "element": element_name, "size": size,
+            "tree_code": tree_code, "element_code": element_code,
+        },
     )
     if ready.status_code != 200:
         return result | {"stage": "prepare", "error": ready.json().get("error", ready.text)}
     request_id = ready.json()["request_id"]
     result["request_id"] = request_id
+    result["scale"] = ready.json().get("scale")
+    result["exact_scale"] = ready.json().get("exact_scale")
 
     done = client.post(f"{base}/api/generate/{request_id}")
     if done.status_code != 200:
@@ -133,6 +141,8 @@ def main():
     parser.add_argument("--size", default="4:5")
     parser.add_argument("--out", default="ac5-results")
     parser.add_argument("--stamp", required=True, help="folder name for this run, e.g. pilot-1")
+    parser.add_argument("--tree-code", default="", help="catalogue code, applied to every pair")
+    parser.add_argument("--element-code", default="", help="catalogue code, applied to every pair")
     args = parser.parse_args()
 
     pairs = read_pairs(args.pairs)
@@ -153,7 +163,9 @@ def main():
 
     for n, (tree, element) in enumerate(pairs, 1):
         print(f"[{n}/{len(pairs)}] {tree.name} + {element.name} ... ", end="", flush=True)
-        result = run_one(client, args.base, tree, element, args.size)
+        result = run_one(
+            client, args.base, tree, element, args.size, args.tree_code, args.element_code
+        )
         results.append(result)
 
         if result["stage"] != "done":

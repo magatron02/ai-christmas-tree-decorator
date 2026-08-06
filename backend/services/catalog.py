@@ -119,6 +119,14 @@ def scale_sentence(tree_code, element_code):
     tree_mm, element_mm = require_size(tree), require_size(element)
     ratio = tree_mm / element_mm
 
+    # What this buys, measured on real generations of the same tree and bauble:
+    #   no sizes given   baubles ranged 22-53 px, median 0.52x the true ratio
+    #   sizes given      baubles ranged 48-61 px, median 0.60x
+    # So stating the size makes every copy in a picture the same size, which was one of the
+    # AC-5 defects. It does not make them the right size — the model draws roughly 60% of
+    # whatever it is told, and a longer version of this text spelling the ratio out as a
+    # visible fraction with a bias warning measured 0.58x, i.e. no different. The extra
+    # words were removed rather than kept for the look of them.
     return (
         f"These are real products and their real sizes are known. The tree is "
         f"{describe(tree)}, {tree_mm:.0f} mm tall. The decoration is {describe(element)}, "
