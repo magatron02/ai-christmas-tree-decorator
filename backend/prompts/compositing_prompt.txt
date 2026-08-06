@@ -29,7 +29,7 @@ Density
 - Leave visible gaps of bare branch between copies.
 
 Scale
-- Keep every copy in proportion to the tree, as if it were the real object hanging there.
+- {scale}
 - Copies further back are slightly smaller, copies at the front slightly larger; no other
   size variation between copies.
 

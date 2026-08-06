@@ -19,6 +19,7 @@ STORAGE_DIR = ROOT / "storage"
 DB_PATH = DATA_DIR / "app.db"
 PROMPT_PATH = BACKEND_DIR / "prompts" / "compositing_prompt.txt"
 FRONTEND_DIR = ROOT / "frontend"
+CATALOG_PATH = ROOT / "catalog" / "products.json"
 
 # Spec.md 3. gpt-image-2's own per-file ceiling is higher; this is ours.
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024

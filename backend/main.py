@@ -33,7 +33,7 @@ from fastapi.staticfiles import StaticFiles
 
 from backend import config, validation
 from backend.models import request_log
-from backend.services import background_removal, image_gen
+from backend.services import background_removal, catalog, image_gen
 from backend.services.background_removal import BackgroundRemovalError
 from backend.services.image_gen import ImageGenError
 from backend.validation import ValidationError
@@ -115,6 +115,8 @@ def _row_json(row):
         # so there is no flag that can disagree with the record of what happened
         "billed": row["usage_json"] is not None,
         "size": row["size"],
+        "tree_code": row["tree_code"],
+        "element_code": row["element_code"],
         "error": row["error"],
         "usage": json.loads(row["usage_json"]) if row["usage_json"] else None,
         "created_at": row["created_at"],
@@ -154,6 +156,24 @@ def api_config():
     }
 
 
+@app.get("/api/products")
+def api_products(q: str = "", limit: int = 20):
+    """Code picker lookup. Returns what the catalogue actually says, including `size: null`
+    for the third of the catalogue that has no printed size (NonGoals.md 8)."""
+    return {
+        "results": [
+            {
+                "code": row["code"],
+                "size_raw": row["size_raw"],
+                "size_mm": catalog.longest_side_mm(row),
+                "section": row["section"],
+                "page": row["pdf_page"],
+            }
+            for row in catalog.search(q, limit)
+        ]
+    }
+
+
 @app.get("/api/usage")
 def api_usage():
     """What has been spent so far, summed from the log.
@@ -186,19 +206,30 @@ def api_prepare(
     files: list[UploadFile] = File(...),
     element: str = Form(...),
     size: str = Form(config.DEFAULT_SIZE),
+    tree_code: str = Form(""),
+    element_code: str = Form(""),
 ):
-    """Input A + an accepted element -> a `pending` request. Still free; still no API call."""
+    """Input A + an accepted element -> a `pending` request. Still free; still no API call.
+
+    The product codes are optional but come in pairs: with both, the prompt gets the real
+    millimetres (Product.md 8.2). Codes are resolved here rather than at generation time so
+    an unknown code costs nothing and is caught before the confirm dialog.
+    """
     upload = validation.exactly_one(files, "Tree image")
     data = _read(upload, "Tree image")
     fmt, _dimensions = validation.check_image(data, upload.filename, upload.content_type, "Tree image")
 
     width, height = validation.resolve_size(size)
     element_path = _stored_path(element)
+    tree_code, element_code = tree_code.strip(), element_code.strip()
+    scale = catalog.scale_sentence(tree_code, element_code)
     tree_name = _store(data, "tree", EXT_FOR_FORMAT[fmt])
 
     conn = _db()
     try:
-        request_id = request_log.create(conn, tree_name, element_path.name, size)
+        request_id = request_log.create(
+            conn, tree_name, element_path.name, size, tree_code or None, element_code or None
+        )
     finally:
         conn.close()
 
@@ -209,6 +240,8 @@ def api_prepare(
         "height": height,
         "tree_url": _url(tree_name),
         "element_url": _url(element_path.name),
+        "scale": scale,
+        "exact_scale": bool(tree_code and element_code),
     }
 
 
@@ -237,9 +270,11 @@ def api_generate(request_id: str):
         # stranded at calling_api and can never be retried. So this catches everything, not
         # just ImageGenError — an unexpected failure is still a failure that produced no
         # image and should be runnable again.
+        scale = catalog.scale_sentence(row["tree_code"], row["element_code"])
+
         try:
             output, usage = image_gen.generate(
-                tree_path.read_bytes(), element_path.read_bytes(), width, height
+                tree_path.read_bytes(), element_path.read_bytes(), width, height, scale
             )
             name = _store(output, "output", "png")
         except Exception as exc:

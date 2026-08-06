@@ -98,6 +98,46 @@ async function loadConfig() {
   $("cut-hint").textContent = `Runs locally. Costs nothing. Max ${config.max_upload_mb} MB, JPG or PNG.`;
 }
 
+/* ---- product codes ----
+ * Optional, but they come in pairs: with both, the server can put the real millimetres in
+ * the prompt instead of asking for "a believable size" (Product.md 8.2). The datalist is
+ * filled from the catalogue rather than typed from memory — 1,092 codes is too many to
+ * remember and a mistyped code is a wrong order. */
+function wireCodePicker(inputId, listId, hintId) {
+  const input = $(inputId);
+  let timer;
+
+  input.addEventListener("input", () => {
+    clearTimeout(timer);
+    timer = setTimeout(async () => {
+      const query = input.value.trim();
+      if (query.length < 2) return;
+      try {
+        const { results } = await call(`/api/products?q=${encodeURIComponent(query)}`);
+        const list = $(listId);
+        list.innerHTML = "";
+        for (const product of results) {
+          const option = document.createElement("option");
+          option.value = product.code;
+          option.label = [product.size_raw, `p.${product.page}`].filter(Boolean).join(" · ");
+          list.append(option);
+        }
+        const exact = results.find((p) => p.code.toLowerCase() === query.toLowerCase());
+        $(hintId).textContent = exact
+          ? exact.size_raw
+            ? `${exact.code} — ${exact.size_raw} (catalogue page ${exact.page})`
+            : `${exact.code} — the catalogue prints no size for this one`
+          : "";
+      } catch {
+        /* the picker is a convenience; the server re-checks the code on prepare anyway */
+      }
+    }, 200);
+  });
+}
+
+wireCodePicker("tree-code", "tree-code-list", "tree-code-hint");
+wireCodePicker("element-code", "element-code-list", "element-code-hint");
+
 /* ---- step 1: bare tree ---- */
 $("tree-file").addEventListener("change", (event) => {
   const file = event.target.files[0] || null;
@@ -171,6 +211,8 @@ $("generate-btn").addEventListener("click", async () => {
     body.append("files", state.treeFile);
     body.append("element", state.elementName);
     body.append("size", $("size-select").value);
+    body.append("tree_code", $("tree-code").value.trim());
+    body.append("element_code", $("element-code").value.trim());
 
     const prepared = await call("/api/prepare", { method: "POST", body });
     state.requestId = prepared.request_id;
@@ -178,7 +220,9 @@ $("generate-btn").addEventListener("click", async () => {
     $("confirm-body").textContent =
       `This calls gpt-image-2 and produces one ${prepared.width} × ${prepared.height} image. ` +
       `It is billed to your OpenAI account, and only if the image comes back. ` +
-      `Nothing else in this tool spends money.`;
+      (prepared.exact_scale
+        ? `Scale comes from the catalogue: ${prepared.scale}`
+        : `No product codes given, so the size is left to the model's judgement.`);
     $("confirm-btn").disabled = false;
     $("confirm-dialog").showModal();
   } catch (err) {

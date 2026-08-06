@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS requests (
     element_path TEXT NOT NULL,
     output_path  TEXT,
     size         TEXT NOT NULL,
+    tree_code    TEXT,
+    element_code TEXT,
     error        TEXT,
     usage_json   TEXT,
     created_at   TEXT NOT NULL,
@@ -59,22 +61,26 @@ def connect(path=None):
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA busy_timeout=5000")
     conn.executescript(SCHEMA)
-    # databases created before usage accounting existed keep their rows and gain the column
+    # older databases keep their rows and gain whatever columns arrived since — the log is
+    # the spend record, so it outlives schema changes rather than being rebuilt
     existing = {row["name"] for row in conn.execute("PRAGMA table_info(requests)")}
-    if "usage_json" not in existing:
-        conn.execute("ALTER TABLE requests ADD COLUMN usage_json TEXT")
+    for column in ("usage_json", "tree_code", "element_code"):
+        if column not in existing:
+            conn.execute(f"ALTER TABLE requests ADD COLUMN {column} TEXT")
     conn.commit()
     return conn
 
 
-def create(conn, tree_path, element_path, size):
+def create(conn, tree_path, element_path, size, tree_code=None, element_code=None):
     request_id = uuid.uuid4().hex
     stamp = now()
     with conn:
         conn.execute(
             "INSERT INTO requests (request_id, status, tree_path, element_path, size,"
-            " created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (request_id, PENDING, tree_path, element_path, size, stamp, stamp),
+            " tree_code, element_code, created_at, updated_at)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (request_id, PENDING, tree_path, element_path, size,
+             tree_code, element_code, stamp, stamp),
         )
     return request_id
 

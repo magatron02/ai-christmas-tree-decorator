@@ -11,11 +11,20 @@ Codes with no printed size are kept with `size: null`. Roughly a third of the ca
 like that, and a record saying "no size printed" is the honest answer — dropping those rows
 would make the table look complete while quietly hiding the products it cannot size.
 
+There is no per-code product name. An earlier version guessed one by picking the nearest
+large text, which paired code 017-06 with "Dimension" — the caption of a size chart 364 pt
+away — and, because product names and section headings are both set at 30 pt, swallowed
+"Norwood Fir" into the heading instead. A guessed name in a data file is indistinguishable
+from a known one, which is the thing NonGoals.md 7 is about. What is recorded instead is the
+exact heading text printed on the page, which carries the same words without claiming which
+code they belong to.
+
 This is phase A of Product.md 8.1 — the code → size table, which is all 8.2 needs to put true
 millimetres into the prompt. It deliberately does not decide which photo belongs to which
 code: the bauble pages carry forty images each and the price ribbons are images too, so a
 nearest-neighbour rule would be confidently wrong often. That association is phase B, needed
-only for 8.3, and it has to be verified rather than guessed.
+only for 8.3, and it has to be verified rather than guessed — the same reason there is no
+per-code name here.
 """
 
 import argparse
@@ -89,15 +98,6 @@ def spans(page):
                     yield text, span["size"], span["bbox"]
 
 
-def centre(bbox):
-    return ((bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2)
-
-
-def gap(a, b):
-    (ax, ay), (bx, by) = centre(a), centre(b)
-    return ((ax - bx) ** 2 + (ay - by) ** 2) ** 0.5
-
-
 def extract(pdf_path):
     doc = fitz.open(pdf_path)
     rows, unparsed = [], []
@@ -108,14 +108,16 @@ def extract(pdf_path):
         page = doc[index]
         page_spans = list(spans(page))
 
+        # Every large piece of text printed on this page, exactly as set. Product names and
+        # section headings are both 30 pt here, so this deliberately does not try to tell
+        # them apart — it is context to search on, not a claim about any one code.
+        page_headings = [t for t, s, _ in page_spans if s >= 28]
+
         # a section heading is printed once, on its opening page, and the following pages
         # belong to it silently — carry it forward or four fifths of the table has no category
-        heading = " ".join(t for t, s, _ in page_spans if s >= 28) or None
-        if heading:
-            current_section = heading
+        if page_headings:
+            current_section = " ".join(page_headings)
         section = current_section
-        # product names are set larger than the code labels but smaller than section headings
-        names = [(t, b) for t, s, b in page_spans if 17 <= s < 28 and not CODE.search(t)]
 
         for text, size, bbox in page_spans:
             if size >= 28:
@@ -129,20 +131,12 @@ def extract(pdf_path):
                 if raw and parsed is None:
                     unparsed.append((index + 1, code, raw))
 
-                name, name_gap = None, None
-                if names:
-                    name, name_bbox = min(names, key=lambda n: gap(bbox, n[1]))
-                    name_gap = round(gap(bbox, name_bbox), 1)
-
                 rows.append({
                     "code": code,
                     "size_raw": " ".join(raw.split()) if raw else None,
                     "size": parsed,
-                    "name": name,
-                    # how far the guessed name sat from the code, so phase B can tell a
-                    # confident pairing from a coincidence instead of trusting all of them
-                    "name_gap_pt": name_gap,
                     "section": section,
+                    "page_headings": page_headings,
                     "pdf_page": index + 1,
                     "bbox": [round(v, 1) for v in bbox],
                     "duplicate": code in seen,

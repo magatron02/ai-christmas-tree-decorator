@@ -31,12 +31,20 @@
   <section class="card stack">
     <span class="caption">Step 1 — bare tree (input a)</span>
     <input class="input" type="file" id="tree-file" accept="image/jpeg,image/png">
+    <input class="input" id="tree-code" list="tree-code-list" autocomplete="off"
+           placeholder="Product code — optional, e.g. 05021-1">
+    <datalist id="tree-code-list"></datalist>
+    <span class="hint" id="tree-code-hint">Give both codes and the real size goes into the prompt.</span>
     <img class="thumb" id="tree-preview" alt="Bare tree" hidden>
   </section>
 
   <section class="card stack">
     <span class="caption">Step 2 — decoration element (input b)</span>
     <input class="input" type="file" id="element-file" accept="image/jpeg,image/png">
+    <input class="input" id="element-code" list="element-code-list" autocomplete="off"
+           placeholder="Product code — optional, e.g. 017-06">
+    <datalist id="element-code-list"></datalist>
+    <span class="hint" id="element-code-hint"></span>
     <div class="btn-row">
       <button class="btn" id="cut-btn" disabled>Remove background</button>
       <span class="hint" id="cut-hint">Runs locally. Costs nothing.</span>
