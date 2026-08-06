@@ -61,13 +61,26 @@
   </section>
 
   <section class="card stack">
-    <span class="caption">Step 3 — output size</span>
+    <span class="caption">Step 3 — setting (optional)</span>
+    <span class="hint">
+      A photo of the kind of place this should look like. Only its light and mood are used —
+      no object from it is copied. Leave empty to keep the tree's own background.
+    </span>
+    <input class="input" type="file" id="reference-file" accept="image/jpeg,image/png">
+    <div class="btn-row" id="reference-actions" hidden>
+      <button class="btn danger" id="reference-clear">Remove reference</button>
+    </div>
+    <img class="thumb" id="reference-preview" alt="Reference setting" hidden>
+  </section>
+
+  <section class="card stack">
+    <span class="caption">Step 4 — output size</span>
     <select class="input option-name" id="size-select" disabled></select>
     <span class="hint">Every option is divisible by 16, as gpt-image-2 requires.</span>
   </section>
 
   <section class="card stack">
-    <span class="caption">Step 4 — generate</span>
+    <span class="caption">Step 5 — generate</span>
     <div class="chip" id="status-chip">Waiting for both images</div>
     <div class="btn-row">
       <button class="btn primary" id="generate-btn" disabled>Generate</button>

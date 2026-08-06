@@ -28,6 +28,7 @@ const MAX_ELEMENTS = 5;
 const state = {
   treeFile: null,
   elements: [], // {name, url, code} — one entry per accepted cut-out, up to MAX_ELEMENTS
+  reference: null, // stored filename of the optional setting photo
   requestId: null,
   busy: false,
 };
@@ -245,7 +246,37 @@ $("reject-btn").addEventListener("click", () => {
   resetRun();
 });
 
-/* ---- step 3 + 4: prepare, confirm, generate ---- */
+/* ---- step 3: the optional setting reference ----
+ * Uploaded on its own endpoint rather than with the tree, because it is not
+ * background-removed: its background is the only thing being taken from it. */
+$("reference-file").addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  showError("");
+  try {
+    const body = new FormData();
+    body.append("files", file);
+    const result = await call("/api/reference", { method: "POST", body });
+    state.reference = result.reference;
+    $("reference-preview").src = result.reference_url;
+    $("reference-preview").hidden = false;
+    $("reference-actions").hidden = false;
+  } catch (err) {
+    showError(err.message);
+    $("reference-file").value = "";
+  }
+  resetRun();
+});
+
+$("reference-clear").addEventListener("click", () => {
+  state.reference = null;
+  $("reference-file").value = "";
+  $("reference-preview").hidden = true;
+  $("reference-actions").hidden = true;
+  resetRun();
+});
+
+/* ---- step 4 + 5: prepare, confirm, generate ---- */
 $("generate-btn").addEventListener("click", async () => {
   state.busy = true;
   refreshGenerateButton();
@@ -257,6 +288,7 @@ $("generate-btn").addEventListener("click", async () => {
     body.append("files", state.treeFile);
     body.append("size", $("size-select").value);
     body.append("tree_code", $("tree-code").value.trim());
+    if (state.reference) body.append("reference", state.reference);
     for (const element of state.elements) {
       body.append("element", element.name);
       body.append("element_code", element.code);
@@ -271,6 +303,9 @@ $("generate-btn").addEventListener("click", async () => {
     $("confirm-body").textContent =
       `This calls gpt-image-2 and produces one ${prepared.width} × ${prepared.height} image ` +
       `with ${many}. It is billed to your OpenAI account, and only if the image comes back. ` +
+      (prepared.reference_url
+        ? `The tree will be moved into a new setting taken from your reference photo. `
+        : `The tree keeps its own background. `) +
       (prepared.exact_scale
         ? `Sizes come from the catalogue.`
         : `No product codes given, so the sizes are left to the model's judgement.`);

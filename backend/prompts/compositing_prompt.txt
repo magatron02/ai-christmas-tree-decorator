@@ -1,15 +1,16 @@
 The first image is a photograph of a real bare Christmas tree in a shop. Return that same
-photograph with decorations added to the tree. Nothing else about it may change.
+tree with decorations added to it.
 
 This is an edit of an existing photo, not a new picture of a similar tree. Preserve exactly:
 - the tree itself — its height, width, silhouette, branch structure, species, how full or
   sparse it is, how it leans, where its gaps are
-- its position and scale within the frame, the camera angle, the focal length, the crop
-- the background, the floor, and anything else in the shot
+- its scale within the frame, the camera angle, the focal length
 - the photographic character: the same grain, focus, white balance, exposure and colour
 
 If the returned tree could be told apart from the tree in the first image with the
 decorations removed, the result is wrong.
+
+{scene}
 
 {elements}
 
@@ -33,11 +34,10 @@ Scale
   size variation between copies.
 
 Lighting and material
-- Match the lighting direction, colour temperature, contrast and softness of the first image.
 - Add contact shadows where a copy touches a branch, and a soft cast shadow on the foliage
   behind it.
-- Keep the element's own material: if it is glossy it picks up a highlight from the scene's
-  light, if it is matte it does not.
+- Keep each decoration's own material: if it is glossy it picks up a highlight from the
+  scene's light, if it is matte it does not.
 
 Do not add any decoration that was not supplied. No extra ornaments, no lights, no ribbon,
 no star, no tinsel, no snow, no gifts, no text, no watermark.

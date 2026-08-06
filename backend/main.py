@@ -47,7 +47,7 @@ app = FastAPI(title="AI Christmas Tree Decorator")
 app.mount("/files", StaticFiles(directory=config.STORAGE_DIR), name="files")
 app.mount("/static", StaticFiles(directory=config.FRONTEND_DIR), name="static")
 
-STORED_NAME = re.compile(r"^[0-9a-f]{32}_(tree|element|output)\.(png|jpg)$")
+STORED_NAME = re.compile(r"^[0-9a-f]{32}_(tree|element|output|reference)\.(png|jpg)$")
 EXT_FOR_FORMAT = {"PNG": "png", "JPEG": "jpg"}
 
 
@@ -113,6 +113,7 @@ def _row_json(row):
         "request_id": row["request_id"],
         "status": row["status"],
         "elements": [{"url": _url(e["path"]), "code": e.get("code")} for e in elements],
+        "reference_url": _url(row["reference_path"]),
         # billed is derived, not stored: a row that carries usage is a row that cost money,
         # so there is no flag that can disagree with the record of what happened
         "billed": row["usage_json"] is not None,
@@ -203,6 +204,22 @@ def api_remove_bg(files: list[UploadFile] = File(...)):
     return {"element": name, "element_url": _url(name)}
 
 
+@app.post("/api/reference")
+def api_reference(files: list[UploadFile] = File(...)):
+    """An optional photo whose setting and light the result should adopt (Product.md 8.3).
+
+    Stored as-is: unlike a decoration this one is not background-removed, because the
+    background is the whole reason it is here.
+    """
+    upload = validation.exactly_one(files, "Reference image")
+    data = _read(upload, "Reference image")
+    fmt, _dimensions = validation.check_image(
+        data, upload.filename, upload.content_type, "Reference image"
+    )
+    name = _store(data, "reference", EXT_FOR_FORMAT[fmt])
+    return {"reference": name, "reference_url": _url(name)}
+
+
 @app.post("/api/prepare")
 def api_prepare(
     files: list[UploadFile] = File(...),
@@ -210,6 +227,7 @@ def api_prepare(
     size: str = Form(config.DEFAULT_SIZE),
     tree_code: str = Form(""),
     element_code: list[str] = Form(default=[]),
+    reference: str = Form(""),
 ):
     """Input A + one to five accepted decorations -> a `pending` request. Still free; still
     no API call.
@@ -237,12 +255,16 @@ def api_prepare(
         )
 
     scale = catalog.scale_sentence(tree_code, codes)
+    reference = reference.strip()
+    reference_name = _stored_path(reference).name if reference else None
     tree_name = _store(data, "tree", EXT_FOR_FORMAT[fmt])
     elements = [{"path": p.name, "code": c or None} for p, c in zip(paths, codes)]
 
     conn = _db()
     try:
-        request_id = request_log.create(conn, tree_name, elements, size, tree_code or None)
+        request_id = request_log.create(
+            conn, tree_name, elements, size, tree_code or None, reference_name
+        )
     finally:
         conn.close()
 
@@ -254,6 +276,7 @@ def api_prepare(
         "tree_url": _url(tree_name),
         "element_urls": [_url(e["path"]) for e in elements],
         "element_count": len(elements),
+        "reference_url": _url(reference_name),
         "scale": scale,
         "exact_scale": bool(tree_code and all(codes)),
     }
@@ -286,11 +309,14 @@ def api_generate(request_id: str):
         # stranded at calling_api and can never be retried. So this catches everything, not
         # just ImageGenError — an unexpected failure is still a failure that produced no
         # image and should be runnable again.
+        reference = row["reference_path"]
+        reference_bytes = _stored_path(reference).read_bytes() if reference else None
+
         try:
             output, usage = image_gen.generate(
                 tree_path.read_bytes(),
                 [path.read_bytes() for path in element_paths],
-                width, height, scale,
+                width, height, scale, reference_bytes,
             )
             name = _store(output, "output", "png")
         except Exception as exc:

@@ -63,7 +63,9 @@ def referenced(conn, exclude=()):
     for row in conn.execute("SELECT * FROM requests"):
         if row["request_id"] in exclude:
             continue
-        names.update(row[key] for key in ("tree_path", "output_path") if row[key])
+        names.update(
+            row[key] for key in ("tree_path", "output_path", "reference_path") if row[key]
+        )
         names.update(e["path"] for e in request_log.elements_of(row) if e.get("path"))
     return names
 

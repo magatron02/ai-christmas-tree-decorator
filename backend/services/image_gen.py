@@ -32,27 +32,57 @@ def describe_elements(count):
     )
 
 
-def load_prompt(scale, element_count=1):
+NO_REFERENCE_SCENE = """\
+Keep the setting exactly as it is: the background, the floor, the framing, the crop, and
+anything else in the shot. Only the decorations are new."""
+
+REFERENCE_SCENE = """\
+The last image is a reference for the setting, not for the tree and not for the decorations.
+Take only its mood from it: the kind of place, the time of day, the colour of the light, how
+warm or cool it is, how soft or hard the shadows are, the overall palette.
+
+Place the decorated tree into a setting of that kind. Relight the tree to match — the light
+has to fall on it from the same direction and in the same colour as the setting implies, or
+it will look pasted in. Do not copy any object, furniture, decoration or person from the
+reference image, and do not copy its composition."""
+
+
+def describe_scene(has_reference):
+    """What to do with the background, which is the opposite instruction in the two cases.
+
+    Without a reference the background is sacred — the shop wants its own tree in its own
+    shop. With one, replacing it is the entire point (Product.md 8.3), so the "keep the
+    setting" line has to actually leave rather than sit there contradicting the new one.
+    """
+    return REFERENCE_SCENE if has_reference else NO_REFERENCE_SCENE
+
+
+def load_prompt(scale, element_count=1, has_reference=False):
     """Read the template on every call and fill in what changes between runs.
 
     Prompt design is the highest-risk part of this project and gets tuned constantly
     (Spec.md 4), so editing the file takes effect on the next generation without a restart
     and without touching code.
 
-    Two substitutions, both existing so whoever tunes the prompt controls where the text
-    goes rather than the code appending it somewhere fixed: `{elements}` says how many
-    decorations there are, and `{scale}` how big they really are.
+    Three substitutions, all existing so whoever tunes the prompt controls where the text
+    goes rather than the code appending it somewhere fixed: `{scene}` says what happens to
+    the background, `{elements}` how many decorations there are, and `{scale}` how big they
+    really are.
     """
     text = config.PROMPT_PATH.read_text(encoding="utf-8").strip()
     if not text:
         raise ImageGenError(f"The prompt template at {config.PROMPT_PATH} is empty.")
-    for token in ("{scale}", "{elements}"):
+    for token in ("{scale}", "{elements}", "{scene}"):
         if token not in text:
             raise ImageGenError(
                 f"The prompt template at {config.PROMPT_PATH} no longer contains {token}, "
                 "so part of the instruction would be silently dropped."
             )
-    return text.replace("{elements}", describe_elements(element_count)).replace("{scale}", scale)
+    return (
+        text.replace("{scene}", describe_scene(has_reference))
+        .replace("{elements}", describe_elements(element_count))
+        .replace("{scale}", scale)
+    )
 
 
 def _part(name, data):
@@ -62,12 +92,14 @@ def _part(name, data):
     return (f"{name}.{ext}", io.BytesIO(data), mime)
 
 
-def generate(tree_image, element_pngs, width, height, scale):
+def generate(tree_image, element_pngs, width, height, scale, reference=None):
     """Composite the transparent decorations onto the bare tree.
 
     `element_pngs` is a list of one to five cut-outs. `scale` is the sentence saying how big
     each really is next to the tree, built from the catalogue when product codes were given
-    (backend/services/catalog.py).
+    (backend/services/catalog.py). `reference`, if given, is a photo whose setting and light
+    the result should adopt — it goes last so "the last image" in the prompt is unambiguous
+    however many decorations there are.
 
     Returns (png_bytes, usage). `usage` is whatever token accounting the API reported, kept
     because it is the only per-image record of what a generation actually cost.
@@ -80,10 +112,12 @@ def generate(tree_image, element_pngs, width, height, scale):
         client = OpenAI(timeout=config.API_TIMEOUT_S)
         response = client.images.edit(
             model=config.IMAGE_MODEL,
-            image=[_part("tree", tree_image)] + [
-                _part(f"element{n}", data) for n, data in enumerate(element_pngs, 1)
-            ],
-            prompt=load_prompt(scale, len(element_pngs)),
+            image=(
+                [_part("tree", tree_image)]
+                + [_part(f"element{n}", data) for n, data in enumerate(element_pngs, 1)]
+                + ([_part("reference", reference)] if reference else [])
+            ),
+            prompt=load_prompt(scale, len(element_pngs), reference is not None),
             size=f"{width}x{height}",
         )
     except Exception as exc:
