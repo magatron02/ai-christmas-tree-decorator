@@ -146,5 +146,37 @@ Factory ให้ dark เป็นค่าเริ่มต้น
 
 ทำอย่างอื่นก่อน 8.1 คือทำซ้ำ · 8.4 กับ 8.5 อยู่ท้ายเพราะทั้งคู่เป็นการห่อสิ่งที่ยังเปลี่ยนรูปอยู่
 
+### 8.6 แก้ UI/layout ที่พบหลังใช้จริง + แยก reference function + catalogue picker/admin (2026-08-07)
+
+**Design**: panel heading ("1 —" ฯลฯ) เดิมใช้ `.caption` (12px) เท่ากับ hint/input placeholder —
+ไม่มีลำดับชั้นเลย เพิ่ม class `.panel-title` (18px, token ใหม่ `--text-md`) แยกจาก `.caption`
+โดยเฉพาะ · sidebar ปุ่มล้นขวา 16px เพราะ `.row` ไม่มี `box-sizing: border-box` (ไฟล์ทั้งชุดไม่มี
+global reset เลย) — แก้ด้วย `*, *::before, *::after { box-sizing: border-box }` ที่หัว tokens.css
+
+**Function**: รูปอ้างอิง "สถานที่" เดิมทำ 2 หน้าที่พร้อมกันจาก upload เดียว (บรรยากาศพื้นหลังตอน
+generate + หาสินค้าใกล้เคียง) ผู้ใช้ทดสอบแล้วอยากแยกจริง — แยกเป็น 2 การ์ด/2 upload slot อิสระ
+(`state.sceneReference` / `state.identifyReference`) backend ไม่ต้องแก้ endpoint (แยกอยู่แล้วเป็น
+คนละ call) แค่ frontend เลิกใช้ตัวแปรร่วม
+
+**Data — catalogue picker**: เพิ่ม `GET /api/catalog/search` + `POST /api/element/from-catalog`
+ให้เลือกของตกแต่งจาก catalogue ที่มีรูปอยู่แล้ว (ค้นแล้วคลิก แทนต้องอัปโหลดไฟล์เอง) ยังเลือกไฟล์
+นอกได้เหมือนเดิม ใช้ pipeline ตัดพื้นหลังเดียวกับที่มีอยู่ (คืน response shape เดียวกับ `/api/remove-bg`)
+
+**Data — admin เพิ่ม catalogue เอง**: หน้า settings เพิ่มฟอร์ม (code/ขนาด/หมวด/เล่ม/รูป) →
+`POST /api/catalog/products` (localhost only เหมือน API-key write เพราะเขียนไฟล์ลงดิสก์) กันโค้ด
+ซ้ำแบบเข้ม (ห้ามเขียนทับ code เดิม — ตัดสินใจแบบเดียวกับที่ NonGoals ข้อ 7/8 ใช้กับ pipeline PDF)
+เพิ่มปุ่ม "sync ดัชนีค้นหา" เรียก `scripts/describe_catalog.py`+`embed_catalog.py` (ของเดิม ไม่เขียนใหม่)
+เป็น subprocess เพราะ vision/embedding เป็นของแพง/ช้า ไม่ควรอยู่ใน request เดียวกับการเพิ่มข้อมูล
+**ขอบเขต**: แค่เพิ่ม ไม่มีแก้/ลบ (ตามที่ user ขอ)
+
+**Data — เล่มใหม่ (book1.pdf/book2.pdf)**: ก่อนจะรวม เช็ค content จริงก่อนเชื่อชื่อไฟล์ —
+**book1.pdf (96 หน้า) พบว่าเป็นแคตตาล็อกเดิม 100%** (1,092/1,092 code ชนกับที่มีอยู่แล้วทั้งหมด)
+ไม่ใช่ของใหม่ตามที่คิด — ข้ามไปทั้งไฟล์ (ไม่ merge อะไรเลย, folder `ac5-source/Book1` ก็เป็นภาพ
+เล่มเดิมซ้ำเช่นกัน ไม่ได้ใช้งาน) · **book2.pdf (32 หน้า) คือของใหม่จริง** — 201 code, ชนของเดิมแค่
+~1% → merge เข้า `catalog/products.json`/`product_images.json` (199 code ใหม่ที่ไม่ชน, tag
+`book: "2026"` ไว้แยกดูใน settings, 4 code ชนกันเอง/ซ้ำในเล่มถูกคัดออกไว้ที่
+`catalog/book_conflicts.json`) — ยังไม่ได้รัน describe+embed (เสียเงินจริง ต้องกดปุ่ม "sync
+ดัชนีค้นหา" ในหน้า settings เองถึงจะค้นหาของใหม่ผ่าน "หาสินค้าใกล้เคียง" เจอ)
+
 ---
 *สถานะ: MVP ส่งแล้ว (AC-1 ถึง AC-4 ผ่าน) · AC-5 รอกา · V1.1 เปิด scope แล้ว ดูข้อ 8*

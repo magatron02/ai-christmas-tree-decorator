@@ -21987,5 +21987,4033 @@
   },
   "text": "pick, green, gold, glitter, spray, mixed, single",
   "tokens": 557
+ },
+ "90680-6": {
+  "code": "90680-6",
+  "pdf_page": 1,
+  "image": "90680-6.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "flower",
+   "primary_colour": "red",
+   "other_colours": [
+    "green"
+   ],
+   "finish": "glitter",
+   "shape": "poinsettia",
+   "pattern": "single",
+   "packaging": "single",
+   "summary": "Red glitter poinsettia decoration on a stem."
+  },
+  "text": "flower, red, green, glitter, poinsettia, single, single",
+  "tokens": 569
+ },
+ "90663-33": {
+  "code": "90663-33",
+  "pdf_page": 1,
+  "image": "90663-33.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "flower",
+   "primary_colour": "pink",
+   "other_colours": [
+    "white",
+    "green"
+   ],
+   "finish": "glitter",
+   "shape": "poinsettia flower",
+   "pattern": "mixed",
+   "packaging": "single",
+   "summary": "A glittery pink poinsettia-style decorative stem with white accents and green leaves."
+  },
+  "text": "flower, pink, white, green, glitter, poinsettia flower, mixed, single",
+  "tokens": 579
+ },
+ "90678-5": {
+  "code": "90678-5",
+  "pdf_page": 1,
+  "image": "90678-5.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "flower",
+   "primary_colour": "gold",
+   "other_colours": [
+    "green",
+    "black"
+   ],
+   "finish": "glitter",
+   "shape": "poinsettia",
+   "pattern": "n/a",
+   "packaging": "single",
+   "summary": "Glittery gold poinsettia-style Christmas pick with green leaves."
+  },
+  "text": "flower, gold, green, black, glitter, poinsettia, single",
+  "tokens": 590
+ },
+ "90665-18": {
+  "code": "90665-18",
+  "pdf_page": 1,
+  "image": "90665-18.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "flower",
+   "primary_colour": "pink",
+   "other_colours": [
+    "white",
+    "green"
+   ],
+   "finish": "glitter",
+   "shape": "poinsettia",
+   "pattern": "flower",
+   "packaging": "unclear",
+   "summary": "Pink glitter poinsettia flower pick with green leaves."
+  },
+  "text": "flower, pink, white, green, glitter, poinsettia, flower",
+  "tokens": 587
+ },
+ "90757-5": {
+  "code": "90757-5",
+  "pdf_page": 1,
+  "image": "90757-5.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "pick",
+   "primary_colour": "red",
+   "other_colours": [
+    "gold",
+    "green"
+   ],
+   "finish": "glitter",
+   "shape": "poinsettia flower",
+   "pattern": "?",
+   "packaging": "single",
+   "summary": "Red glitter poinsettia pick with gold accents and green leaves on a stem."
+  },
+  "text": "pick, red, gold, green, glitter, poinsettia flower, single",
+  "tokens": 564
+ },
+ "90665-15": {
+  "code": "90665-15",
+  "pdf_page": 1,
+  "image": "90665-15.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "flower",
+   "primary_colour": "red",
+   "other_colours": [
+    "green"
+   ],
+   "finish": "glitter",
+   "shape": "poinsettia flower",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "Red glitter poinsettia flower pick with green leaves on a stem."
+  },
+  "text": "flower, red, green, glitter, poinsettia flower, single",
+  "tokens": 572
+ },
+ "90681-2": {
+  "code": "90681-2",
+  "pdf_page": 1,
+  "image": "90681-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "flower",
+   "primary_colour": "white",
+   "other_colours": [
+    "green",
+    "dark brown"
+   ],
+   "finish": "mixed",
+   "shape": "poinsettia bloom",
+   "pattern": "single potted plant",
+   "packaging": "single",
+   "summary": "A potted white poinsettia-style Christmas decoration with green leaves and dark berry centers."
+  },
+  "text": "flower, white, green, dark brown, mixed, poinsettia bloom, single potted plant, single",
+  "tokens": 569
+ },
+ "90665-30": {
+  "code": "90665-30",
+  "pdf_page": 1,
+  "image": "90665-30.png",
+  "match": "no_rule_fitted",
+  "attributes": {
+   "kind": "flower",
+   "primary_colour": "pink",
+   "other_colours": [
+    "gold",
+    "green"
+   ],
+   "finish": "glitter",
+   "shape": "poinsettia flower",
+   "pattern": "single stem flower with pointed petals and leaves",
+   "packaging": "single",
+   "summary": "A glittery pink poinsettia-style decorative flower pick on a stem."
+  },
+  "text": "flower, pink, gold, green, glitter, poinsettia flower, single stem flower with pointed petals and leaves, single",
+  "tokens": 584
+ },
+ "90665-16": {
+  "code": "90665-16",
+  "pdf_page": 1,
+  "image": "90665-16.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "flower",
+   "primary_colour": "blue",
+   "other_colours": [
+    "white",
+    "green",
+    "silver"
+   ],
+   "finish": "glitter",
+   "shape": "flower",
+   "pattern": "none",
+   "packaging": "single",
+   "summary": "A glittery blue flower decoration with silver accents and green leaves on a stem."
+  },
+  "text": "flower, blue, white, green, silver, glitter, flower, single",
+  "tokens": 576
+ },
+ "5983-01": {
+  "code": "5983-01",
+  "pdf_page": 2,
+  "image": "5983-01.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "pick",
+   "primary_colour": "gold",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "glitter",
+   "shape": "spray",
+   "pattern": "cluster of berries",
+   "packaging": "single",
+   "summary": "Gold glitter berry pick with white-toned berries on wired stems."
+  },
+  "text": "pick, gold, white, glitter, spray, cluster of berries, single",
+  "tokens": 586
+ },
+ "90432-2": {
+  "code": "90432-2",
+  "pdf_page": 2,
+  "image": "90432-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "pick",
+   "primary_colour": "gold",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "branch spray",
+   "pattern": "single",
+   "packaging": "display",
+   "summary": "Glittery decorative foliage picks in gold and copper tones."
+  },
+  "text": "pick, gold, glitter, branch spray, single, display",
+  "tokens": 617
+ },
+ "5988-03": {
+  "code": "5988-03",
+  "pdf_page": 2,
+  "image": "5988-03.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "pick",
+   "primary_colour": "green",
+   "other_colours": [
+    "red",
+    "brown"
+   ],
+   "finish": "natural",
+   "shape": "spray",
+   "pattern": "mixed",
+   "packaging": "single",
+   "summary": "Artificial pine pick with a pine cone, red berries, and plaid ribbon accents."
+  },
+  "text": "pick, green, red, brown, natural, spray, mixed, single",
+  "tokens": 574
+ },
+ "70923-3": {
+  "code": "70923-3",
+  "pdf_page": 2,
+  "image": "70923-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "red",
+    "brown"
+   ],
+   "finish": "natural",
+   "shape": "branch spray",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "Artificial green pine branch spray with two red berry clusters."
+  },
+  "text": "tree, green, red, brown, natural, branch spray, single",
+  "tokens": 553
+ },
+ "90576-14": {
+  "code": "90576-14",
+  "pdf_page": 3,
+  "image": "90576-14.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "pick",
+   "primary_colour": "silver",
+   "other_colours": [
+    "clear"
+   ],
+   "finish": "glitter",
+   "shape": "spray",
+   "pattern": "unclear",
+   "packaging": "single",
+   "summary": "A silver glitter decorative spray pick with three slender fronds."
+  },
+  "text": "pick, silver, clear, glitter, spray, single",
+  "tokens": 527
+ },
+ "90566-3": {
+  "code": "90566-3",
+  "pdf_page": 3,
+  "image": "90566-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "pick",
+   "primary_colour": "silver",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "glitter",
+   "shape": "spray",
+   "pattern": "single",
+   "packaging": "single",
+   "summary": "A silver glitter floral pick with layered leaves and flower shapes on a stem."
+  },
+  "text": "pick, silver, white, glitter, spray, single, single",
+  "tokens": 529
+ },
+ "90524-16": {
+  "code": "90524-16",
+  "pdf_page": 3,
+  "image": "90524-16.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "pick",
+   "primary_colour": "blue",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "fan spray",
+   "pattern": "packaging",
+   "packaging": "multipack",
+   "summary": "Assorted glitter fan picks in blue, gold, silver, green, red and gold."
+  },
+  "text": "pick, blue, glitter, fan spray, packaging, multipack",
+  "tokens": 546
+ },
+ "90584-2": {
+  "code": "90584-2",
+  "pdf_page": 3,
+  "image": "90584-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "pick",
+   "primary_colour": "silver",
+   "other_colours": [
+    "clear"
+   ],
+   "finish": "glitter",
+   "shape": "spray",
+   "pattern": "single",
+   "packaging": "display",
+   "summary": "Sparkly metallic spray pick with bead-tipped stems."
+  },
+  "text": "pick, silver, clear, glitter, spray, single, display",
+  "tokens": 686
+ },
+ "90532-5": {
+  "code": "90532-5",
+  "pdf_page": 3,
+  "image": "90532-5.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "pick",
+   "primary_colour": "yellow",
+   "other_colours": [
+    "gold"
+   ],
+   "finish": "glitter",
+   "shape": "floral spray",
+   "pattern": "multiple flower-and-leaf sprigs on stem",
+   "packaging": "single",
+   "summary": "Glittery floral pick with layered leaves and blossoms on a stem."
+  },
+  "text": "pick, yellow, gold, glitter, floral spray, multiple flower-and-leaf sprigs on stem, single",
+  "tokens": 719
+ },
+ "90564-2": {
+  "code": "90564-2",
+  "pdf_page": 3,
+  "image": "90564-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "pick",
+   "primary_colour": "gold",
+   "other_colours": [
+    "brown"
+   ],
+   "finish": "glitter",
+   "shape": "spray",
+   "pattern": "packaging",
+   "packaging": "single",
+   "summary": "A gold glitter decorative spray pick with three leaf-like stems on a brown stem."
+  },
+  "text": "pick, gold, brown, glitter, spray, packaging, single",
+  "tokens": 531
+ },
+ "90586-2": {
+  "code": "90586-2",
+  "pdf_page": 4,
+  "image": "90586-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "pick",
+   "primary_colour": "gold",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "spray",
+   "pattern": "fern frond",
+   "packaging": "single",
+   "summary": "Gold glitter fern frond decorative pick."
+  },
+  "text": "pick, gold, glitter, spray, fern frond, single",
+  "tokens": 522
+ },
+ "90586-6": {
+  "code": "90586-6",
+  "pdf_page": 4,
+  "image": "90586-6.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "pick",
+   "primary_colour": "gold",
+   "other_colours": [],
+   "finish": "metallic",
+   "shape": "spray",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "Gold metallic palm-leaf spray pick with multiple frond stems."
+  },
+  "text": "pick, gold, metallic, spray, single",
+  "tokens": 523
+ },
+ "90586-7": {
+  "code": "90586-7",
+  "pdf_page": 4,
+  "image": "90586-7.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "pick",
+   "primary_colour": "gold",
+   "other_colours": [],
+   "finish": "metallic",
+   "shape": "spray",
+   "pattern": "single",
+   "packaging": "single",
+   "summary": "A gold metallic fern-like decorative spray pick."
+  },
+  "text": "pick, gold, metallic, spray, single, single",
+  "tokens": 506
+ },
+ "90586-3": {
+  "code": "90586-3",
+  "pdf_page": 4,
+  "image": "90586-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "pick",
+   "primary_colour": "gold",
+   "other_colours": [],
+   "finish": "metallic",
+   "shape": "spray",
+   "pattern": "single",
+   "packaging": "single",
+   "summary": "Gold metallic decorative spray pick with branching stems and small leaves."
+  },
+  "text": "pick, gold, metallic, spray, single, single",
+  "tokens": 603
+ },
+ "90586-4": {
+  "code": "90586-4",
+  "pdf_page": 4,
+  "image": "90586-4.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "pick",
+   "primary_colour": "gold",
+   "other_colours": [],
+   "finish": "metallic",
+   "shape": "spray",
+   "pattern": "unclear",
+   "packaging": "unclear",
+   "summary": "Gold metallic decorative spray pick with fine branching leaves."
+  },
+  "text": "pick, gold, metallic, spray",
+  "tokens": 603
+ },
+ "90586-8": {
+  "code": "90586-8",
+  "pdf_page": 4,
+  "image": "90586-8.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "pick",
+   "primary_colour": "gold",
+   "other_colours": [],
+   "finish": "metallic",
+   "shape": "spray",
+   "pattern": "single",
+   "packaging": "single",
+   "summary": "A gold metallic decorative spray pick with feathery branches."
+  },
+  "text": "pick, gold, metallic, spray, single, single",
+  "tokens": 524
+ },
+ "90586-5": {
+  "code": "90586-5",
+  "pdf_page": 4,
+  "image": "90586-5.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "pick",
+   "primary_colour": "gold",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "metallic",
+   "shape": "spray",
+   "pattern": "unclear",
+   "packaging": "single",
+   "summary": "Gold leafy spray pick with delicate fern-like branches."
+  },
+  "text": "pick, gold, white, metallic, spray, single",
+  "tokens": 539
+ },
+ "90586-9": {
+  "code": "90586-9",
+  "pdf_page": 4,
+  "image": "90586-9.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "pick",
+   "primary_colour": "gold",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "spray",
+   "pattern": "fern-like fronds",
+   "packaging": "single",
+   "summary": "Gold glitter fern spray pick with multiple feathery fronds."
+  },
+  "text": "pick, gold, glitter, spray, fern-like fronds, single",
+  "tokens": 542
+ },
+ "90765-4": {
+  "code": "90765-4",
+  "pdf_page": 4,
+  "image": "90765-4.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "pink",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "glitter",
+   "shape": "butterfly",
+   "pattern": "none",
+   "packaging": "unclear",
+   "summary": "A glittery butterfly decoration with sheer wings in pink and white."
+  },
+  "text": "figure, pink, white, glitter, butterfly",
+  "tokens": 570
+ },
+ "90769-2": {
+  "code": "90769-2",
+  "pdf_page": 4,
+  "image": "90769-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "red",
+   "other_colours": [
+    "pink",
+    "gold"
+   ],
+   "finish": "glitter",
+   "shape": "butterfly",
+   "pattern": "unclear",
+   "packaging": "single",
+   "summary": "Glittery butterfly decoration pick with a long stem."
+  },
+  "text": "figure, red, pink, gold, glitter, butterfly, single",
+  "tokens": 611
+ },
+ "90780-2": {
+  "code": "90780-2",
+  "pdf_page": 4,
+  "image": "90780-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "pink",
+   "other_colours": [
+    "gold",
+    "beige"
+   ],
+   "finish": "glitter",
+   "shape": "butterfly",
+   "pattern": "winged butterfly with ornate swirled wings",
+   "packaging": "single",
+   "summary": "A pink glitter butterfly decoration with gold-beige translucent wings."
+  },
+  "text": "figure, pink, gold, beige, glitter, butterfly, winged butterfly with ornate swirled wings, single",
+  "tokens": 595
+ },
+ "90653-8/2": {
+  "code": "90653-8/2",
+  "pdf_page": 5,
+  "image": "90653-8_2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "pick",
+   "primary_colour": "red",
+   "other_colours": [
+    "green",
+    "gold",
+    "clear"
+   ],
+   "finish": "glitter",
+   "shape": "floral spray",
+   "pattern": "clear",
+   "packaging": "single",
+   "summary": "A glittery red and green floral pick with layered translucent petals and leaf accents."
+  },
+  "text": "pick, red, green, gold, clear, glitter, floral spray, clear, single",
+  "tokens": 578
+ },
+ "90765-3": {
+  "code": "90765-3",
+  "pdf_page": 5,
+  "image": "90765-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "blue",
+   "other_colours": [
+    "purple",
+    "green",
+    "silver"
+   ],
+   "finish": "glitter",
+   "shape": "butterfly",
+   "pattern": "beaded wire wings",
+   "packaging": "single",
+   "summary": "A glittery beaded wire butterfly decoration with curled antennae."
+  },
+  "text": "figure, blue, purple, green, silver, glitter, butterfly, beaded wire wings, single",
+  "tokens": 592
+ },
+ "90686-2": {
+  "code": "90686-2",
+  "pdf_page": 5,
+  "image": "90686-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "silver",
+   "other_colours": [
+    "black"
+   ],
+   "finish": "glitter",
+   "shape": "flower",
+   "pattern": "open-petal floral",
+   "packaging": "single",
+   "summary": "A glittery open-petal flower decoration with wirey outlined petals."
+  },
+  "text": "figure, silver, black, glitter, flower, open-petal floral, single",
+  "tokens": 568
+ },
+ "90663-9": {
+  "code": "90663-9",
+  "pdf_page": 5,
+  "image": "90663-9.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "pick",
+   "primary_colour": "pink",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "spray",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "A pink glittered decorative spray pick with clustered leafy branches."
+  },
+  "text": "pick, pink, glitter, spray, single",
+  "tokens": 480
+ },
+ "6020-03": {
+  "code": "6020-03",
+  "pdf_page": 5,
+  "image": "6020-03.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "garland",
+   "primary_colour": "brown",
+   "other_colours": [
+    "gold"
+   ],
+   "finish": "natural",
+   "shape": "pine cone cluster garland",
+   "pattern": "unclear",
+   "packaging": "single",
+   "summary": "A natural pine cone garland with clustered brown and gold-toned cones."
+  },
+  "text": "garland, brown, gold, natural, pine cone cluster garland, single",
+  "tokens": 475
+ },
+ "90653-9": {
+  "code": "90653-9",
+  "pdf_page": 5,
+  "image": "90653-9.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "pick",
+   "primary_colour": "pink",
+   "other_colours": [
+    "black"
+   ],
+   "finish": "glitter",
+   "shape": "butterfly spray",
+   "pattern": "single",
+   "packaging": "single",
+   "summary": "A pink glitter butterfly spray pick on a black stem."
+  },
+  "text": "pick, pink, black, glitter, butterfly spray, single, single",
+  "tokens": 621
+ },
+ "90654-19": {
+  "code": "90654-19",
+  "pdf_page": 5,
+  "image": "90654-19.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "pick",
+   "primary_colour": "red",
+   "other_colours": [
+    "brown"
+   ],
+   "finish": "glossy",
+   "shape": "branch spray with small berry clusters",
+   "pattern": "single",
+   "packaging": "single",
+   "summary": "A red berry spray on a brown stem, with glossy berries on branching twigs."
+  },
+  "text": "pick, red, brown, glossy, branch spray with small berry clusters, single, single",
+  "tokens": 507
+ },
+ "90659-20": {
+  "code": "90659-20",
+  "pdf_page": 5,
+  "image": "90659-20.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "pick",
+   "primary_colour": "green",
+   "other_colours": [
+    "red"
+   ],
+   "finish": "glitter",
+   "shape": "holly leaf spray",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "A glittery green holly leaf pick with red berry accents."
+  },
+  "text": "pick, green, red, glitter, holly leaf spray, single",
+  "tokens": 469
+ },
+ "90633-3": {
+  "code": "90633-3",
+  "pdf_page": 5,
+  "image": "90633-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "pick",
+   "primary_colour": "gold",
+   "other_colours": [
+    "silver",
+    "brown"
+   ],
+   "finish": "glitter",
+   "shape": "spray",
+   "pattern": "branch with leaves and flowers",
+   "packaging": "single",
+   "summary": "A glittery gold decorative pick with silver branched spray and brown-gold leaves and flower accents."
+  },
+  "text": "pick, gold, silver, brown, glitter, spray, branch with leaves and flowers, single",
+  "tokens": 525
+ },
+ "6117-02": {
+  "code": "6117-02",
+  "pdf_page": 6,
+  "image": "6117-02.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "gold",
+   "other_colours": [
+    "yellow",
+    "green",
+    "orange"
+   ],
+   "finish": "glitter",
+   "shape": "star",
+   "pattern": "starburst",
+   "packaging": "single",
+   "summary": "Gold glitter star tree topper with smaller star accents."
+  },
+  "text": "tree topper, gold, yellow, green, orange, glitter, star, starburst, single",
+  "tokens": 573
+ },
+ "6126-02": {
+  "code": "6126-02",
+  "pdf_page": 6,
+  "image": "6126-02.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "silver",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "star",
+   "pattern": "star",
+   "packaging": "single",
+   "summary": "Silver glitter star tree topper with a pointed stem."
+  },
+  "text": "tree topper, silver, glitter, star, star, single",
+  "tokens": 580
+ },
+ "5600-27": {
+  "code": "5600-27",
+  "pdf_page": 6,
+  "image": "5600-27.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "silver",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "star",
+   "pattern": "none",
+   "packaging": "single",
+   "summary": "Silver glitter star tree topper with a spring coil base."
+  },
+  "text": "tree topper, silver, glitter, star, single",
+  "tokens": 538
+ },
+ "6125-01": {
+  "code": "6125-01",
+  "pdf_page": 6,
+  "image": "6125-01.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "gold",
+   "other_colours": [
+    "black"
+   ],
+   "finish": "transparent",
+   "shape": "star",
+   "pattern": "unknown",
+   "packaging": "single",
+   "summary": "Gold tinsel star tree topper with a black-and-gold star center."
+  },
+  "text": "tree topper, gold, black, transparent, star, single",
+  "tokens": 588
+ },
+ "6117-07": {
+  "code": "6117-07",
+  "pdf_page": 6,
+  "image": "6117-07.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "red",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "star",
+   "pattern": "spiky starburst",
+   "packaging": "single",
+   "summary": "Red glitter starburst tree topper on a coil stem."
+  },
+  "text": "tree topper, red, glitter, star, spiky starburst, single",
+  "tokens": 596
+ },
+ "6124-02": {
+  "code": "6124-02",
+  "pdf_page": 6,
+  "image": "6124-02.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "red",
+   "other_colours": [
+    "black"
+   ],
+   "finish": "glitter",
+   "shape": "starburst star",
+   "pattern": "spring stem topper",
+   "packaging": "single",
+   "summary": "Red glitter starburst tree topper on a spring stem."
+  },
+  "text": "tree topper, red, black, glitter, starburst star, spring stem topper, single",
+  "tokens": 601
+ },
+ "6114-06": {
+  "code": "6114-06",
+  "pdf_page": 6,
+  "image": "6114-06.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "silver",
+   "other_colours": [
+    "black",
+    "white"
+   ],
+   "finish": "metallic",
+   "shape": "star",
+   "pattern": "ornate filigree star",
+   "packaging": "single",
+   "summary": "Silver metallic star tree topper with decorative filigree cutout pattern."
+  },
+  "text": "tree topper, silver, black, white, metallic, star, ornate filigree star, single",
+  "tokens": 593
+ },
+ "90610-8": {
+  "code": "90610-8",
+  "pdf_page": 6,
+  "image": "90610-8.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "gold",
+   "other_colours": [],
+   "finish": "metallic",
+   "shape": "star",
+   "pattern": "unclear",
+   "packaging": "single",
+   "summary": "Gold metallic star tree topper with an open woven wire look."
+  },
+  "text": "tree topper, gold, metallic, star, single",
+  "tokens": 583
+ },
+ "6111-02": {
+  "code": "6111-02",
+  "pdf_page": 6,
+  "image": "6111-02.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "silver",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "star",
+   "pattern": "multiple nested stars",
+   "packaging": "single",
+   "summary": "Silver glitter star tree topper with nested star cutout design."
+  },
+  "text": "tree topper, silver, glitter, star, multiple nested stars, single",
+  "tokens": 584
+ },
+ "6114-05": {
+  "code": "6114-05",
+  "pdf_page": 6,
+  "image": "6114-05.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "silver",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "glitter",
+   "shape": "multi-point star",
+   "pattern": "nested stars",
+   "packaging": "single",
+   "summary": "Silver glitter nested star tree topper with a central cone mount."
+  },
+  "text": "tree topper, silver, white, glitter, multi-point star, nested stars, single",
+  "tokens": 587
+ },
+ "6191-03": {
+  "code": "6191-03",
+  "pdf_page": 6,
+  "image": "6191-03.png",
+  "match": "above_far",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "silver",
+   "other_colours": [
+    "grey"
+   ],
+   "finish": "glitter",
+   "shape": "star",
+   "pattern": "nested star outline",
+   "packaging": "single",
+   "summary": "Silver glitter nested star tree topper with a clip base."
+  },
+  "text": "tree topper, silver, grey, glitter, star, nested star outline, single",
+  "tokens": 585
+ },
+ "90651-2": {
+  "code": "90651-2",
+  "pdf_page": 6,
+  "image": "90651-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "silver",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "star",
+   "pattern": "wire frame star",
+   "packaging": "single",
+   "summary": "A glittery silver wire-frame star tree topper."
+  },
+  "text": "tree topper, silver, glitter, star, wire frame star, single",
+  "tokens": 582
+ },
+ "90698-5": {
+  "code": "90698-5",
+  "pdf_page": 6,
+  "image": "90698-5.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "star",
+   "primary_colour": "silver",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "five-point star",
+   "pattern": "open wire star with glitter",
+   "packaging": "single",
+   "summary": "A silver glitter five-point star decoration with an open wire look."
+  },
+  "text": "star, silver, glitter, five-point star, open wire star with glitter, single",
+  "tokens": 587
+ },
+ "6749-02": {
+  "code": "6749-02",
+  "pdf_page": 6,
+  "image": "6749-02.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "silver",
+   "other_colours": [],
+   "finish": "metallic",
+   "shape": "star",
+   "pattern": "filigree star",
+   "packaging": "single",
+   "summary": "Silver metallic openwork star tree topper."
+  },
+  "text": "tree topper, silver, metallic, star, filigree star, single",
+  "tokens": 581
+ },
+ "6758-01": {
+  "code": "6758-01",
+  "pdf_page": 6,
+  "image": "6758-01.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "gold",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "star",
+   "pattern": "none",
+   "packaging": "single",
+   "summary": "Gold glitter star tree topper with a pointed, faceted look."
+  },
+  "text": "tree topper, gold, glitter, star, single",
+  "tokens": 583
+ },
+ "90664-15": {
+  "code": "90664-15",
+  "pdf_page": 7,
+  "image": "90664-15.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "gold",
+   "other_colours": [],
+   "finish": "metallic",
+   "shape": "star",
+   "pattern": "wireframe star with spiral stem",
+   "packaging": "single",
+   "summary": "A gold metallic wireframe star tree topper with a spiral stem."
+  },
+  "text": "tree topper, gold, metallic, star, wireframe star with spiral stem, single",
+  "tokens": 588
+ },
+ "90667-2": {
+  "code": "90667-2",
+  "pdf_page": 7,
+  "image": "90667-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "red",
+   "other_colours": [],
+   "finish": "metallic",
+   "shape": "star",
+   "pattern": "wireframe",
+   "packaging": "single",
+   "summary": "Red wireframe star tree topper with a metallic look."
+  },
+  "text": "tree topper, red, metallic, star, wireframe, single",
+  "tokens": 582
+ },
+ "76015-2": {
+  "code": "76015-2",
+  "pdf_page": 7,
+  "image": "76015-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "gold",
+   "other_colours": [],
+   "finish": "metallic",
+   "shape": "star",
+   "pattern": "striped",
+   "packaging": "single",
+   "summary": "Metallic gold star tree topper with a pointed five-point shape."
+  },
+  "text": "tree topper, gold, metallic, star, striped, single",
+  "tokens": 584
+ },
+ "79015-2": {
+  "code": "79015-2",
+  "pdf_page": 7,
+  "image": "79015-2.png",
+  "match": "above_far",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "gold",
+   "other_colours": [
+    "black"
+   ],
+   "finish": "metallic",
+   "shape": "star",
+   "pattern": "single star topper with pointed rays and glittered edging",
+   "packaging": "single",
+   "summary": "Metallic gold star tree topper with glittered edging and a black support stem."
+  },
+  "text": "tree topper, gold, black, metallic, star, single star topper with pointed rays and glittered edging, single",
+  "tokens": 597
+ },
+ "90669-2": {
+  "code": "90669-2",
+  "pdf_page": 7,
+  "image": "90669-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "grey",
+   "other_colours": [],
+   "finish": "metallic",
+   "shape": "wire star",
+   "pattern": "none",
+   "packaging": "single",
+   "summary": "A metallic wire star tree topper with a spiral base."
+  },
+  "text": "tree topper, grey, metallic, wire star, single",
+  "tokens": 582
+ },
+ "79015-1": {
+  "code": "79015-1",
+  "pdf_page": 7,
+  "image": "79015-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "silver",
+   "other_colours": [
+    "clear"
+   ],
+   "finish": "glitter",
+   "shape": "star",
+   "pattern": "faceted star",
+   "packaging": "single",
+   "summary": "A silver glitter faceted star tree topper with a clear light in the center."
+  },
+  "text": "tree topper, silver, clear, glitter, star, faceted star, single",
+  "tokens": 576
+ },
+ "76015-1": {
+  "code": "76015-1",
+  "pdf_page": 7,
+  "image": "76015-1.png",
+  "match": "above_far",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "white",
+   "other_colours": [
+    "clear",
+    "silver"
+   ],
+   "finish": "transparent",
+   "shape": "star",
+   "pattern": "faceted star",
+   "packaging": "single",
+   "summary": "Clear faceted star tree topper with a light inside."
+  },
+  "text": "tree topper, white, clear, silver, transparent, star, faceted star, single",
+  "tokens": 572
+ },
+ "78015-1": {
+  "code": "78015-1",
+  "pdf_page": 7,
+  "image": "78015-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "silver",
+   "other_colours": [
+    "gold"
+   ],
+   "finish": "metallic",
+   "shape": "star",
+   "pattern": "radiating starburst",
+   "packaging": "single",
+   "summary": "Metallic star tree topper with a radiating starburst look."
+  },
+  "text": "tree topper, silver, gold, metallic, star, radiating starburst, single",
+  "tokens": 588
+ },
+ "71015-4": {
+  "code": "71015-4",
+  "pdf_page": 7,
+  "image": "71015-4.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "white",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "star",
+   "pattern": "unclear",
+   "packaging": "single",
+   "summary": "White glittery star tree topper with a long pointed star shape."
+  },
+  "text": "tree topper, white, glitter, star, single",
+  "tokens": 570
+ },
+ "71015-5": {
+  "code": "71015-5",
+  "pdf_page": 7,
+  "image": "71015-5.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "white",
+   "other_colours": [
+    "silver"
+   ],
+   "finish": "glitter",
+   "shape": "star",
+   "pattern": "wireframe star with lights",
+   "packaging": "single",
+   "summary": "A white glittery wireframe star tree topper with bright lights."
+  },
+  "text": "tree topper, white, silver, glitter, star, wireframe star with lights, single",
+  "tokens": 589
+ },
+ "76015-3": {
+  "code": "76015-3",
+  "pdf_page": 7,
+  "image": "76015-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "white",
+   "other_colours": [
+    "silver"
+   ],
+   "finish": "metallic",
+   "shape": "star",
+   "pattern": "?",
+   "packaging": "single",
+   "summary": "A white metallic star tree topper with a silver wire-frame look and sparkling lights."
+  },
+  "text": "tree topper, white, silver, metallic, star, single",
+  "tokens": 588
+ },
+ "76015-4": {
+  "code": "76015-4",
+  "pdf_page": 7,
+  "image": "76015-4.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "yellow",
+   "other_colours": [
+    "orange",
+    "gold"
+   ],
+   "finish": "transparent",
+   "shape": "star",
+   "pattern": "plain",
+   "packaging": "single",
+   "summary": "Transparent yellow star tree topper with a warm amber edge."
+  },
+  "text": "tree topper, yellow, orange, gold, transparent, star, plain, single",
+  "tokens": 557
+ },
+ "71218-3": {
+  "code": "71218-3",
+  "pdf_page": 8,
+  "image": "71218-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "white",
+   "other_colours": [
+    "red",
+    "gold",
+    "green"
+   ],
+   "finish": "mixed",
+   "shape": "santa head figurine with pointed hat",
+   "pattern": "na",
+   "packaging": "single",
+   "summary": "A Santa head Christmas figure with a red mesh pointed hat and gold bell."
+  },
+  "text": "figure, white, red, gold, green, mixed, santa head figurine with pointed hat, na, single",
+  "tokens": 567
+ },
+ "90663-28": {
+  "code": "90663-28",
+  "pdf_page": 8,
+  "image": "90663-28.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "gift_box",
+   "primary_colour": "red",
+   "other_colours": [
+    "pink"
+   ],
+   "finish": "glitter",
+   "shape": "cube with bow",
+   "pattern": "open lattice",
+   "packaging": "single",
+   "summary": "A red glitter openwork gift box decoration with a pink bow."
+  },
+  "text": "gift box, red, pink, glitter, cube with bow, open lattice, single",
+  "tokens": 645
+ },
+ "90680-3": {
+  "code": "90680-3",
+  "pdf_page": 8,
+  "image": "90680-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "gift_box",
+   "primary_colour": "red",
+   "other_colours": [
+    "clear"
+   ],
+   "finish": "glitter",
+   "shape": "cube",
+   "pattern": "lattice box with bow",
+   "packaging": "single",
+   "summary": "A glittery red lattice gift box decoration with a bow on top."
+  },
+  "text": "gift box, red, clear, glitter, cube, lattice box with bow, single",
+  "tokens": 602
+ },
+ "71207-4": {
+  "code": "71207-4",
+  "pdf_page": 8,
+  "image": "71207-4.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "white",
+   "other_colours": [
+    "red",
+    "green",
+    "black",
+    "orange"
+   ],
+   "finish": "mixed",
+   "shape": "snowman figure",
+   "pattern": "wire mesh with glitter accents",
+   "packaging": "single",
+   "summary": "Decorative snowman figure with a red-and-green wire hat, scarf, and top section."
+  },
+  "text": "figure, white, red, green, black, orange, mixed, snowman figure, wire mesh with glitter accents, single",
+  "tokens": 543
+ },
+ "73018-3": {
+  "code": "73018-3",
+  "pdf_page": 8,
+  "image": "73018-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "white",
+   "other_colours": [
+    "red",
+    "green",
+    "gold",
+    "black"
+   ],
+   "finish": "mixed",
+   "shape": "Santa head with hanging hook",
+   "pattern": "?",
+   "packaging": "single",
+   "summary": "Santa face hanging Christmas decoration with a red netted hat and gold bell."
+  },
+  "text": "figure, white, red, green, gold, black, mixed, Santa head with hanging hook, single",
+  "tokens": 566
+ },
+ "90664-17": {
+  "code": "90664-17",
+  "pdf_page": 8,
+  "image": "90664-17.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "gift_box",
+   "primary_colour": "red",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "glitter",
+   "shape": "box with bow",
+   "pattern": "open lattice",
+   "packaging": "multipack",
+   "summary": "Open lattice glitter gift box decoration in red with a bow top."
+  },
+  "text": "gift box, red, white, glitter, box with bow, open lattice, multipack",
+  "tokens": 654
+ },
+ "90587-2": {
+  "code": "90587-2",
+  "pdf_page": 8,
+  "image": "90587-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "silver",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "glitter",
+   "shape": "cone tree",
+   "pattern": "stylized Christmas tree",
+   "packaging": "single",
+   "summary": "Glittery silver cone-shaped Christmas tree decoration."
+  },
+  "text": "tree, silver, white, glitter, cone tree, stylized Christmas tree, single",
+  "tokens": 527
+ },
+ "73007-4": {
+  "code": "73007-4",
+  "pdf_page": 8,
+  "image": "73007-4.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "white",
+   "other_colours": [
+    "gold",
+    "red",
+    "black",
+    "green"
+   ],
+   "finish": "glitter",
+   "shape": "snowman",
+   "pattern": "hat and scarf",
+   "packaging": "unclear",
+   "summary": "Glittery snowman figure with a top hat, scarf, and button details."
+  },
+  "text": "figure, white, gold, red, black, green, glitter, snowman, hat and scarf",
+  "tokens": 701
+ },
+ "90680-4": {
+  "code": "90680-4",
+  "pdf_page": 8,
+  "image": "90680-4.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "white",
+   "other_colours": [
+    "black",
+    "orange",
+    "gold",
+    "brown"
+   ],
+   "finish": "mixed",
+   "shape": "snowman figure",
+   "pattern": "figurine",
+   "packaging": "display",
+   "summary": "Christmas snowman figure with a glittery top hat and scarf, black buttons, and an orange carrot nose."
+  },
+  "text": "figure, white, black, orange, gold, brown, mixed, snowman figure, figurine, display",
+  "tokens": 776
+ },
+ "90664-16": {
+  "code": "90664-16",
+  "pdf_page": 8,
+  "image": "90664-16.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "red",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "candy cane",
+   "pattern": "striped",
+   "packaging": "single",
+   "summary": "A red glitter candy cane decoration."
+  },
+  "text": "figure, red, glitter, candy cane, striped, single",
+  "tokens": 609
+ },
+ "90650-5": {
+  "code": "90650-5",
+  "pdf_page": 8,
+  "image": "90650-5.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "ornament",
+   "primary_colour": "red",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "diamond drop",
+   "pattern": "open woven lattice",
+   "packaging": "multipack",
+   "summary": "Open lattice diamond drop ornaments in red, gold, and silver glitter finish."
+  },
+  "text": "ornament, red, glitter, diamond drop, open woven lattice, multipack",
+  "tokens": 531
+ },
+ "71507-4": {
+  "code": "71507-4",
+  "pdf_page": 8,
+  "image": "71507-4.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "white",
+   "other_colours": [
+    "gold",
+    "red",
+    "black"
+   ],
+   "finish": "glitter",
+   "shape": "snowman",
+   "pattern": "hat, scarf, buttons",
+   "packaging": "unclear",
+   "summary": "Glittery snowman decoration with a tall top hat and scarf in festive colours."
+  },
+  "text": "figure, white, gold, red, black, glitter, snowman, hat, scarf, buttons",
+  "tokens": 693
+ },
+ "70202-6": {
+  "code": "70202-6",
+  "pdf_page": 9,
+  "image": "70202-6.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "gold",
+   "other_colours": [
+    "transparent"
+   ],
+   "finish": "glitter",
+   "shape": "angel",
+   "pattern": "none",
+   "packaging": "single",
+   "summary": "Gold glitter angel tree topper with wire halo and outstretched wings."
+  },
+  "text": "tree topper, gold, transparent, glitter, angel, single",
+  "tokens": 529
+ },
+ "70301-7": {
+  "code": "70301-7",
+  "pdf_page": 9,
+  "image": "70301-7.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "orange",
+   "other_colours": [
+    "brown",
+    "red",
+    "white"
+   ],
+   "finish": "natural",
+   "shape": "reindeer figure",
+   "pattern": "textured knitted body with antlers",
+   "packaging": "single",
+   "summary": "Decorative reindeer figure with a knitted-texture orange body and brown antlers."
+  },
+  "text": "figure, orange, brown, red, white, natural, reindeer figure, textured knitted body with antlers, single",
+  "tokens": 728
+ },
+ "73501-7": {
+  "code": "73501-7",
+  "pdf_page": 9,
+  "image": "73501-7.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "gold",
+   "other_colours": [],
+   "finish": "metallic",
+   "shape": "reindeer figure",
+   "pattern": "wireframe",
+   "packaging": "single",
+   "summary": "Metallic gold wireframe reindeer figure decoration."
+  },
+  "text": "figure, gold, metallic, reindeer figure, wireframe, single",
+  "tokens": 581
+ },
+ "70101-12": {
+  "code": "70101-12",
+  "pdf_page": 9,
+  "image": "70101-12.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "orange",
+   "other_colours": [
+    "brown",
+    "white",
+    "red",
+    "green"
+   ],
+   "finish": "fabric",
+   "shape": "reindeer",
+   "pattern": "ribbed",
+   "packaging": "display",
+   "summary": "Fabric reindeer figures in orange with brown antlers and white-red-green neck detail."
+  },
+  "text": "figure, orange, brown, white, red, green, fabric, reindeer, ribbed, display",
+  "tokens": 594
+ },
+ "70402-6": {
+  "code": "70402-6",
+  "pdf_page": 9,
+  "image": "70402-6.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "orange",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "angel",
+   "pattern": "none",
+   "packaging": "single",
+   "summary": "Orange glitter angel figure ornament with wings and a trumpet"
+  },
+  "text": "figure, orange, glitter, angel, single",
+  "tokens": 550
+ },
+ "70101-7": {
+  "code": "70101-7",
+  "pdf_page": 9,
+  "image": "70101-7.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "gold",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "metallic",
+   "shape": "reindeer silhouette",
+   "pattern": "wireframe outline with lights",
+   "packaging": "single",
+   "summary": "Gold wireframe reindeer decoration with a lit-look outline and white accents."
+  },
+  "text": "figure, gold, white, metallic, reindeer silhouette, wireframe outline with lights, single",
+  "tokens": 591
+ },
+ "70401-7": {
+  "code": "70401-7",
+  "pdf_page": 9,
+  "image": "70401-7.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "orange",
+   "other_colours": [
+    "brown",
+    "red",
+    "white",
+    "black"
+   ],
+   "finish": "fabric",
+   "shape": "deer",
+   "pattern": "reindeer figure with antlers",
+   "packaging": "unclear",
+   "summary": "Fabric reindeer figure with orange body, brown antlers and legs, and a white beard detail."
+  },
+  "text": "figure, orange, brown, red, white, black, fabric, deer, reindeer figure with antlers",
+  "tokens": 602
+ },
+ "70501-3": {
+  "code": "70501-3",
+  "pdf_page": 9,
+  "image": "70501-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "orange",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "angel",
+   "pattern": "none",
+   "packaging": "single",
+   "summary": "Orange glitter angel figure ornament with a trumpet."
+  },
+  "text": "figure, orange, glitter, angel, single",
+  "tokens": 549
+ },
+ "72501-7": {
+  "code": "72501-7",
+  "pdf_page": 9,
+  "image": "72501-7.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "gold",
+   "other_colours": [
+    "white",
+    "grey"
+   ],
+   "finish": "metallic",
+   "shape": "reindeer",
+   "pattern": "wire frame",
+   "packaging": "unclear",
+   "summary": "Metallic gold wire-frame reindeer figure in a decorative display style."
+  },
+  "text": "figure, gold, white, grey, metallic, reindeer, wire frame",
+  "tokens": 589
+ },
+ "70402-7": {
+  "code": "70402-7",
+  "pdf_page": 9,
+  "image": "70402-7.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "orange",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "angel figure",
+   "pattern": "winged trumpet player",
+   "packaging": "single",
+   "summary": "Orange glitter angel figure holding a trumpet."
+  },
+  "text": "figure, orange, glitter, angel figure, winged trumpet player, single",
+  "tokens": 552
+ },
+ "70301-6": {
+  "code": "70301-6",
+  "pdf_page": 9,
+  "image": "70301-6.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "white",
+   "other_colours": [
+    "red"
+   ],
+   "finish": "frosted",
+   "shape": "deer figure",
+   "pattern": "sparkly",
+   "packaging": "single",
+   "summary": "White glittery reindeer figure with red berry-style neck decoration."
+  },
+  "text": "figure, white, red, frosted, deer figure, sparkly, single",
+  "tokens": 681
+ },
+ "70801-2": {
+  "code": "70801-2",
+  "pdf_page": 9,
+  "image": "70801-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "garland",
+   "primary_colour": "gold",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "swag",
+   "pattern": "tinsel",
+   "packaging": "single",
+   "summary": "Gold glitter tinsel garland with a curly, swirled shape."
+  },
+  "text": "garland, gold, glitter, swag, tinsel, single",
+  "tokens": 514
+ },
+ "70502-7": {
+  "code": "70502-7",
+  "pdf_page": 9,
+  "image": "70502-7.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "gold",
+   "other_colours": [
+    "grey"
+   ],
+   "finish": "metallic",
+   "shape": "angel with trumpet",
+   "pattern": "single",
+   "packaging": "single",
+   "summary": "Metallic gold angel figure with a trumpet and outstretched wings."
+  },
+  "text": "figure, gold, grey, metallic, angel with trumpet, single, single",
+  "tokens": 572
+ },
+ "70101-11": {
+  "code": "70101-11",
+  "pdf_page": 9,
+  "image": "70101-11.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "white",
+   "other_colours": [
+    "red",
+    "green",
+    "black"
+   ],
+   "finish": "frosted",
+   "shape": "deer",
+   "pattern": "reindeer",
+   "packaging": "single",
+   "summary": "White frosted reindeer figure with glittery antlers and a small red-and-green neck detail."
+  },
+  "text": "figure, white, red, green, black, frosted, deer, reindeer, single",
+  "tokens": 711
+ },
+ "6388-01": {
+  "code": "6388-01",
+  "pdf_page": 9,
+  "image": "6388-01.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "silver",
+   "other_colours": [
+    "gold"
+   ],
+   "finish": "glitter",
+   "shape": "reindeer",
+   "pattern": "none",
+   "packaging": "single",
+   "summary": "Sparkly silver reindeer figure with gold-tipped antlers."
+  },
+  "text": "figure, silver, gold, glitter, reindeer, single",
+  "tokens": 570
+ },
+ "70401-6": {
+  "code": "70401-6",
+  "pdf_page": 9,
+  "image": "70401-6.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "white",
+   "other_colours": [
+    "red",
+    "green"
+   ],
+   "finish": "frosted",
+   "shape": "reindeer",
+   "pattern": "sparkly",
+   "packaging": "display",
+   "summary": "White sparkly reindeer figure with red and green neck detail."
+  },
+  "text": "figure, white, red, green, frosted, reindeer, sparkly, display",
+  "tokens": 692
+ },
+ "70502-8": {
+  "code": "70502-8",
+  "pdf_page": 9,
+  "image": "70502-8.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "gold",
+   "other_colours": [
+    "silver"
+   ],
+   "finish": "metallic",
+   "shape": "angel figure with trumpet and wings",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "Metallic wire angel figure with outstretched wings and a trumpet."
+  },
+  "text": "figure, gold, silver, metallic, angel figure with trumpet and wings, single",
+  "tokens": 573
+ },
+ "70801-1": {
+  "code": "70801-1",
+  "pdf_page": 10,
+  "image": "70801-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "ornament",
+   "primary_colour": "brown",
+   "other_colours": [
+    "grey"
+   ],
+   "finish": "metallic",
+   "shape": "bell",
+   "pattern": "filigree",
+   "packaging": "single",
+   "summary": "Decorative bell-shaped ornament with an openwork filigree design."
+  },
+  "text": "ornament, brown, grey, metallic, bell, filigree, single",
+  "tokens": 559
+ },
+ "71101-1": {
+  "code": "71101-1",
+  "pdf_page": 10,
+  "image": "71101-1.png",
+  "match": "above_far",
+  "attributes": {
+   "kind": "ornament",
+   "primary_colour": "brown",
+   "other_colours": [],
+   "finish": "metallic",
+   "shape": "cage bell",
+   "pattern": "filigree",
+   "packaging": "single",
+   "summary": "Brown metallic filigree bell-shaped ornament with an open cage design."
+  },
+  "text": "ornament, brown, metallic, cage bell, filigree, single",
+  "tokens": 559
+ },
+ "71701-1": {
+  "code": "71701-1",
+  "pdf_page": 10,
+  "image": "71701-1.png",
+  "match": "above_far",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "copper",
+   "other_colours": [],
+   "finish": "metallic",
+   "shape": "domed cage with star and heart cutouts",
+   "pattern": "open wirework",
+   "packaging": "single",
+   "summary": "Copper-toned open wire Christmas tree topper with a domed cage shape and star-and-heart style cutouts."
+  },
+  "text": "tree topper, copper, metallic, domed cage with star and heart cutouts, open wirework, single",
+  "tokens": 575
+ },
+ "70607-1": {
+  "code": "70607-1",
+  "pdf_page": 10,
+  "image": "70607-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "white",
+   "other_colours": [
+    "red",
+    "green",
+    "orange",
+    "black"
+   ],
+   "finish": "fabric",
+   "shape": "snowman",
+   "pattern": "snowman figure with hat, scarf and mittens",
+   "packaging": "single",
+   "summary": "A soft snowman figure with a red-and-green hat, scarf, and mittens."
+  },
+  "text": "figure, white, red, green, orange, black, fabric, snowman, snowman figure with hat, scarf and mittens, single",
+  "tokens": 560
+ },
+ "71507-2": {
+  "code": "71507-2",
+  "pdf_page": 10,
+  "image": "71507-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "white",
+   "other_colours": [
+    "black",
+    "red",
+    "orange",
+    "brown",
+    "green"
+   ],
+   "finish": "fabric",
+   "shape": "snowman",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "A plush snowman figure with a black top hat, red scarf, twig arms, and black button details."
+  },
+  "text": "figure, white, black, red, orange, brown, green, fabric, snowman, single",
+  "tokens": 541
+ },
+ "73004-4": {
+  "code": "73004-4",
+  "pdf_page": 10,
+  "image": "73004-4.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "other",
+   "primary_colour": "white",
+   "other_colours": [
+    "gold",
+    "grey"
+   ],
+   "finish": "matte",
+   "shape": "snowflake",
+   "pattern": "mixed",
+   "packaging": "unclear",
+   "summary": "A decorative snowflake design in white and gold outline with candy cane and star accents."
+  },
+  "text": "other, white, gold, grey, matte, snowflake, mixed",
+  "tokens": 519
+ },
+ "71636-2": {
+  "code": "71636-2",
+  "pdf_page": 10,
+  "image": "71636-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "white",
+   "other_colours": [
+    "black",
+    "red"
+   ],
+   "finish": "glitter",
+   "shape": "snowman",
+   "pattern": "not applicable",
+   "packaging": "single",
+   "summary": "Glittery snowman figure with a black hat and red bow."
+  },
+  "text": "figure, white, black, red, glitter, snowman, not applicable, single",
+  "tokens": 502
+ },
+ "71507-3": {
+  "code": "71507-3",
+  "pdf_page": 10,
+  "image": "71507-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "white",
+   "other_colours": [
+    "black",
+    "red",
+    "green",
+    "orange"
+   ],
+   "finish": "frosted",
+   "shape": "snowman figure",
+   "pattern": "snowman with top hat and scarf-like accents",
+   "packaging": "single",
+   "summary": "A frosted white snowman figure with a black top hat and red and green accents."
+  },
+  "text": "figure, white, black, red, green, orange, frosted, snowman figure, snowman with top hat and scarf-like accents, single",
+  "tokens": 548
+ },
+ "76004-6": {
+  "code": "76004-6",
+  "pdf_page": 10,
+  "image": "76004-6.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "silver",
+   "other_colours": [],
+   "finish": "metallic",
+   "shape": "starburst filigree",
+   "pattern": "swirled wire-like decorative topper with star accents",
+   "packaging": "single",
+   "summary": "Silver metallic filigree tree topper with swirling starburst design."
+  },
+  "text": "tree topper, silver, metallic, starburst filigree, swirled wire-like decorative topper with star accents, single",
+  "tokens": 602
+ },
+ "72336-1": {
+  "code": "72336-1",
+  "pdf_page": 10,
+  "image": "72336-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "white",
+   "other_colours": [
+    "black",
+    "red"
+   ],
+   "finish": "glitter",
+   "shape": "snowman",
+   "pattern": "black buttons, red scarf and hat band, black hat",
+   "packaging": "single",
+   "summary": "Glittery white snowman figure with black hat, red scarf, and black buttons."
+  },
+  "text": "figure, white, black, red, glitter, snowman, black buttons, red scarf and hat band, black hat, single",
+  "tokens": 544
+ },
+ "70403-3": {
+  "code": "70403-3",
+  "pdf_page": 11,
+  "image": "70403-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "blue",
+   "other_colours": [
+    "yellow",
+    "white",
+    "brown"
+   ],
+   "finish": "glitter",
+   "shape": "teddy bear figure",
+   "pattern": "not specified",
+   "packaging": "single",
+   "summary": "A glittery teddy bear figure with a blue body, yellow head and arms, and white paws."
+  },
+  "text": "figure, blue, yellow, white, brown, glitter, teddy bear figure, not specified, single",
+  "tokens": 598
+ },
+ "70501-6": {
+  "code": "70501-6",
+  "pdf_page": 11,
+  "image": "70501-6.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "brown",
+   "other_colours": [
+    "red"
+   ],
+   "finish": "fabric",
+   "shape": "teddy bear",
+   "pattern": "plain",
+   "packaging": "single",
+   "summary": "A brown teddy bear figure with a red bow tie."
+  },
+  "text": "figure, brown, red, fabric, teddy bear, plain, single",
+  "tokens": 568
+ },
+ "70505-3": {
+  "code": "70505-3",
+  "pdf_page": 11,
+  "image": "70505-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "blue",
+   "other_colours": [
+    "gold",
+    "white",
+    "black"
+   ],
+   "finish": "glitter",
+   "shape": "teddy bear figure",
+   "pattern": "sequined body with hat and paw pads",
+   "packaging": "single",
+   "summary": "A glittery teddy bear figure with a blue body, gold arms and head accents, and white paw pads."
+  },
+  "text": "figure, blue, gold, white, black, glitter, teddy bear figure, sequined body with hat and paw pads, single",
+  "tokens": 606
+ },
+ "70501-5": {
+  "code": "70501-5",
+  "pdf_page": 11,
+  "image": "70501-5.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "gold",
+   "other_colours": [
+    "white",
+    "black"
+   ],
+   "finish": "glitter",
+   "shape": "teddy bear",
+   "pattern": "no pattern",
+   "packaging": "single",
+   "summary": "A glittery gold teddy bear decoration with white accents and black eyes and nose."
+  },
+  "text": "figure, gold, white, black, glitter, teddy bear, no pattern, single",
+  "tokens": 563
+ },
+ "70501-1": {
+  "code": "70501-1",
+  "pdf_page": 11,
+  "image": "70501-1.png",
+  "match": "above_far",
+  "attributes": {
+   "kind": "banner",
+   "primary_colour": "red",
+   "other_colours": [
+    "white",
+    "green"
+   ],
+   "finish": "matte",
+   "shape": "pennant",
+   "pattern": "Christmas character logo",
+   "packaging": "single",
+   "summary": "Red pennant-style Christmas banner with a Santa and tree logo, edged in white and green."
+  },
+  "text": "banner, red, white, green, matte, pennant, Christmas character logo, single",
+  "tokens": 523
+ },
+ "70301-1": {
+  "code": "70301-1",
+  "pdf_page": 11,
+  "image": "70301-1.png",
+  "match": "above_far",
+  "attributes": {
+   "kind": "banner",
+   "primary_colour": "red",
+   "other_colours": [
+    "green",
+    "white"
+   ],
+   "finish": "fabric",
+   "shape": "pennant",
+   "pattern": "Santa and Christmas tree logo",
+   "packaging": "single",
+   "summary": "Red fabric pennant-style banner with a Santa-and-tree logo and the text 'since 1987'."
+  },
+  "text": "banner, red, green, white, fabric, pennant, Santa and Christmas tree logo, single",
+  "tokens": 527
+ },
+ "70101-1": {
+  "code": "70101-1",
+  "pdf_page": 11,
+  "image": "70101-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "brown",
+   "other_colours": [
+    "red"
+   ],
+   "finish": "fabric",
+   "shape": "teddy bear",
+   "pattern": "textured plush",
+   "packaging": "single",
+   "summary": "A brown plush teddy bear Christmas decoration with a red bow tie."
+  },
+  "text": "figure, brown, red, fabric, teddy bear, textured plush, single",
+  "tokens": 572
+ },
+ "71256-1": {
+  "code": "71256-1",
+  "pdf_page": 11,
+  "image": "71256-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "banner",
+   "primary_colour": "red",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "matte",
+   "shape": "ribbon banner",
+   "pattern": "text",
+   "packaging": "single",
+   "summary": "A red ribbon-style banner with white lettering reading 76056-1 and 60 cm."
+  },
+  "text": "banner, red, white, matte, ribbon banner, text, single",
+  "tokens": 519
+ },
+ "76056-1": {
+  "code": "76056-1",
+  "pdf_page": 11,
+  "image": "76056-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "banner",
+   "primary_colour": "red",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "matte",
+   "shape": "ribbon banner",
+   "pattern": "red ribbon with white text",
+   "packaging": "single",
+   "summary": "Red ribbon-style banner with white lettering reading 76056-2 and 60 cm."
+  },
+  "text": "banner, red, white, matte, ribbon banner, red ribbon with white text, single",
+  "tokens": 522
+ },
+ "76056-2": {
+  "code": "76056-2",
+  "pdf_page": 11,
+  "image": "76056-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "red",
+   "other_colours": [
+    "gold",
+    "black",
+    "white",
+    "green"
+   ],
+   "finish": "glossy",
+   "shape": "soldier",
+   "pattern": "nutcracker",
+   "packaging": "single",
+   "summary": "Decorative nutcracker soldier figure in red, gold and black with a tall hat and painted face."
+  },
+  "text": "figure, red, gold, black, white, green, glossy, soldier, nutcracker, single",
+  "tokens": 484
+ },
+ "74556-1": {
+  "code": "74556-1",
+  "pdf_page": 11,
+  "image": "74556-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "red",
+   "other_colours": [
+    "gold",
+    "white",
+    "black",
+    "skin-tone"
+   ],
+   "finish": "glossy",
+   "shape": "standing nutcracker figure",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "A glossy red-and-gold nutcracker soldier figure with white uniform details and black boots."
+  },
+  "text": "figure, red, gold, white, black, skin-tone, glossy, standing nutcracker figure, single",
+  "tokens": 482
+ },
+ "73056-1": {
+  "code": "73056-1",
+  "pdf_page": 11,
+  "image": "73056-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "blue",
+   "other_colours": [
+    "gold",
+    "red",
+    "white",
+    "skin-tone"
+   ],
+   "finish": "glossy",
+   "shape": "nutcracker soldier",
+   "pattern": "decorative",
+   "packaging": "single",
+   "summary": "Nutcracker-style Christmas figure with a tall blue hat, gold trim, red jacket, and white trousers on a base."
+  },
+  "text": "figure, blue, gold, red, white, skin-tone, glossy, nutcracker soldier, decorative, single",
+  "tokens": 505
+ },
+ "73056-2": {
+  "code": "73056-2",
+  "pdf_page": 11,
+  "image": "73056-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "gold",
+   "other_colours": [
+    "white",
+    "black",
+    "beige",
+    "red"
+   ],
+   "finish": "glossy",
+   "shape": "standing nutcracker figure",
+   "pattern": "crown and uniform details",
+   "packaging": "single",
+   "summary": "Standing nutcracker figure in gold, white, black and beige with a crown and staff."
+  },
+  "text": "figure, gold, white, black, beige, red, glossy, standing nutcracker figure, crown and uniform details, single",
+  "tokens": 488
+ },
+ "73032-1": {
+  "code": "73032-1",
+  "pdf_page": 12,
+  "image": "73032-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "ribbon",
+   "primary_colour": "red",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "fabric",
+   "shape": "bow and candy cane loop",
+   "pattern": "striped",
+   "packaging": "single",
+   "summary": "A festive red-and-white fuzzy candy cane decoration with a red bow."
+  },
+  "text": "ribbon, red, white, fabric, bow and candy cane loop, striped, single",
+  "tokens": 561
+ },
+ "74532-1": {
+  "code": "74532-1",
+  "pdf_page": 12,
+  "image": "74532-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "swag",
+   "primary_colour": "red",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "mixed",
+   "shape": "candy cane",
+   "pattern": "striped",
+   "packaging": "single",
+   "summary": "Red and white fluffy candy-cane-style decoration with a red bow."
+  },
+  "text": "swag, red, white, mixed, candy cane, striped, single",
+  "tokens": 559
+ },
+ "75011-1": {
+  "code": "75011-1",
+  "pdf_page": 12,
+  "image": "75011-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "red",
+   "other_colours": [],
+   "finish": "transparent",
+   "shape": "tinsel tree",
+   "pattern": "dense fluffy cone",
+   "packaging": "single",
+   "summary": "Red fluffy tinsel Christmas tree decoration."
+  },
+  "text": "tree, red, transparent, tinsel tree, dense fluffy cone, single",
+  "tokens": 567
+ },
+ "73032-2": {
+  "code": "73032-2",
+  "pdf_page": 12,
+  "image": "73032-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "garland",
+   "primary_colour": "red",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "glitter",
+   "shape": "candy cane",
+   "pattern": "spiral",
+   "packaging": "single",
+   "summary": "Fuzzy red-and-white candy cane shaped Christmas garland."
+  },
+  "text": "garland, red, white, glitter, candy cane, spiral, single",
+  "tokens": 543
+ },
+ "74532-2": {
+  "code": "74532-2",
+  "pdf_page": 12,
+  "image": "74532-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "other",
+   "primary_colour": "red",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "fabric",
+   "shape": "candy cane",
+   "pattern": "striped",
+   "packaging": "single",
+   "summary": "A fuzzy red-and-white striped candy cane decoration."
+  },
+  "text": "other, red, white, fabric, candy cane, striped, single",
+  "tokens": 539
+ },
+ "79032-1": {
+  "code": "79032-1",
+  "pdf_page": 12,
+  "image": "79032-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "red",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "glitter",
+   "shape": "candy cane figure",
+   "pattern": "striped",
+   "packaging": "single",
+   "summary": "Glittery red and white striped candy cane figure decoration."
+  },
+  "text": "figure, red, white, glitter, candy cane figure, striped, single",
+  "tokens": 586
+ },
+ "77555-1": {
+  "code": "77555-1",
+  "pdf_page": 12,
+  "image": "77555-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "ornament",
+   "primary_colour": "blue",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "glitter",
+   "shape": "teardrop",
+   "pattern": "striped",
+   "packaging": "single",
+   "summary": "A blue and white glitter teardrop ornament with a striped design."
+  },
+  "text": "ornament, blue, white, glitter, teardrop, striped, single",
+  "tokens": 516
+ },
+ "77555-2": {
+  "code": "77555-2",
+  "pdf_page": 12,
+  "image": "77555-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "ornament",
+   "primary_colour": "red",
+   "other_colours": [
+    "green",
+    "gold",
+    "white"
+   ],
+   "finish": "glitter",
+   "shape": "hot air balloon",
+   "pattern": "striped",
+   "packaging": "single",
+   "summary": "Glittery striped hot-air-balloon-style Christmas ornament in red, green, gold and white."
+  },
+  "text": "ornament, red, green, gold, white, glitter, hot air balloon, striped, single",
+  "tokens": 570
+ },
+ "73033-1": {
+  "code": "73033-1",
+  "pdf_page": 12,
+  "image": "73033-1.png",
+  "match": "above_far",
+  "attributes": {
+   "kind": "other",
+   "primary_colour": "red",
+   "other_colours": [
+    "white",
+    "grey"
+   ],
+   "finish": "mixed",
+   "shape": "ribbon banner",
+   "pattern": "printed text",
+   "packaging": "single",
+   "summary": "A red ribbon-style banner with white printed text."
+  },
+  "text": "other, red, white, grey, mixed, ribbon banner, printed text, single",
+  "tokens": 484
+ },
+ "74033-1": {
+  "code": "74033-1",
+  "pdf_page": 12,
+  "image": "74033-1.png",
+  "match": "above_far",
+  "attributes": {
+   "kind": "banner",
+   "primary_colour": "red",
+   "other_colours": [
+    "grey",
+    "white"
+   ],
+   "finish": "matte",
+   "shape": "ribbon banner",
+   "pattern": "text print",
+   "packaging": "single",
+   "summary": "Red ribbon-style banner with white printed text."
+  },
+  "text": "banner, red, grey, white, matte, ribbon banner, text print, single",
+  "tokens": 484
+ },
+ "76033-1": {
+  "code": "76033-1",
+  "pdf_page": 12,
+  "image": "76033-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "gift_box",
+   "primary_colour": "white",
+   "other_colours": [
+    "red"
+   ],
+   "finish": "frosted",
+   "shape": "box",
+   "pattern": "wrapped present with bow",
+   "packaging": "single",
+   "summary": "A frosted white gift box decoration wrapped with a red ribbon and bow."
+  },
+  "text": "gift box, white, red, frosted, box, wrapped present with bow, single",
+  "tokens": 576
+ },
+ "76033-2": {
+  "code": "76033-2",
+  "pdf_page": 12,
+  "image": "76033-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "gift_box",
+   "primary_colour": "blue",
+   "other_colours": [
+    "gold",
+    "white"
+   ],
+   "finish": "glitter",
+   "shape": "wrapped present box",
+   "pattern": "vertical striped gift box with bow",
+   "packaging": "single",
+   "summary": "Glittery blue gift box decoration with gold stripes and a white bow."
+  },
+  "text": "gift box, blue, gold, white, glitter, wrapped present box, vertical striped gift box with bow, single",
+  "tokens": 581
+ },
+ "78033-2": {
+  "code": "78033-2",
+  "pdf_page": 12,
+  "image": "78033-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "gift_box",
+   "primary_colour": "blue",
+   "other_colours": [
+    "gold",
+    "white"
+   ],
+   "finish": "glitter",
+   "shape": "cube with bow",
+   "pattern": "vertical stripes and ribbon bow",
+   "packaging": "single",
+   "summary": "Blue glitter gift box decoration with gold striped ribbon and a white bow."
+  },
+  "text": "gift box, blue, gold, white, glitter, cube with bow, vertical stripes and ribbon bow, single",
+  "tokens": 579
+ },
+ "71033-2": {
+  "code": "71033-2",
+  "pdf_page": 12,
+  "image": "71033-2.png",
+  "match": "above_far",
+  "attributes": {
+   "kind": "gift_box",
+   "primary_colour": "blue",
+   "other_colours": [
+    "gold",
+    "white"
+   ],
+   "finish": "glitter",
+   "shape": "box",
+   "pattern": "vertical stripes with bow",
+   "packaging": "single",
+   "summary": "A glittery blue gift box decoration with gold striped panels and a white bow on top."
+  },
+  "text": "gift box, blue, gold, white, glitter, box, vertical stripes with bow, single",
+  "tokens": 580
+ },
+ "71509-1": {
+  "code": "71509-1",
+  "pdf_page": 13,
+  "image": "71509-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "red",
+   "other_colours": [
+    "gold"
+   ],
+   "finish": "mixed",
+   "shape": "sleigh",
+   "pattern": "decorative scrollwork",
+   "packaging": "single",
+   "summary": "A red decorative Santa sleigh with gold trim and scrollwork runners."
+  },
+  "text": "figure, red, gold, mixed, sleigh, decorative scrollwork, single",
+  "tokens": 530
+ },
+ "79009-2": {
+  "code": "79009-2",
+  "pdf_page": 13,
+  "image": "79009-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "red",
+   "other_colours": [
+    "gold",
+    "white"
+   ],
+   "finish": "glossy",
+   "shape": "sleigh",
+   "pattern": "wireframe",
+   "packaging": "single",
+   "summary": "A red sleigh-style Christmas decoration with gold scrollwork runners and trim."
+  },
+  "text": "figure, red, gold, white, glossy, sleigh, wireframe, single",
+  "tokens": 518
+ },
+ "74109-1": {
+  "code": "74109-1",
+  "pdf_page": 13,
+  "image": "74109-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "gold",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "glitter",
+   "shape": "sleigh",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "Gold glitter sleigh decoration with a white-speckled finish."
+  },
+  "text": "figure, gold, white, glitter, sleigh, single",
+  "tokens": 539
+ },
+ "75009-1": {
+  "code": "75009-1",
+  "pdf_page": 13,
+  "image": "75009-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "silver",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "chair-shaped",
+   "pattern": "none",
+   "packaging": "single",
+   "summary": "A silver glittery decorative chair-shaped piece."
+  },
+  "text": "tree topper, silver, glitter, chair-shaped, single",
+  "tokens": 566
+ },
+ "77009-1": {
+  "code": "77009-1",
+  "pdf_page": 13,
+  "image": "77009-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "gold",
+   "other_colours": [
+    "red"
+   ],
+   "finish": "glitter",
+   "shape": "sleigh",
+   "pattern": "unclear",
+   "packaging": "single",
+   "summary": "Glittery gold sleigh decoration with red outline and runners."
+  },
+  "text": "figure, gold, red, glitter, sleigh, single",
+  "tokens": 542
+ },
+ "71033-3": {
+  "code": "71033-3",
+  "pdf_page": 13,
+  "image": "71033-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "ornament",
+   "primary_colour": "blue",
+   "other_colours": [
+    "gold",
+    "teal",
+    "silver"
+   ],
+   "finish": "glossy",
+   "shape": "sphere",
+   "pattern": "decorative bauble assortment",
+   "packaging": "unclear",
+   "summary": "Assorted glossy round Christmas baubles in blue tones with gold hanging caps."
+  },
+  "text": "ornament, blue, gold, teal, silver, glossy, sphere, decorative bauble assortment",
+  "tokens": 540
+ },
+ "71033-4": {
+  "code": "71033-4",
+  "pdf_page": 13,
+  "image": "71033-4.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "gold",
+   "other_colours": [
+    "red",
+    "orange"
+   ],
+   "finish": "metallic",
+   "shape": "triangular tree outline with round baubles",
+   "pattern": "N/A",
+   "packaging": "single",
+   "summary": "A gold wire Christmas tree decoration with red and gold round baubles inside."
+  },
+  "text": "tree, gold, red, orange, metallic, triangular tree outline with round baubles, single",
+  "tokens": 523
+ },
+ "71233-1": {
+  "code": "71233-1",
+  "pdf_page": 13,
+  "image": "71233-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "ornament",
+   "primary_colour": "green",
+   "other_colours": [
+    "gold",
+    "silver"
+   ],
+   "finish": "glossy",
+   "shape": "sphere",
+   "pattern": "pack of hanging baubles",
+   "packaging": "display",
+   "summary": "A display of assorted round Christmas baubles in green, gold and silver finishes."
+  },
+  "text": "ornament, green, gold, silver, glossy, sphere, pack of hanging baubles, display",
+  "tokens": 522
+ },
+ "76033-3": {
+  "code": "76033-3",
+  "pdf_page": 13,
+  "image": "76033-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "gold",
+   "other_colours": [
+    "white",
+    "brown"
+   ],
+   "finish": "mixed",
+   "shape": "tree",
+   "pattern": "ring circles",
+   "packaging": "single",
+   "summary": "A decorative Christmas tree display stand with round hanging ornament holders."
+  },
+  "text": "tree, gold, white, brown, mixed, tree, ring circles, single",
+  "tokens": 541
+ },
+ "74018-1": {
+  "code": "74018-1",
+  "pdf_page": 14,
+  "image": "74018-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "red",
+   "other_colours": [
+    "white",
+    "black",
+    "gold",
+    "green"
+   ],
+   "finish": "fabric",
+   "shape": "standing Santa figure",
+   "pattern": "none",
+   "packaging": "single",
+   "summary": "A fabric Santa Claus hanging figure in red with a long pointed hat and black boots."
+  },
+  "text": "figure, red, white, black, gold, green, fabric, standing Santa figure, single",
+  "tokens": 522
+ },
+ "73007-2": {
+  "code": "73007-2",
+  "pdf_page": 14,
+  "image": "73007-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "white",
+   "other_colours": [
+    "black",
+    "red",
+    "green",
+    "gold"
+   ],
+   "finish": "mixed",
+   "shape": "snowman figure",
+   "pattern": "striped scarf and vest",
+   "packaging": "single",
+   "summary": "Snowman figure decoration with a black hat, scarf, and a sign that says 'LET IT SNOW'."
+  },
+  "text": "figure, white, black, red, green, gold, mixed, snowman figure, striped scarf and vest, single",
+  "tokens": 561
+ },
+ "90159-2": {
+  "code": "90159-2",
+  "pdf_page": 14,
+  "image": "90159-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "white",
+   "other_colours": [
+    "red",
+    "green",
+    "black"
+   ],
+   "finish": "mixed",
+   "shape": "snowman figure",
+   "pattern": "smiling snowman with red hat, red scarf, green mittens, and two buttons",
+   "packaging": "single",
+   "summary": "A cheerful snowman figure with a red hat, scarf, and green mittens."
+  },
+  "text": "figure, white, red, green, black, mixed, snowman figure, smiling snowman with red hat, red scarf, green mittens, and two buttons, single",
+  "tokens": 581
+ },
+ "90159-3": {
+  "code": "90159-3",
+  "pdf_page": 14,
+  "image": "90159-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "red",
+   "other_colours": [
+    "white",
+    "green",
+    "gold"
+   ],
+   "finish": "fabric",
+   "shape": "standing santa figure",
+   "pattern": "trimmed suit with hat",
+   "packaging": "single",
+   "summary": "Standing Santa Claus figure in a red suit with white trim, holding a green wreath and a gold gift bag."
+  },
+  "text": "figure, red, white, green, gold, fabric, standing santa figure, trimmed suit with hat, single",
+  "tokens": 515
+ },
+ "73018-1": {
+  "code": "73018-1",
+  "pdf_page": 14,
+  "image": "73018-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "red",
+   "other_colours": [
+    "white",
+    "black",
+    "gold",
+    "green"
+   ],
+   "finish": "fabric",
+   "shape": "standing Santa figure",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "A standing Santa Claus figure in a red suit with white trim, black boots, and a tall red hat."
+  },
+  "text": "figure, red, white, black, gold, green, fabric, standing Santa figure, single",
+  "tokens": 497
+ },
+ "74018-2": {
+  "code": "74018-2",
+  "pdf_page": 14,
+  "image": "74018-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "red",
+   "other_colours": [
+    "white",
+    "black",
+    "skin",
+    "green"
+   ],
+   "finish": "fabric",
+   "shape": "standing Santa figure",
+   "pattern": "santa claus",
+   "packaging": "single",
+   "summary": "Standing Santa Claus figure in a red suit with white trim, black boots and belt, and a red hat."
+  },
+  "text": "figure, red, white, black, skin, green, fabric, standing Santa figure, santa claus, single",
+  "tokens": 501
+ },
+ "72607-1": {
+  "code": "72607-1",
+  "pdf_page": 14,
+  "image": "72607-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "white",
+   "other_colours": [
+    "black",
+    "red",
+    "green"
+   ],
+   "finish": "matte",
+   "shape": "snowman figure",
+   "pattern": "striped scarf",
+   "packaging": "single",
+   "summary": "A cheerful snowman figure with a black top hat, striped scarf, red shoes, and green mittens."
+  },
+  "text": "figure, white, black, red, green, matte, snowman figure, striped scarf, single",
+  "tokens": 528
+ },
+ "71507-1": {
+  "code": "71507-1",
+  "pdf_page": 14,
+  "image": "71507-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "white",
+   "other_colours": [
+    "black",
+    "red",
+    "green"
+   ],
+   "finish": "fabric",
+   "shape": "snowman figure",
+   "pattern": "red and green stripes scarf and candy-cane staff",
+   "packaging": "single",
+   "summary": "Plush snowman figure with a black hat, red ear muffs, striped scarf, and candy-cane staff."
+  },
+  "text": "figure, white, black, red, green, fabric, snowman figure, red and green stripes scarf and candy-cane staff, single",
+  "tokens": 536
+ },
+ "74031-1": {
+  "code": "74031-1",
+  "pdf_page": 15,
+  "image": "74031-1.png",
+  "match": "above_far",
+  "attributes": {
+   "kind": "other",
+   "primary_colour": "white",
+   "other_colours": [],
+   "finish": "matte",
+   "shape": "mantelpiece/fireplace-shaped panel",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "White matte decorative fireplace/mantelpiece display piece."
+  },
+  "text": "other, white, matte, mantelpiece/fireplace-shaped panel, single",
+  "tokens": 554
+ },
+ "70319-1": {
+  "code": "70319-1",
+  "pdf_page": 16,
+  "image": "70319-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "white",
+   "other_colours": [
+    "cream"
+   ],
+   "finish": "frosted",
+   "shape": "house",
+   "pattern": "single",
+   "packaging": "single",
+   "summary": "A small white frosted decorative house with a steep snowy roof and arched doorway."
+  },
+  "text": "tree, white, cream, frosted, house, single, single",
+  "tokens": 560
+ },
+ "77019-1": {
+  "code": "77019-1",
+  "pdf_page": 16,
+  "image": "77019-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "lantern",
+   "primary_colour": "white",
+   "other_colours": [
+    "gold",
+    "grey"
+   ],
+   "finish": "matte",
+   "shape": "house-shaped",
+   "pattern": "single",
+   "packaging": "single",
+   "summary": "White house-shaped decorative lantern with cut-out windows and warm light inside."
+  },
+  "text": "lantern, white, gold, grey, matte, house-shaped, single, single",
+  "tokens": 574
+ },
+ "70503-1": {
+  "code": "70503-1",
+  "pdf_page": 16,
+  "image": "70503-1.png",
+  "match": "above_far",
+  "attributes": {
+   "kind": "other",
+   "primary_colour": "blue",
+   "other_colours": [
+    "white",
+    "grey"
+   ],
+   "finish": "matte",
+   "shape": "banner",
+   "pattern": "text",
+   "packaging": "unclear",
+   "summary": "A blue ribbon-style banner with white text, shown as a catalogue label graphic."
+  },
+  "text": "other, blue, white, grey, matte, banner, text",
+  "tokens": 474
+ },
+ "70203-1": {
+  "code": "70203-1",
+  "pdf_page": 16,
+  "image": "70203-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "white",
+   "other_colours": [
+    "blue",
+    "black"
+   ],
+   "finish": "fabric",
+   "shape": "bear",
+   "pattern": "plain",
+   "packaging": "single",
+   "summary": "A soft white polar bear figure with blue accents and a simple black face."
+  },
+  "text": "figure, white, blue, black, fabric, bear, plain, single",
+  "tokens": 500
+ },
+ "75009-2": {
+  "code": "75009-2",
+  "pdf_page": 17,
+  "image": "75009-2.png",
+  "match": "no_rule_fitted",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "red",
+   "other_colours": [
+    "white",
+    "black",
+    "gold"
+   ],
+   "finish": "glitter",
+   "shape": "santa in sleigh",
+   "pattern": "solid",
+   "packaging": "single",
+   "summary": "Glittery Santa figure seated in a gold sleigh with a black base."
+  },
+  "text": "figure, red, white, black, gold, glitter, santa in sleigh, solid, single",
+  "tokens": 508
+ },
+ "74109-2": {
+  "code": "74109-2",
+  "pdf_page": 17,
+  "image": "74109-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "silver",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "glitter",
+   "shape": "reindeer",
+   "pattern": "light-up silhouette",
+   "packaging": "single",
+   "summary": "A glittery silver reindeer light decoration with white sparkling lights."
+  },
+  "text": "figure, silver, white, glitter, reindeer, light-up silhouette, single",
+  "tokens": 492
+ },
+ "74109-2/L": {
+  "code": "74109-2/L",
+  "pdf_page": 17,
+  "image": "74109-2_L.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "purple",
+   "other_colours": [
+    "silver"
+   ],
+   "finish": "glitter",
+   "shape": "reindeer",
+   "pattern": "festive silhouette",
+   "packaging": "single",
+   "summary": "Glittery purple and silver reindeer decoration with a light-up look."
+  },
+  "text": "figure, purple, silver, glitter, reindeer, festive silhouette, single",
+  "tokens": 488
+ },
+ "77009-1/D": {
+  "code": "77009-1/D",
+  "pdf_page": 17,
+  "image": "77009-1_D.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "red",
+   "other_colours": [
+    "white",
+    "gold"
+   ],
+   "finish": "mixed",
+   "shape": "Santa figure",
+   "pattern": "striped suit with gold trim",
+   "packaging": "single",
+   "summary": "A Santa figure seated in a glittery sleigh, shown as a single decorative piece."
+  },
+  "text": "figure, red, white, gold, mixed, Santa figure, striped suit with gold trim, single",
+  "tokens": 562
+ },
+ "70302-12": {
+  "code": "70302-12",
+  "pdf_page": 18,
+  "image": "70302-12.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "gold",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "reindeer",
+   "pattern": "standing",
+   "packaging": "single",
+   "summary": "Glittery gold reindeer figure decoration with a standing pose and curled antlers."
+  },
+  "text": "figure, gold, glitter, reindeer, standing, single",
+  "tokens": 514
+ },
+ "70402-12": {
+  "code": "70402-12",
+  "pdf_page": 18,
+  "image": "70402-12.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "gold",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "reindeer silhouette",
+   "pattern": "none",
+   "packaging": "single",
+   "summary": "Gold glitter reindeer figure decoration with a raised antler pose."
+  },
+  "text": "figure, gold, glitter, reindeer silhouette, single",
+  "tokens": 511
+ },
+ "70502-12": {
+  "code": "70502-12",
+  "pdf_page": 18,
+  "image": "70502-12.png",
+  "match": "above_far",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "gold",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "deer silhouette",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "Glittery gold reindeer figure decoration."
+  },
+  "text": "figure, gold, glitter, deer silhouette, single",
+  "tokens": 505
+ },
+ "70301-14": {
+  "code": "70301-14",
+  "pdf_page": 18,
+  "image": "70301-14.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "red",
+   "other_colours": [
+    "blue",
+    "gold",
+    "silver",
+    "pink"
+   ],
+   "finish": "glitter",
+   "shape": "reindeer",
+   "pattern": "multicoloured illuminated frame",
+   "packaging": "single",
+   "summary": "Multicoloured illuminated reindeer figure with a glittering wire-frame look."
+  },
+  "text": "figure, red, blue, gold, silver, pink, glitter, reindeer, multicoloured illuminated frame, single",
+  "tokens": 553
+ },
+ "70401-12": {
+  "code": "70401-12",
+  "pdf_page": 18,
+  "image": "70401-12.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "gold",
+   "other_colours": [
+    "white",
+    "clear"
+   ],
+   "finish": "glitter",
+   "shape": "reindeer",
+   "pattern": "irregular",
+   "packaging": "display",
+   "summary": "A glittery gold reindeer decoration with clear and white accents and a lit display presentation."
+  },
+  "text": "figure, gold, white, clear, glitter, reindeer, irregular, display",
+  "tokens": 506
+ },
+ "70301-13": {
+  "code": "70301-13",
+  "pdf_page": 18,
+  "image": "70301-13.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "blue",
+    "yellow",
+    "pink",
+    "white"
+   ],
+   "finish": "glitter",
+   "shape": "reindeer silhouette",
+   "pattern": "ornamented with baubles and lights",
+   "packaging": "single",
+   "summary": "A glittery reindeer-shaped decorative figure covered in pastel baubles and sparkly accents."
+  },
+  "text": "tree, green, blue, yellow, pink, white, glitter, reindeer silhouette, ornamented with baubles and lights, single",
+  "tokens": 560
+ },
+ "72001-1": {
+  "code": "72001-1",
+  "pdf_page": 18,
+  "image": "72001-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "gold",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "metallic",
+   "shape": "reindeer",
+   "pattern": "wireframe light sculpture",
+   "packaging": "single",
+   "summary": "A gold wireframe reindeer light sculpture with warm white lights."
+  },
+  "text": "figure, gold, white, metallic, reindeer, wireframe light sculpture, single",
+  "tokens": 515
+ },
+ "70402-16": {
+  "code": "70402-16",
+  "pdf_page": 18,
+  "image": "70402-16.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "gold",
+   "other_colours": [],
+   "finish": "metallic",
+   "shape": "reindeer silhouette",
+   "pattern": "wire frame with lights",
+   "packaging": "single",
+   "summary": "Gold wire-frame reindeer figure with a lighted outline."
+  },
+  "text": "figure, gold, metallic, reindeer silhouette, wire frame with lights, single",
+  "tokens": 528
+ },
+ "73033-5": {
+  "code": "73033-5",
+  "pdf_page": 19,
+  "image": "73033-5.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "gift_box",
+   "primary_colour": "white",
+   "other_colours": [
+    "clear",
+    "warm white"
+   ],
+   "finish": "transparent",
+   "shape": "square box with bow outline",
+   "pattern": "single",
+   "packaging": "single",
+   "summary": "Transparent gift box decoration outlined with warm white lights and a bow on top."
+  },
+  "text": "gift box, white, clear, warm white, transparent, square box with bow outline, single, single",
+  "tokens": 578
+ },
+ "75033-2": {
+  "code": "75033-2",
+  "pdf_page": 19,
+  "image": "75033-2.png",
+  "match": "above_far",
+  "attributes": {
+   "kind": "gift_box",
+   "primary_colour": "white",
+   "other_colours": [
+    "clear"
+   ],
+   "finish": "transparent",
+   "shape": "box",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "Transparent gift box decoration outlined in white lights with a bow on top."
+  },
+  "text": "gift box, white, clear, transparent, box, single",
+  "tokens": 621
+ },
+ "71325-1": {
+  "code": "71325-1",
+  "pdf_page": 19,
+  "image": "71325-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "ornament",
+   "primary_colour": "gold",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "glitter",
+   "shape": "ring",
+   "pattern": "plain",
+   "packaging": "single",
+   "summary": "Gold glitter ring ornament with a small hanging loop."
+  },
+  "text": "ornament, gold, white, glitter, ring, plain, single",
+  "tokens": 567
+ },
+ "70402-1": {
+  "code": "70402-1",
+  "pdf_page": 19,
+  "image": "70402-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "white",
+   "other_colours": [
+    "black"
+   ],
+   "finish": "glossy",
+   "shape": "reindeer silhouette",
+   "pattern": "none",
+   "packaging": "single",
+   "summary": "White outlined reindeer figure light on a stand."
+  },
+  "text": "figure, white, black, glossy, reindeer silhouette, single",
+  "tokens": 526
+ },
+ "71325-2": {
+  "code": "71325-2",
+  "pdf_page": 19,
+  "image": "71325-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "ornament",
+   "primary_colour": "pink",
+   "other_colours": [
+    "red"
+   ],
+   "finish": "metallic",
+   "shape": "ring",
+   "pattern": "plain",
+   "packaging": "single",
+   "summary": "A plain metallic ring ornament in pink-red tones with a hanging loop."
+  },
+  "text": "ornament, pink, red, metallic, ring, plain, single",
+  "tokens": 571
+ },
+ "70402-2": {
+  "code": "70402-2",
+  "pdf_page": 19,
+  "image": "70402-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "white",
+   "other_colours": [],
+   "finish": "glossy",
+   "shape": "reindeer outline",
+   "pattern": "?",
+   "packaging": "single",
+   "summary": "White outline reindeer figure decoration on a stake-like stand."
+  },
+  "text": "figure, white, glossy, reindeer outline, single",
+  "tokens": 526
+ },
+ "71152-1": {
+  "code": "71152-1",
+  "pdf_page": 19,
+  "image": "71152-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "gold",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "glitter",
+   "shape": "star",
+   "pattern": "outline star",
+   "packaging": "single",
+   "summary": "Gold glitter outline star tree topper with a hanging loop."
+  },
+  "text": "tree topper, gold, white, glitter, star, outline star, single",
+  "tokens": 570
+ },
+ "70402-14": {
+  "code": "70402-14",
+  "pdf_page": 19,
+  "image": "70402-14.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "gold",
+   "other_colours": [
+    "black"
+   ],
+   "finish": "metallic",
+   "shape": "reindeer silhouette",
+   "pattern": "none",
+   "packaging": "single",
+   "summary": "Metallic gold outline reindeer figure on a stand."
+  },
+  "text": "figure, gold, black, metallic, reindeer silhouette, single",
+  "tokens": 526
+ },
+ "73533-1": {
+  "code": "73533-1",
+  "pdf_page": 19,
+  "image": "73533-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "gift_box",
+   "primary_colour": "white",
+   "other_colours": [
+    "gold"
+   ],
+   "finish": "metallic",
+   "shape": "rectangular present with bow",
+   "pattern": "wireframe with glittery lights",
+   "packaging": "single",
+   "summary": "A decorative wire-frame gift box with a bow, in a white and gold metallic finish."
+  },
+  "text": "gift box, white, gold, metallic, rectangular present with bow, wireframe with glittery lights, single",
+  "tokens": 620
+ },
+ "71152-2": {
+  "code": "71152-2",
+  "pdf_page": 19,
+  "image": "71152-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "white",
+   "other_colours": [
+    "gold"
+   ],
+   "finish": "metallic",
+   "shape": "star",
+   "pattern": "plain",
+   "packaging": "single",
+   "summary": "White outlined star tree topper with gold detail at the top."
+  },
+  "text": "tree topper, white, gold, metallic, star, plain, single",
+  "tokens": 570
+ },
+ "70402-15": {
+  "code": "70402-15",
+  "pdf_page": 19,
+  "image": "70402-15.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "gold",
+   "other_colours": [
+    "black"
+   ],
+   "finish": "metallic",
+   "shape": "reindeer silhouette",
+   "pattern": "wire frame with light strands",
+   "packaging": "single",
+   "summary": "Gold wire-frame reindeer figure with a black stand and warm white light outline."
+  },
+  "text": "figure, gold, black, metallic, reindeer silhouette, wire frame with light strands, single",
+  "tokens": 564
+ },
+ "76052-2": {
+  "code": "76052-2",
+  "pdf_page": 19,
+  "image": "76052-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "star",
+   "primary_colour": "gold",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "star",
+   "pattern": "outlined star",
+   "packaging": "single",
+   "summary": "Gold glitter star decoration with layered outlined star design."
+  },
+  "text": "star, gold, glitter, star, outlined star, single",
+  "tokens": 553
+ },
+ "72032-1": {
+  "code": "72032-1",
+  "pdf_page": 20,
+  "image": "72032-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "figure",
+   "primary_colour": "red",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "glitter",
+   "shape": "candy cane",
+   "pattern": "striped",
+   "packaging": "single",
+   "summary": "A red-and-white striped candy cane decoration with a glittery finish on a stand."
+  },
+  "text": "figure, red, white, glitter, candy cane, striped, single",
+  "tokens": 533
+ },
+ "71857-1": {
+  "code": "71857-1",
+  "pdf_page": 20,
+  "image": "71857-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "other",
+   "primary_colour": "black",
+   "other_colours": [
+    "gold",
+    "silver"
+   ],
+   "finish": "metallic",
+   "shape": "square frame",
+   "pattern": "square frame with striped texture",
+   "packaging": "single",
+   "summary": "Square decorative frame-style Christmas ornament with black and gold trim and a silver-striped textured finish."
+  },
+  "text": "other, black, gold, silver, metallic, square frame, square frame with striped texture, single",
+  "tokens": 552
+ },
+ "73404-2": {
+  "code": "73404-2",
+  "pdf_page": 21,
+  "image": "73404-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "black",
+   "other_colours": [
+    "silver"
+   ],
+   "finish": "glitter",
+   "shape": "snowflake",
+   "pattern": "none",
+   "packaging": "single",
+   "summary": "Black glitter snowflake tree topper with a silver stem."
+  },
+  "text": "tree topper, black, silver, glitter, snowflake, single",
+  "tokens": 570
+ },
+ "71504-3": {
+  "code": "71504-3",
+  "pdf_page": 21,
+  "image": "71504-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "ornament",
+   "primary_colour": "white",
+   "other_colours": [
+    "red"
+   ],
+   "finish": "glitter",
+   "shape": "snowflake",
+   "pattern": "retail pack single pictured against a red backing card",
+   "packaging": "single",
+   "summary": "White snowflake ornament with a glitter-speckled finish, shown on a red backing card."
+  },
+  "text": "ornament, white, red, glitter, snowflake, retail pack single pictured against a red backing card, single",
+  "tokens": 600
+ },
+ "73404-4": {
+  "code": "73404-4",
+  "pdf_page": 21,
+  "image": "73404-4.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "black",
+   "other_colours": [
+    "gold"
+   ],
+   "finish": "glitter",
+   "shape": "snowflake",
+   "pattern": "single",
+   "packaging": "single",
+   "summary": "Black glitter snowflake decoration with a warm golden outline on a stick."
+  },
+  "text": "tree topper, black, gold, glitter, snowflake, single, single",
+  "tokens": 544
+ },
+ "73404-1": {
+  "code": "73404-1",
+  "pdf_page": 21,
+  "image": "73404-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "ornament",
+   "primary_colour": "pink",
+   "other_colours": [
+    "purple"
+   ],
+   "finish": "glitter",
+   "shape": "snowflake",
+   "pattern": "glitter",
+   "packaging": "single",
+   "summary": "Glittery pink-purple snowflake ornament with a sparkly finish."
+  },
+  "text": "ornament, pink, purple, glitter, snowflake, glitter, single",
+  "tokens": 587
+ },
+ "74404-1": {
+  "code": "74404-1",
+  "pdf_page": 21,
+  "image": "74404-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "other",
+   "primary_colour": "white",
+   "other_colours": [],
+   "finish": "glitter",
+   "shape": "snowflake",
+   "pattern": "snowflake",
+   "packaging": "single",
+   "summary": "White glitter snowflake decoration with a hanging string."
+  },
+  "text": "other, white, glitter, snowflake, snowflake, single",
+  "tokens": 566
+ },
+ "76004-5": {
+  "code": "76004-5",
+  "pdf_page": 21,
+  "image": "76004-5.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "lights",
+   "primary_colour": "white",
+   "other_colours": [],
+   "finish": "glossy",
+   "shape": "snowflake",
+   "pattern": "snowflake",
+   "packaging": "single",
+   "summary": "White snowflake-shaped light decoration with a glossy finish."
+  },
+  "text": "lights, white, glossy, snowflake, snowflake, single",
+  "tokens": 568
+ },
+ "77004-2": {
+  "code": "77004-2",
+  "pdf_page": 21,
+  "image": "77004-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "star",
+   "primary_colour": "white",
+   "other_colours": [
+    "blue"
+   ],
+   "finish": "glitter",
+   "shape": "snowflake",
+   "pattern": "lit snowflake",
+   "packaging": "single",
+   "summary": "A lit snowflake decoration with white-blue glowing lights and a glittery look."
+  },
+  "text": "star, white, blue, glitter, snowflake, lit snowflake, single",
+  "tokens": 575
+ },
+ "77004-3": {
+  "code": "77004-3",
+  "pdf_page": 21,
+  "image": "77004-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "lights",
+   "primary_colour": "blue",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "glossy",
+   "shape": "snowflake",
+   "pattern": "unclear",
+   "packaging": "single",
+   "summary": "Blue snowflake-shaped LED light decoration with a bright icy glow."
+  },
+  "text": "lights, blue, white, glossy, snowflake, single",
+  "tokens": 572
+ },
+ "77004-4": {
+  "code": "77004-4",
+  "pdf_page": 21,
+  "image": "77004-4.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "lights",
+   "primary_colour": "white",
+   "other_colours": [
+    "blue"
+   ],
+   "finish": "mixed",
+   "shape": "snowflake",
+   "pattern": "snowflake",
+   "packaging": "single",
+   "summary": "A white illuminated snowflake light decoration with a cool blue glow."
+  },
+  "text": "lights, white, blue, mixed, snowflake, snowflake, single",
+  "tokens": 584
+ },
+ "78054-1": {
+  "code": "78054-1",
+  "pdf_page": 22,
+  "image": "78054-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "gold",
+   "other_colours": [
+    "yellow"
+   ],
+   "finish": "glitter",
+   "shape": "cone",
+   "pattern": "wireframe with baubles",
+   "packaging": "single",
+   "summary": "Gold glitter cone Christmas tree decoration with round bauble details."
+  },
+  "text": "tree, gold, yellow, glitter, cone, wireframe with baubles, single",
+  "tokens": 500
+ },
+ "71054-1": {
+  "code": "71054-1",
+  "pdf_page": 22,
+  "image": "71054-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "white",
+   "other_colours": [
+    "silver"
+   ],
+   "finish": "glitter",
+   "shape": "spiral cone tree",
+   "pattern": "spiral",
+   "packaging": "single",
+   "summary": "A white glitter spiral cone Christmas tree topper-style decoration with a star at the top."
+  },
+  "text": "tree, white, silver, glitter, spiral cone tree, spiral, single",
+  "tokens": 505
+ },
+ "71054-2": {
+  "code": "71054-2",
+  "pdf_page": 22,
+  "image": "71054-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "orange",
+   "other_colours": [
+    "gold",
+    "red",
+    "green"
+   ],
+   "finish": "glitter",
+   "shape": "cone",
+   "pattern": "star topper and star base",
+   "packaging": "single",
+   "summary": "A cone-shaped lighted Christmas tree decoration with a glowing star topper and star base, trimmed in orange and gold lights."
+  },
+  "text": "tree, orange, gold, red, green, glitter, cone, star topper and star base, single",
+  "tokens": 516
+ },
+ "71054-3": {
+  "code": "71054-3",
+  "pdf_page": 22,
+  "image": "71054-3.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "gold",
+   "other_colours": [
+    "white",
+    "black"
+   ],
+   "finish": "metallic",
+   "shape": "cone",
+   "pattern": "wire frame with star topper and baubles",
+   "packaging": "single",
+   "summary": "A cone-shaped wire Christmas tree decoration in gold and white with a star topper and small hanging baubles."
+  },
+  "text": "tree, gold, white, black, metallic, cone, wire frame with star topper and baubles, single",
+  "tokens": 514
+ },
+ "77054-1": {
+  "code": "77054-1",
+  "pdf_page": 22,
+  "image": "77054-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "gold",
+   "other_colours": [
+    "black"
+   ],
+   "finish": "metallic",
+   "shape": "cone",
+   "pattern": "string-light tree",
+   "packaging": "single",
+   "summary": "A gold wire Christmas tree with warm fairy lights and black baubles."
+  },
+  "text": "tree, gold, black, metallic, cone, string-light tree, single",
+  "tokens": 529
+ },
+ "78054-2": {
+  "code": "78054-2",
+  "pdf_page": 22,
+  "image": "78054-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree_topper",
+   "primary_colour": "gold",
+   "other_colours": [
+    "black"
+   ],
+   "finish": "metallic",
+   "shape": "star and cone tree",
+   "pattern": "unknown",
+   "packaging": "single",
+   "summary": "A gold wire Christmas tree decoration with small round baubles and a star topper, lit with tiny warm lights."
+  },
+  "text": "tree topper, gold, black, metallic, star and cone tree, single",
+  "tokens": 540
+ },
+ "73003-2": {
+  "code": "73003-2",
+  "pdf_page": 23,
+  "image": "73003-2.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "ornament",
+   "primary_colour": "green",
+   "other_colours": [
+    "yellow"
+   ],
+   "finish": "glitter",
+   "shape": "round",
+   "pattern": "sunburst",
+   "packaging": "single",
+   "summary": "Green glitter round ornament with a small top cap."
+  },
+  "text": "ornament, green, yellow, glitter, round, sunburst, single",
+  "tokens": 582
+ },
+ "04035-1": {
+  "code": "04035-1",
+  "pdf_page": 31,
+  "image": "04035-1.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "white",
+    "gold",
+    "red"
+   ],
+   "finish": "mixed",
+   "shape": "cone",
+   "pattern": "decorated christmas tree",
+   "packaging": "single",
+   "summary": "Tall decorated Christmas tree with lights and large snowflake ornaments."
+  },
+  "text": "tree, green, white, gold, red, mixed, cone, decorated christmas tree, single",
+  "tokens": 531
+ },
+ "03035-1": {
+  "code": "03035-1",
+  "pdf_page": 30,
+  "image": "03035-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "ribbon",
+   "primary_colour": "gold",
+   "other_colours": [
+    "white",
+    "orange"
+   ],
+   "finish": "matte",
+   "shape": "banner",
+   "pattern": "text",
+   "packaging": "single",
+   "summary": "A gold-toned banner-style ribbon tag printed with “25 Ft.”"
+  },
+  "text": "ribbon, gold, white, orange, matte, banner, text, single",
+  "tokens": 487
+ },
+ "04035-1/FLOCKED": {
+  "code": "04035-1/FLOCKED",
+  "pdf_page": 31,
+  "image": "04035-1_FLOCKED.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "gold",
+    "red",
+    "white"
+   ],
+   "finish": "mixed",
+   "shape": "conical",
+   "pattern": "dense decorated Christmas tree",
+   "packaging": "single",
+   "summary": "A tall conical Christmas tree densely decorated with gold, red, and white ornaments."
+  },
+  "text": "tree, green, gold, red, white, mixed, conical, dense decorated Christmas tree, single",
+  "tokens": 537
  }
 }

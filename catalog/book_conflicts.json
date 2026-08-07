@@ -1,0 +1,82 @@
+[
+ {
+  "code": "90680-6",
+  "size_raw": "15 inc.",
+  "size": {
+   "inches": 15.0,
+   "size_mm": 381,
+   "unit_printed": "inch"
+  },
+  "section": null,
+  "page_headings": [],
+  "pdf_page": 1,
+  "bbox": [
+   411.0,
+   545.9,
+   517.8,
+   560.5
+  ],
+  "duplicate": true,
+  "book": "2026"
+ },
+ {
+  "code": "90634-8",
+  "size_raw": "6 inc.",
+  "size": {
+   "inches": 6.0,
+   "size_mm": 152,
+   "unit_printed": "inch"
+  },
+  "section": "Star Topper",
+  "page_headings": [
+   "Star Topper"
+  ],
+  "pdf_page": 6,
+  "bbox": [
+   64.2,
+   792.4,
+   157.0,
+   806.2
+  ],
+  "duplicate": false,
+  "book": "2026"
+ },
+ {
+  "code": "90663-18",
+  "size_raw": "10 inc.",
+  "size": {
+   "inches": 10.0,
+   "size_mm": 254,
+   "unit_printed": "inch"
+  },
+  "section": "Star Topper",
+  "page_headings": [
+   "Star Topper"
+  ],
+  "pdf_page": 6,
+  "bbox": [
+   61.6,
+   810.9,
+   162.7,
+   824.6
+  ],
+  "duplicate": false,
+  "book": "2026"
+ },
+ {
+  "code": "04035-1",
+  "size_raw": null,
+  "size": null,
+  "section": "Illumunation",
+  "page_headings": [],
+  "pdf_page": 31,
+  "bbox": [
+   506.3,
+   246.2,
+   537.2,
+   256.6
+  ],
+  "duplicate": true,
+  "book": "2026"
+ }
+]

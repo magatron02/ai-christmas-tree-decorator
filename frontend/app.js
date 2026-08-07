@@ -28,7 +28,8 @@ const MAX_ELEMENTS = 5;
 const state = {
   treeFile: null,
   elements: [], // {name, url, code} — one entry per accepted cut-out, up to MAX_ELEMENTS
-  reference: null, // stored filename of the optional setting photo
+  sceneReference: null, // stored filename of the optional scene/ambience photo (used at generate time)
+  identifyReference: null, // stored filename of the optional catalogue-search photo (search only)
   requestId: null,
   busy: false,
 };
@@ -196,6 +197,13 @@ $("element-file").addEventListener("change", (event) => {
   resetRun();
 });
 
+function showElementPreview(result) {
+  $("element-preview").src = result.element_url;
+  $("element-preview").hidden = false;
+  $("element-actions").hidden = false;
+  $("element-preview").dataset.name = result.element;
+}
+
 $("cut-btn").addEventListener("click", async () => {
   const file = $("element-file").files[0];
   if (!file) return;
@@ -206,11 +214,7 @@ $("cut-btn").addEventListener("click", async () => {
   try {
     const body = new FormData();
     body.append("files", file);
-    const result = await call("/api/remove-bg", { method: "POST", body });
-    $("element-preview").src = result.element_url;
-    $("element-preview").hidden = false;
-    $("element-actions").hidden = false;
-    $("element-preview").dataset.name = result.element;
+    showElementPreview(await call("/api/remove-bg", { method: "POST", body }));
   } catch (err) {
     // rembg failed. Nothing continues on its own — the user re-uploads or cuts by hand.
     showError(err.message);
@@ -219,6 +223,60 @@ $("cut-btn").addEventListener("click", async () => {
     $("cut-btn").textContent = "ตัดพื้นหลัง";
   }
 });
+
+/* ---- catalogue picker: an alternate source for the same "element" slot ----
+ * Skips the browser file upload entirely — the photo already lives on the server, so it
+ * goes straight through the same rembg pipeline and lands in the same preview/accept flow. */
+$("catalog-toggle").addEventListener("click", () => {
+  $("catalog-picker").hidden = !$("catalog-picker").hidden;
+});
+
+let catalogTimer;
+$("catalog-search").addEventListener("input", () => {
+  clearTimeout(catalogTimer);
+  const query = $("catalog-search").value.trim();
+  const host = $("catalog-results");
+  if (query.length < 2) {
+    host.innerHTML = "";
+    return;
+  }
+  catalogTimer = setTimeout(async () => {
+    try {
+      const { results } = await call(`/api/catalog/search?q=${encodeURIComponent(query)}`);
+      host.innerHTML = "";
+      for (const item of results) {
+        const card = document.createElement("div");
+        card.className = "candidate pickable";
+        const photo = document.createElement("img");
+        photo.src = `/catalog/${item.image}`;
+        photo.alt = item.code;
+        const code = document.createElement("div");
+        code.className = "code";
+        code.textContent = item.size_raw ? `${item.code} — ${item.size_raw}` : item.code;
+        card.append(photo, code);
+        card.addEventListener("click", () => useFromCatalog(item.code));
+        host.append(card);
+      }
+    } catch {
+      /* the picker is a convenience; nothing else depends on it succeeding */
+    }
+  }, 200);
+});
+
+async function useFromCatalog(code) {
+  showError("");
+  try {
+    const body = new FormData();
+    body.append("code", code);
+    showElementPreview(await call("/api/element/from-catalog", { method: "POST", body }));
+    $("element-code").value = code;
+    $("catalog-picker").hidden = true;
+    $("catalog-search").value = "";
+    $("catalog-results").innerHTML = "";
+  } catch (err) {
+    showError(err.message);
+  }
+}
 
 $("accept-btn").addEventListener("click", () => {
   const preview = $("element-preview");
@@ -248,10 +306,12 @@ $("reject-btn").addEventListener("click", () => {
   resetRun();
 });
 
-/* ---- step 3: the optional setting reference ----
+/* ---- step 3a: the optional scene/ambience reference ----
  * Uploaded on its own endpoint rather than with the tree, because it is not
- * background-removed: its background is the only thing being taken from it. */
-$("reference-file").addEventListener("change", async (event) => {
+ * background-removed: its background is the only thing being taken from it.
+ * Independent of the identify reference below — this one only ever feeds the background
+ * of the generated result, never the catalogue search. */
+$("scene-reference-file").addEventListener("change", async (event) => {
   const file = event.target.files[0];
   if (!file) return;
   showError("");
@@ -259,26 +319,54 @@ $("reference-file").addEventListener("change", async (event) => {
     const body = new FormData();
     body.append("files", file);
     const result = await call("/api/reference", { method: "POST", body });
-    state.reference = result.reference;
-    $("reference-preview").src = result.reference_url;
-    $("reference-preview").hidden = false;
-    $("reference-actions").hidden = false;
+    state.sceneReference = result.reference;
+    $("scene-reference-preview").src = result.reference_url;
+    $("scene-reference-preview").hidden = false;
+    $("scene-reference-actions").hidden = false;
   } catch (err) {
     showError(err.message);
-    $("reference-file").value = "";
+    $("scene-reference-file").value = "";
   }
   resetRun();
 });
 
-$("reference-clear").addEventListener("click", () => {
-  state.reference = null;
-  $("reference-file").value = "";
-  $("reference-preview").hidden = true;
-  $("reference-actions").hidden = true;
+$("scene-reference-clear").addEventListener("click", () => {
+  state.sceneReference = null;
+  $("scene-reference-file").value = "";
+  $("scene-reference-preview").hidden = true;
+  $("scene-reference-actions").hidden = true;
+  resetRun();
+});
+
+/* ---- step 3b: the optional identify reference ----
+ * A second, independent upload slot — this photo is only ever sent to the catalogue-search
+ * endpoint below, never attached to /api/prepare, so it has no effect on the generated image. */
+$("identify-reference-file").addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  showError("");
+  try {
+    const body = new FormData();
+    body.append("files", file);
+    const result = await call("/api/reference", { method: "POST", body });
+    state.identifyReference = result.reference;
+    $("identify-reference-preview").src = result.reference_url;
+    $("identify-reference-preview").hidden = false;
+    $("identify-reference-actions").hidden = false;
+  } catch (err) {
+    showError(err.message);
+    $("identify-reference-file").value = "";
+  }
+});
+
+$("identify-reference-clear").addEventListener("click", () => {
+  state.identifyReference = null;
+  $("identify-reference-file").value = "";
+  $("identify-reference-preview").hidden = true;
+  $("identify-reference-actions").hidden = true;
   $("identify-results").innerHTML = "";
   $("identify-note").hidden = true;
   $("identify-panel").hidden = true;
-  resetRun();
 });
 
 /* ---- what of this does the shop sell? ----
@@ -287,7 +375,7 @@ $("reference-clear").addEventListener("click", () => {
  * identification — measured, a nutcracker matches a Santa at 0.82, so a high score is not
  * the same as the right product. */
 $("identify-btn").addEventListener("click", async () => {
-  if (!state.reference) return;
+  if (!state.identifyReference) return;
   const button = $("identify-btn");
   button.disabled = true;
   button.textContent = "กำลังค้นแคตตาล็อก…";
@@ -296,7 +384,7 @@ $("identify-btn").addEventListener("click", async () => {
   try {
     const treeCode = $("tree-code").value.trim();
     const query = treeCode ? `?tree_code=${encodeURIComponent(treeCode)}` : "";
-    const result = await call(`/api/reference/${state.reference}/analyse${query}`, {
+    const result = await call(`/api/reference/${state.identifyReference}/analyse${query}`, {
       method: "POST",
     });
     renderIdentified(result);
@@ -397,7 +485,7 @@ $("generate-btn").addEventListener("click", async () => {
     body.append("files", state.treeFile);
     body.append("size", $("size-select").value);
     body.append("tree_code", $("tree-code").value.trim());
-    if (state.reference) body.append("reference", state.reference);
+    if (state.sceneReference) body.append("reference", state.sceneReference);
     for (const element of state.elements) {
       body.append("element", element.name);
       body.append("element_code", element.code);

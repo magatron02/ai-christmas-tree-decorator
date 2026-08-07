@@ -38,7 +38,7 @@
     <div class="panels">
 
       <section class="card stack">
-        <span class="caption">1 — ต้นเปล่า</span>
+        <span class="panel-title">1 — ต้นเปล่า</span>
         <input class="input" type="file" id="tree-file" accept="image/jpeg,image/png">
         <input class="input" id="tree-code" list="tree-code-list" autocomplete="off"
                placeholder="รหัสสินค้า — ไม่ใส่ก็ได้ เช่น 05021-1">
@@ -48,29 +48,57 @@
       </section>
 
       <section class="card stack role-decoration">
-        <span class="caption">2 — ของตกแต่ง</span>
-        <span class="hint" id="element-count-hint">ใส่ได้ถึง 5 ชิ้น แต่ละชิ้นตัดพื้นหลังแยกกัน จะได้ตรวจทีละอัน</span>
+        <span class="panel-title">2 — ของตกแต่ง</span>
+        <div class="decoration-columns">
 
-        <ul class="accepted" id="accepted-elements"></ul>
+          <div class="stack decoration-list-col">
+            <span class="hint" id="element-count-hint">ใส่ได้ถึง 5 ชิ้น แต่ละชิ้นตัดพื้นหลังแยกกัน จะได้ตรวจทีละอัน</span>
+            <ul class="accepted" id="accepted-elements"></ul>
+          </div>
 
-        <input class="input" type="file" id="element-file" accept="image/jpeg,image/png">
-        <input class="input" id="element-code" list="element-code-list" autocomplete="off"
-               placeholder="รหัสสินค้า — ไม่ใส่ก็ได้ เช่น 017-06">
-        <datalist id="element-code-list"></datalist>
-        <span class="hint" id="element-code-hint"></span>
-        <div class="btn-row">
-          <button class="btn" id="cut-btn" disabled>ตัดพื้นหลัง</button>
-          <span class="hint" id="cut-hint">ทำในเครื่อง ไม่เสียเงิน</span>
-        </div>
-        <img class="thumb checker" id="element-preview" alt="ของตกแต่งที่ตัดพื้นหลังแล้ว" hidden>
-        <div class="btn-row" id="element-actions" hidden>
-          <button class="btn" id="accept-btn">ใช้ชิ้นนี้</button>
-          <button class="btn danger" id="reject-btn">ทิ้ง แล้วลองใหม่</button>
+          <div class="stack decoration-controls-col">
+
+            <div class="stack">
+              <span class="caption">บรรยากาศอ้างอิง (ไม่ใส่ก็ได้)</span>
+              <input class="input" type="file" id="scene-reference-file" accept="image/jpeg,image/png">
+              <div class="btn-row" id="scene-reference-actions" hidden>
+                <button class="btn danger" id="scene-reference-clear">เอารูปออก</button>
+              </div>
+              <img class="thumb-sm" id="scene-reference-preview" alt="รูปบรรยากาศอ้างอิง" hidden>
+            </div>
+
+            <div class="stack">
+              <input class="input" type="file" id="element-file" accept="image/jpeg,image/png">
+              <input class="input" id="element-code" list="element-code-list" autocomplete="off"
+                     placeholder="รหัสสินค้า — ไม่ใส่ก็ได้ เช่น 017-06">
+              <datalist id="element-code-list"></datalist>
+              <span class="hint" id="element-code-hint"></span>
+              <div class="btn-row">
+                <button class="btn" id="cut-btn" disabled>ตัดพื้นหลัง</button>
+                <span class="hint" id="cut-hint">ทำในเครื่อง ไม่เสียเงิน</span>
+              </div>
+              <img class="thumb-sm checker" id="element-preview" alt="ของตกแต่งที่ตัดพื้นหลังแล้ว" hidden>
+              <div class="btn-row" id="element-actions" hidden>
+                <button class="btn" id="accept-btn">ใช้ชิ้นนี้</button>
+                <button class="btn danger" id="reject-btn">ทิ้ง แล้วลองใหม่</button>
+              </div>
+            </div>
+
+            <div class="stack">
+              <button class="btn" id="catalog-toggle">เลือกจาก catalogue</button>
+              <div class="stack" id="catalog-picker" hidden>
+                <input class="input" id="catalog-search" placeholder="ค้นรหัสหรือหมวดสินค้า">
+                <div class="candidates" id="catalog-results"></div>
+              </div>
+            </div>
+
+          </div>
+
         </div>
       </section>
 
       <section class="card stack role-result">
-        <span class="caption">3 — ผลลัพธ์</span>
+        <span class="panel-title">3 — ผลลัพธ์</span>
         <select class="input option-name" id="size-select" disabled></select>
         <div class="chip" id="status-chip">รอต้นเปล่ากับของตกแต่งอย่างน้อย 1 ชิ้น</div>
         <div class="btn-row">
@@ -89,17 +117,17 @@
     </div>
 
     <section class="card stack">
-      <span class="caption">สถานที่ (ไม่ใส่ก็ได้)</span>
+      <span class="caption">หาสินค้าจากรูป (ไม่ใส่ก็ได้)</span>
       <span class="hint">
-        รูปสถานที่แบบที่อยากให้ผลลัพธ์ออกมาเป็น ระบบเอาแค่แสงกับโทนสี
-        ไม่ลอกของชิ้นไหนจากรูปนี้ ถ้าไม่ใส่ ต้นจะอยู่บนพื้นหลังเดิมของมัน
+        อัปโหลดรูปที่มีของตกแต่งอยู่แล้ว (เช่นรูปจากลูกค้า) เพื่อค้นแคตตาล็อกว่ามีอะไรใกล้เคียง
+        รูปนี้ไม่ถูกใช้ตอนสร้างภาพ — แค่ค้นหาเท่านั้น
       </span>
-      <input class="input" type="file" id="reference-file" accept="image/jpeg,image/png">
-      <div class="btn-row" id="reference-actions" hidden>
+      <input class="input" type="file" id="identify-reference-file" accept="image/jpeg,image/png">
+      <div class="btn-row" id="identify-reference-actions" hidden>
         <button class="btn" id="identify-btn">หาว่าในรูปมีของอะไรที่เราขาย</button>
-        <button class="btn danger" id="reference-clear">เอารูปออก</button>
+        <button class="btn danger" id="identify-reference-clear">เอารูปออก</button>
       </div>
-      <img class="thumb" id="reference-preview" alt="รูปอ้างอิงสถานที่" hidden>
+      <img class="thumb" id="identify-reference-preview" alt="รูปอ้างอิงหาสินค้า" hidden>
     </section>
 
     <section class="card stack" id="identify-panel" hidden>

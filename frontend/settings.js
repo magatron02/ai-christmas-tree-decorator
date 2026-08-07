@@ -81,3 +81,82 @@ $("key-save").addEventListener("click", async () => {
 });
 
 loadStatus();
+
+/* ---- catalogue admin: add only, no edit/delete ---- */
+async function loadRecentCatalog() {
+  const response = await fetch("/api/catalog/recent");
+  const { results } = await response.json();
+  const host = $("cat-recent");
+  host.innerHTML = "";
+  for (const item of results) {
+    const row = document.createElement("tr");
+    const photo = document.createElement("td");
+    if (item.image) {
+      const img = document.createElement("img");
+      img.src = `/catalog/${item.image}`;
+      img.alt = item.code;
+      img.className = "checker cat-thumb";
+      photo.append(img);
+    }
+    const code = document.createElement("td");
+    code.className = "mono";
+    code.textContent = item.code;
+    const meta = document.createElement("td");
+    meta.className = "hint";
+    meta.textContent = [item.size_raw, item.book].filter(Boolean).join(" · ");
+    row.append(photo, code, meta);
+    host.append(row);
+  }
+}
+
+$("cat-add").addEventListener("click", async () => {
+  $("cat-error").hidden = true;
+  const image = $("cat-image").files[0];
+  if (!$("cat-code").value.trim() || !image) {
+    $("cat-error").textContent = "ต้องมีรหัสสินค้ากับรูปอย่างน้อย";
+    $("cat-error").hidden = false;
+    return;
+  }
+  $("cat-add").disabled = true;
+  try {
+    const body = new FormData();
+    body.append("code", $("cat-code").value.trim());
+    body.append("size_raw", $("cat-size").value.trim());
+    body.append("section", $("cat-section").value.trim());
+    body.append("book", $("cat-book").value.trim());
+    body.append("image", image);
+    const response = await fetch("/api/catalog/products", { method: "POST", body });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || response.statusText);
+    ["cat-code", "cat-size", "cat-section", "cat-book", "cat-image"].forEach((id) => ($(id).value = ""));
+    await loadRecentCatalog();
+  } catch (err) {
+    $("cat-error").textContent = err.message;
+    $("cat-error").hidden = false;
+  } finally {
+    $("cat-add").disabled = false;
+  }
+});
+
+$("cat-sync").addEventListener("click", async () => {
+  $("cat-error").hidden = true;
+  $("cat-sync").disabled = true;
+  $("cat-status").hidden = false;
+  $("cat-status").className = "chip running";
+  $("cat-status").textContent = "กำลัง sync…";
+  try {
+    const response = await fetch("/api/catalog/sync", { method: "POST" });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || response.statusText);
+    $("cat-status").className = "chip done";
+    $("cat-status").textContent = "sync แล้ว";
+  } catch (err) {
+    $("cat-status").hidden = true;
+    $("cat-error").textContent = err.message;
+    $("cat-error").hidden = false;
+  } finally {
+    $("cat-sync").disabled = false;
+  }
+});
+
+loadRecentCatalog();

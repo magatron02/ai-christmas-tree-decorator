@@ -18,7 +18,10 @@ from functools import lru_cache
 from backend import config
 from backend.validation import ValidationError
 
-__all__ = ["find", "search", "longest_side_mm", "describe", "require_size", "scale_sentence"]
+__all__ = [
+    "find", "search", "longest_side_mm", "describe", "require_size", "scale_sentence",
+    "image_for", "image_path", "recent",
+]
 
 
 @lru_cache(maxsize=1)
@@ -37,6 +40,43 @@ def _by_code():
     for row in _rows():
         index.setdefault(row["code"], row)  # a repeated code is the same product listed twice
     return index
+
+
+@lru_cache(maxsize=1)
+def _images_by_code():
+    path = config.CATALOG_PATH.parent / "product_images.json"
+    if not path.is_file():
+        return {}
+    index = {}
+    for row in json.loads(path.read_text(encoding="utf-8")):
+        index.setdefault(row["code"], row["image"])
+    return index
+
+
+def image_for(code):
+    """The catalogue crop filename for a code, or None if none was paired (Product.md 8.1
+    phase B is a confidence-scored guess, not every code gets one)."""
+    return _images_by_code().get(code)
+
+
+def image_path(code):
+    """Absolute path to the crop on disk, or None."""
+    image = image_for(code)
+    return (config.CATALOG_PATH.parent / "images" / image) if image else None
+
+
+def recent(n=20):
+    """The last n rows in file order — the admin form appends, so this is "most recently
+    added" without needing a timestamp field the PDF-derived rows never had."""
+    return _rows()[-n:][::-1]
+
+
+def refresh():
+    """Drop every cached read, so a write to products.json/product_images.json (the admin
+    add-catalogue form) is visible on the next lookup without restarting the server."""
+    _rows.cache_clear()
+    _by_code.cache_clear()
+    _images_by_code.cache_clear()
 
 
 def find(code):

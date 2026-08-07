@@ -3,6 +3,11 @@
    colour, font and spacing value used anywhere else in the project must be a var(--token)
    from here, never a literal. tests/test_design_tokens.py enforces that. */
 
+/* 2026-08-07: content-box is the default, so any fixed-width component (.row, .candidate,
+   .sidebar's children) has its border+padding added on top of a percentage width instead of
+   inside it — that's what made the sidebar nav buttons spill past their column. */
+*, *::before, *::after { box-sizing: border-box; }
+
 @font-face {
   font-family: "Fraunces";
   src: url("../fonts/fraunces.woff2") format("woff2");
@@ -140,6 +145,7 @@
   --text-sm: 12px;
   --text-base: 14px;
   --text-lg: 16px;
+  --text-md: 18px;
   --text-xl: 20px;
   --text-2xl: 26px;
 

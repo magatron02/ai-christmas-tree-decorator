@@ -63,6 +63,27 @@
       </div>
     </section>
 
+    <section class="card stack">
+      <span class="caption">จัดการ catalogue</span>
+      <span class="hint">เพิ่มสินค้าทีละชิ้น ไม่มีแก้/ลบในหน้านี้ — แก้ไฟล์ catalog/ ตรง ๆ ถ้าต้องแก้จริง ๆ</span>
+      <input class="input" id="cat-code" placeholder="รหัสสินค้า เช่น 017-06">
+      <input class="input" id="cat-size" placeholder="ขนาด — ไม่ใส่ก็ได้ เช่น 80 mm.">
+      <input class="input" id="cat-section" placeholder="หมวด — ไม่ใส่ก็ได้">
+      <input class="input" id="cat-book" placeholder="เล่ม — ไม่ใส่ก็ได้ เช่น 2026">
+      <input class="input" type="file" id="cat-image" accept="image/jpeg,image/png">
+      <div class="btn-row">
+        <button class="btn" id="cat-add">เพิ่มสินค้า</button>
+        <button class="btn" id="cat-sync">sync ดัชนีค้นหา</button>
+      </div>
+      <div class="notice" id="cat-error" hidden></div>
+      <div class="chip" id="cat-status" hidden></div>
+      <div class="scroll-x">
+        <table>
+          <tbody id="cat-recent"></tbody>
+        </table>
+      </div>
+    </section>
+
   </main>
 </div>
 

@@ -21,6 +21,14 @@
   font-weight: 600;
   color: var(--text-muted);
 }
+/* panel headings ("1 — ...", "2 — ...") need their own step above body text — .caption stays
+   small for hints/stat-labels, this is the only thing that should read as a section title. */
+.panel-title {
+  font-family: var(--font-th);
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--text-primary);
+}
 .hint { font-size: var(--text-sm); color: var(--text-muted) }
 .mono { font-family: var(--font-body-en), var(--font-th); font-size: var(--text-sm) }
 .muted { color: var(--text-muted) }
@@ -118,9 +126,9 @@ input[type="file"].input::file-selector-button {
 /* Section 2's role mapping: each panel gets one accent, on its border and its label only —
    never a fill, so the accent still reads as meaning rather than decoration. */
 .card.role-decoration { border-color: var(--fill-gold-block) }
-.card.role-decoration .caption { color: var(--text-gold) }
+.card.role-decoration .panel-title { color: var(--text-gold) }
 .card.role-result { border-color: var(--fill-success) }
-.card.role-result .caption { color: var(--text-success) }
+.card.role-result .panel-title { color: var(--text-success) }
 
 /* ---- status chip (pipeline state) ----
    Reuses the state-banner colours from section 10 rather than the toast pattern, since a
@@ -175,8 +183,8 @@ input[type="file"].input::file-selector-button {
 /* ---- nav row ---- */
 .row {
   display: block; width: 100%; text-align: left; border: none;
-  background: none; color: inherit; font: inherit; font-size: var(--text-sm);
-  padding: var(--space-2); border-radius: var(--radius-sm); cursor: pointer;
+  background: none; color: inherit; font: inherit; font-size: var(--text-base);
+  padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); cursor: pointer;
   text-decoration: none;
 }
 .row:hover,
@@ -237,8 +245,23 @@ input[type="file"].input::file-selector-button {
   .sidebar .row { width: auto }
 }
 
+/* ---- decoration panel: picked items on the left, controls to add more on the right —
+   picking something never has to open a full-size preview, so the whole left column is
+   built out of the same small thumbnail the accepted list already used. ---- */
+.decoration-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+.decoration-list-col .accepted { max-height: 520px; overflow-y: auto }
+.decoration-controls-col { gap: var(--space-4) }
+@media (max-width: 720px) {
+  .decoration-columns { grid-template-columns: minmax(0, 1fr) }
+}
+
 /* ---- accepted decorations list ---- */
-.accepted { list-style: none; margin: 0; padding: 0; display: flex; gap: var(--space-2); flex-wrap: wrap }
+.accepted { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2) }
 .accepted li {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -249,7 +272,19 @@ input[type="file"].input::file-selector-button {
   font-size: var(--text-sm);
 }
 .accepted img { width: 40px; height: 40px; object-fit: contain; border-radius: var(--radius-sm) }
+.cat-thumb { width: 40px; height: 40px; object-fit: contain; border-radius: var(--radius-sm) }
 .accepted .btn.danger { padding: var(--space-1) var(--space-2); font-size: var(--text-sm) }
+
+/* rough-preview only — picking a decoration (cut-out or catalogue) never opens the full-size
+   .thumb treatment the tree/result panels use; a small square is enough to confirm the pick */
+.thumb-sm {
+  display: block;
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
 
 /* ---- preview surfaces ---- */
 .checker {
@@ -283,6 +318,8 @@ input[type="file"].input::file-selector-button {
   width: 168px;
 }
 .candidate img { width: 100%; height: 110px; object-fit: contain; border-radius: var(--radius-sm) }
+.candidate.pickable { cursor: pointer }
+.candidate.pickable:hover { border-color: var(--fill-gold-block) }
 .candidate .code { font-family: var(--font-body-en); font-size: var(--text-sm); margin-top: var(--space-2) }
 .candidate .why { font-size: var(--text-xs); color: var(--text-muted); margin-top: var(--space-1) }
 .candidate .chip { padding: var(--space-1) var(--space-2); font-size: var(--text-xs); margin-top: var(--space-2) }

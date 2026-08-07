@@ -98,13 +98,23 @@ def spans(page):
                     yield text, span["size"], span["bbox"]
 
 
-def extract(pdf_path):
+def extract(pdf_path, pages=None, book=None):
+    """`pages`, if given, is a (start, end) 1-based inclusive pair restricting which pages of
+    the PDF are scanned — for a source file that bundles several catalogue editions into one
+    PDF, so only the pages belonging to the edition being ingested are read. `book` tags every
+    row, so a catalogue merged in later can be told apart from the one already in
+    catalog/products.json (which has no `book` field at all)."""
     doc = fitz.open(pdf_path)
     rows, unparsed = [], []
     seen = set()
     current_section = None
 
-    for index in range(doc.page_count):
+    page_range = range(doc.page_count)
+    if pages:
+        start, end = pages
+        page_range = range(start - 1, min(end, doc.page_count))
+
+    for index in page_range:
         page = doc[index]
         page_spans = list(spans(page))
 
@@ -140,6 +150,7 @@ def extract(pdf_path):
                     "pdf_page": index + 1,
                     "bbox": [round(v, 1) for v in bbox],
                     "duplicate": code in seen,
+                    "book": book,
                 })
                 seen.add(code)
 
@@ -150,9 +161,16 @@ def main():
     parser = argparse.ArgumentParser(description="Extract product codes and sizes from the catalogue PDF.")
     parser.add_argument("pdf")
     parser.add_argument("--out", default="catalog/products.json")
+    parser.add_argument("--pages", help="1-based inclusive range, e.g. 1:96")
+    parser.add_argument("--book", help="tag every row with this edition label")
     args = parser.parse_args()
 
-    rows, unparsed = extract(args.pdf)
+    pages = None
+    if args.pages:
+        start, end = args.pages.split(":")
+        pages = (int(start), int(end))
+
+    rows, unparsed = extract(args.pdf, pages=pages, book=args.book)
 
     out = ROOT / args.out
     out.parent.mkdir(parents=True, exist_ok=True)

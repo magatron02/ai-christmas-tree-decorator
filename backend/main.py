@@ -215,6 +215,99 @@ def api_products(q: str = "", limit: int = 20):
     }
 
 
+@app.get("/api/catalog/search")
+def api_catalog_search(q: str = "", limit: int = 30):
+    """Thumbnail picker for panel 2 — same substring search as /api/products, plus the
+    catalogue photo so a decoration can be chosen without touching the filesystem."""
+    return {
+        "results": [
+            {
+                "code": row["code"],
+                "image": catalog.image_for(row["code"]),
+                "size_raw": row["size_raw"],
+                "section": row["section"],
+                "book": row.get("book"),
+            }
+            for row in catalog.search(q, limit)
+            if catalog.image_for(row["code"])
+        ]
+    }
+
+
+@app.post("/api/element/from-catalog")
+def api_element_from_catalog(code: str = Form(...)):
+    """Same as /api/remove-bg, except the source photo already lives in the catalogue instead
+    of coming from the browser. Returns the identical shape so the frontend's existing
+    preview/accept/reject flow needs no separate code path."""
+    path = catalog.image_path(code.strip())
+    if not path or not path.is_file():
+        raise HTTPException(404, f"No catalogue photo for '{code}'.")
+
+    cut = background_removal.remove_background(path.read_bytes())
+    name = _store(cut, "element", "png")
+    return {"element": name, "element_url": _url(name)}
+
+
+@app.post("/api/catalog/products")
+def api_catalog_add(
+    request: Request,
+    code: str = Form(...),
+    size_raw: str = Form(""),
+    section: str = Form(""),
+    book: str = Form(""),
+    image: UploadFile = File(...),
+):
+    """Add one product by hand (settings page). Localhost only, same reasoning as the API-key
+    write: this writes files to disk, and the auth to do that safely from elsewhere doesn't
+    exist yet."""
+    from backend.services import catalog_admin, settings
+
+    if not settings.is_local(request):
+        raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
+
+    data = _read(image, "Product photo")
+    validation.check_image(data, image.filename, image.content_type, "Product photo")
+    return catalog_admin.add_product(code, size_raw, section, book, data)
+
+
+@app.get("/api/catalog/recent")
+def api_catalog_recent(limit: int = 20):
+    """Read-only list for the settings page, newest addition first."""
+    return {
+        "results": [
+            {"code": row["code"], "image": catalog.image_for(row["code"]),
+             "size_raw": row["size_raw"], "book": row.get("book")}
+            for row in catalog.recent(limit)
+        ]
+    }
+
+
+@app.post("/api/catalog/sync")
+def api_catalog_sync(request: Request):
+    """Describe + embed whatever was added since the last sync, so newly-added products
+    become findable through 'หาสินค้าใกล้เคียง'. Runs the same scripts a bulk catalogue
+    import uses — describe_catalog.py already skips codes it has described before, so this
+    is cheap to call after adding just one product."""
+    import subprocess
+    import sys
+
+    from backend.services import settings
+
+    if not settings.is_local(request):
+        raise HTTPException(403, "Catalogue sync can only be run from the machine running this.")
+
+    for script in ("scripts/describe_catalog.py", "scripts/embed_catalog.py"):
+        result = subprocess.run(
+            [sys.executable, str(config.ROOT / script)],
+            capture_output=True, text=True, cwd=config.ROOT,
+        )
+        if result.returncode != 0:
+            raise HTTPException(502, f"{script} failed:\n{result.stderr[-2000:]}")
+
+    catalog.refresh()
+    return {"synced": True}
+
+
 @app.get("/api/usage")
 def api_usage():
     """What has been spent so far, summed from the log.
