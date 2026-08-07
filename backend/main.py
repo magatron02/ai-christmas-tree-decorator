@@ -47,6 +47,19 @@ app = FastAPI(title="AI Christmas Tree Decorator")
 app.mount("/files", StaticFiles(directory=config.STORAGE_DIR), name="files")
 app.mount("/static", StaticFiles(directory=config.FRONTEND_DIR), name="static")
 
+
+@app.middleware("http")
+async def no_cache_static(request: Request, call_next):
+    """The CSS/JS under /static change during a work session (this is a single-machine tool,
+    not a CDN-fronted deploy) — without this, a browser's heuristic caching (no Cache-Control
+    header is set by StaticFiles) can keep serving a stylesheet from before the last edit,
+    which reads as "the fix didn't work" when it actually did. ETag still makes a revalidated
+    load cheap; this only forces the revalidation to happen every time."""
+    response = await call_next(request)
+    if request.url.path.startswith("/static/"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
 # catalogue product crops, so a proposed code can be shown as a picture. Mounted only if the
 # index has been built — the app works without it, minus the reference matching.
 CATALOG_IMAGES = config.CATALOG_PATH.parent / "images"
