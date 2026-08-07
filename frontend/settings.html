@@ -1,65 +1,67 @@
 <!doctype html>
-<html lang="en">
+<html lang="th">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tree Decorator — Settings</title>
-<link rel="stylesheet" href="/static/styles/factory-tokens.css">
-<link rel="stylesheet" href="/static/styles/factory.css">
+<title>Tree Decorator — ตั้งค่า</title>
+<link rel="stylesheet" href="/static/styles/tokens.css">
+<link rel="stylesheet" href="/static/styles/components.css">
 <script src="/static/theme.js"></script>
 </head>
 <body>
 
 <header class="topbar">
-  <span class="logo">TREE DECORATOR</span>
+  <span class="logo">Tree Decorator</span>
   <span class="spacer"></span>
 </header>
 
 <div class="frame">
   <nav class="sidebar">
-    <a class="row" href="/">Decorate</a>
-    <a class="row" href="/history">History</a>
-    <a class="row active" href="/settings">Settings</a>
+    <a class="row" href="/">แต่งต้น</a>
+    <a class="row" href="/history">ประวัติ</a>
+    <a class="row active" href="/settings">ตั้งค่า</a>
   </nav>
 
   <main class="page stack">
 
-  <section class="card stack">
-    <span class="caption">Appearance</span>
-    <span class="hint">Stored in this browser. Nothing about it reaches the server.</span>
-    <div class="btn-row">
-      <button class="btn" id="theme-dark">Dark</button>
-      <button class="btn" id="theme-light">Light</button>
-      <span class="hint" id="theme-now"></span>
-    </div>
-  </section>
+    <section class="card stack">
+      <span class="caption">หน้าตา</span>
+      <span class="hint">เก็บไว้ใน browser นี้เท่านั้น ไม่ส่งอะไรขึ้น server</span>
+      <div class="btn-row">
+        <button class="btn" id="theme-light">สว่าง</button>
+        <button class="btn" id="theme-dark">มืด</button>
+        <span class="hint" id="theme-now"></span>
+      </div>
+    </section>
 
-  <section class="card stack">
-    <span class="caption">OpenAI API key</span>
-    <div class="chip" id="key-state">checking…</div>
-    <span class="hint" id="key-where"></span>
-    <input class="input" type="password" id="key-input" autocomplete="off"
-           placeholder="sk-…">
-    <div class="btn-row">
-      <button class="btn primary" id="key-save">Save key</button>
+    <section class="card stack">
+      <span class="caption">OpenAI API key</span>
+      <div class="chip" id="key-state">กำลังตรวจ…</div>
+      <span class="hint" id="key-where"></span>
+      <input class="input" type="password" id="key-input" autocomplete="off"
+             placeholder="sk-…">
+      <div class="btn-row">
+        <button class="btn primary" id="key-save">บันทึก key</button>
+        <span class="hint">
+          เขียนลงไฟล์ .env ในเครื่องนี้ · ค่าไม่เคยถูกส่งกลับมาแสดงในหน้านี้
+          กล่องด้านบนบอกได้แค่ว่าตั้งไว้แล้วหรือยัง
+        </span>
+      </div>
+      <div class="notice" id="key-error" hidden></div>
       <span class="hint">
-        Written to the .env file on this machine. It is never sent back to this page, and
-        the box above only ever says whether one is set.
+        ขอ key ได้ที่ platform.openai.com/api-keys · บัญชีต้องผูก billing ไว้
+        เพราะ gpt-image-2 ไม่มี free tier
       </span>
-    </div>
-    <div class="notice" id="key-error" hidden></div>
-    <span class="hint">
-      Get one at platform.openai.com/api-keys. The account needs billing set up —
-      gpt-image-2 has no free tier.
-    </span>
-  </section>
+    </section>
 
-  <section class="card stack">
-    <span class="caption">What this install has</span>
-    <table>
-      <tbody id="status-rows"></tbody>
-    </table>
-  </section>
+    <section class="card stack">
+      <span class="caption">เครื่องนี้มีอะไรพร้อมบ้าง</span>
+      <div class="scroll-x">
+        <table>
+          <tbody id="status-rows"></tbody>
+        </table>
+      </div>
+    </section>
 
   </main>
 </div>

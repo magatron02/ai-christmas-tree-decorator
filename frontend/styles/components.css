@@ -1,0 +1,315 @@
+/* Components — DESIGN.md sections 2, 4, 8, 9, 10.
+   DESIGN.md scopes itself to "color + typography tokens only, no layout/component work yet",
+   so this reskins the DOM structure that already existed (cards, chips, notices, dialog,
+   table) rather than building new interaction patterns. Explicitly not built, because the
+   doc itself excludes them: drag-and-drop file picker states (section 5), a custom
+   scrollbar (section 7), a transient success toast (section 10 — an inline banner is used
+   instead), and a dedicated empty-state card (section 13) — real components have to move
+   the ones that exist without inventing new ones.
+   No literal colour below; everything is var(--token) from tokens.css. */
+
+/* ---- type ---- */
+.logo {
+  font-family: var(--font-header-en);
+  font-weight: 600;
+  font-size: var(--text-2xl);
+  letter-spacing: -0.01em;
+}
+.caption {
+  font-family: var(--font-th);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.hint { font-size: var(--text-sm); color: var(--text-muted) }
+.mono { font-family: var(--font-body-en), var(--font-th); font-size: var(--text-sm) }
+.muted { color: var(--text-muted) }
+
+/* ---- buttons (section 4 + 8) ---- */
+.btn {
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: var(--space-2) var(--space-4);
+  font: inherit;
+  font-size: var(--text-base);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: background var(--transition-gentle), transform var(--transition-gentle),
+              box-shadow var(--transition-gentle);
+}
+.btn:hover    { transform: translateY(-1px); box-shadow: var(--shadow-hover) }
+.btn:active   { transform: scale(0.97); transition: transform var(--transition-press) }
+.btn:disabled { opacity: .5; cursor: default; transform: none; box-shadow: none }
+
+/* primary — Generate. One per view (Rule carried over from the previous system: colour
+   carries emphasis, so only one control may claim it). */
+.btn.primary {
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+}
+.btn.primary:hover    { background: var(--btn-primary-bg-hover) }
+.btn.primary:disabled {
+  background: var(--btn-primary-bg-disabled);
+  color: var(--btn-primary-text-disabled);
+}
+
+/* danger — outlined wine, for a destructive or cancelling action (Reset/remove/cancel) */
+.btn.danger {
+  background: transparent;
+  border: 1px solid var(--btn-secondary-border);
+  color: var(--btn-secondary-text);
+  box-shadow: none;
+}
+.btn.danger:hover { background: var(--btn-secondary-bg-hover) }
+
+/* the plain .btn above already reads as ghost-weight; a bare .btn (no modifier) is used for
+   low-emphasis actions like Download, per section 4's ghost row */
+.btn:not(.primary):not(.danger):not(.success) {
+  border: 1px solid var(--btn-ghost-border);
+  color: var(--btn-ghost-text);
+}
+.btn:not(.primary):not(.danger):not(.success):hover { background: var(--btn-ghost-bg-hover) }
+
+/* success — confirm/save. Used for the confirm-dialog's "yes" button: it is the one place a
+   second strong colour is allowed, because it is a different action (confirm) in a
+   different view (the dialog), and it keeps the money-spending click from being the most
+   visually emphasised thing on the page — the opposite of what a second wine button would do. */
+.btn.success {
+  background: var(--btn-success-bg);
+  color: var(--btn-success-text);
+}
+.btn.success:hover { background: var(--btn-success-bg-hover) }
+
+/* ---- inputs ---- */
+.input {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: var(--space-2) var(--space-3);
+  font: inherit;
+  font-size: var(--text-sm);
+}
+.input::placeholder { color: var(--text-muted) }
+.input:disabled     { opacity: .5 }
+input[type="file"].input::file-selector-button {
+  background: var(--surface-0);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-sm);
+  margin-right: var(--space-3);
+  padding: var(--space-1) var(--space-3);
+  cursor: pointer;
+}
+
+/* ---- card ---- */
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow);
+}
+
+/* Section 2's role mapping: each panel gets one accent, on its border and its label only —
+   never a fill, so the accent still reads as meaning rather than decoration. */
+.card.role-decoration { border-color: var(--fill-gold-block) }
+.card.role-decoration .caption { color: var(--text-gold) }
+.card.role-result { border-color: var(--fill-success) }
+.card.role-result .caption { color: var(--text-success) }
+
+/* ---- status chip (pipeline state) ----
+   Reuses the state-banner colours from section 10 rather than the toast pattern, since a
+   transient toast would be new interaction the doc scopes out. */
+.chip {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  background: var(--surface-1);
+}
+.chip.done {
+  color: var(--state-success-icon);
+  background: var(--state-success-bg);
+  border-color: var(--state-success-bg);
+}
+.chip.running {
+  color: var(--spinner-active);
+  background: var(--spinner-track);
+  border-color: var(--spinner-active);
+}
+.chip.failed,
+.chip.stale {
+  color: var(--state-error-text);
+  background: var(--state-error-bg);
+  border-color: var(--state-error-border);
+}
+
+/* ---- notice (inline banner: error / warning) — section 10 ---- */
+.notice {
+  border: 1px solid var(--state-error-border);
+  background: var(--state-error-bg);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  font-size: var(--text-base);
+  color: var(--state-error-text);
+}
+.notice.warning {
+  border-color: var(--state-warning-border);
+  background: var(--state-warning-bg);
+  color: var(--state-warning-text);
+}
+
+/* ---- stat tile ---- */
+.tile            { flex: 1; padding: 0 var(--space-4); border-right: 1px solid var(--border) }
+.tile:last-child { border-right: none }
+.tile .k         { font-size: var(--text-sm); display: block; margin-bottom: var(--space-1) }
+.tile .v         { font-size: var(--text-xl); color: var(--text-primary) }
+
+/* ---- nav row ---- */
+.row {
+  display: block; width: 100%; text-align: left; border: none;
+  background: none; color: inherit; font: inherit; font-size: var(--text-sm);
+  padding: var(--space-2); border-radius: var(--radius-sm); cursor: pointer;
+  text-decoration: none;
+}
+.row:hover,
+.row.active { background: var(--modal-item-selected-bg); color: var(--modal-item-selected-text) }
+
+/* ---- frame ---- */
+.topbar {
+  height: 64px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: 0 var(--space-6);
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--border);
+}
+.topbar .spacer { flex: 1 }
+
+.frame { display: flex; align-items: flex-start }
+.sidebar {
+  position: sticky;
+  top: 0;
+  width: 220px;
+  flex: none;
+  padding: var(--space-6) var(--space-3);
+  border-right: 1px solid var(--border);
+  background: var(--surface-1);
+  min-height: calc(100vh - 64px);
+  box-sizing: border-box;
+}
+
+.page { padding: var(--space-6); flex: 1; min-width: 0 }
+.stack   { display: flex; flex-direction: column; gap: var(--space-3) }
+.btn-row { display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap }
+.option-name { font-size: var(--text-lg) }
+
+/* the 3-panel flow: bare tree -> decorations -> result, side by side so the whole job is
+   visible at once instead of stacked one screen apart */
+.panels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-6);
+  align-items: start;
+}
+@media (max-width: 1100px) {
+  .panels { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+}
+@media (max-width: 720px) {
+  .panels { grid-template-columns: minmax(0, 1fr) }
+}
+@media (max-width: 720px) {
+  .frame { display: block }
+  .sidebar {
+    width: auto; min-height: 0; display: flex; gap: var(--space-2);
+    padding: var(--space-2) var(--space-3); border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar .row { width: auto }
+}
+
+/* ---- accepted decorations list ---- */
+.accepted { list-style: none; margin: 0; padding: 0; display: flex; gap: var(--space-2); flex-wrap: wrap }
+.accepted li {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+.accepted img { width: 40px; height: 40px; object-fit: contain; border-radius: var(--radius-sm) }
+.accepted .btn.danger { padding: var(--space-1) var(--space-2); font-size: var(--text-sm) }
+
+/* ---- preview surfaces ---- */
+.checker {
+  background-color: var(--surface-0);
+  background-image:
+    linear-gradient(45deg, var(--border) 25%, transparent 25%, transparent 75%, var(--border) 75%),
+    linear-gradient(45deg, var(--border) 25%, transparent 25%, transparent 75%, var(--border) 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 8px 8px;
+}
+.thumb {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.triptych { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3) }
+.triptych figure { margin: 0 }
+.triptych figcaption { margin-bottom: var(--space-2) }
+
+/* ---- catalogue matches (8.3c) ---- */
+.found { border-top: 1px solid var(--border); padding-top: var(--space-3) }
+.found:first-child { border-top: none; padding-top: 0 }
+.found .seen { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap }
+.candidates { display: flex; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-3) }
+.candidate {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
+  width: 168px;
+}
+.candidate img { width: 100%; height: 110px; object-fit: contain; border-radius: var(--radius-sm) }
+.candidate .code { font-family: var(--font-body-en); font-size: var(--text-sm); margin-top: var(--space-2) }
+.candidate .why { font-size: var(--text-xs); color: var(--text-muted); margin-top: var(--space-1) }
+.candidate .chip { padding: var(--space-1) var(--space-2); font-size: var(--text-xs); margin-top: var(--space-2) }
+
+/* ---- confirm dialog (section 6) ---- */
+dialog {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
+  padding: var(--space-4);
+  max-width: 420px;
+  font: inherit;
+  box-shadow: var(--modal-shadow);
+}
+dialog::backdrop { background: var(--modal-backdrop) }
+dialog h2 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+dialog p { margin: 0 0 var(--space-3); font-size: var(--text-base); color: var(--text-muted) }
+
+/* ---- history table ---- */
+.scroll-x { overflow-x: auto; max-width: 100% }
+table { width: 100%; border-collapse: collapse; font-size: var(--text-sm) }
+.scroll-x table { min-width: 560px }
+th, td { text-align: left; padding: var(--space-2); border-bottom: 1px solid var(--border) }
+th { color: var(--text-muted) }
+td.shrink { width: 96px }

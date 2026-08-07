@@ -1,10 +1,10 @@
-"""Factory design system compliance — section 6, rules 1 to 9.
+"""Design system compliance — DESIGN.md, replacing the Factory rules it superseded.
 
-The design system asks for this itself: "If your project has a lint or test layer, assert
-that the literal color-mix string is present. It is the kind of rule that gets quietly
-unwound during a refactor, and the failure is invisible to anyone with good eyesight."
-
-So this suite is a linter, not a rendering test. It reads the frontend as text.
+DESIGN.md scopes itself to "colour + typography tokens only", so what survives from the old
+Factory ruleset is the discipline, not the mechanism: one file of literal colours, everything
+else references a token, and every accent means something rather than decorating. The old
+colour-mix contrast trick is gone — this palette's colours are pre-verified AA pairs stated
+directly in the doc, checked here and in test_theme_contrast.py rather than derived.
 """
 
 import re
@@ -14,8 +14,8 @@ import pytest
 from backend import config
 
 FRONTEND = config.FRONTEND_DIR
-TOKENS = FRONTEND / "styles" / "factory-tokens.css"
-COMPONENTS = FRONTEND / "styles" / "factory.css"
+TOKENS = FRONTEND / "styles" / "tokens.css"
+COMPONENTS = FRONTEND / "styles" / "components.css"
 PAGES = sorted(FRONTEND.glob("*.html"))
 SCRIPTS = sorted(FRONTEND.glob("*.js"))
 
@@ -27,27 +27,20 @@ def read(path):
 
 
 def strip_comments(source):
-    """Block and line comments both. A comment explaining why a colour was avoided is not a
-    colour, and the first version of this only stripped /* */ — so the word "green" in a
-    line comment failed the no-literal-colour rule.
-
-    The lookbehind keeps https:// intact.
-    """
     source = re.sub(r"/\*.*?\*/", "", source, flags=re.S)
     return re.sub(r"(?<!:)//[^\n]*", "", source)
 
 
 def component_sources():
-    """Everything except the token file — that is the one place literals are allowed."""
     return [COMPONENTS, *PAGES, *SCRIPTS]
 
 
-# ---- rule 1: never a literal colour in a component ---------------------------------------
+# ---- rule 1: never a literal colour outside the token file --------------------------------
 
 HEX = re.compile(r"#[0-9a-fA-F]{3,8}\b")
-FUNCTIONAL = re.compile(r"\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\s*\(")
+FUNCTIONAL = re.compile(r"\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color-mix)\s*\(")
 NAMED = re.compile(
-    r"(?<![\w-])(?:white|black|red|green|blue|orange|yellow|gray|grey|silver|maroon|navy)(?![\w-])",
+    r"(?<![\w-])(?:white|black|red|green|blue|orange|yellow|gray|grey|silver|maroon|navy|gold|wine)(?![\w-])",
     re.I,
 )
 
@@ -60,62 +53,65 @@ def test_rule_1_no_literal_colour_outside_the_token_file(path):
     assert not NAMED.findall(text), f"{path.name}: named colour"
 
 
-def test_rule_1_the_token_file_still_defines_every_token():
+def test_rule_1_the_token_file_defines_every_token_the_doc_lists():
     text = read(TOKENS)
     for token in (
-        "--bg", "--bg-elevated", "--border",
-        "--text", "--text-2", "--text-3",
-        "--accent-positive", "--accent-warning",
-        "--btn-bg", "--btn-hover-bg", "--btn-primary-bg", "--btn-primary-hover-bg",
-        "--btn-primary-text",
-        "--radius-sm", "--radius-lg", "--shadow",
-        "--font-ui", "--font-mono", "--weight-heading", "--tracking-heading",
+        "--surface-0", "--surface-1", "--border", "--text-primary", "--text-muted",
+        "--fill-primary", "--on-primary", "--text-accent-red",
+        "--fill-success", "--text-success",
+        "--fill-gold-block", "--text-gold",
+        "--btn-primary-bg", "--btn-primary-bg-hover", "--btn-primary-bg-disabled",
+        "--btn-secondary-border", "--btn-secondary-text",
+        "--btn-ghost-border", "--btn-ghost-text",
+        "--btn-success-bg", "--btn-success-bg-hover",
+        "--state-error-bg", "--state-error-border", "--state-error-text",
+        "--state-warning-bg", "--state-warning-border", "--state-warning-text",
+        "--focus-ring-gap", "--focus-ring-color",
+        "--font-header-en", "--font-body-en", "--font-th",
+        "--radius-sm", "--radius-lg", "--space-4", "--text-base", "--transition-gentle",
     ):
         assert f"{token}:" in text, f"missing token {token}"
 
 
-# ---- rule 2: accents mean status, never decoration, never a fill --------------------------
+# ---- rule 2: gold is decorative-fill only, never text (DESIGN.md section 1's own audit) ---
 
 
-def test_rule_2_no_accent_is_ever_a_background():
+def test_rule_2_the_raw_gold_fill_is_never_used_as_a_text_colour():
+    """The doc's own contrast audit: --fill-gold-block is 2.75:1 as text and fails AA. Text
+    must go through --text-gold instead. A component that puts --fill-gold-block in a
+    `color:` declaration has reintroduced the failure the audit found."""
     css = strip_comments(read(COMPONENTS))
-    fills = re.findall(r"(?<![\w-])background(?:-color)?\s*:\s*([^;}]*)", css)
-    offenders = [value.strip() for value in fills if "--accent" in value]
-    assert offenders == [], f"accent used as a fill: {offenders}"
+    for value in re.findall(r"(?<![\w-])color\s*:\s*([^;}]*)", css):
+        assert "--fill-gold-block" not in value, f"gold fill used as text colour: {value.strip()}"
 
 
-def test_rule_2_accents_only_appear_where_a_status_is_being_said():
-    """Every accent reference belongs to a chip, the danger button or the error notice."""
+def test_rule_2_accents_appear_only_where_a_role_is_being_said():
+    """Section 2: one accent per functional role, on a border or a label — never mixed into
+    an unrelated element. Checked loosely: every rule touching a role token lives under a
+    role class, a status chip, a button variant, or a notice."""
     css = strip_comments(read(COMPONENTS))
-    for block in re.findall(r"([^{}]+)\{([^}]*)\}", css):
-        selector, body = block[0].strip(), block[1]
-        if "--accent" not in body:
-            continue
-        assert re.search(r"\.chip|\.danger|\.notice", selector), (
-            f"accent used outside a status context: {selector!r}"
-        )
+    role_tokens = ("--fill-primary", "--fill-success", "--fill-gold-block", "--text-gold",
+                   "--text-success", "--text-accent-red")
+    allowed = re.compile(
+        r"\.role-|\.chip|\.btn\.(primary|success|danger)|\.notice|\.row\.active|"
+        r"\.candidate|\.modal-item"
+    )
+    for selector, body in re.findall(r"([^{}]+)\{([^}]*)\}", css):
+        if any(token in body for token in role_tokens):
+            assert allowed.search(selector), f"role accent used outside a role context: {selector!r}"
 
 
-# ---- rule 3: accents as text go through color-mix(… 55%, var(--text)) --------------------
-
-COLOR_DECL = re.compile(r"(?<![\w-])color\s*:\s*([^;}]*)")
-MIXED = re.compile(r"color-mix\(\s*in\s+srgb\s*,\s*var\(--accent-[a-z]+\)\s+55%\s*,\s*var\(--text\)\s*\)")
+# ---- rule 3 (was colour-mix): every accent-as-text pairing is one DESIGN.md verified ------
 
 
-def test_rule_3_accent_text_is_always_mixed_to_pass_contrast():
-    css = strip_comments(read(COMPONENTS))
-    accent_colours = [value for value in COLOR_DECL.findall(css) if "--accent" in value]
-    assert accent_colours, "expected at least one accent-coloured text rule"
-    for value in accent_colours:
-        assert MIXED.search(value), f"raw accent used as text: color: {value.strip()}"
+def test_rule_3_no_component_reinvents_a_colour_mix_formula():
+    """The old system computed contrast at runtime with color-mix; this one uses pre-verified
+    literal pairs. A color-mix reappearing means someone reached for the old pattern instead
+    of the new tokens, and it would not be checked by anything here."""
+    assert "color-mix(" not in strip_comments(read(COMPONENTS))
 
 
-def test_rule_3_the_literal_mix_string_is_present():
-    """The check the design system explicitly asks for."""
-    assert "color-mix(in srgb, var(--accent-" in read(COMPONENTS)
-
-
-# ---- rule 4: one primary button per view -------------------------------------------------
+# ---- rule 4: one primary button per view (unchanged) --------------------------------------
 
 PRIMARY = re.compile(r'class\s*=\s*"[^"]*\bbtn\b[^"]*\bprimary\b[^"]*"')
 
@@ -125,24 +121,34 @@ def test_rule_4_the_decorate_page_has_exactly_one_primary():
     assert len(matches) == 1, f"expected 1 primary button, found {len(matches)}"
 
 
-def test_rule_4_the_confirm_dialog_is_not_a_second_primary():
-    """The dialog is a view of its own and the page already spent its primary on Generate.
-    The button that costs money being the quieter one is also the right call for AC-4."""
+def test_rule_4_the_confirm_dialog_uses_success_not_a_second_primary():
+    """The dialog's own action is 'confirm/save' (section 2's role table), which maps to the
+    success variant — and keeping it off wine also means the button that spends money is
+    never the most visually emphasised control on the page (AC-4)."""
     html = read(FRONTEND / "index.html")
     dialog = html[html.index("<dialog") : html.index("</dialog>")]
     assert "primary" not in dialog
+    assert 'class="btn success"' in dialog
 
 
 def test_rule_4_the_history_page_has_no_primary():
     assert PRIMARY.findall(read(FRONTEND / "history.html")) == []
 
 
+def test_rule_4_the_settings_page_has_exactly_one_primary():
+    """Saving the key is the one action that changes something on this page."""
+    assert len(PRIMARY.findall(read(FRONTEND / "settings.html"))) == 1
+
+
 @pytest.mark.parametrize("path", SCRIPTS, ids=lambda p: p.name)
 def test_rule_4_scripts_do_not_mint_extra_primaries(path):
-    assert "primary" not in read(path)
+    """Looks for the word inside a className assignment, not inside prose — theme.js quotes
+    DESIGN.md's "Light theme — primary" in a comment, which is not a second button."""
+    text = strip_comments(read(path))
+    assert "primary" not in text, f"{path.name} mentions 'primary' outside a comment"
 
 
-# ---- rule 5: borders are 1px, emphasis is the colour --------------------------------------
+# ---- rule 5: borders are 1px --------------------------------------------------------------
 
 BORDER_DECL = re.compile(r"(?<![\w-])border(?:-top|-right|-bottom|-left)?\s*:\s*([^;}]*)")
 
@@ -154,73 +160,74 @@ def test_rule_5_every_border_is_one_pixel():
         assert all(width == "1" for width in widths), f"border width other than 1px: {value.strip()}"
 
 
-# ---- rule 6: no shadows, but keep writing box-shadow ---------------------------------------
+# ---- rule 6: shadows are tokens, not literals ----------------------------------------------
 
 
-def test_rule_6_box_shadow_only_ever_reaches_for_the_token():
+def test_rule_6_box_shadow_only_ever_reaches_for_a_token():
+    """`none` is allowed — danger and disabled buttons deliberately drop the elevation
+    shadow — but a literal shadow value (a hardcoded blur/colour) is not."""
     css = strip_comments(read(COMPONENTS))
-    values = re.findall(r"box-shadow\s*:\s*([^;}]*)", css)
-    assert values, "the card should still declare box-shadow so a future token can reach it"
-    assert all(value.strip() == "var(--shadow)" for value in values), values
+    values = [v.strip() for v in re.findall(r"box-shadow\s*:\s*([^;}]*)", css)]
+    assert values, "at least one component should declare box-shadow"
+    assert all(v.startswith("var(--") or v == "none" for v in values), values
 
 
-# ---- rule 7: weight 400 everywhere, 500 only for the logo and modal headings ---------------
+# ---- rule 7: heavy weight only on the app title and modal heading -------------------------
 
 
-def test_rule_7_no_hardcoded_heavy_weights():
-    css = strip_comments(read(COMPONENTS))
-    values = [value.strip() for value in re.findall(r"font-weight\s*:\s*([^;}]*)", css)]
-    allowed = {"var(--weight-heading)", "400 700"}  # the second is the @font-face range
-    assert set(values) <= allowed, f"unexpected font weights: {sorted(set(values) - allowed)}"
-
-
-def test_rule_7_only_the_logo_and_the_modal_heading_are_heavy():
+def test_rule_7_only_the_logo_and_the_modal_heading_carry_a_hardcoded_weight():
     css = strip_comments(read(COMPONENTS))
     heavy = [
         selector.strip()
         for selector, body in re.findall(r"([^{}]+)\{([^}]*)\}", css)
-        if "var(--weight-heading)" in body
+        if re.search(r"font-weight:\s*(500|600|700|800|900)\b", body)
     ]
-    assert sorted(heavy) == [".logo", "dialog h2"]
+    assert set(heavy) <= {".logo", "dialog h2", ".caption"}, heavy
 
 
 # ---- rule 8: unreachable controls are disabled, never hidden -------------------------------
 
 
-def test_rule_8_disabled_controls_stay_visible_at_half_opacity():
+def test_rule_8_disabled_controls_stay_visible_at_reduced_opacity():
     css = strip_comments(read(COMPONENTS))
     assert re.search(r"\.btn:disabled\s*\{[^}]*opacity:\s*\.5", css)
 
 
 def test_rule_8_the_page_ships_its_controls_disabled_rather_than_absent():
-    """Every control the user cannot use yet is in the markup with `disabled` on it, so the
-    whole shape of the tool is visible from the first paint."""
     html = read(FRONTEND / "index.html")
     for element_id in ("cut-btn", "size-select", "generate-btn"):
         match = re.search(rf'<[^>]*id="{element_id}"[^>]*>', html)
         assert match and "disabled" in match.group(0), f"{element_id} should start disabled"
 
 
-# ---- rule 9: nothing may depend on letter case ---------------------------------------------
+# ---- typography: Thai always resolves through the Thai face -------------------------------
 
 
-def test_rule_9_uppercase_is_styling_only_and_has_an_escape_hatch():
+def test_thai_pages_declare_the_thai_language():
+    for path in PAGES:
+        assert '<html lang="th">' in read(path), f"{path.name} must declare lang=th"
+
+
+def test_the_logo_is_the_only_thing_in_the_header_font():
     css = strip_comments(read(COMPONENTS))
     owners = [
         selector.strip()
         for selector, body in re.findall(r"([^{}]+)\{([^}]*)\}", css)
-        if "text-transform: uppercase" in body
+        if "var(--font-header-en)" in body
     ]
-    assert owners == [".caption"], f"uppercase applied outside .caption: {owners}"
-    assert re.search(r"\.caption\s+\.sub\s*\{[^}]*text-transform:\s*none", css)
+    assert owners == [".logo"]
+
+
+def test_body_text_defaults_to_the_thai_face():
+    """Fraunces and Inter carry no Thai glyphs (DESIGN.md section 3): the base stack has to
+    be Thai-first or Thai strings fall through to whatever the OS ships."""
+    assert 'font-family: var(--font-th)' in read(TOKENS)
 
 
 # ---- the app's own contract with the design system -----------------------------------------
 
 
 def test_every_pipeline_state_has_a_chip_class():
-    """Spec.md 2 defines five states; all five must render as a chip, and api_failed uses the
-    agreed .chip.failed rather than a new colour."""
     app_js = read(FRONTEND / "app.js")
     history_js = read(FRONTEND / "history.js")
     for state in PIPELINE_STATES:
@@ -233,9 +240,7 @@ def test_every_pipeline_state_has_a_chip_class():
 
 
 def test_no_font_is_loaded_from_a_network():
-    """Section 7: a design system that stops looking right without a network is not a system."""
-    for path in [COMPONENTS, *PAGES]:
+    for path in [COMPONENTS, TOKENS, *PAGES]:
         text = read(path)
         assert "fonts.googleapis" not in text
-        assert "https://" not in text or "@font-face" not in text or "cdn" not in text.lower()
         assert not re.search(r'src:\s*url\(\s*["\']?https?://', text)

@@ -1,59 +1,59 @@
 <!doctype html>
-<html lang="en">
+<html lang="th">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tree Decorator — History</title>
-<link rel="stylesheet" href="/static/styles/factory-tokens.css">
-<link rel="stylesheet" href="/static/styles/factory.css">
+<title>Tree Decorator — ประวัติ</title>
+<link rel="stylesheet" href="/static/styles/tokens.css">
+<link rel="stylesheet" href="/static/styles/components.css">
 <script src="/static/theme.js"></script>
 </head>
 <body>
 
 <header class="topbar">
-  <span class="logo">TREE DECORATOR</span>
+  <span class="logo">Tree Decorator</span>
   <span class="spacer"></span>
   <div class="tile">
-    <span class="k caption">Generated</span>
+    <span class="k caption">สร้างไปแล้ว</span>
     <span class="v" id="generations">–</span>
   </div>
   <div class="tile">
-    <span class="k caption">Tokens spent</span>
+    <span class="k caption">token ที่ใช้</span>
     <span class="v" id="tokens">–</span>
   </div>
 </header>
 
 <div class="frame">
   <nav class="sidebar">
-    <a class="row" href="/">Decorate</a>
-    <a class="row active" href="/history">History</a>
-    <a class="row" href="/settings">Settings</a>
+    <a class="row" href="/">แต่งต้น</a>
+    <a class="row active" href="/history">ประวัติ</a>
+    <a class="row" href="/settings">ตั้งค่า</a>
   </nav>
 
   <main class="page">
     <section class="card stack">
-      <span class="caption">Every request, newest first</span>
+      <span class="caption">ทุก request เรียงใหม่สุดก่อน</span>
       <span class="hint">
-        If a generation succeeded on the server but never reached the browser, the image is
-        still here and its cost is still recorded. Nothing is retried automatically.
+        ถ้า generation สำเร็จฝั่ง server แต่ผลไม่ถึง browser ภาพยังอยู่ที่นี่
+        และค่าใช้จ่ายยังถูกบันทึกไว้ ระบบไม่ retry ให้เองโดยอัตโนมัติ
       </span>
       <div class="notice" id="error-box" hidden></div>
       <div class="scroll-x">
       <table>
         <thead>
           <tr>
-            <th class="caption">When</th>
-            <th class="caption">Request</th>
-            <th class="caption">Size</th>
-            <th class="caption">State</th>
-            <th class="caption">Tokens</th>
-            <th class="caption">Result</th>
+            <th class="caption">เมื่อไหร่</th>
+            <th class="caption">request</th>
+            <th class="caption">ขนาด</th>
+            <th class="caption">สถานะ</th>
+            <th class="caption">token</th>
+            <th class="caption">ผลลัพธ์</th>
           </tr>
         </thead>
         <tbody id="rows"></tbody>
       </table>
       </div>
-      <span class="hint" id="empty" hidden>Nothing generated yet.</span>
+      <span class="hint" id="empty" hidden>ยังไม่เคยสร้างภาพ</span>
     </section>
   </main>
 </div>

@@ -28,7 +28,7 @@ from helpers import gif_bytes, jpeg_bytes, png_bytes, upload, webp_bytes
 def test_unsupported_types_are_rejected(data, filename, mime):
     with pytest.raises(ValidationError) as caught:
         validation.check_image(data, filename, mime, "Element image")
-    assert "not a supported file type" in str(caught.value)
+    assert "ไม่รองรับ" in str(caught.value)
 
 
 def test_jpg_and_png_are_accepted():
@@ -40,13 +40,13 @@ def test_a_renamed_file_is_caught_by_its_contents():
     """The extension and the MIME type both say PNG. The bytes do not."""
     with pytest.raises(ValidationError) as caught:
         validation.check_image(b"%PDF-1.4 still not an image", "sneaky.png", "image/png", "Tree image")
-    assert "not a readable image" in str(caught.value)
+    assert "อ่านเป็นรูปภาพไม่ได้" in str(caught.value)
 
 
 def test_a_real_gif_renamed_to_png_is_caught_by_its_format():
     with pytest.raises(ValidationError) as caught:
         validation.check_image(gif_bytes(), "sneaky.png", "image/png", "Tree image")
-    assert "contents are GIF" in str(caught.value)
+    assert "เนื้อไฟล์จริงเป็น GIF" in str(caught.value)
 
 
 # ---- file size -------------------------------------------------------------------------
@@ -55,7 +55,7 @@ def test_a_real_gif_renamed_to_png_is_caught_by_its_format():
 def test_oversized_file_is_rejected():
     with pytest.raises(ValidationError) as caught:
         validation.check_size(config.MAX_UPLOAD_BYTES + 1, "Tree image")
-    assert "the limit is 10 MB" in str(caught.value)
+    assert "เกินขีดจำกัด 10 MB" in str(caught.value)
 
 
 def test_empty_file_is_rejected():
@@ -74,7 +74,7 @@ def test_more_than_one_element_is_rejected_not_silently_truncated():
     """AC-1 wants a defined behaviour. This is it: two files is an error the user sees."""
     with pytest.raises(ValidationError) as caught:
         validation.exactly_one(["a", "b"], "Element image")
-    assert "exactly 1 is allowed" in str(caught.value)
+    assert "รับได้ทีละ 1 ไฟล์" in str(caught.value)
 
 
 def test_zero_files_is_rejected():
@@ -108,7 +108,7 @@ def test_invalid_dimensions_are_rejected(width, height):
 def test_unknown_size_key_is_rejected():
     with pytest.raises(ValidationError) as caught:
         validation.resolve_size("7:3")
-    assert "Unknown output size" in str(caught.value)
+    assert "ไม่รู้จักขนาด" in str(caught.value)
 
 
 # ---- through the API -------------------------------------------------------------------
@@ -118,7 +118,7 @@ def test_endpoint_rejects_a_bad_type_with_a_readable_message(client, fake_rembg)
     response = client.post("/api/remove-bg", files=[upload(gif_bytes(), "e.gif", "image/gif")])
 
     assert response.status_code == 422
-    assert "not a supported file type" in response.json()["error"]
+    assert "ไม่รองรับ" in response.json()["error"]
     assert fake_rembg.count == 0
 
 
@@ -129,7 +129,7 @@ def test_endpoint_rejects_two_element_files(client, fake_rembg):
     )
 
     assert response.status_code == 422
-    assert "exactly 1 is allowed" in response.json()["error"]
+    assert "รับได้ทีละ 1 ไฟล์" in response.json()["error"]
     assert fake_rembg.count == 0
 
 
@@ -139,7 +139,7 @@ def test_endpoint_rejects_an_oversized_file(client, fake_rembg, monkeypatch):
     response = client.post("/api/remove-bg", files=[upload(png_bytes(), "big.png")])
 
     assert response.status_code == 422
-    assert "the limit is" in response.json()["error"]
+    assert "เกินขีดจำกัด" in response.json()["error"]
     assert fake_rembg.count == 0
 
 
@@ -152,7 +152,7 @@ def test_prepare_rejects_an_unknown_size(client, fake_rembg):
     )
 
     assert response.status_code == 422
-    assert "Unknown output size" in response.json()["error"]
+    assert "ไม่รู้จักขนาด" in response.json()["error"]
 
 
 def test_prepare_rejects_a_forged_element_path(client, fake_rembg):

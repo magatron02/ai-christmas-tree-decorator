@@ -1,15 +1,19 @@
 # Fonts
 
-    inter.woff2            @fontsource-variable/inter          (SIL OFL 1.1)
-    jetbrains-mono.woff2   @fontsource-variable/jetbrains-mono  (SIL OFL 1.1)
+    fraunces.woff2                        @fontsource-variable/fraunces          (SIL OFL 1.1)
+    inter.woff2                           @fontsource-variable/inter             (SIL OFL 1.1)
+    ibm-plex-sans-thai-400.woff2          @fontsource/ibm-plex-sans-thai (Thai)  (SIL OFL 1.1)
+    ibm-plex-sans-thai-600.woff2          @fontsource/ibm-plex-sans-thai (Thai)  (SIL OFL 1.1)
+    ibm-plex-sans-thai-latin-400.woff2    @fontsource/ibm-plex-sans-thai (Latin) (SIL OFL 1.1)
+    ibm-plex-sans-thai-latin-600.woff2    @fontsource/ibm-plex-sans-thai (Latin) (SIL OFL 1.1)
 
-Variable `.woff2`, latin subset, ~45 KB each. Committed rather than fetched, and there is no
-CDN link anywhere in the project: "a design system that stops looking right without a network
-is not a system" (factory-design-system.md section 7). A clone renders correctly offline.
+Self-hosted per DESIGN.md's typography section — Fraunces for the app title, Inter for Latin
+UI text, IBM Plex Sans Thai for everything Thai (which is almost everything, since the UI
+copy is Thai). Fraunces and Inter carry no Thai glyphs, so Thai strings always resolve
+through IBM Plex Sans Thai rather than falling through to a system font.
 
-`@font-face` is declared in `../styles/factory.css` and points at these filenames, so
-replacing a file is enough to change the face — nothing else refers to them.
+Committed rather than fetched — no CDN link anywhere in the project, so a clone renders
+correctly offline. `@font-face` is declared in `../styles/tokens.css`.
 
-Both have a full system fallback stack, so a missing file degrades to `Segoe UI` / `Consolas`
-rather than breaking. The caption's negative tracking is tuned for JetBrains Mono, though, so
-the stamped-label look only works with the real file present.
+Every family has a system fallback stack (Georgia, -apple-system, Tahoma-class sans), so a
+missing file degrades rather than breaks.

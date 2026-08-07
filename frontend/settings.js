@@ -8,38 +8,38 @@ const $ = (id) => document.getElementById(id);
 
 /* ---- theme ---- */
 function applyTheme(theme) {
-  if (theme === "light") document.documentElement.setAttribute("data-theme", "light");
+  if (theme === "dark") document.documentElement.setAttribute("data-theme", "dark");
   else document.documentElement.removeAttribute("data-theme");
   try {
     localStorage.setItem("theme", theme);
   } catch (err) {
     /* storage unavailable; the choice just will not survive a reload */
   }
-  $("theme-now").textContent = theme === "light" ? "Light is on." : "Dark is on.";
+  $("theme-now").textContent = theme === "dark" ? "กำลังใช้ธีมมืด" : "กำลังใช้ธีมสว่าง";
 }
 
 $("theme-dark").addEventListener("click", () => applyTheme("dark"));
 $("theme-light").addEventListener("click", () => applyTheme("light"));
-applyTheme(document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark");
+applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light");
 
 /* ---- api key ---- */
 function showKeyState(isSet) {
   const chip = $("key-state");
   chip.className = isSet ? "chip done" : "chip failed";
-  chip.textContent = isSet ? "A key is set" : "No key set — nothing can be generated";
+  chip.textContent = isSet ? "ตั้ง key ไว้แล้ว" : "ยังไม่ได้ตั้ง key — สร้างภาพไม่ได้";
 }
 
 async function loadStatus() {
   const response = await fetch("/api/settings");
   const status = await response.json();
   showKeyState(status.api_key_set);
-  $("key-where").textContent = `Stored in ${status.env_path}`;
+  $("key-where").textContent = `เก็บไว้ที่ ${status.env_path}`;
 
   const rows = [
-    ["Image model", status.model],
-    ["Vision model", status.vision_model],
-    ["Product sizes", status.catalog_products ? "loaded" : "missing — run scripts/extract_catalog.py"],
-    ["Reference matching", status.catalog_searchable ? "ready" : "not built — run scripts/describe_catalog.py then embed_catalog.py"],
+    ["model สร้างภาพ", status.model],
+    ["model อ่านรูป", status.vision_model],
+    ["ขนาดสินค้า", status.catalog_products ? "โหลดแล้ว" : "ยังไม่มี — รัน scripts/extract_catalog.py"],
+    ["ค้นของจากรูป", status.catalog_searchable ? "พร้อมใช้" : "ยังไม่ได้สร้าง — รัน scripts/describe_catalog.py แล้ว embed_catalog.py"],
   ];
   const host = $("status-rows");
   host.innerHTML = "";

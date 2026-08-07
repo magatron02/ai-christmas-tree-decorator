@@ -1,3 +1,10 @@
+> **Superseded 2026-08-05.** Replaced by [[DESIGN.md]] — a warm cream/wine/forest system,
+> light by default with dark as an opt-in, self-hosted Fraunces/Inter/IBM Plex Sans Thai.
+> Kept here as the historical record of what the UI looked like before, and because Rule 3's
+> `color-mix` contrast technique and the "one primary per view" discipline are still worth
+> knowing even though DESIGN.md's palette does not use them (its colours are pre-verified
+> literal pairs instead). Not applied to any current page.
+
 # Factory — a dark UI design system
 
 A machine tool, not an app. Flat surfaces, hairline borders, no shadows, and

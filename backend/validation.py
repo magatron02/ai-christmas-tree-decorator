@@ -27,11 +27,11 @@ def exactly_one(files, field):
     the behaviour to be a choice, and a rejection is the one the user can actually see.
     """
     if not files:
-        raise ValidationError(f"{field}: no file was uploaded.")
+        raise ValidationError(f"{field}: ยังไม่ได้เลือกไฟล์")
     if len(files) > 1:
         raise ValidationError(
-            f"{field}: {len(files)} files uploaded, but exactly 1 is allowed. "
-            "Upload decorations one at a time so you can check each cut-out."
+            f"{field}: อัปโหลดมา {len(files)} ไฟล์ แต่รับได้ทีละ 1 ไฟล์เท่านั้น "
+            "ใส่ของตกแต่งทีละชิ้น จะได้ตรวจการตัดพื้นหลังทีละอัน"
         )
     return files[0]
 
@@ -39,24 +39,24 @@ def exactly_one(files, field):
 def element_count(elements):
     """1 to MAX_ELEMENTS decorations per picture (Product.md 8.2)."""
     if not elements:
-        raise ValidationError("Add at least one decoration before generating.")
+        raise ValidationError("ใส่ของตกแต่งอย่างน้อย 1 ชิ้นก่อนสร้างภาพ")
     if len(elements) > config.MAX_ELEMENTS:
         raise ValidationError(
-            f"{len(elements)} decorations selected, but at most {config.MAX_ELEMENTS} "
-            "can go into one picture."
+            f"เลือกของตกแต่งมา {len(elements)} ชิ้น แต่ใส่ในภาพเดียวได้มากสุด "
+            f"{config.MAX_ELEMENTS} ชิ้น"
         )
     if len(set(elements)) != len(elements):
-        raise ValidationError("The same decoration was added twice. Each one may appear once.")
+        raise ValidationError("ใส่ของตกแต่งชิ้นเดิมซ้ำ แต่ละชิ้นใส่ได้ครั้งเดียว")
     return elements
 
 
 def check_size(nbytes, field):
     if nbytes <= 0:
-        raise ValidationError(f"{field}: the file is empty.")
+        raise ValidationError(f"{field}: ไฟล์ว่างเปล่า")
     if nbytes > config.MAX_UPLOAD_BYTES:
         limit = config.MAX_UPLOAD_BYTES // (1024 * 1024)
         raise ValidationError(
-            f"{field}: file is {nbytes / 1024 / 1024:.1f} MB, the limit is {limit} MB."
+            f"{field}: ไฟล์ขนาด {nbytes / 1024 / 1024:.1f} MB เกินขีดจำกัด {limit} MB"
         )
 
 
@@ -69,21 +69,21 @@ def check_image(data, filename, content_type, field):
     if ext not in config.ALLOWED_EXT:
         allowed = ", ".join(sorted(config.ALLOWED_EXT))
         raise ValidationError(
-            f"{field}: '{filename}' is not a supported file type. Allowed: {allowed}."
+            f"{field}: '{filename}' เป็นชนิดไฟล์ที่ไม่รองรับ · รับเฉพาะ {allowed}"
         )
     if content_type and content_type.split(";")[0].strip().lower() not in config.ALLOWED_MIME:
-        raise ValidationError(f"{field}: '{content_type}' is not a supported file type. Use JPG or PNG.")
+        raise ValidationError(f"{field}: '{content_type}' เป็นชนิดไฟล์ที่ไม่รองรับ · ใช้ JPG หรือ PNG")
 
     try:
         probe = Image.open(io.BytesIO(data))
         fmt, size = probe.format, probe.size
         probe.verify()
     except (UnidentifiedImageError, OSError, ValueError) as exc:
-        raise ValidationError(f"{field}: the file is not a readable image ({exc}).") from exc
+        raise ValidationError(f"{field}: ไฟล์นี้อ่านเป็นรูปภาพไม่ได้ ({exc})") from exc
 
     if fmt not in config.ALLOWED_FORMATS:
         raise ValidationError(
-            f"{field}: the file contents are {fmt}, not JPG or PNG, whatever the extension says."
+            f"{field}: เนื้อไฟล์จริงเป็น {fmt} ไม่ใช่ JPG หรือ PNG ไม่ว่านามสกุลจะเขียนว่าอะไร"
         )
     return fmt, size
 
@@ -97,13 +97,13 @@ def validate_dimensions(width, height):
     """gpt-image-2 output constraints (Spec.md 5)."""
     m = config.DIMENSION_MULTIPLE
     if width % m or height % m:
-        raise ValidationError(f"Output size {width}x{height}: both sides must be divisible by {m}.")
+        raise ValidationError(f"ขนาดภาพ {width}x{height}: ทั้งสองด้านต้องหารด้วย {m} ลงตัว")
     max_w, max_h = config.MAX_DIMENSION
     if width > max_w or height > max_h:
-        raise ValidationError(f"Output size {width}x{height} exceeds the {max_w}x{max_h} maximum.")
+        raise ValidationError(f"ขนาดภาพ {width}x{height} เกินขีดจำกัด {max_w}x{max_h}")
     ratio = width / height
     if not (config.MIN_RATIO <= ratio <= config.MAX_RATIO):
-        raise ValidationError(f"Output size {width}x{height}: aspect ratio must be between 1:3 and 3:1.")
+        raise ValidationError(f"ขนาดภาพ {width}x{height}: สัดส่วนต้องอยู่ระหว่าง 1:3 ถึง 3:1")
     return width, height
 
 
@@ -111,5 +111,5 @@ def resolve_size(key):
     """Preset key -> (width, height). Users pick a ratio, never raw pixels."""
     if key not in config.SIZE_PRESETS:
         allowed = ", ".join(config.SIZE_PRESETS)
-        raise ValidationError(f"Unknown output size '{key}'. Choose one of: {allowed}.")
+        raise ValidationError(f"ไม่รู้จักขนาด '{key}' · เลือกจาก: {allowed}")
     return validate_dimensions(*config.SIZE_PRESETS[key])

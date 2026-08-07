@@ -51,7 +51,7 @@ def test_six_is_refused(client, fake_gen, fake_rembg):
     response = prepare(client, cut_out(client, 6))
 
     assert response.status_code == 422
-    assert "at most 5" in response.json()["error"]
+    assert "มากสุด 5" in response.json()["error"]
     assert fake_gen.count == 0
 
 
@@ -68,7 +68,7 @@ def test_the_same_decoration_twice_is_refused(client, fake_gen, fake_rembg):
     response = prepare(client, [token, token])
 
     assert response.status_code == 422
-    assert "twice" in response.json()["error"]
+    assert "ซ้ำ" in response.json()["error"]
 
 
 def test_every_decoration_is_recorded_on_the_request(client, conn, fake_gen, fake_rembg):

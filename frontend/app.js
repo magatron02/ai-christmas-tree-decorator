@@ -16,11 +16,11 @@
 const $ = (id) => document.getElementById(id);
 
 const STATE_LABEL = {
-  pending: ["", "Ready to generate"],
-  calling_api: ["running", "Calling gpt-image-2…"],
-  api_success: ["done", "Image generated"],
-  api_failed: ["failed", "Generation failed — nothing was billed"],
-  delivered: ["done", "Delivered"],
+  pending: ["", "พร้อมสร้างภาพ"],
+  calling_api: ["running", "กำลังเรียก gpt-image-2…"],
+  api_success: ["done", "ได้ภาพแล้ว"],
+  api_failed: ["failed", "สร้างไม่สำเร็จ — ไม่ถูกคิดเงิน"],
+  delivered: ["done", "ส่งถึงแล้ว"],
 };
 
 const MAX_ELEMENTS = 5;
@@ -78,7 +78,7 @@ function renderElements() {
     label.textContent = element.code || `#${index + 1}`;
     const drop = document.createElement("button");
     drop.className = "btn danger";
-    drop.textContent = "remove";
+    drop.textContent = "เอาออก";
     drop.addEventListener("click", () => {
       state.elements.splice(index, 1);
       renderElements();
@@ -90,8 +90,8 @@ function renderElements() {
 
   const room = MAX_ELEMENTS - state.elements.length;
   $("element-count-hint").textContent = room
-    ? `${state.elements.length} of ${MAX_ELEMENTS} added. Each one is cut out separately so you can check it.`
-    : `${MAX_ELEMENTS} of ${MAX_ELEMENTS} added — remove one to swap it.`;
+    ? `ใส่แล้ว ${state.elements.length} จาก ${MAX_ELEMENTS} ชิ้น แต่ละชิ้นตัดพื้นหลังแยกกัน จะได้ตรวจทีละอัน`
+    : `ครบ ${MAX_ELEMENTS} ชิ้นแล้ว — เอาออกสักชิ้นถ้าจะเปลี่ยน`;
   $("element-file").disabled = room === 0;
   $("element-code").disabled = room === 0;
 }
@@ -100,10 +100,12 @@ function renderElements() {
  * changes an input — that is the moment the previous run stops being the current one. */
 function resetRun() {
   state.requestId = null;
-  $("result").hidden = true;
+  $("out-result").hidden = true;
+  $("result-actions").hidden = true;
+  $("result-empty").hidden = false;
   showError("");
   if (state.treeFile && state.elements.length) setStatus("pending");
-  else setStatus("waiting", "Waiting for a tree and at least one decoration");
+  else setStatus("waiting", "รอต้นเปล่ากับของตกแต่งอย่างน้อย 1 ชิ้น");
   refreshGenerateButton();
 }
 
@@ -132,7 +134,7 @@ async function loadConfig() {
     select.append(option);
   }
   select.disabled = false;
-  $("cut-hint").textContent = `Runs locally. Costs nothing. Max ${config.max_upload_mb} MB, JPG or PNG.`;
+  $("cut-hint").textContent = `ทำในเครื่อง ไม่เสียเงิน · ไม่เกิน ${config.max_upload_mb} MB, JPG หรือ PNG`;
 }
 
 /* ---- product codes ----
@@ -162,8 +164,8 @@ function wireCodePicker(inputId, listId, hintId) {
         const exact = results.find((p) => p.code.toLowerCase() === query.toLowerCase());
         $(hintId).textContent = exact
           ? exact.size_raw
-            ? `${exact.code} — ${exact.size_raw} (catalogue page ${exact.page})`
-            : `${exact.code} — the catalogue prints no size for this one`
+            ? `${exact.code} — ${exact.size_raw} (catalogue หน้า ${exact.page})`
+            : `${exact.code} — แคตตาล็อกไม่ได้พิมพ์ขนาดของชิ้นนี้ไว้`
           : "";
       } catch {
         /* the picker is a convenience; the server re-checks the code on prepare anyway */
@@ -199,7 +201,7 @@ $("cut-btn").addEventListener("click", async () => {
   if (!file) return;
 
   $("cut-btn").disabled = true;
-  $("cut-btn").textContent = "Removing background…";
+  $("cut-btn").textContent = "กำลังตัดพื้นหลัง…";
   showError("");
   try {
     const body = new FormData();
@@ -214,7 +216,7 @@ $("cut-btn").addEventListener("click", async () => {
     showError(err.message);
     $("cut-btn").disabled = false;
   } finally {
-    $("cut-btn").textContent = "Remove background";
+    $("cut-btn").textContent = "ตัดพื้นหลัง";
   }
 });
 
@@ -288,7 +290,7 @@ $("identify-btn").addEventListener("click", async () => {
   if (!state.reference) return;
   const button = $("identify-btn");
   button.disabled = true;
-  button.textContent = "Looking through the catalogue…";
+  button.textContent = "กำลังค้นแคตตาล็อก…";
   showError("");
 
   try {
@@ -302,7 +304,7 @@ $("identify-btn").addEventListener("click", async () => {
     showError(err.message);
   } finally {
     button.disabled = false;
-    button.textContent = "Identify decorations in it";
+    button.textContent = "หาว่าในรูปมีของอะไรที่เราขาย";
   }
 });
 
@@ -323,14 +325,14 @@ function renderIdentified(result) {
     const chip = document.createElement("span");
     if (entry.refused) {
       chip.className = "chip failed";
-      chip.textContent = "nothing close";
+      chip.textContent = "ไม่เจอของใกล้เคียง";
     } else {
       // Deliberately the neutral chip. Green would say "this is right", and measured, three
       // of ten matches were wrong at scores as high as the correct ones. The kind field is
       // too coarse to tell them apart — "figure" covers Santa, snowman and nutcracker alike
       // — so nothing here can honestly claim correctness.
       chip.className = "chip";
-      chip.textContent = "closest in the catalogue";
+      chip.textContent = "ใกล้เคียงที่สุดในแคตตาล็อก";
     }
     const said = document.createElement("span");
     said.textContent = entry.seen.summary;
@@ -341,8 +343,8 @@ function renderIdentified(result) {
       const quantity = document.createElement("span");
       quantity.className = "hint";
       quantity.textContent =
-        `About ${entry.quantity.low}–${entry.quantity.high} of these for this tree ` +
-        `(${Math.round(entry.quantity.element_mm)} mm on a ${Math.round(entry.quantity.tree_mm)} mm tree).`;
+        `ต้นนี้ใช้ประมาณ ${entry.quantity.low}–${entry.quantity.high} ชิ้น ` +
+        `(ของ ${Math.round(entry.quantity.element_mm)} mm บนต้น ${Math.round(entry.quantity.tree_mm)} mm)`;
       block.append(quantity);
     } else if (entry.quantity_note) {
       const note = document.createElement("span");
@@ -367,14 +369,14 @@ function renderIdentified(result) {
       code.textContent = `${candidate.code} · ${candidate.score.toFixed(2)}`;
       const why = document.createElement("div");
       why.className = "why";
-      why.textContent = `${candidate.kind || ""} · page ${candidate.pdf_page}`;
+      why.textContent = `${candidate.kind || ""} · หน้า ${candidate.pdf_page}`;
       card.append(code, why);
       // shape is the field that discriminates: kind lumps every figure together, so a
       // nutcracker and a Santa agree on kind and disagree on shape
       if (candidate.shape_agrees === false) {
         const warn = document.createElement("div");
         warn.className = "chip stale";
-        warn.textContent = `shaped like a ${candidate.shape || "different thing"}`;
+        warn.textContent = `รูปทรงเป็น ${candidate.shape || "อย่างอื่น"}`;
         card.append(warn);
       }
       row.append(card);
@@ -389,7 +391,6 @@ $("generate-btn").addEventListener("click", async () => {
   state.busy = true;
   refreshGenerateButton();
   showError("");
-  $("result").hidden = true;
 
   try {
     const body = new FormData();
@@ -406,17 +407,17 @@ $("generate-btn").addEventListener("click", async () => {
     state.requestId = prepared.request_id;
     setStatus("pending");
     const many = prepared.element_count > 1
-      ? `${prepared.element_count} decorations mixed together`
-      : `1 decoration`;
+      ? `ของตกแต่ง ${prepared.element_count} ชิ้นผสมกัน`
+      : `ของตกแต่ง 1 ชิ้น`;
     $("confirm-body").textContent =
-      `This calls gpt-image-2 and produces one ${prepared.width} × ${prepared.height} image ` +
-      `with ${many}. It is billed to your OpenAI account, and only if the image comes back. ` +
+      `จะเรียก gpt-image-2 สร้างภาพ ${prepared.width} × ${prepared.height} หนึ่งภาพ ` +
+      `พร้อม${many} · คิดเงินจากบัญชี OpenAI ของคุณ และคิดเฉพาะตอนที่ได้ภาพกลับมา · ` +
       (prepared.reference_url
-        ? `The tree will be moved into a new setting taken from your reference photo. `
-        : `The tree keeps its own background. `) +
+        ? `ต้นจะถูกย้ายไปอยู่ในสถานที่ใหม่ตามรูปอ้างอิงที่ใส่ไว้ · `
+        : `ต้นจะอยู่บนพื้นหลังเดิมของมัน · `) +
       (prepared.exact_scale
-        ? `Sizes come from the catalogue.`
-        : `No product codes given, so the sizes are left to the model's judgement.`);
+        ? `ขนาดมาจากแคตตาล็อก`
+        : `ไม่ได้ใส่รหัสสินค้า ขนาดจึงขึ้นกับที่ model ตัดสินเอง`);
     $("confirm-btn").disabled = false;
     $("confirm-dialog").showModal();
   } catch (err) {
@@ -440,23 +441,18 @@ $("confirm-btn").addEventListener("click", async () => {
   setStatus("calling_api");
 
   try {
+    // What went into this run is already visible in panels 1 and 2 (the tree preview and
+    // the accepted-decorations list) — repeating them here would just be the same pictures
+    // twice, so the result panel shows only the thing this step actually produced.
     const result = await call(`/api/generate/${state.requestId}`, { method: "POST" });
     showTotals(result.totals);
-    $("out-tree").src = result.tree_url;
-    const strip = $("out-elements");
-    strip.innerHTML = "";
-    for (const element of result.elements) {
-      const thumb = document.createElement("img");
-      thumb.className = "thumb checker";
-      thumb.src = element.url;
-      thumb.alt = element.code || "Decoration";
-      strip.append(thumb);
-    }
     $("out-result").src = result.output_url;
+    $("out-result").hidden = false;
+    $("result-empty").hidden = true;
     $("download-btn").href = result.output_url;
     $("result-meta").textContent =
-      `${result.request_id} · ${result.size} · ${result.usage ? result.usage.total_tokens.toLocaleString() + " tokens" : "cost not reported"}`;
-    $("result").hidden = false;
+      `${result.request_id} · ${result.size} · ${result.usage ? result.usage.total_tokens.toLocaleString() + " โทเคน" : "ไม่ทราบต้นทุน"}`;
+    $("result-actions").hidden = false;
     setStatus("api_success");
 
     // tell the server the browser really got it, so a row left at api_success is a genuine

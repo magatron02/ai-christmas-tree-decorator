@@ -7,7 +7,10 @@ Builder ห้ามแก้ค่าในไฟล์นี้เอง — �
 - **Backend**: Python (FastAPI) — เหตุผล: เรียก OpenAI SDK ตรง, จัดการ background-removal (rembg เป็น Python lib) ได้ในระบบเดียว
 - **Background removal**: `rembg` (local, ไม่มี cost ต่อครั้ง) — fallback เป็น manual upload ที่ user ตัดมาเองแล้ว (Photoshop) ถ้า auto-remove คุณภาพไม่พอ
 - **Image-gen**: OpenAI API — `gpt-image-2`
-- **Frontend**: เว็บง่าย ๆ (internal tool ใช้คนเดียว) — **ใช้ Factory design system** (ดู [[factory-design-system.md]]) เป็น visual styling: dark theme, framework-free CSS, ไม่มี build step ผูกกับ font/component library — เหมาะกับงาน internal tool ที่ไม่ต้อง overhead ของ design framework เต็มรูปแบบ
+- **Frontend**: เว็บง่าย ๆ (internal tool ใช้คนเดียว) — framework-free CSS ไม่มี build step ผูกกับ font/component library
+  **ปรับ 2026-08-05**: เปลี่ยนจาก Factory design system เป็น [[DESIGN.md]] (warm cream/wine/forest,
+  light theme เป็นค่าเริ่มต้น, dark เป็นตัวเลือก) — [[factory-design-system.md]] เก็บไว้เป็นประวัติ
+  ไม่ได้ใช้กับหน้าไหนแล้ว
 - **Storage**: **Local disk** — เก็บ input/output image บนเครื่องที่รันระบบ (ตัดสินใจแล้ว: MVP ใช้คนเดียว ไม่ต้อง scale)
 - **Auth**: **ไม่มี** — MVP ใช้คนเดียวบนเครื่องตัวเอง (ปรับ 2026-08-05) เดิมกำหนดให้มี single-account record ไว้เก็บ credit balance แต่ระบบ credit ถูกยกเลิกแล้ว (ดู Product.md ข้อ 6) จึงไม่เหลือสิ่งที่ account record ต้องเก็บ — ไม่มี login/signup, ไม่มีตาราง account
 - **การคิดเงิน**: เงินอยู่ในบัญชี OpenAI ระบบไม่เก็บ balance ท้องถิ่น (OpenAI ไม่เปิด endpoint ให้อ่านยอดคงเหลือ) — บันทึก `usage` token จริงของทุกภาพลง state log แทน แล้วสรุปยอดที่ใช้ไปที่ `GET /api/usage`

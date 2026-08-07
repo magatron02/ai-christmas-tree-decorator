@@ -65,7 +65,7 @@ async function load() {
       link.href = request.output_url;
       link.download = "";
       link.className = "btn";
-      link.textContent = "Download";
+      link.textContent = "ดาวน์โหลด";
       result.append(link);
     } else {
       result.textContent = "—";

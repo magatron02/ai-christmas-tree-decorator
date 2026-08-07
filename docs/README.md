@@ -11,7 +11,8 @@ history rather than one folder.
 | `AcceptanceCriteria.md` | AC-1 to AC-5, pass/fail, no opinions |
 | `NonGoals.md` | what must not be built even when it looks like a good idea mid-sprint |
 | `TestPlan.md` | what to check before anything that touches money ships |
-| `factory-design-system.md` | the visual system every screen follows |
+| `factory-design-system.md` | superseded 2026-08-05 by `DESIGN.md` — kept as historical record |
+| `DESIGN.md` | the visual system every screen follows now (warm cream/wine/forest, light default) |
 
 **These copies are canonical.** Edit them here and commit; the Desktop copies are whatever
 they were the day they were copied and will drift. Delete those when you are ready to have
