@@ -5,6 +5,7 @@ python-dotenv
 openai
 pillow
 rembg[cpu]
+numpy
 
 # test only
 pytest

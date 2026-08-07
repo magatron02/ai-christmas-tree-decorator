@@ -25,3 +25,4 @@ catalog/images/
 # embeddings are a derived binary rebuilt by scripts/embed_catalog.py from descriptions.json
 catalog/embeddings.npy
 catalog/embedding_codes.json
+catalog.legacy-backup/

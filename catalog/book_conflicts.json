@@ -1,5 +1,57 @@
 [
  {
+  "code": "26022-2",
+  "size_raw": null,
+  "size": null,
+  "section": "Cashmere Pine Brighton Spruce",
+  "page_headings": [],
+  "pdf_page": 19,
+  "bbox": [
+   209.1,
+   737.6,
+   328.9,
+   754.7
+  ],
+  "duplicate": true,
+  "book": "book1"
+ },
+ {
+  "code": "07012-2",
+  "size_raw": null,
+  "size": null,
+  "section": "Cashmere Pine Brighton Spruce",
+  "page_headings": [],
+  "pdf_page": 19,
+  "bbox": [
+   239.1,
+   437.4,
+   314.2,
+   454.4
+  ],
+  "duplicate": true,
+  "book": "book1"
+ },
+ {
+  "code": "02035-1",
+  "size_raw": "20 Ft.",
+  "size": {
+   "feet": 20.0,
+   "height_mm": 6096,
+   "unit_printed": "ft"
+  },
+  "section": "Ornament Gift boxes",
+  "page_headings": [],
+  "pdf_page": 84,
+  "bbox": [
+   350.7,
+   653.5,
+   462.0,
+   670.6
+  ],
+  "duplicate": true,
+  "book": "book1"
+ },
+ {
   "code": "90680-6",
   "size_raw": "15 inc.",
   "size": {
@@ -17,7 +69,7 @@
    560.5
   ],
   "duplicate": true,
-  "book": "2026"
+  "book": "book2"
  },
  {
   "code": "90634-8",
@@ -39,7 +91,7 @@
    806.2
   ],
   "duplicate": false,
-  "book": "2026"
+  "book": "book2"
  },
  {
   "code": "90663-18",
@@ -61,7 +113,7 @@
    824.6
   ],
   "duplicate": false,
-  "book": "2026"
+  "book": "book2"
  },
  {
   "code": "04035-1",
@@ -77,6 +129,6 @@
    256.6
   ],
   "duplicate": true,
-  "book": "2026"
+  "book": "book2"
  }
 ]
