@@ -5,7 +5,8 @@ that tree decorated with it — so a shop can show a customer what an element lo
 real tree without decorating and photographing every combination by hand.
 
 Internal single-user tool. See `Product.md`, `Spec.md`, `AcceptanceCriteria.md`,
-`NonGoals.md`, `TestPlan.md` and `factory-design-system.md` for the decisions behind it.
+`NonGoals.md`, `TestPlan.md` and `DESIGN.md` for the decisions behind it
+(`factory-design-system.md` is the superseded system, kept as a historical record only).
 
 ## Run it
 
@@ -43,14 +44,36 @@ Open <http://localhost:8000>. History is at <http://localhost:8000/history>.
 Nothing in the test suite calls OpenAI or loads the rembg model, so it is safe and free to
 run on every change.
 
+### Catalogue search (optional but recommended)
+
+`catalog/products.json` and `catalog/product_images.json` ship in the repo — codes, sizes,
+and which product goes with which cropped photo. Two things do **not** ship, because they
+are large or derived:
+
+- `catalog/images/` (the crops themselves, ~130 MB) — comes with the handover as a separate
+  file bundle, not through git. Unzip it into `catalog/images/` before starting the server.
+- `catalog/descriptions.json` / `embeddings.npy` / `embedding_codes.json` — what makes
+  "find this in the catalogue from a photo" actually searchable. Build them from settings
+  (`/settings` → "sync ดัชนีค้นหา"), or from the command line:
+
+  ```bash
+  .venv/Scripts/python scripts/describe_catalog.py   # one billed vision call per photo
+  .venv/Scripts/python scripts/embed_catalog.py       # one small billed call per photo
+  ```
+
+  Both are resumable — interrupting and rerunning only pays for what's still missing.
+  Without this step the app still runs; catalogue search just returns nothing.
+
 ## How it fits together
 
 ```
-frontend/          static HTML + vanilla JS, Factory design system, no build step
-backend/main.py    four endpoints, one of which costs money
-backend/services/  image_gen · background_removal · storage
+frontend/          static HTML + vanilla JS, DESIGN.md tokens, no build step
+backend/main.py    the generation pipeline plus catalogue search/admin endpoints
+backend/services/  image_gen · background_removal · storage · catalog · matching · vision
 backend/models/    request_log — the SQLite state machine and the spend record
 backend/prompts/   compositing_prompt.txt, read fresh on every generation
+catalog/           product data (committed) + images/embeddings (not — see above)
+scripts/           one-off/offline tooling: catalogue extraction, quality runs, housekeeping
 ```
 
 The pipeline is deliberately split so the expensive step is never reached by accident:
