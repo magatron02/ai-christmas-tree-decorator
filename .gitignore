@@ -26,3 +26,4 @@ catalog/images/
 catalog/embeddings.npy
 catalog/embedding_codes.json
 catalog.legacy-backup/
+catalog-images*.zip
