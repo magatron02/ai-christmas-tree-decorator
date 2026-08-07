@@ -222,18 +222,22 @@ input[type="file"].input::file-selector-button {
 .option-name { font-size: var(--text-lg) }
 
 /* the 3-panel flow: bare tree -> decorations -> result, side by side so the whole job is
-   visible at once instead of stacked one screen apart */
+   visible at once instead of stacked one screen apart. Decorations gets double share — it is
+   the one panel that holds an accepted-list column plus three separate controls next to it,
+   so an equal third is not enough room for it. */
 .panels {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1fr 2fr 1fr;
   gap: var(--space-6);
   align-items: start;
 }
 @media (max-width: 1100px) {
   .panels { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+  .panels .role-decoration { grid-column: 1 / -1 }
 }
 @media (max-width: 720px) {
   .panels { grid-template-columns: minmax(0, 1fr) }
+  .panels .role-decoration { grid-column: auto }
 }
 @media (max-width: 720px) {
   .frame { display: block }
