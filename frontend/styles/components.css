@@ -276,8 +276,13 @@ input[type="file"].input::file-selector-button {
 .decoration-list-col .accepted { flex: 1; min-height: 0; overflow-y: auto }
 .decoration-controls-col { gap: var(--space-4) }
 /* the catalogue picker is the one control that can grow past the panel's height (search
-   results), so it is the one that takes the leftover space and scrolls in place */
-.decoration-controls-col > .stack:last-child { flex: 1; min-height: 0 }
+   results), so it is the one that takes the leftover space and scrolls in place — but its
+   own label/hint/button must stay visible always. min-height:0 on this wrapper would let the
+   whole thing (button included) collapse to nothing when the panel is short; min-height:auto
+   (the default, so just flex here) caps the shrink at that button's own natural size, and lets
+   the shrink happen one level down instead, in catalog-picker/#catalog-results, which do want
+   min-height:0 since they're the part meant to compress and scroll. */
+.decoration-controls-col > .stack:last-child { flex: 1 }
 #catalog-picker { flex: 1; min-height: 0 }
 #catalog-results { flex: 1; min-height: 0; overflow-y: auto; align-content: flex-start; margin-top: 0 }
 @media (max-width: 720px) {

@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tree Decorator</title>
-<link rel="stylesheet" href="/static/styles/tokens.css?v=8.8">
-<link rel="stylesheet" href="/static/styles/components.css?v=8.8">
-<script src="/static/theme.js?v=8.8"></script>
+<link rel="stylesheet" href="/static/styles/tokens.css?v=8.9">
+<link rel="stylesheet" href="/static/styles/components.css?v=8.9">
+<script src="/static/theme.js?v=8.9"></script>
 </head>
 <body>
 
@@ -59,7 +59,8 @@
           <div class="stack decoration-controls-col">
 
             <div class="stack">
-              <span class="caption">บรรยากาศอ้างอิง (ไม่ใส่ก็ได้)</span>
+              <span class="caption">1. บรรยากาศอ้างอิง (ไม่ใส่ก็ได้)</span>
+              <span class="hint">รูปสถานที่ที่อยากให้ผลลัพธ์อยู่ — เอาแค่โทนแสง ไม่ลอกของในรูป</span>
               <input class="input" type="file" id="scene-reference-file" accept="image/jpeg,image/png">
               <div class="btn-row" id="scene-reference-actions" hidden>
                 <button class="btn danger" id="scene-reference-clear">เอารูปออก</button>
@@ -68,6 +69,8 @@
             </div>
 
             <div class="stack">
+              <span class="caption">2. อัปโหลดของตกแต่ง</span>
+              <span class="hint">รูปของตกแต่งชิ้นเดียว แล้วกดตัดพื้นหลังก่อนใช้</span>
               <input class="input" type="file" id="element-file" accept="image/jpeg,image/png">
               <input class="input" id="element-code" list="element-code-list" autocomplete="off"
                      placeholder="รหัสสินค้า — ไม่ใส่ก็ได้ เช่น 017-06">
@@ -85,6 +88,8 @@
             </div>
 
             <div class="stack">
+              <span class="caption">3. หรือเลือกจาก catalogue</span>
+              <span class="hint">ค้นจากสินค้าที่มีอยู่แล้ว ไม่ต้องหาไฟล์เอง</span>
               <button class="btn" id="catalog-toggle">เลือกจาก catalogue</button>
               <div class="stack" id="catalog-picker" hidden>
                 <input class="input" id="catalog-search" placeholder="ค้นรหัสหรือหมวดสินค้า">
@@ -148,6 +153,6 @@
   </div>
 </dialog>
 
-<script src="/static/app.js?v=8.8"></script>
+<script src="/static/app.js?v=8.9"></script>
 </body>
 </html>
