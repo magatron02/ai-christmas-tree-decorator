@@ -57,7 +57,7 @@ if /i "!RUNCHECK!"=="y" (
 if not exist "catalog\embeddings.npy" (
     echo.
     echo Catalogue search index is not built yet - it costs a small billed call per product photo.
-    echo Build it later from the Settings page ^("sync ดัชนีค้นหา"^), or now:
+    echo Build it later from the Settings page ^("sync search index"^), or now:
     set /p RUNSYNC="Build catalogue search now? [y/N] "
     if /i "!RUNSYNC!"=="y" (
         .venv\Scripts\python.exe scripts\describe_catalog.py
