@@ -10,6 +10,13 @@ Internal single-user tool. See `Product.md`, `Spec.md`, `AcceptanceCriteria.md`,
 
 ## Run it
 
+**Windows, one step:** double-click `setup.bat`. It creates the venv, installs everything,
+asks for your OpenAI key on first run, unzips `catalog-images*.zip` into `catalog/images/`
+if that bundle is sitting next to it, offers to run the two one-time billed checks below,
+and starts the server. Safe to run again later — it skips whatever's already done.
+
+By hand:
+
 ```bash
 uv venv --python 3.11
 uv pip install -r backend/requirements.txt
