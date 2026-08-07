@@ -116,19 +116,19 @@
 
     </div>
 
-    <section class="card stack">
-      <span class="caption">หาสินค้าจากรูป (ไม่ใส่ก็ได้)</span>
-      <span class="hint">
-        อัปโหลดรูปที่มีของตกแต่งอยู่แล้ว (เช่นรูปจากลูกค้า) เพื่อค้นแคตตาล็อกว่ามีอะไรใกล้เคียง
-        รูปนี้ไม่ถูกใช้ตอนสร้างภาพ — แค่ค้นหาเท่านั้น
-      </span>
-      <input class="input" type="file" id="identify-reference-file" accept="image/jpeg,image/png">
-      <div class="btn-row" id="identify-reference-actions" hidden>
-        <button class="btn" id="identify-btn">หาว่าในรูปมีของอะไรที่เราขาย</button>
-        <button class="btn danger" id="identify-reference-clear">เอารูปออก</button>
+    <details class="card identify-toggle">
+      <summary><span class="caption">หาสินค้าจากรูป</span>
+        <span class="hint">อัปโหลดรูปที่มีของตกแต่งอยู่แล้ว เพื่อค้นแคตตาล็อกว่ามีอะไรใกล้เคียง (ไม่ใส่ก็ได้ ไม่ใช้ตอนสร้างภาพ)</span>
+      </summary>
+      <div class="stack">
+        <input class="input" type="file" id="identify-reference-file" accept="image/jpeg,image/png">
+        <div class="btn-row" id="identify-reference-actions" hidden>
+          <button class="btn" id="identify-btn">หาว่าในรูปมีของอะไรที่เราขาย</button>
+          <button class="btn danger" id="identify-reference-clear">เอารูปออก</button>
+        </div>
+        <img class="thumb-sm" id="identify-reference-preview" alt="รูปอ้างอิงหาสินค้า" hidden>
       </div>
-      <img class="thumb" id="identify-reference-preview" alt="รูปอ้างอิงหาสินค้า" hidden>
-    </section>
+    </details>
 
     <section class="card stack" id="identify-panel" hidden>
       <span class="caption">ของในรูปที่เราขาย</span>

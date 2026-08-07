@@ -121,6 +121,9 @@ input[type="file"].input::file-selector-button {
   border-radius: var(--radius-lg);
   padding: var(--space-4);
   box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 /* Section 2's role mapping: each panel gets one accent, on its border and its label only —
@@ -224,12 +227,20 @@ input[type="file"].input::file-selector-button {
 /* the 3-panel flow: bare tree -> decorations -> result, side by side so the whole job is
    visible at once instead of stacked one screen apart. Decorations gets double share — it is
    the one panel that holds an accepted-list column plus three separate controls next to it,
-   so an equal third is not enough room for it. */
+   so an equal third is not enough room for it. Stretch keeps all three the same height — the
+   tallest panel sets the row, and everything else (accepted list, catalogue results) scrolls
+   inside that height rather than the page growing underneath it. */
 .panels {
   display: grid;
   grid-template-columns: 1fr 2fr 1fr;
   gap: var(--space-6);
-  align-items: start;
+  align-items: stretch;
+  /* an auto grid row sizes to whatever its tallest cell WANTS to be — max-height alone does not
+     feed back into track sizing, so a long accepted-list or catalogue result set still grows
+     the whole row. A definite height does: it gives align-items:stretch something real to
+     stretch every card to, so overflow becomes each card's problem (it scrolls) rather than
+     the page's (it grows). */
+  height: calc(100vh - 220px);
 }
 @media (max-width: 1100px) {
   .panels { grid-template-columns: repeat(2, minmax(0, 1fr)) }
@@ -256,10 +267,19 @@ input[type="file"].input::file-selector-button {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
   gap: var(--space-4);
-  align-items: start;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
 }
-.decoration-list-col .accepted { max-height: 520px; overflow-y: auto }
+.decoration-list-col,
+.decoration-controls-col { min-height: 0 }
+.decoration-list-col .accepted { flex: 1; min-height: 0; overflow-y: auto }
 .decoration-controls-col { gap: var(--space-4) }
+/* the catalogue picker is the one control that can grow past the panel's height (search
+   results), so it is the one that takes the leftover space and scrolls in place */
+.decoration-controls-col > .stack:last-child { flex: 1; min-height: 0 }
+#catalog-picker { flex: 1; min-height: 0 }
+#catalog-results { flex: 1; min-height: 0; overflow-y: auto; align-content: flex-start; margin-top: 0 }
 @media (max-width: 720px) {
   .decoration-columns { grid-template-columns: minmax(0, 1fr) }
 }
@@ -299,16 +319,36 @@ input[type="file"].input::file-selector-button {
   background-size: 16px 16px;
   background-position: 0 0, 8px 8px;
 }
+/* near-square, bounded — a tall portrait tree photo or a wide result render both fit inside
+   the same box instead of setting the panel's height themselves */
 .thumb {
   display: block;
   width: 100%;
-  height: auto;
+  aspect-ratio: 1 / 0.95;
+  object-fit: contain;
+  background: var(--surface-0);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
 }
 .triptych { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3) }
 .triptych figure { margin: 0 }
 .triptych figcaption { margin-bottom: var(--space-2) }
+
+/* ---- collapsible reference-photo search — closed by default so it never adds page height
+   when nobody is using it; the panels above are the whole job on their own ---- */
+.identify-toggle { padding: var(--space-3) var(--space-4) }
+.identify-toggle > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.identify-toggle > summary::-webkit-details-marker { display: none }
+.identify-toggle > summary::before { content: "▸"; color: var(--text-muted); font-size: var(--text-sm) }
+.identify-toggle[open] > summary::before { content: "▾" }
+.identify-toggle[open] > summary { margin-bottom: var(--space-3) }
 
 /* ---- catalogue matches (8.3c) ---- */
 .found { border-top: 1px solid var(--border); padding-top: var(--space-3) }

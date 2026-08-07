@@ -231,3 +231,8 @@ body {
   box-shadow: 0 0 0 2px var(--focus-ring-gap), 0 0 0 4px var(--focus-ring-color);
   outline: none;
 }
+
+/* the hidden attribute must win over any component's own `display:` rule (.thumb, .btn-row,
+   .candidates, ...) — every one of them sets display explicitly, which otherwise ties the UA
+   stylesheet's [hidden]{display:none} on specificity and gets overridden by source order. */
+[hidden] { display: none !important; }
