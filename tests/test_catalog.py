@@ -118,3 +118,69 @@ def test_every_parsed_size_is_a_positive_number():
 def test_the_catalogue_covers_what_the_ac5_run_used():
     for code in ("05021-1", "04031-6", "017-04", "018-02", "5203-04"):
         catalog.find(code)
+
+
+# ---- the picker's contract: a card must be able to stand for its code ----------------------
+
+
+def test_every_product_lands_in_exactly_one_category():
+    """The picker's category filter is a partition, not a tag cloud — a product appearing in
+    two categories would be found twice and counted twice."""
+    for row in catalog._rows():
+        matches = [
+            key for key, _label, needles in catalog.CATEGORIES
+            if any(n in f"{row.get('section') or ''} {catalog._kinds().get(row['code'], '')}".lower()
+                   for n in needles)
+        ]
+        assert catalog.category_of(row) == (matches[0] if matches else None)
+
+
+def test_no_product_is_left_without_a_category():
+    """The section strings are mangled by PDF extraction ("Sno wflakes", "N N u u t t c c..."),
+    so this is the guard that a re-extraction has not broken the substrings that match them."""
+    uncategorised = [row["code"] for row in catalog._rows() if catalog.category_of(row) is None]
+    assert not uncategorised, f"{len(uncategorised)} products match no category: {uncategorised[:10]}"
+
+
+def test_a_crop_shared_by_many_codes_is_not_showable():
+    """It cannot be a picture of any one of them, whatever it depicts."""
+    shared = [c for c, n in catalog._crop_users().items() if n + 1 >= catalog.MAX_SHARED_CROP]
+    assert shared, "expected the catalogue to contain some over-shared crops"
+    for code in shared:
+        assert not catalog.crop_is_showable(code)
+
+
+def test_a_crop_judged_page_furniture_is_not_showable():
+    verdicts = catalog._crop_verdicts()
+    if not verdicts:
+        pytest.skip("run scripts/audit_crops.py first")
+    for code, reason in verdicts.items():
+        assert reason in catalog.REJECTABLE_CROP_KINDS
+        assert not catalog.crop_is_showable(code), f"{code} was judged {reason}"
+
+
+def test_only_the_audit_reasons_that_survived_checking_are_acted_on():
+    """The audit rejected 137 crops; sampling the pixels behind each reason found `multiple`,
+    `unclear` and `blank` almost always wrong — this catalogue photographs one product in all
+    its colourways at once, which that pass read as a montage of different products. Acting on
+    those reasons would hide about a hundred real items."""
+    assert catalog.REJECTABLE_CROP_KINDS.isdisjoint({"multiple", "unclear", "blank"})
+
+
+def test_the_eye_checked_false_rejects_stay_in_the_picker():
+    """Rejections inside the trusted reasons that were checked by hand and found wrong."""
+    for code in catalog.KEEP_DESPITE_AUDIT:
+        assert catalog.crop_is_showable(code), f"{code} is a real product the audit got wrong"
+
+
+def test_an_unjudged_crop_still_shows():
+    """The audit file is optional and is filled in over many runs. A code nobody has judged
+    yet must stay in the picker — treating "unknown" as "reject" would empty it."""
+    assert catalog.crop_is_not_a_product("no-such-code-anywhere") is False
+
+
+def test_the_picker_never_offers_a_code_it_cannot_illustrate():
+    rows, total = catalog.browse(10_000, 0)
+    assert total == len(rows)
+    for row in rows:
+        assert catalog.crop_is_showable(row["code"])

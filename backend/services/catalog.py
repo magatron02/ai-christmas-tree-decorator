@@ -156,12 +156,69 @@ def crop_is_ambiguous(code):
     return _crop_users().get(code, 0) + 1 >= MAX_SHARED_CROP
 
 
+# Which of the vision audit's rejection reasons are actually acted on.
+#
+# The audit (scripts/audit_crops.py) rejected 137 crops. Sampling each reason against the real
+# pixels found only two of them reliable. The rest reject real merchandise:
+#
+#   heading      7 of 7 correct   — section lettering, no product in frame
+#   page_number  3 of 3 correct   — the printed page-number badge
+#   logo         8 of 9 correct
+#   caption     10 of 12 correct
+#   multiple     1 of 12 correct  ← this catalogue prints one product in ALL ITS COLOURWAYS in
+#                                   a single photo. Six tinsel garlands in six colours is one
+#                                   SKU's colour range, which is exactly what the picker should
+#                                   show; the audit counted objects and called it a montage.
+#   unclear      1 of 14 correct  ← "if in doubt reject", rationalised after the fact
+#   blank        0 of 3 correct
+#
+# So `multiple`, `unclear` and `blank` are ignored entirely: acting on them would have hidden
+# roughly a hundred real products to remove a handful of page fragments.
+REJECTABLE_CROP_KINDS = {"page_number", "heading", "logo", "caption"}
+
+# Rejections inside the trusted reasons that were checked by eye and found wrong anyway.
+KEEP_DESPITE_AUDIT = {"70912-4/D1", "4501-09", "90773-1"}
+
+
+@lru_cache(maxsize=1)
+def _crop_verdicts():
+    """code -> the reason a vision pass gave for calling this crop something other than a
+    product. Only reasons in REJECTABLE_CROP_KINDS end up here.
+
+    Written by scripts/audit_crops.py. Absent entries mean "never judged", which is treated as
+    showable: the file is optional, and an un-run audit must not empty the picker.
+    """
+    path = config.CATALOG_PATH.parent / "crop_audit.json"
+    if not path.is_file():
+        return {}
+    judged = json.loads(path.read_text(encoding="utf-8"))
+    return {
+        code: entry["crop_kind"]
+        for code, entry in judged.items()
+        if entry.get("is_product") is False
+        and entry.get("crop_kind") in REJECTABLE_CROP_KINDS
+        and code not in KEEP_DESPITE_AUDIT
+    }
+
+
+def crop_is_not_a_product(code):
+    """True when the crop was judged page furniture for a reason that held up to checking —
+    the page-number badge, the brand logo, heading artwork, or a bare code/size ribbon."""
+    return code in _crop_verdicts()
+
+
+def crop_is_showable(code):
+    """The one question the picker asks: can this photo stand for this code on a card?"""
+    return (
+        bool(image_for(code))
+        and not crop_is_ambiguous(code)
+        and not crop_is_not_a_product(code)
+    )
+
+
 @lru_cache(maxsize=1)
 def _with_photos():
-    return [
-        row for row in _rows()
-        if image_for(row["code"]) and not crop_is_ambiguous(row["code"])
-    ]
+    return [row for row in _rows() if crop_is_showable(row["code"])]
 
 
 def browse(limit=60, offset=0, category=None):
@@ -186,6 +243,7 @@ def refresh():
     _images_by_code.cache_clear()
     _with_photos.cache_clear()
     _crop_users.cache_clear()
+    _crop_verdicts.cache_clear()
     _kinds.cache_clear()
 
 

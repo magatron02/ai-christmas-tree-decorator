@@ -70,6 +70,48 @@ REFERENCE_PROMPT = (
 )
 
 
+# What a crop turned out to be. The pairing script takes the nearest photo to each printed
+# code, so where it misfires it hands back whatever else was on the page.
+CROP_KINDS = Literal[
+    "product",        # an actual item for sale, photographed for the catalogue
+    "page_number",    # the printed page-number badge
+    "logo",           # the wholesaler's brand mark / pennant
+    "heading",        # section or category heading artwork, text rather than merchandise
+    "caption",        # a code/size/price ribbon printed beside a product
+    "multiple",       # several different products in one frame; identifies none of them
+    "blank",          # empty, or a sliver of background with nothing in it
+    "unclear",
+]
+
+
+class CropVerdict(BaseModel):
+    is_product: bool = Field(
+        description="true only if this is a single sellable item photographed for sale"
+    )
+    crop_kind: CROP_KINDS
+    why: str = Field(description="one short line, in English, naming what is actually in frame")
+
+
+# Deliberately not the catalogue prompt. That one says "describe the product shown", which
+# presupposes there is one — asked that way the model called a printed page number "an orange
+# circular decoration with the number 44", which is how these got into the picker in the first
+# place. This prompt has to make "there is no product here" an easy answer to give.
+CROP_AUDIT_PROMPT = (
+    "This image was cropped automatically from a printed wholesale catalogue page, by taking "
+    "whatever artwork sat nearest to a product code. Sometimes it caught the product. Often it "
+    "caught something else on the page.\n\n"
+    "Say what is actually in this frame. It is NOT a product if it is: a page-number badge (a "
+    "plain disc or square with a number), the company logo or brand pennant, section heading "
+    "text or decorative lettering, a caption/price ribbon showing codes and dimensions, a grid "
+    "or montage of several different products at once, or blank background.\n\n"
+    "It IS a product only if a single sellable decoration is photographed as the subject. Note "
+    "that this catalogue genuinely sells printed banners and greeting signs, so text on the "
+    "item does not by itself make it page furniture — judge whether the text is the merchandise "
+    "or the page's own printing.\n\n"
+    "When in doubt, answer unclear rather than guessing product."
+)
+
+
 def _client():
     from openai import OpenAI
 
@@ -104,6 +146,23 @@ def describe_catalogue_photo(image_bytes, mime="image/png"):
 
 def describe_reference(image_bytes, mime="image/png"):
     return describe(image_bytes, REFERENCE_PROMPT, mime)
+
+
+def audit_crop(image_bytes, mime="image/png"):
+    """Returns (CropVerdict, usage). Answers "is this a product at all", which is a different
+    question from describe_catalogue_photo's "describe the product"."""
+    response = _client().responses.parse(
+        model=config.VISION_MODEL,
+        input=[{"role": "user", "content": [{"type": "input_text", "text": CROP_AUDIT_PROMPT},
+                                            _image_part(image_bytes, mime)]}],
+        text_format=CropVerdict,
+    )
+    usage = response.usage
+    return response.output_parsed, {
+        "input_tokens": usage.input_tokens,
+        "output_tokens": usage.output_tokens,
+        "total_tokens": usage.total_tokens,
+    }
 
 
 def as_text(decoration):

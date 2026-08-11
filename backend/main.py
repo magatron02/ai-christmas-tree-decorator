@@ -259,7 +259,7 @@ def api_catalog_search(q: str = "", category: str = "", limit: int = 60, offset:
     if q.strip():
         matched = [
             row for row in catalog.search(q, 10_000)
-            if catalog.image_for(row["code"]) and not catalog.crop_is_ambiguous(row["code"])
+            if catalog.crop_is_showable(row["code"])
         ]
         if category:
             matched = [row for row in matched if catalog.category_of(row) == category]
