@@ -19,8 +19,8 @@ from backend import config
 from backend.validation import ValidationError
 
 __all__ = [
-    "find", "search", "longest_side_mm", "describe", "require_size", "scale_sentence",
-    "image_for", "image_path", "recent",
+    "find", "search", "browse", "longest_side_mm", "describe", "require_size",
+    "scale_sentence", "image_for", "image_path", "recent",
 ]
 
 
@@ -71,12 +71,30 @@ def recent(n=20):
     return _rows()[-n:][::-1]
 
 
+@lru_cache(maxsize=1)
+def _with_photos():
+    return [row for row in _rows() if image_for(row["code"])]
+
+
+def browse(limit=60, offset=0):
+    """One page of the catalogue in printed order, plus how many pages' worth there are.
+
+    Only the codes that have a photo: this backs a thumbnail grid, and a card with nothing
+    to show is worse than no card. search() answers the empty query with nothing on purpose
+    (it also backs a datalist, which must not swallow 1,300 rows), so browsing is asked here
+    instead of by widening that.
+    """
+    rows = _with_photos()
+    return rows[offset : offset + limit], len(rows)
+
+
 def refresh():
     """Drop every cached read, so a write to products.json/product_images.json (the admin
     add-catalogue form) is visible on the next lookup without restarting the server."""
     _rows.cache_clear()
     _by_code.cache_clear()
     _images_by_code.cache_clear()
+    _with_photos.cache_clear()
 
 
 def find(code):

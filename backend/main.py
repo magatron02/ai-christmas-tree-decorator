@@ -229,10 +229,22 @@ def api_products(q: str = "", limit: int = 20):
 
 
 @app.get("/api/catalog/search")
-def api_catalog_search(q: str = "", limit: int = 30):
-    """Thumbnail picker for panel 2 — same substring search as /api/products, plus the
-    catalogue photo so a decoration can be chosen without touching the filesystem."""
+def api_catalog_search(q: str = "", limit: int = 60, offset: int = 0):
+    """Thumbnail picker for panel 2 — the catalogue photo alongside the code, so a decoration
+    can be chosen without touching the filesystem.
+
+    With no query it browses the whole catalogue in printed order, so the picker opens onto
+    products rather than an empty box. `total` is the full match count, not the page's, which
+    is what lets the browser say "showing 60 of 1252" and know whether to offer another page.
+    """
+    if q.strip():
+        matched = [row for row in catalog.search(q, 10_000) if catalog.image_for(row["code"])]
+        rows, total = matched[offset : offset + limit], len(matched)
+    else:
+        rows, total = catalog.browse(limit, offset)
+
     return {
+        "total": total,
         "results": [
             {
                 "code": row["code"],
@@ -241,9 +253,8 @@ def api_catalog_search(q: str = "", limit: int = 30):
                 "section": row["section"],
                 "book": row.get("book"),
             }
-            for row in catalog.search(q, limit)
-            if catalog.image_for(row["code"])
-        ]
+            for row in rows
+        ],
     }
 
 

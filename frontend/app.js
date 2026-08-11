@@ -226,41 +226,63 @@ $("cut-btn").addEventListener("click", async () => {
 
 /* ---- catalogue picker: an alternate source for the same "element" slot ----
  * Skips the browser file upload entirely — the photo already lives on the server, so it
- * goes straight through the same rembg pipeline and lands in the same preview/accept flow. */
+ * goes straight through the same rembg pipeline and lands in the same preview/accept flow.
+ * Paged rather than all-at-once: the catalogue is ~1,250 products with a photo each, and a
+ * grid that requests every one of them on open is a slideshow of spinners. */
+const CATALOG_PAGE = 60;
+let catalogTimer;
+let catalogQuery = "";
+let catalogShown = 0;
+
+function catalogCard(item) {
+  const card = document.createElement("div");
+  card.className = "candidate pickable";
+  const photo = document.createElement("img");
+  photo.src = `/catalog/${item.image}`;
+  photo.alt = item.code;
+  photo.loading = "lazy";
+  const code = document.createElement("div");
+  code.className = "code";
+  code.textContent = item.size_raw ? `${item.code} — ${item.size_raw}` : item.code;
+  card.append(photo, code);
+  card.addEventListener("click", () => useFromCatalog(item.code));
+  return card;
+}
+
+async function loadCatalogPage(restart) {
+  const host = $("catalog-results");
+  if (restart) {
+    catalogShown = 0;
+    host.innerHTML = "";
+  }
+  try {
+    const { results, total } = await call(
+      `/api/catalog/search?q=${encodeURIComponent(catalogQuery)}` +
+        `&limit=${CATALOG_PAGE}&offset=${catalogShown}`
+    );
+    for (const item of results) host.append(catalogCard(item));
+    catalogShown += results.length;
+    $("catalog-count").textContent = total
+      ? `แสดง ${catalogShown} จาก ${total} ชิ้น`
+      : "ไม่เจอสินค้าที่ตรงกับที่ค้น";
+    $("catalog-more").hidden = catalogShown >= total;
+  } catch (err) {
+    $("catalog-count").textContent = err.message;
+  }
+}
+
 $("catalog-toggle").addEventListener("click", () => {
-  $("catalog-picker").hidden = !$("catalog-picker").hidden;
+  $("catalog-dialog").showModal();
+  if (!$("catalog-results").children.length) loadCatalogPage(true);
 });
 
-let catalogTimer;
+$("catalog-close").addEventListener("click", () => $("catalog-dialog").close());
+$("catalog-more").addEventListener("click", () => loadCatalogPage(false));
+
 $("catalog-search").addEventListener("input", () => {
   clearTimeout(catalogTimer);
-  const query = $("catalog-search").value.trim();
-  const host = $("catalog-results");
-  if (query.length < 2) {
-    host.innerHTML = "";
-    return;
-  }
-  catalogTimer = setTimeout(async () => {
-    try {
-      const { results } = await call(`/api/catalog/search?q=${encodeURIComponent(query)}`);
-      host.innerHTML = "";
-      for (const item of results) {
-        const card = document.createElement("div");
-        card.className = "candidate pickable";
-        const photo = document.createElement("img");
-        photo.src = `/catalog/${item.image}`;
-        photo.alt = item.code;
-        const code = document.createElement("div");
-        code.className = "code";
-        code.textContent = item.size_raw ? `${item.code} — ${item.size_raw}` : item.code;
-        card.append(photo, code);
-        card.addEventListener("click", () => useFromCatalog(item.code));
-        host.append(card);
-      }
-    } catch {
-      /* the picker is a convenience; nothing else depends on it succeeding */
-    }
-  }, 200);
+  catalogQuery = $("catalog-search").value.trim();
+  catalogTimer = setTimeout(() => loadCatalogPage(true), 200);
 });
 
 async function useFromCatalog(code) {
@@ -270,10 +292,9 @@ async function useFromCatalog(code) {
     body.append("code", code);
     showElementPreview(await call("/api/element/from-catalog", { method: "POST", body }));
     $("element-code").value = code;
-    $("catalog-picker").hidden = true;
-    $("catalog-search").value = "";
-    $("catalog-results").innerHTML = "";
+    $("catalog-dialog").close();
   } catch (err) {
+    $("catalog-dialog").close();
     showError(err.message);
   }
 }

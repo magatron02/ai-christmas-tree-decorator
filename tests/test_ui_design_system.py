@@ -124,9 +124,15 @@ def test_rule_4_the_decorate_page_has_exactly_one_primary():
 def test_rule_4_the_confirm_dialog_uses_success_not_a_second_primary():
     """The dialog's own action is 'confirm/save' (section 2's role table), which maps to the
     success variant — and keeping it off wine also means the button that spends money is
-    never the most visually emphasised control on the page (AC-4)."""
+    never the most visually emphasised control on the page (AC-4).
+
+    Sliced by id rather than by "the first <dialog>": the catalogue picker is a second dialog
+    on this page, and a positional slice would silently start checking whichever one happened
+    to be written first.
+    """
     html = read(FRONTEND / "index.html")
-    dialog = html[html.index("<dialog") : html.index("</dialog>")]
+    start = html.index('<dialog id="confirm-dialog"')
+    dialog = html[start : html.index("</dialog>", start)]
     assert "primary" not in dialog
     assert 'class="btn success"' in dialog
 

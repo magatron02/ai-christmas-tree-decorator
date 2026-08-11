@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tree Decorator</title>
-<link rel="stylesheet" href="/static/styles/tokens.css?v=8.10">
-<link rel="stylesheet" href="/static/styles/components.css?v=8.10">
-<script src="/static/theme.js?v=8.10"></script>
+<link rel="stylesheet" href="/static/styles/tokens.css?v=8.11">
+<link rel="stylesheet" href="/static/styles/components.css?v=8.11">
+<script src="/static/theme.js?v=8.11"></script>
 </head>
 <body>
 
@@ -91,10 +91,6 @@
               <span class="caption">3. หรือเลือกจาก catalogue</span>
               <span class="hint">ค้นจากสินค้าที่มีอยู่แล้ว ไม่ต้องหาไฟล์เอง</span>
               <button class="btn" id="catalog-toggle">เลือกจาก catalogue</button>
-              <div class="stack" id="catalog-picker" hidden>
-                <input class="input" id="catalog-search" placeholder="ค้นรหัสหรือหมวดสินค้า">
-                <div class="candidates" id="catalog-results"></div>
-              </div>
             </div>
 
           </div>
@@ -153,6 +149,21 @@
   </div>
 </dialog>
 
-<script src="/static/app.js?v=8.10"></script>
+<!-- The catalogue picker. A modal rather than an inline panel because it is a browse: the
+     grid wants the whole width, and opening it should not push the rest of panel 2 around. -->
+<dialog id="catalog-dialog" class="picker-dialog">
+  <div class="picker-head">
+    <h2>เลือกของตกแต่งจาก catalogue</h2>
+    <button class="btn danger" id="catalog-close">ปิด</button>
+  </div>
+  <input class="input" id="catalog-search" placeholder="ค้นรหัสหรือหมวด เช่น 017 หรือ bauble">
+  <span class="hint" id="catalog-count">กำลังโหลด…</span>
+  <div class="picker-grid" id="catalog-results"></div>
+  <div class="btn-row">
+    <button class="btn" id="catalog-more" hidden>โหลดเพิ่ม</button>
+  </div>
+</dialog>
+
+<script src="/static/app.js?v=8.11"></script>
 </body>
 </html>

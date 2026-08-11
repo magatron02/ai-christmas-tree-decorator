@@ -391,6 +391,39 @@ dialog h2 {
   font-size: var(--text-lg);
   font-weight: 600;
 }
+
+/* ---- catalogue picker modal ----
+   Wider and taller than the confirm dialog: this one is a browse over ~1,250 products, so
+   the grid gets the room and scrolls inside the dialog rather than growing it. The cards are
+   the same .candidate component the match results already use — a picked product and a
+   proposed match are the same object, so they should not be two different components. */
+.picker-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: min(880px, 92vw);
+  max-height: 86vh;
+}
+.picker-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.picker-head h2 { margin: 0 }
+.picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: var(--space-3);
+  overflow-y: auto;
+  align-content: start;
+  flex: 1;
+  min-height: 0;
+}
+/* .candidate carries a fixed width for the match strip, where the cards sit in a row; in the
+   grid the track decides instead */
+.picker-grid .candidate { width: auto }
 dialog p { margin: 0 0 var(--space-3); font-size: var(--text-base); color: var(--text-muted) }
 
 /* ---- history table ---- */
