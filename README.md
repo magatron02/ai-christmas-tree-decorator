@@ -10,6 +10,10 @@ Internal single-user tool. See `Product.md`, `Spec.md`, `AcceptanceCriteria.md`,
 
 ## Run it
 
+**Handing this to the shop?** `ติดตั้ง.md` is the same thing written for them: Thai,
+step-by-step from a machine with nothing installed, including what the billed prompts mean
+and what to do when something doesn't start.
+
 **Windows, one step:** double-click `setup.bat`. It creates the venv, installs everything,
 asks for your OpenAI key on first run, unzips `catalog-images*.zip` into `catalog/images/`
 if that bundle is sitting next to it, offers to run the two one-time billed checks below,
