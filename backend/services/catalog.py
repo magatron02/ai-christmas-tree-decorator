@@ -71,20 +71,110 @@ def recent(n=20):
     return _rows()[-n:][::-1]
 
 
+# Browsing categories. The catalogue's own `section` string comes from PDF text spans and is
+# mangled often enough that it cannot be shown to anyone as-is — the real data contains
+# "N N u u t t c c r r a a c c" (Nutcracker), "Lanter ns", "Christmas Swa gs", "ChristmasTrees".
+# So each category carries substrings that survive the mangling, tested against the section AND
+# against what the vision pass saw in the photo, and the first match wins. Order is therefore
+# load-bearing: "star topper" must reach `topper` before `tree` claims it for "tree topper".
+CATEGORIES = [
+    ("wreath",   "พวงหรีด & สวอก",           ("wreath", "swa")),
+    ("garland",  "สายรุ้ง & การ์แลนด์",       ("garland", "bead", "pullout", "arch")),
+    ("light",    "ไฟประดับ & โคมไฟ",          ("lanter", "lighting", "lights", "llum")),
+    ("ribbon",   "ริบบิ้น & โบว์",            ("ribbon", "bow")),
+    ("bell",     "ระฆัง",                     ("bell",)),
+    ("giftbox",  "กล่องของขวัญ",              ("gift", "box")),
+    ("flower",   "ดอกไม้ & ช่อประดับ",        ("flower", "spray", "branch", "pick", "stem", "butterfly")),
+    # "wflake" rather than "snowflake": it matches both the clean spelling and the catalogue's
+    # own "Sno wflakes", which is how that heading actually comes out of the PDF
+    ("ornament", "ลูกบอล & ออร์นาเมนต์แขวน",  ("ornament", "bauble", "ball", "glitter", "honeycomb", "tinsel", "wflake")),
+    ("topper",   "ดาว & ยอดต้น",              ("topper", "star")),
+    ("tree",     "ต้นคริสต์มาส",              ("tree", "fir", "spruce", "pine")),
+    ("banner",   "ป้ายอวยพร & แบนเนอร์",      ("banner", "blessing")),
+    # "u u t t c c" is the Nutcracker heading as the PDF actually renders it, every letter
+    # doubled: "N N u u t t c c r r a a c c". There is no un-mangled spelling to match on.
+    ("figure",   "ตุ๊กตา & ของตั้งโชว์",      ("figure", "santa", "sleigh", "fantasy", "sculpture",
+                                              "foam", "display", "u u t t c c")),
+]
+
+
+@lru_cache(maxsize=1)
+def _kinds():
+    """What the vision pass called each photo, by code. Second haystack for categorising: a
+    section heading is printed once per page and carried forward, so it is often vaguer than
+    the photo itself."""
+    path = config.CATALOG_PATH.parent / "descriptions.json"
+    if not path.is_file():
+        return {}
+    described = json.loads(path.read_text(encoding="utf-8"))
+    return {
+        code: (entry.get("attributes") or {}).get("kind", "")
+        for code, entry in described.items()
+    }
+
+
+def category_of(row):
+    """The first category whose substrings appear in this product's section or photo kind,
+    or None when nothing matches."""
+    haystack = f"{row.get('section') or ''} {_kinds().get(row['code'], '')}".lower()
+    for key, _label, needles in CATEGORIES:
+        if any(needle in haystack for needle in needles):
+            return key
+    return None
+
+
+# How many codes may share one crop file before the crop stops identifying any of them.
+# The pairing script grabs the nearest photo to each printed code, and where it misfires it
+# hands the same file to a run of codes: measured on this catalogue, one file is shared by 18
+# codes, another by 12, another by 10. Spot-checking those found page-number badges, the
+# "since 1987" brand pennant, and whole-page montages of six products at once. Below the
+# threshold sharing is usually legitimate — one photo, several sizes printed under it.
+MAX_SHARED_CROP = 5
+
+
+@lru_cache(maxsize=1)
+def _crop_users():
+    """code -> how many OTHER codes show the identical crop.
+
+    Read from product_images.json's `shared_with`, which the build script computes by hashing
+    the file contents. Counting filenames here instead would always report zero: every code
+    writes its own <code>.png, so duplicates are byte-identical files under different names.
+    """
+    path = config.CATALOG_PATH.parent / "product_images.json"
+    if not path.is_file():
+        return {}
+    return {
+        row["code"]: row.get("shared_with", 0)
+        for row in json.loads(path.read_text(encoding="utf-8"))
+        if row.get("image")
+    }
+
+
+def crop_is_ambiguous(code):
+    """True when this code's photo is shared by so many codes that it cannot be showing any
+    one of them. Such a photo is worse than no photo in a picker: it looks like an answer."""
+    return _crop_users().get(code, 0) + 1 >= MAX_SHARED_CROP
+
+
 @lru_cache(maxsize=1)
 def _with_photos():
-    return [row for row in _rows() if image_for(row["code"])]
+    return [
+        row for row in _rows()
+        if image_for(row["code"]) and not crop_is_ambiguous(row["code"])
+    ]
 
 
-def browse(limit=60, offset=0):
+def browse(limit=60, offset=0, category=None):
     """One page of the catalogue in printed order, plus how many pages' worth there are.
 
-    Only the codes that have a photo: this backs a thumbnail grid, and a card with nothing
-    to show is worse than no card. search() answers the empty query with nothing on purpose
-    (it also backs a datalist, which must not swallow 1,300 rows), so browsing is asked here
-    instead of by widening that.
+    Only the codes that have a photo worth showing: this backs a thumbnail grid, and a card
+    showing the wrong thing is worse than no card. search() answers the empty query with
+    nothing on purpose (it also backs a datalist, which must not swallow 1,300 rows), so
+    browsing is asked here instead of by widening that.
     """
     rows = _with_photos()
+    if category:
+        rows = [row for row in rows if category_of(row) == category]
     return rows[offset : offset + limit], len(rows)
 
 
@@ -95,6 +185,8 @@ def refresh():
     _by_code.cache_clear()
     _images_by_code.cache_clear()
     _with_photos.cache_clear()
+    _crop_users.cache_clear()
+    _kinds.cache_clear()
 
 
 def find(code):

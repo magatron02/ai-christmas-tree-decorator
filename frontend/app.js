@@ -249,6 +249,21 @@ function catalogCard(item) {
   return card;
 }
 
+async function loadCatalogCategories() {
+  try {
+    const { categories } = await call("/api/catalog/categories");
+    const select = $("catalog-category");
+    for (const item of categories) {
+      const option = document.createElement("option");
+      option.value = item.key;
+      option.textContent = `${item.label} (${item.count})`;
+      select.append(option);
+    }
+  } catch {
+    /* the filter is a convenience; browsing everything still works without it */
+  }
+}
+
 async function loadCatalogPage(restart) {
   const host = $("catalog-results");
   if (restart) {
@@ -258,6 +273,7 @@ async function loadCatalogPage(restart) {
   try {
     const { results, total } = await call(
       `/api/catalog/search?q=${encodeURIComponent(catalogQuery)}` +
+        `&category=${encodeURIComponent($("catalog-category").value)}` +
         `&limit=${CATALOG_PAGE}&offset=${catalogShown}`
     );
     for (const item of results) host.append(catalogCard(item));
@@ -273,8 +289,13 @@ async function loadCatalogPage(restart) {
 
 $("catalog-toggle").addEventListener("click", () => {
   $("catalog-dialog").showModal();
-  if (!$("catalog-results").children.length) loadCatalogPage(true);
+  if (!$("catalog-results").children.length) {
+    if ($("catalog-category").options.length <= 1) loadCatalogCategories();
+    loadCatalogPage(true);
+  }
 });
+
+$("catalog-category").addEventListener("change", () => loadCatalogPage(true));
 
 $("catalog-close").addEventListener("click", () => $("catalog-dialog").close());
 $("catalog-more").addEventListener("click", () => loadCatalogPage(false));

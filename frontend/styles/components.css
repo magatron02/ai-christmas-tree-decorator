@@ -412,6 +412,11 @@ dialog h2 {
   gap: var(--space-3);
 }
 .picker-head h2 { margin: 0 }
+/* category first, then free text: the category is the coarse cut a shop worker reaches for,
+   the search box is for when they already know part of a code */
+.picker-filters { display: flex; gap: var(--space-3); flex-wrap: wrap }
+.picker-filters #catalog-category { flex: 0 1 220px }
+.picker-filters #catalog-search { flex: 1 1 220px; min-width: 0 }
 .picker-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));

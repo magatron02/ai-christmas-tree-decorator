@@ -16,6 +16,7 @@ Does not call describe_catalog.py / embed_catalog.py — those cost real OpenAI 
 code, so they're a separate, explicit step (see README note printed at the end).
 """
 
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -93,15 +94,25 @@ def main():
 
         print(f"{pdf_path.name}: {len(codes_this_book)} codes, {len(unparsed)} unreadable sizes")
 
-    # several codes legitimately share one photo (a ribbon listing two sizes points at one
-    # pack) — counted the same way build_product_index.py does, over every row including the
-    # imageless ones, so the count isn't silently dropped for the new source
+    # Several codes legitimately share one photo (a ribbon listing two sizes points at one
+    # pack), and where the pairing misfires a whole run of codes gets handed the same crop.
+    # Counted by file CONTENT, not filename: every code writes its own <code>.png, so the
+    # duplicates are byte-identical files under different names and a filename tally reports
+    # nothing shared at all.
     from collections import Counter
 
-    shared = Counter(row["image"] for row in images if row["image"])
+    digests = {}
     for row in images:
         if row["image"]:
-            row["shared_with"] = shared[row["image"]] - 1
+            path = IMAGES_DIR / row["image"]
+            if path.is_file():
+                digests[row["image"]] = hashlib.md5(path.read_bytes()).hexdigest()
+
+    shared = Counter(digests.values())
+    for row in images:
+        digest = digests.get(row["image"])
+        if digest:
+            row["shared_with"] = shared[digest] - 1
 
     PRODUCTS_PATH.write_text(json.dumps(products, indent=1, ensure_ascii=False), encoding="utf-8")
     IMAGES_PATH.write_text(json.dumps(images, indent=1, ensure_ascii=False), encoding="utf-8")

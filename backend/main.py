@@ -228,20 +228,44 @@ def api_products(q: str = "", limit: int = 20):
     }
 
 
+@app.get("/api/catalog/categories")
+def api_catalog_categories():
+    """The browsing categories and how many showable products each holds, so the picker can
+    label its filters with real counts instead of offering an empty one."""
+    counts = {}
+    for row, _total in [(r, None) for r in catalog.browse(10_000, 0)[0]]:
+        key = catalog.category_of(row)
+        counts[key] = counts.get(key, 0) + 1
+    return {
+        "categories": [
+            {"key": key, "label": label, "count": counts.get(key, 0)}
+            for key, label, _needles in catalog.CATEGORIES
+            if counts.get(key, 0)
+        ]
+    }
+
+
 @app.get("/api/catalog/search")
-def api_catalog_search(q: str = "", limit: int = 60, offset: int = 0):
+def api_catalog_search(q: str = "", category: str = "", limit: int = 60, offset: int = 0):
     """Thumbnail picker for panel 2 — the catalogue photo alongside the code, so a decoration
     can be chosen without touching the filesystem.
 
     With no query it browses the whole catalogue in printed order, so the picker opens onto
     products rather than an empty box. `total` is the full match count, not the page's, which
     is what lets the browser say "showing 60 of 1252" and know whether to offer another page.
+    Codes whose crop is shared by too many codes to identify any of them are left out of both
+    paths — see catalog.crop_is_ambiguous.
     """
     if q.strip():
-        matched = [row for row in catalog.search(q, 10_000) if catalog.image_for(row["code"])]
+        matched = [
+            row for row in catalog.search(q, 10_000)
+            if catalog.image_for(row["code"]) and not catalog.crop_is_ambiguous(row["code"])
+        ]
+        if category:
+            matched = [row for row in matched if catalog.category_of(row) == category]
         rows, total = matched[offset : offset + limit], len(matched)
     else:
-        rows, total = catalog.browse(limit, offset)
+        rows, total = catalog.browse(limit, offset, category or None)
 
     return {
         "total": total,
@@ -251,6 +275,7 @@ def api_catalog_search(q: str = "", limit: int = 60, offset: int = 0):
                 "image": catalog.image_for(row["code"]),
                 "size_raw": row["size_raw"],
                 "section": row["section"],
+                "category": catalog.category_of(row),
                 "book": row.get("book"),
             }
             for row in rows
