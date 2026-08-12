@@ -139,6 +139,17 @@ def main():
 
     if not args.dry_run:
         OUT.write_text(json.dumps(variants, indent=1, ensure_ascii=False), encoding="utf-8")
+        # a crop that stopped being showable since the last run leaves its colour images
+        # behind; they would still be served, and the manifest is the only thing that knows
+        # they are stale
+        keep = {name for names in variants.values() for name in names}
+        removed = 0
+        for stale in VARIANTS_DIR.glob("*.png"):
+            if stale.name not in keep:
+                stale.unlink()
+                removed += 1
+        if removed:
+            print(f"removed {removed} colour images whose product is no longer showable")
 
     total = sum(len(v) if isinstance(v, list) else v for v in variants.values())
     print(f"{len(codes)} showable crops examined")

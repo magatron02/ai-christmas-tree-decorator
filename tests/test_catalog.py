@@ -167,10 +167,25 @@ def test_only_the_audit_reasons_that_survived_checking_are_acted_on():
     assert catalog.REJECTABLE_CROP_KINDS.isdisjoint({"multiple", "unclear", "blank"})
 
 
-def test_the_eye_checked_false_rejects_stay_in_the_picker():
-    """Rejections inside the trusted reasons that were checked by hand and found wrong."""
+def test_the_eye_checked_false_rejects_are_not_treated_as_page_furniture():
+    """Rejections inside the trusted reasons that were checked by hand and found wrong.
+
+    This overrides the vision audit only. Two of these three are still out of the picker
+    because their crop is shared with other codes — being a real product does not rescue a
+    photo that cannot say which product it is, and the two rules are deliberately separate.
+    """
     for code in catalog.KEEP_DESPITE_AUDIT:
-        assert catalog.crop_is_showable(code), f"{code} is a real product the audit got wrong"
+        assert not catalog.crop_is_not_a_product(code), f"{code} is a real product"
+
+
+def test_a_shared_crop_is_hidden_even_when_it_shows_a_real_product():
+    """The point of the sharing rule: 34072-1's photo is byte-identical to four other codes'
+    and the ribbon inside it names 34072-1, so the other four are showing the wrong product.
+    Since nothing in the data says which claimant is the real one, all of them go."""
+    family = ["34072-1", "35072-1", "36072-1", "37072-1", "38072-1"]
+    users = catalog._crop_users()
+    assert all(users.get(code, 0) >= 1 for code in family)
+    assert not any(catalog.crop_is_showable(code) for code in family)
 
 
 def test_an_unjudged_crop_still_shows():

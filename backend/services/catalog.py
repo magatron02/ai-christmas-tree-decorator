@@ -124,12 +124,17 @@ def category_of(row):
 
 
 # How many codes may share one crop file before the crop stops identifying any of them.
-# The pairing script grabs the nearest photo to each printed code, and where it misfires it
-# hands the same file to a run of codes: measured on this catalogue, one file is shared by 18
-# codes, another by 12, another by 10. Spot-checking those found page-number badges, the
-# "since 1987" brand pennant, and whole-page montages of six products at once. Below the
-# threshold sharing is usually legitimate — one photo, several sizes printed under it.
-MAX_SHARED_CROP = 5
+#
+# Set to 2, meaning any duplicate at all disqualifies every code that shares it. The first
+# version allowed up to 4, on the assumption that a small group sharing a photo was the
+# legitimate case of one product printed with several sizes under it. Surveying the crops
+# against the caption ribbons printed inside them showed that assumption was wrong: on book1
+# pages 17-32, 128 crops resolve to only 91 distinct images, and where a ribbon was legible it
+# named exactly one owner — 35072-1.png is byte-identical to 34072-1, 36072-1, 37072-1 and
+# 38072-1, and the ribbon inside it reads "34072-1 (4 Ft.)". A shared crop can be right for at
+# most one of its claimants, so every other claim is a picture of the wrong product, which is
+# the thing NonGoals.md 7 exists to prevent.
+MAX_SHARED_CROP = 2
 
 
 @lru_cache(maxsize=1)
