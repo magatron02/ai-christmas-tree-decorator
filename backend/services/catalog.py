@@ -217,6 +217,31 @@ def crop_is_showable(code):
 
 
 @lru_cache(maxsize=1)
+def _variants():
+    """code -> one image per colour, for the products photographed as a colour range.
+
+    This catalogue shoots a product across all its colours in one frame: 4400-1 is a single
+    4-inch tinsel garland and its photo shows six of them in six colours. One code, but not
+    one picture — picking it whole hands the generator all six at once. Built by
+    scripts/split_colourways.py; absent file means nothing was split, which is a valid state.
+    """
+    path = config.CATALOG_PATH.parent / "variants.json"
+    if not path.is_file():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def variants_of(code):
+    """The images to offer for this code: one per colour where the photo was split, otherwise
+    the single crop. Always at least one entry, so callers need no special case."""
+    split = _variants().get(code)
+    if split:
+        return [f"variants/{name}" for name in split]
+    image = image_for(code)
+    return [image] if image else []
+
+
+@lru_cache(maxsize=1)
 def _with_photos():
     return [row for row in _rows() if crop_is_showable(row["code"])]
 

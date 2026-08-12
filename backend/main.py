@@ -267,28 +267,46 @@ def api_catalog_search(q: str = "", category: str = "", limit: int = 60, offset:
     else:
         rows, total = catalog.browse(limit, offset, category or None)
 
-    return {
-        "total": total,
-        "results": [
-            {
+    # one card per colour, not per code: a product photographed across its colour range is one
+    # code with several pictures, and picking "the whole photo" would hand the generator every
+    # colour at once (catalog.variants_of)
+    results = []
+    for row in rows:
+        images = catalog.variants_of(row["code"])
+        for index, image in enumerate(images):
+            results.append({
                 "code": row["code"],
-                "image": catalog.image_for(row["code"]),
+                "image": image,
+                "colour": index + 1 if len(images) > 1 else None,
+                "colours": len(images),
                 "size_raw": row["size_raw"],
                 "section": row["section"],
                 "category": catalog.category_of(row),
                 "book": row.get("book"),
-            }
-            for row in rows
-        ],
-    }
+            })
+
+    # `codes` is how many products this page consumed, which is what the next offset must
+    # advance by — `results` can be larger, since a colour range contributes several cards
+    return {"total": total, "codes": len(rows), "results": results}
 
 
 @app.post("/api/element/from-catalog")
-def api_element_from_catalog(code: str = Form(...)):
+def api_element_from_catalog(code: str = Form(...), image: str = Form("")):
     """Same as /api/remove-bg, except the source photo already lives in the catalogue instead
     of coming from the browser. Returns the identical shape so the frontend's existing
-    preview/accept/reject flow needs no separate code path."""
-    path = catalog.image_path(code.strip())
+    preview/accept/reject flow needs no separate code path.
+
+    `image` picks one colour of a product photographed as a colour range. It is checked
+    against that code's own variant list rather than joined onto a path — the value arrives
+    from the browser, and anything else would be a traversal into the filesystem.
+    """
+    code = code.strip()
+    if image:
+        if image not in catalog.variants_of(code):
+            raise HTTPException(404, f"'{image}' is not a photo of {code}.")
+        path = config.CATALOG_PATH.parent / "images" / image
+    else:
+        path = catalog.image_path(code)
     if not path or not path.is_file():
         raise HTTPException(404, f"No catalogue photo for '{code}'.")
 

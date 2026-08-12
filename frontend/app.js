@@ -232,7 +232,8 @@ $("cut-btn").addEventListener("click", async () => {
 const CATALOG_PAGE = 60;
 let catalogTimer;
 let catalogQuery = "";
-let catalogShown = 0;
+let catalogCodesShown = 0;   // products consumed — what the next page's offset advances by
+let catalogCardsShown = 0;   // cards on screen, larger when a product has several colours
 
 function catalogCard(item) {
   const card = document.createElement("div");
@@ -245,7 +246,14 @@ function catalogCard(item) {
   code.className = "code";
   code.textContent = item.size_raw ? `${item.code} — ${item.size_raw}` : item.code;
   card.append(photo, code);
-  card.addEventListener("click", () => useFromCatalog(item.code));
+  // the same code appears once per colour, so the card has to say which one it is
+  if (item.colours > 1) {
+    const which = document.createElement("div");
+    which.className = "why";
+    which.textContent = `สี ${item.colour} จาก ${item.colours}`;
+    card.append(which);
+  }
+  card.addEventListener("click", () => useFromCatalog(item.code, item.image));
   return card;
 }
 
@@ -267,21 +275,24 @@ async function loadCatalogCategories() {
 async function loadCatalogPage(restart) {
   const host = $("catalog-results");
   if (restart) {
-    catalogShown = 0;
+    catalogCodesShown = 0;
+    catalogCardsShown = 0;
     host.innerHTML = "";
   }
   try {
-    const { results, total } = await call(
+    const { results, total, codes } = await call(
       `/api/catalog/search?q=${encodeURIComponent(catalogQuery)}` +
         `&category=${encodeURIComponent($("catalog-category").value)}` +
-        `&limit=${CATALOG_PAGE}&offset=${catalogShown}`
+        `&limit=${CATALOG_PAGE}&offset=${catalogCodesShown}`
     );
     for (const item of results) host.append(catalogCard(item));
-    catalogShown += results.length;
+    catalogCodesShown += codes;
+    catalogCardsShown += results.length;
+    const extra = catalogCardsShown > catalogCodesShown ? ` (${catalogCardsShown} รูป แยกสีแล้ว)` : "";
     $("catalog-count").textContent = total
-      ? `แสดง ${catalogShown} จาก ${total} ชิ้น`
+      ? `แสดง ${catalogCodesShown} จาก ${total} ชิ้น${extra}`
       : "ไม่เจอสินค้าที่ตรงกับที่ค้น";
-    $("catalog-more").hidden = catalogShown >= total;
+    $("catalog-more").hidden = catalogCodesShown >= total;
   } catch (err) {
     $("catalog-count").textContent = err.message;
   }
@@ -306,11 +317,12 @@ $("catalog-search").addEventListener("input", () => {
   catalogTimer = setTimeout(() => loadCatalogPage(true), 200);
 });
 
-async function useFromCatalog(code) {
+async function useFromCatalog(code, image) {
   showError("");
   try {
     const body = new FormData();
     body.append("code", code);
+    if (image) body.append("image", image);
     showElementPreview(await call("/api/element/from-catalog", { method: "POST", body }));
     $("element-code").value = code;
     $("catalog-dialog").close();
