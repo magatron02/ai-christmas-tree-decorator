@@ -39,7 +39,7 @@ VARIANTS_DIR = IMAGES / "variants"
 OUT = ROOT / "catalog" / "variants.json"
 
 INK_THRESHOLD = 60        # channel-sum distance from the page background that counts as ink
-COVERAGE = 0.20           # fraction of a line that must be ink for it to be inside a panel
+COVERAGE = 0.40           # fraction of a line that must be ink for it to be inside an item's core
 MIN_PANEL_PX = 24         # narrower than this is a stray mark, not a product
 MIN_PANELS, MAX_PANELS = 2, 12
 MAX_WIDTH_RATIO = 1.7     # widest panel / narrowest; a colour range is evenly spaced
@@ -56,25 +56,54 @@ def background(pixels):
 
 
 def runs_along(ink, axis):
-    """Contiguous stretches of the given axis whose lines are mostly ink."""
+    """One panel per item, spanning the space between its neighbours.
+
+    Two passes, because the two things wanted here pull in opposite directions. Finding where
+    one item ends and the next begins needs a strict threshold: colourway strips are printed
+    close enough to touch at their fuzzy edges, and a lenient one merges three tinsel strands
+    into a single 200px blob. But a strict threshold only keeps each item's dense core — on the
+    mini-tree ranges that is the trunk, and cropping to it would cut the branches off.
+
+    So the cores locate the items, and the boundaries are then placed midway between adjacent
+    cores. Each panel gets the full width up to its neighbour, whatever the threshold could
+    see of it.
+    """
     profile = ink.mean(axis=axis)
-    found, start = [], None
+    cores, start = [], None
     for index, inside in enumerate(profile > COVERAGE):
         if inside and start is None:
             start = index
         elif not inside and start is not None:
             if index - start >= MIN_PANEL_PX:
-                found.append((start, index))
+                cores.append((start, index))
             start = None
     if start is not None and len(profile) - start >= MIN_PANEL_PX:
-        found.append((start, len(profile)))
-    return found
+        cores.append((start, len(profile)))
+
+    return cores
 
 
-def confident(panels, span):
-    if not MIN_PANELS <= len(panels) <= MAX_PANELS:
+def expand(cores, span):
+    """Cores -> panels, each reaching halfway to its neighbour."""
+    centres = [(start + end) / 2 for start, end in cores]
+    edges = [0]
+    edges += [round((a + b) / 2) for a, b in zip(centres, centres[1:])]
+    edges.append(span)
+    return list(zip(edges, edges[1:]))
+
+
+def confident(cores, span):
+    """Judged on the CORES, never on the expanded panels.
+
+    Expansion places every boundary midway between neighbours, which makes the panels come out
+    near-identical in width whatever they contain — so measuring evenness there would approve
+    anything with two blobs in it, including one tall tree whose foliage and stand read as two.
+    The cores are what the picture actually shows, and a colour range shows the same item
+    several times: cores of the same size. A single product's parts do not.
+    """
+    if not MIN_PANELS <= len(cores) <= MAX_PANELS:
         return False
-    widths = [end - start for start, end in panels]
+    widths = [end - start for start, end in cores]
     if min(widths) < MIN_PANEL_SHARE * span:
         return False
     return max(widths) / min(widths) <= MAX_WIDTH_RATIO
@@ -85,12 +114,10 @@ def split(path):
     pixels = np.asarray(Image.open(path).convert("RGB")).astype(int)
     ink = np.abs(pixels - background(pixels)).sum(axis=2) > INK_THRESHOLD
 
-    columns = runs_along(ink, axis=0)
-    if confident(columns, pixels.shape[1]):
-        return "x", columns
-    rows = runs_along(ink, axis=1)
-    if confident(rows, pixels.shape[0]):
-        return "y", rows
+    for axis, span in (("x", pixels.shape[1]), ("y", pixels.shape[0])):
+        cores = runs_along(ink, axis=0 if axis == "x" else 1)
+        if confident(cores, span):
+            return axis, expand(cores, span)
     return None, []
 
 
