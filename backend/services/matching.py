@@ -54,7 +54,16 @@ def _descriptions():
 @lru_cache(maxsize=1)
 def _vectors():
     """The embedded catalogue, built once and cached on disk — 1,053 embeddings is a cheap
-    call but not a free one, and nothing about them changes between runs."""
+    call but not a free one, and nothing about them changes between runs.
+
+    Filtered to the same codes catalog.browse() will show a photo for. A description was
+    written by describing this code's CROP, so a code whose crop turned out to be shared with
+    another code, or to be page furniture rather than a product, has a description of the
+    wrong thing — searching it can point a customer's photo at a code that only looks right
+    because the text describes someone else's picture. catalog.crop_is_showable() is already
+    the system's one answer to "can this code's photo be trusted", so matching defers to it
+    rather than keeping a second opinion.
+    """
     path = config.CATALOG_PATH.parent / "embeddings.npy"
     codes_path = config.CATALOG_PATH.parent / "embedding_codes.json"
     if not (path.is_file() and codes_path.is_file()):
@@ -63,7 +72,21 @@ def _vectors():
         )
     matrix = np.load(path)
     codes = json.loads(codes_path.read_text(encoding="utf-8"))
+
+    from backend.services import catalog
+
+    keep = [i for i, code in enumerate(codes) if catalog.crop_is_showable(code)]
+    if len(keep) != len(codes):
+        codes = [codes[i] for i in keep]
+        matrix = matrix[keep]
     return codes, matrix
+
+
+def refresh():
+    """Drop the cached embeddings, so a sync that rewrites embeddings.npy — or a change to
+    which crops count as showable — is visible on the next search without restarting."""
+    _descriptions.cache_clear()
+    _vectors.cache_clear()
 
 
 def embed(texts):

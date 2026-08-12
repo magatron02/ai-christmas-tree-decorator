@@ -144,3 +144,39 @@ def test_the_embedded_catalogue_matches_the_descriptions():
 
     assert len(codes) == matrix.shape[0]
     assert set(codes) <= described
+
+
+# ---- search never surfaces a code the picker itself would not show ------------------------
+
+
+def test_the_search_space_excludes_every_unshowable_code():
+    """A description was written by describing this code's CROP. If that crop turned out to
+    be shared with another code, or to be page furniture, the description is of the wrong
+    thing — matching against it can point a customer's photo at a code that only looks right
+    because the text describes someone else's picture. This is the same standard
+    catalog.browse() already holds the picker to."""
+    from backend.services import catalog
+
+    codes, _matrix = matching._vectors()
+    assert codes, "expected at least one showable, embedded code to test against"
+    for code in codes:
+        assert catalog.crop_is_showable(code), f"{code} is searchable but not showable"
+
+
+def test_refresh_forgets_a_code_that_stops_being_showable():
+    """Mirrors catalog.refresh() — a sync must not require a server restart to take effect."""
+    from backend.services import catalog
+
+    codes_before, _ = matching._vectors()
+    code = codes_before[0]
+    assert catalog.crop_is_showable(code)
+
+    original = catalog.crop_is_showable
+    catalog.crop_is_showable = lambda c: False if c == code else original(c)
+    try:
+        matching.refresh()
+        codes_after, _ = matching._vectors()
+        assert code not in codes_after
+    finally:
+        catalog.crop_is_showable = original
+        matching.refresh()

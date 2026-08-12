@@ -372,6 +372,7 @@ def api_catalog_sync(request: Request):
             raise HTTPException(502, f"{script} failed:\n{result.stderr[-2000:]}")
 
     catalog.refresh()
+    matching.refresh()
     return {"synced": True}
 
 
