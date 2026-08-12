@@ -182,7 +182,16 @@ def api_settings():
         "vision_model": config.VISION_MODEL,
         "catalog_products": config.CATALOG_PATH.is_file(),
         "catalog_searchable": (config.CATALOG_PATH.parent / "embeddings.npy").is_file(),
+        "catalog_conflicts": len(catalog.conflicts()),
     }
+
+
+@app.get("/api/catalog/conflicts")
+def api_catalog_conflicts():
+    """Codes the rebuild found meaning two different things on two different pages. Neither
+    side is picked automatically (catalog.code_is_contested) — this is what Settings shows so
+    someone who knows the product line can say which one is real."""
+    return {"conflicts": catalog.conflicts()}
 
 
 @app.post("/api/settings/api-key")

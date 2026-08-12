@@ -246,3 +246,33 @@ def test_only_showable_crops_were_split():
     where the filter had already removed one."""
     for code in catalog._variants():
         assert catalog.crop_is_showable(code), f"{code} is hidden but was still split"
+
+
+# ---- contested codes: two different products, one code, neither picked automatically -------
+
+
+def test_a_contested_code_is_not_showable():
+    """book_conflicts.json records codes the rebuild saw mean two different things on two
+    different pages (26022-2 is a Fraser Fir on one page, a Brighton Spruce on another).
+    Guessing which is real is exactly what NonGoals.md 7/8 forbid, so neither wins by default —
+    both stay out of the picker until a person resolves it."""
+    contested = catalog._contested_codes()
+    assert contested, "expected the rebuilt catalogue to contain some contested codes"
+    for code in contested:
+        assert not catalog.crop_is_showable(code), f"{code} is contested but still showable"
+
+
+def test_conflicts_reports_kept_and_lost_side_by_side():
+    rows = catalog.conflicts()
+    assert rows
+    for row in rows:
+        assert row["code"] in catalog._contested_codes()
+        assert row["lost"], f"{row['code']} has no losing entry to compare against"
+
+
+def test_an_uncontested_code_is_unaffected():
+    uncontested = next(
+        r["code"] for r in catalog._rows()
+        if r["code"] not in catalog._contested_codes() and catalog.image_for(r["code"])
+    )
+    assert not catalog.code_is_contested(uncontested)

@@ -212,12 +212,62 @@ def crop_is_not_a_product(code):
     return code in _crop_verdicts()
 
 
+@lru_cache(maxsize=1)
+def _contested_codes():
+    """Codes the rebuild found printed on two different pages with two different meanings.
+
+    catalog/book_conflicts.json records every code that lost that race: extraction keeps
+    whichever occurrence it saw first and logs the rest here rather than overwriting silently
+    (same NonGoals.md 7/8 reasoning as everywhere else in this file). Some of these losses are
+    probably harmless — a multi-page spread repeating its own code, the same label read twice
+    off one page — and some are not: 90634-8 is a glittered ball ornament on one page and a
+    star topper on another, from two different catalogue editions.
+
+    Telling those apart would mean guessing which occurrence is "real", which is the one thing
+    this whole module refuses to do. So every code here is treated as contested, not just the
+    ones that look risky by eye — a human who knows the product line resolves it, surfaced
+    in Settings, not a heuristic here deciding some conflicts don't count.
+    """
+    path = config.CATALOG_PATH.parent / "book_conflicts.json"
+    if not path.is_file():
+        return set()
+    return {row["code"] for row in json.loads(path.read_text(encoding="utf-8"))}
+
+
+def code_is_contested(code):
+    return code in _contested_codes()
+
+
+def conflicts():
+    """One row per contested code, kept and lost side by side, for the Settings page to show
+    someone who can actually tell the two products apart."""
+    lost_by_code = {}
+    for row in json.loads(
+        (config.CATALOG_PATH.parent / "book_conflicts.json").read_text(encoding="utf-8")
+    ) if (config.CATALOG_PATH.parent / "book_conflicts.json").is_file() else []:
+        lost_by_code.setdefault(row["code"], []).append(row)
+
+    out = []
+    for code, losers in lost_by_code.items():
+        kept = _by_code().get(code, {})
+        out.append({
+            "code": code,
+            "kept": {"book": kept.get("book"), "page": kept.get("pdf_page"),
+                     "section": kept.get("section"), "size_raw": kept.get("size_raw")},
+            "lost": [{"book": row.get("book"), "page": row.get("pdf_page"),
+                      "section": row.get("section"), "size_raw": row.get("size_raw")}
+                     for row in losers],
+        })
+    return out
+
+
 def crop_is_showable(code):
     """The one question the picker asks: can this photo stand for this code on a card?"""
     return (
         bool(image_for(code))
         and not crop_is_ambiguous(code)
         and not crop_is_not_a_product(code)
+        and not code_is_contested(code)
     )
 
 
@@ -275,6 +325,7 @@ def refresh():
     _crop_users.cache_clear()
     _crop_verdicts.cache_clear()
     _kinds.cache_clear()
+_contested_codes.cache_clear()
 
 
 def find(code):

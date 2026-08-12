@@ -40,6 +40,7 @@ async function loadStatus() {
     ["model อ่านรูป", status.vision_model],
     ["ขนาดสินค้า", status.catalog_products ? "โหลดแล้ว" : "ยังไม่มี — รัน scripts/extract_catalog.py"],
     ["ค้นของจากรูป", status.catalog_searchable ? "พร้อมใช้" : "ยังไม่ได้สร้าง — รัน scripts/describe_catalog.py แล้ว embed_catalog.py"],
+    ["รหัสชนกัน", status.catalog_conflicts ? `${status.catalog_conflicts} รหัส — ดูรายการด้านล่าง` : "ไม่มี"],
   ];
   const host = $("status-rows");
   host.innerHTML = "";
@@ -52,6 +53,34 @@ async function loadStatus() {
     detail.className = "mono";
     detail.textContent = value;
     row.append(key, detail);
+    host.append(row);
+  }
+
+  if (status.catalog_conflicts) loadConflicts();
+}
+
+async function loadConflicts() {
+  const { conflicts } = await (await fetch("/api/catalog/conflicts")).json();
+  if (!conflicts.length) return;
+  $("conflicts-panel").hidden = false;
+  const host = $("conflicts-rows");
+  host.innerHTML = "";
+  for (const item of conflicts) {
+    const row = document.createElement("tr");
+
+    const code = document.createElement("th");
+    code.className = "mono";
+    code.textContent = item.code;
+
+    const kept = document.createElement("td");
+    kept.textContent = `${item.kept.section || "(ไม่ระบุหมวด)"} · ${item.kept.size_raw || "ไม่มีขนาด"} · เล่ม ${item.kept.book || "?"} หน้า ${item.kept.page ?? "?"}`;
+
+    const lost = document.createElement("td");
+    lost.textContent = item.lost
+      .map(l => `${l.section || "(ไม่ระบุหมวด)"} · ${l.size_raw || "ไม่มีขนาด"} · เล่ม ${l.book || "?"} หน้า ${l.page ?? "?"}`)
+      .join(" / ");
+
+    row.append(code, kept, lost);
     host.append(row);
   }
 }
