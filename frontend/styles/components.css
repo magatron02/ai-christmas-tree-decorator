@@ -355,9 +355,31 @@ input[type="file"].input::file-selector-button {
 .identify-toggle > summary::before { content: "▸"; color: var(--text-muted); font-size: var(--text-sm) }
 .identify-toggle[open] > summary::before { content: "▾" }
 .identify-toggle[open] > summary { margin-bottom: var(--space-3) }
+/* controls on the left, the uploaded photo's preview on the right — otherwise both stack in
+   one column and the card's right half sits empty */
+.identify-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+@media (max-width: 720px) {
+  .identify-columns { grid-template-columns: minmax(0, 1fr) }
+}
 
-/* ---- catalogue matches (8.3c) ---- */
-.found { border-top: 1px solid var(--border); padding-top: var(--space-3) }
+/* ---- catalogue matches (8.3c) ----
+   Each decoration keeps its existing grouped block (header, quantity, candidate row) — only
+   the container flows those blocks into two columns instead of one full-width stack, so a
+   short results list doesn't leave the right half of the card empty. */
+#identify-results {
+  display: block;
+  columns: 2;
+  column-gap: var(--space-4);
+}
+@media (max-width: 720px) {
+  #identify-results { columns: 1 }
+}
+.found { border-top: 1px solid var(--border); padding-top: var(--space-3); margin-bottom: var(--space-3); break-inside: avoid }
 .found:first-child { border-top: none; padding-top: 0 }
 .found .seen { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap }
 .candidates { display: flex; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-3) }
@@ -402,8 +424,8 @@ dialog h2 {
   flex-direction: column;
   gap: var(--space-3);
   width: 100%;
-  max-width: min(880px, 92vw);
-  max-height: 86vh;
+  max-width: min(1200px, 94vw);
+  max-height: 90vh;
 }
 .picker-head {
   display: flex;

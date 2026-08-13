@@ -29,7 +29,7 @@ def test_lookup_is_case_insensitive_and_trims():
 def test_an_unknown_code_is_refused():
     with pytest.raises(ValidationError) as caught:
         catalog.find("99999-9")
-    assert "not in the catalogue" in str(caught.value)
+    assert "ไม่มีใน catalogue" in str(caught.value)
 
 
 def test_the_scale_sentence_states_the_real_ratio():
@@ -62,7 +62,7 @@ def test_one_code_alone_is_refused():
     """Half the information cannot produce a ratio, and a ratio is the whole point."""
     with pytest.raises(ValidationError) as caught:
         catalog.scale_sentence("05021-1", [])
-    assert "partial set" in str(caught.value)
+    assert "ใส่บางส่วน" in str(caught.value)
 
 
 def test_several_decorations_each_get_their_own_ratio():
@@ -89,7 +89,7 @@ def test_a_product_with_no_printed_size_is_refused_not_estimated():
 
     with pytest.raises(ValidationError) as caught:
         catalog.require_size(sizeless)
-    assert "no size" in str(caught.value)
+    assert "ไม่มีขนาด" in str(caught.value)
 
 
 def test_search_finds_by_code_and_by_page_heading():

@@ -45,7 +45,7 @@ def _descriptions():
     path = config.CATALOG_PATH.parent / "descriptions.json"
     if not path.is_file():
         raise ValidationError(
-            "The catalogue has not been described yet. Run scripts/describe_catalog.py."
+            "ยังไม่ได้ทำคำอธิบาย catalogue — รัน scripts/describe_catalog.py ก่อน"
         )
     rows = json.loads(path.read_text(encoding="utf-8"))
     return [row for row in rows.values() if not row.get("error")]
@@ -68,7 +68,7 @@ def _vectors():
     codes_path = config.CATALOG_PATH.parent / "embedding_codes.json"
     if not (path.is_file() and codes_path.is_file()):
         raise ValidationError(
-            "The catalogue has not been embedded yet. Run scripts/embed_catalog.py."
+            "ยังไม่ได้ทำดัชนีค้นหา catalogue — รัน scripts/embed_catalog.py ก่อน"
         )
     matrix = np.load(path)
     codes = json.loads(codes_path.read_text(encoding="utf-8"))

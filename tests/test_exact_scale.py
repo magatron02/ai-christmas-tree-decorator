@@ -56,7 +56,7 @@ def test_an_unknown_code_is_rejected_before_anything_is_billed(client, fake_gen,
     response = prepare(client, tree_code="99999-9", element_code="017-06")
 
     assert response.status_code == 422
-    assert "not in the catalogue" in response.json()["error"]
+    assert "ไม่มีใน catalogue" in response.json()["error"]
     assert fake_gen.count == 0
 
 
@@ -64,7 +64,7 @@ def test_one_code_alone_is_rejected(client, fake_gen, fake_rembg):
     response = prepare(client, tree_code="05021-1")
 
     assert response.status_code == 422
-    assert "partial set" in response.json()["error"]
+    assert "ใส่บางส่วน" in response.json()["error"]
 
 
 def test_the_prompt_template_still_carries_the_substitution():

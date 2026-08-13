@@ -21,6 +21,7 @@ const STATE_LABEL = {
   api_success: ["done", "ได้ภาพแล้ว"],
   api_failed: ["failed", "สร้างไม่สำเร็จ — ไม่ถูกคิดเงิน"],
   delivered: ["done", "ส่งถึงแล้ว"],
+  code_mismatch: ["failed", "ใส่รหัสสินค้าให้ทั้งต้นไม้และของตกแต่งทุกชิ้น หรือลบรหัสออกให้หมด"],
 };
 
 const MAX_ELEMENTS = 5;
@@ -48,7 +49,12 @@ function showError(message) {
 }
 
 async function call(url, options) {
-  const response = await fetch(url, options);
+  let response;
+  try {
+    response = await fetch(url, options);
+  } catch {
+    throw new Error("เชื่อมต่อ server ไม่ได้ — เช็คว่า server ยังรันอยู่ไหม");
+  }
   let payload = {};
   try {
     payload = await response.json();
@@ -59,8 +65,21 @@ async function call(url, options) {
   return payload;
 }
 
+/* Mirrors the backend's all-or-nothing rule (catalog.scale_sentence): a code for the tree
+ * and every decoration, or none at all — anything in between is refused server-side, so the
+ * button catches it before a free /api/prepare round-trip has to say so. Checked live because
+ * the catalogue picker fills element-code by itself; without this a decoration picked from
+ * catalogue silently blocks generate until the user notices the tree has no code too. */
+function codesConsistent() {
+  const treeCode = $("tree-code").value.trim();
+  const codes = state.elements.map((element) => element.code || "");
+  if (!treeCode && !codes.some(Boolean)) return true;
+  return Boolean(treeCode) && codes.every(Boolean);
+}
+
 function refreshGenerateButton() {
-  $("generate-btn").disabled = !(state.treeFile && state.elements.length) || state.busy;
+  $("generate-btn").disabled =
+    !(state.treeFile && state.elements.length) || !codesConsistent() || state.busy;
 }
 
 /* The accepted decorations, each removable. Shown as a list rather than a count so it is
@@ -105,7 +124,8 @@ function resetRun() {
   $("result-actions").hidden = true;
   $("result-empty").hidden = false;
   showError("");
-  if (state.treeFile && state.elements.length) setStatus("pending");
+  if (!codesConsistent()) setStatus("code_mismatch");
+  else if (state.treeFile && state.elements.length) setStatus("pending");
   else setStatus("waiting", "รอต้นเปล่ากับของตกแต่งอย่างน้อย 1 ชิ้น");
   refreshGenerateButton();
 }
@@ -177,6 +197,7 @@ function wireCodePicker(inputId, listId, hintId) {
 
 wireCodePicker("tree-code", "tree-code-list", "tree-code-hint");
 wireCodePicker("element-code", "element-code-list", "element-code-hint");
+$("tree-code").addEventListener("input", () => resetRun());
 renderElements();
 
 /* ---- step 1: bare tree ---- */
@@ -433,7 +454,7 @@ $("identify-btn").addEventListener("click", async () => {
   const button = $("identify-btn");
   button.disabled = true;
   button.textContent = "กำลังค้นแคตตาล็อก…";
-  showError("");
+  $("identify-note").hidden = true;
 
   try {
     const treeCode = $("tree-code").value.trim();
@@ -443,7 +464,10 @@ $("identify-btn").addEventListener("click", async () => {
     });
     renderIdentified(result);
   } catch (err) {
-    showError(err.message);
+    $("identify-results").innerHTML = "";
+    $("identify-panel").hidden = false;
+    $("identify-note").textContent = err.message;
+    $("identify-note").hidden = false;
   } finally {
     button.disabled = false;
     button.textContent = "หาว่าในรูปมีของอะไรที่เราขาย";

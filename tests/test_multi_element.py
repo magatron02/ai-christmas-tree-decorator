@@ -122,7 +122,7 @@ def test_codes_are_all_or_nothing(client, fake_gen, fake_rembg):
     )
 
     assert response.status_code == 422
-    assert "every one" in response.json()["error"]
+    assert "ใส่รหัสให้ครบทุกชิ้น" in response.json()["error"]
     assert fake_gen.count == 0
 
 

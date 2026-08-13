@@ -48,15 +48,20 @@ app.mount("/files", StaticFiles(directory=config.STORAGE_DIR), name="files")
 app.mount("/static", StaticFiles(directory=config.FRONTEND_DIR), name="static")
 
 
+PAGE_PATHS = {"/", "/history", "/settings"}
+
+
 @app.middleware("http")
 async def no_cache_static(request: Request, call_next):
-    """The CSS/JS under /static change during a work session (this is a single-machine tool,
-    not a CDN-fronted deploy) — without this, a browser's heuristic caching (no Cache-Control
-    header is set by StaticFiles) can keep serving a stylesheet from before the last edit,
-    which reads as "the fix didn't work" when it actually did. ETag still makes a revalidated
-    load cheap; this only forces the revalidation to happen every time."""
+    """The CSS/JS under /static, and the pages that reference them with a ?v= cache-buster,
+    change during a work session (this is a single-machine tool, not a CDN-fronted deploy) —
+    without this, a browser's heuristic caching (no Cache-Control header is set by StaticFiles
+    or FileResponse) can keep serving a page from before the last edit, complete with its old
+    ?v= links, so even bumping the version does nothing until a hard refresh. Which reads as
+    "the fix didn't work" when it actually did. ETag still makes a revalidated load cheap;
+    this only forces the revalidation to happen every time."""
     response = await call_next(request)
-    if request.url.path.startswith("/static/"):
+    if request.url.path.startswith("/static/") or request.url.path in PAGE_PATHS:
         response.headers["Cache-Control"] = "no-cache"
     return response
 
@@ -111,10 +116,10 @@ def _store(data, kind, ext):
 def _stored_path(name):
     """Resolve a stored filename, rejecting anything that is not one we wrote."""
     if not name or not STORED_NAME.match(name):
-        raise ValidationError(f"Unknown file '{name}'.")
+        raise ValidationError(f"ไม่รู้จักไฟล์ '{name}'")
     path = config.STORAGE_DIR / name
     if not path.is_file():
-        raise ValidationError(f"File '{name}' is no longer on disk. Upload it again.")
+        raise ValidationError(f"ไฟล์ '{name}' ไม่อยู่ในเครื่องแล้ว — อัปโหลดใหม่")
     return path
 
 
@@ -312,12 +317,12 @@ def api_element_from_catalog(code: str = Form(...), image: str = Form("")):
     code = code.strip()
     if image:
         if image not in catalog.variants_of(code):
-            raise HTTPException(404, f"'{image}' is not a photo of {code}.")
+            raise HTTPException(404, f"'{image}' ไม่ใช่รูปของ {code}")
         path = config.CATALOG_PATH.parent / "images" / image
     else:
         path = catalog.image_path(code)
     if not path or not path.is_file():
-        raise HTTPException(404, f"No catalogue photo for '{code}'.")
+        raise HTTPException(404, f"ไม่มีรูป catalogue ของ '{code}'")
 
     cut = background_removal.remove_background(path.read_bytes())
     name = _store(cut, "element", "png")
@@ -378,7 +383,7 @@ def api_catalog_sync(request: Request):
             capture_output=True, text=True, cwd=config.ROOT,
         )
         if result.returncode != 0:
-            raise HTTPException(502, f"{script} failed:\n{result.stderr[-2000:]}")
+            raise HTTPException(502, f"{script} ล้มเหลว:\n{result.stderr[-2000:]}")
 
     catalog.refresh()
     matching.refresh()
@@ -442,7 +447,7 @@ def api_analyse_reference(name: str, tree_code: str = ""):
     try:
         described, usage = vision.describe_reference(path.read_bytes())
     except Exception as exc:
-        raise HTTPException(502, f"Could not read the reference photo. {type(exc).__name__}: {exc}")
+        raise HTTPException(502, f"อ่านรูปอ้างอิงไม่ได้ ({type(exc).__name__}: {exc})")
 
     found = []
     for decoration in described.decorations:
@@ -512,8 +517,8 @@ def api_prepare(
     codes += [""] * (len(paths) - len(codes))
     if any(codes) and not all(codes):
         raise ValidationError(
-            "Some decorations have a product code and some do not. Give a code for every "
-            "one, or for none — a partial set cannot produce real sizes."
+            "ของตกแต่งบางชิ้นใส่รหัส บางชิ้นไม่ใส่ — ใส่รหัสให้ครบทุกชิ้น หรือไม่ใส่เลยก็ได้ "
+            "ใส่บางส่วนคำนวณขนาดจริงไม่ได้"
         )
 
     scale = catalog.scale_sentence(tree_code, codes)
@@ -551,14 +556,14 @@ def api_generate(request_id: str):
     try:
         row = request_log.get(conn, request_id)
         if row is None:
-            raise HTTPException(404, "Unknown request.")
+            raise HTTPException(404, "ไม่รู้จัก request นี้")
 
         # pending -> calling_api. Losing this race means the request is already running or
         # finished, which is what a double-click looks like from here.
         if not request_log.claim(conn, request_id):
             raise HTTPException(
                 409,
-                f"This request is already {row['status']}. It will not be generated twice.",
+                f"request นี้อยู่ในสถานะ {row['status']} แล้ว จะไม่สร้างซ้ำให้",
             )
 
         width, height = validation.resolve_size(row["size"])
@@ -584,7 +589,7 @@ def api_generate(request_id: str):
         except Exception as exc:
             request_log.mark_failed(conn, request_id, exc)
             detail = exc if isinstance(exc, ImageGenError) else f"{type(exc).__name__}: {exc}"
-            raise HTTPException(502, f"Generation failed. {detail}") from exc
+            raise HTTPException(502, f"สร้างภาพไม่สำเร็จ: {detail}") from exc
 
         request_log.mark_success(conn, request_id, name, usage)
 
@@ -602,7 +607,7 @@ def api_delivered(request_id: str):
     conn = _db()
     try:
         if request_log.get(conn, request_id) is None:
-            raise HTTPException(404, "Unknown request.")
+            raise HTTPException(404, "ไม่รู้จัก request นี้")
         request_log.mark_delivered(conn, request_id)
         return _row_json(request_log.get(conn, request_id))
     finally:

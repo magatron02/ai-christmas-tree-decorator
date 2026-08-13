@@ -164,4 +164,4 @@ def test_prepare_rejects_a_forged_element_path(client, fake_rembg):
     )
 
     assert response.status_code == 422
-    assert "Unknown file" in response.json()["error"]
+    assert "ไม่รู้จักไฟล์" in response.json()["error"]

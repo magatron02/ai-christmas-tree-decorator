@@ -30,15 +30,15 @@ def add_product(code, size_raw, section, book, image_bytes):
     """Append one product. Raises ValidationError on a duplicate code or bad input."""
     code = (code or "").strip()
     if not code:
-        raise ValidationError("Give a product code.")
+        raise ValidationError("ใส่รหัสสินค้าด้วย")
     if not image_bytes:
-        raise ValidationError("Give a photo of the product.")
+        raise ValidationError("ใส่รูปสินค้าด้วย")
 
     products = _load(PRODUCTS_PATH, [])
     if any(row["code"] == code for row in products):
         raise ValidationError(
-            f"'{code}' is already in the catalogue. Pick a different code, or edit the "
-            "catalogue files directly if this is really meant to replace it."
+            f"'{code}' มีใน catalogue อยู่แล้ว — ใช้รหัสอื่น "
+            "หรือถ้าตั้งใจจะแทนที่ตัวเดิมจริง ๆ ให้แก้ไฟล์ catalogue ตรง ๆ"
         )
 
     products.append({

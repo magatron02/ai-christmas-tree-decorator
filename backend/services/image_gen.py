@@ -71,12 +71,12 @@ def load_prompt(scale, element_count=1, has_reference=False):
     """
     text = config.PROMPT_PATH.read_text(encoding="utf-8").strip()
     if not text:
-        raise ImageGenError(f"The prompt template at {config.PROMPT_PATH} is empty.")
+        raise ImageGenError(f"ไฟล์ prompt template ที่ {config.PROMPT_PATH} ว่างเปล่า")
     for token in ("{scale}", "{elements}", "{scene}"):
         if token not in text:
             raise ImageGenError(
-                f"The prompt template at {config.PROMPT_PATH} no longer contains {token}, "
-                "so part of the instruction would be silently dropped."
+                f"ไฟล์ prompt template ที่ {config.PROMPT_PATH} ไม่มี {token} แล้ว "
+                "คำสั่งบางส่วนจะหายไปเงียบ ๆ"
             )
     return (
         text.replace("{scene}", describe_scene(has_reference))
@@ -125,16 +125,16 @@ def generate(tree_image, element_pngs, width, height, scale, reference=None):
         # there is no local balance to check first, so make that answer readable
         if "billing_hard_limit" in str(exc):
             raise ImageGenError(
-                "OpenAI stopped the request: the account has hit its billing limit. "
-                "Top up or raise the limit at platform.openai.com. Nothing was generated."
+                "OpenAI ปฏิเสธคำขอ: บัญชีชนขีดจำกัดวงเงินแล้ว "
+                "ไปเติมเงินหรือปรับวงเงินที่ platform.openai.com — ยังไม่มีการสร้างภาพเกิดขึ้น"
             ) from exc
         raise ImageGenError(f"{type(exc).__name__}: {exc}") from exc
 
     if not response.data:
-        raise ImageGenError("The API returned no image.")
+        raise ImageGenError("API ไม่ส่งภาพกลับมา")
     payload = getattr(response.data[0], "b64_json", None)
     if not payload:
-        raise ImageGenError("The API response carried no image data.")
+        raise ImageGenError("คำตอบจาก API ไม่มีข้อมูลภาพอยู่ในนั้น")
 
     usage = getattr(response, "usage", None)
     return base64.b64decode(payload), (usage.model_dump() if usage else None)

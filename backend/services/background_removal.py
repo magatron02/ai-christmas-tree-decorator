@@ -38,23 +38,23 @@ def remove_background(data):
     try:
         cut = remove(data, session=_session_once(), force_return_bytes=True)
     except Exception as exc:  # rembg raises whatever onnxruntime/PIL raise underneath
-        raise BackgroundRemovalError(f"Background removal failed: {exc}") from exc
+        raise BackgroundRemovalError(f"ตัดพื้นหลังไม่สำเร็จ: {exc}") from exc
 
     try:
         image = Image.open(io.BytesIO(cut))
         image.load()
     except Exception as exc:
-        raise BackgroundRemovalError(f"Background removal produced an unreadable image: {exc}") from exc
+        raise BackgroundRemovalError(f"ตัดพื้นหลังแล้วได้ไฟล์ภาพที่เสีย อ่านไม่ได้: {exc}") from exc
 
     if image.mode != "RGBA":
         raise BackgroundRemovalError(
-            "Background removal produced an image with no alpha channel. Upload a clearer "
-            "photo of the element, or cut it out by hand and upload the transparent PNG."
+            "ตัดพื้นหลังแล้วไม่มี alpha channel — ใช้รูปที่ชัดกว่านี้ "
+            "หรือตัดพื้นหลังเองแล้วอัปโหลด PNG แบบโปร่งใส"
         )
     if image.getchannel("A").getextrema()[0] == 255:
         raise BackgroundRemovalError(
-            "Background removal did not cut anything out — the whole image is still opaque. "
-            "This usually means the element and the background are too similar."
+            "ตัดพื้นหลังแล้วไม่มีอะไรถูกตัดออกเลย ทั้งภาพยังทึบอยู่ — "
+            "ส่วนใหญ่เกิดจากของตกแต่งกับพื้นหลังสีใกล้กันเกินไป"
         )
 
     out = io.BytesIO()

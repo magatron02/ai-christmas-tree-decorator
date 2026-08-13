@@ -28,8 +28,8 @@ __all__ = [
 def _rows():
     if not config.CATALOG_PATH.is_file():
         raise ValidationError(
-            f"The product catalogue is missing ({config.CATALOG_PATH.name}). "
-            "Run scripts/extract_catalog.py against the catalogue PDF."
+            f"ไม่พบไฟล์ catalogue ({config.CATALOG_PATH.name}) — "
+            "รัน scripts/extract_catalog.py กับ PDF catalogue ก่อน"
         )
     return json.loads(config.CATALOG_PATH.read_text(encoding="utf-8"))
 
@@ -334,7 +334,7 @@ def find(code):
     code = (code or "").strip().upper()
     row = _by_code().get(code)
     if row is None:
-        raise ValidationError(f"Product code '{code}' is not in the catalogue.")
+        raise ValidationError(f"รหัส '{code}' ไม่มีใน catalogue")
     return row
 
 
@@ -383,8 +383,8 @@ def require_size(row):
     millimetres = longest_side_mm(row)
     if millimetres is None:
         raise ValidationError(
-            f"The catalogue prints no size for {describe(row)}, so the real scale cannot be "
-            "worked out. Pick a product that has a size, or generate without codes."
+            f"catalogue ไม่มีขนาดของ {describe(row)} เลยคำนวณสัดส่วนจริงไม่ได้ — "
+            "เลือกสินค้าที่มีขนาดระบุ หรือสร้างภาพโดยไม่ใส่รหัส"
         )
     return millimetres
 
@@ -407,8 +407,8 @@ def scale_sentence(tree_code, element_codes):
         )
     if not tree_code or not element_codes:
         raise ValidationError(
-            "Give a product code for the tree and for every decoration, or for none of "
-            "them — a partial set is not enough to work out the real scale."
+            "ใส่รหัสสินค้าให้ทั้งต้นไม้และของตกแต่งทุกชิ้น หรือไม่ใส่เลยก็ได้ — "
+            "ใส่บางส่วนคำนวณสัดส่วนจริงไม่ได้"
         )
 
     tree = find(tree_code)

@@ -57,11 +57,11 @@ def set_key(value):
     """
     value = (value or "").strip()
     if not value:
-        raise ValidationError("Paste an API key first.")
+        raise ValidationError("วาง API key ก่อน")
     if not KEY_SHAPE.match(value):
         raise ValidationError(
-            "That does not look like an OpenAI API key. It should start with 'sk-'. "
-            "Create one at platform.openai.com/api-keys."
+            "อันนี้ไม่ใช่รูปแบบ OpenAI API key — ต้องขึ้นต้นด้วย 'sk-' "
+            "สร้างได้ที่ platform.openai.com/api-keys"
         )
 
     lines = ENV_PATH.read_text(encoding="utf-8").splitlines() if ENV_PATH.is_file() else []

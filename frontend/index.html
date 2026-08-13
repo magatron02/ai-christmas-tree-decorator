@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tree Decorator</title>
 <link rel="icon" href="/static/icon.ico">
-<link rel="stylesheet" href="/static/styles/tokens.css?v=8.19">
-<link rel="stylesheet" href="/static/styles/components.css?v=8.19">
-<script src="/static/theme.js?v=8.19"></script>
+<link rel="stylesheet" href="/static/styles/tokens.css?v=8.21">
+<link rel="stylesheet" href="/static/styles/components.css?v=8.21">
+<script src="/static/theme.js?v=8.21"></script>
 </head>
 <body>
 
@@ -122,13 +122,17 @@
       <summary><span class="caption">หาสินค้าจากรูป</span>
         <span class="hint">อัปโหลดรูปที่มีของตกแต่งอยู่แล้ว เพื่อค้นแคตตาล็อกว่ามีอะไรใกล้เคียง (ไม่ใส่ก็ได้ ไม่ใช้ตอนสร้างภาพ)</span>
       </summary>
-      <div class="stack">
-        <input class="input" type="file" id="identify-reference-file" accept="image/jpeg,image/png">
-        <div class="btn-row" id="identify-reference-actions" hidden>
-          <button class="btn" id="identify-btn">หาว่าในรูปมีของอะไรที่เราขาย</button>
-          <button class="btn danger" id="identify-reference-clear">เอารูปออก</button>
+      <div class="identify-columns">
+        <div class="stack">
+          <input class="input" type="file" id="identify-reference-file" accept="image/jpeg,image/png">
+          <div class="btn-row" id="identify-reference-actions" hidden>
+            <button class="btn" id="identify-btn">หาว่าในรูปมีของอะไรที่เราขาย</button>
+            <button class="btn danger" id="identify-reference-clear">เอารูปออก</button>
+          </div>
         </div>
-        <img class="thumb-sm" id="identify-reference-preview" alt="รูปอ้างอิงหาสินค้า" hidden>
+        <div class="stack">
+          <img class="thumb-sm" id="identify-reference-preview" alt="รูปอ้างอิงหาสินค้า" hidden>
+        </div>
       </div>
     </details>
 
@@ -170,6 +174,6 @@
   </div>
 </dialog>
 
-<script src="/static/app.js?v=8.19"></script>
+<script src="/static/app.js?v=8.21"></script>
 </body>
 </html>

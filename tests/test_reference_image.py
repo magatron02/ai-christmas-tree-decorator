@@ -107,7 +107,7 @@ def test_a_forged_reference_name_is_rejected(client, fake_gen, fake_rembg):
     response = prepare(client, reference="../../../etc/passwd")
 
     assert response.status_code == 422
-    assert "Unknown file" in response.json()["error"]
+    assert "ไม่รู้จักไฟล์" in response.json()["error"]
 
 
 def test_pruning_keeps_the_reference_of_a_live_request(client, conn, fake_gen, fake_rembg):
