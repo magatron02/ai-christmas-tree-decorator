@@ -65,6 +65,12 @@ if not exist "catalog\embeddings.npy" (
     )
 )
 
+set SHORTCUT=%USERPROFILE%\Desktop\Tree Decorator.lnk
+if not exist "%SHORTCUT%" (
+    echo Adding a desktop shortcut...
+    powershell -NoProfile -Command "$s = (New-Object -COM WScript.Shell).CreateShortcut('%SHORTCUT%'); $s.TargetPath = '%~f0'; $s.WorkingDirectory = '%~dp0'; $s.IconLocation = 'imageres.dll,175'; $s.Save()"
+)
+
 echo.
 echo Starting server at http://localhost:8000 ...
 start "" http://localhost:8000
