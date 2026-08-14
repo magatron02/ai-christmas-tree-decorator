@@ -478,11 +478,11 @@ def api_analyse_reference(name: str, tree_code: str = ""):
         "decorations": found,
         "usage": usage,
         "note": (
-            "These are the closest products in the catalogue, not an identification. The "
-            "search finds the right category reliably and can still be wrong inside it — a "
-            "nutcracker matched a Santa at 0.82 in testing. Every candidate carries the "
-            "catalogue photo it came from, and that photo-to-code pairing is itself derived "
-            "from page layout and unverified. Look at the photo before quoting the code."
+            "นี่คือสินค้าที่ใกล้เคียงที่สุดในแคตตาล็อก ไม่ใช่การยืนยันว่าใช่ตัวนั้นแน่นอน "
+            "ระบบหาหมวดหมู่ถูกต้องได้ค่อนข้างแม่น แต่ภายในหมวดเดียวกันอาจผิดได้ — ทดสอบแล้วเจอกรณี "
+            "นัทแคร็กเกอร์จับคู่กับซานต้าได้คะแนน 0.82 แต่ละตัวเลือกมีรูป catalogue กำกับไว้ "
+            "และการจับคู่รูปกับรหัสนั้นมาจากตำแหน่งบนหน้า PDF เอง ยังไม่มีคนตรวจยืนยัน "
+            "ดูรูปให้แน่ใจก่อนบอกรหัสลูกค้า"
         ),
     }
 
@@ -522,6 +522,11 @@ def api_prepare(
         )
 
     scale = catalog.scale_sentence(tree_code, codes)
+    quantities = None
+    if tree_code and all(codes):
+        from backend.services import matching
+
+        quantities = [matching.suggest_quantity(tree_code, code) for code in codes]
     reference = reference.strip()
     reference_name = _stored_path(reference).name if reference else None
     tree_name = _store(data, "tree", EXT_FOR_FORMAT[fmt])
@@ -546,6 +551,7 @@ def api_prepare(
         "reference_url": _url(reference_name),
         "scale": scale,
         "exact_scale": bool(tree_code and all(codes)),
+        "quantities": quantities,
     }
 
 

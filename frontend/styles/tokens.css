@@ -113,6 +113,12 @@
   --modal-item-selected-bg: #F7ECE9;
   --modal-item-selected-text: #7A2E2E;
 
+  /* a caption burned onto an arbitrary product photo, not app chrome — same dark-scrim/white
+     pairing regardless of theme, kept as its own token rather than reusing --modal-backdrop
+     so the two can't drift into each other by accident */
+  --thumb-code-bg: rgba(0, 0, 0, 0.65);
+  --thumb-code-text: #FFFFFF;
+
   /* focus ring — a double ring, because no single colour clears 3:1 against every surface */
   --focus-ring-gap: #FFFFFF;
   --focus-ring-color: #2E2A22;
@@ -210,6 +216,9 @@
   --modal-backdrop: rgba(0, 0, 0, 0.5);
   --modal-item-selected-bg: #33201F;
   --modal-item-selected-text: #E8A6A0;
+
+  --thumb-code-bg: rgba(0, 0, 0, 0.65);
+  --thumb-code-text: #FFFFFF;
 
   /* DESIGN.md does not specify a dark-theme focus ring — section 15 covers colour and text
      tokens only. Reusing the dark surface tone as the gap (as a first attempt) fails: gap

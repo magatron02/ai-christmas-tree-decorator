@@ -89,13 +89,21 @@ function renderElements() {
   list.innerHTML = "";
   state.elements.forEach((element, index) => {
     const item = document.createElement("li");
+    const thumbWrap = document.createElement("div");
+    thumbWrap.className = "thumb-wrap";
     const thumb = document.createElement("img");
     thumb.src = element.url;
     thumb.className = "checker";
     thumb.alt = `Decoration ${index + 1}`;
-    const label = document.createElement("span");
-    label.className = "mono";
-    label.textContent = element.code || `#${index + 1}`;
+    thumbWrap.append(thumb);
+    // the code travels with the picture rather than sitting beside it as its own field —
+    // picking from the catalogue already supplies it, there is nothing left to fill in
+    if (element.code) {
+      const badge = document.createElement("span");
+      badge.className = "thumb-code";
+      badge.textContent = element.code;
+      thumbWrap.append(badge);
+    }
     const drop = document.createElement("button");
     drop.className = "btn danger";
     drop.textContent = "เอาออก";
@@ -104,7 +112,7 @@ function renderElements() {
       renderElements();
       resetRun();
     });
-    item.append(thumb, label, drop);
+    item.append(thumbWrap, drop);
     list.append(item);
   });
 
@@ -584,6 +592,18 @@ $("generate-btn").addEventListener("click", async () => {
       (prepared.exact_scale
         ? `ขนาดมาจากแคตตาล็อก`
         : `ไม่ได้ใส่รหัสสินค้า ขนาดจึงขึ้นกับที่ model ตัดสินเอง`);
+
+    const qlist = $("confirm-quantities");
+    qlist.innerHTML = "";
+    if (prepared.quantities) {
+      prepared.quantities.forEach((q, i) => {
+        const li = document.createElement("li");
+        li.textContent = `${state.elements[i].code}: ควรใช้ประมาณ ${q.low}–${q.high} ชิ้นบนต้นนี้`;
+        qlist.append(li);
+      });
+    }
+    qlist.hidden = !prepared.quantities;
+
     $("confirm-btn").disabled = false;
     $("confirm-dialog").showModal();
   } catch (err) {

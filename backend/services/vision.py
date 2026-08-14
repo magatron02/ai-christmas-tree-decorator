@@ -25,10 +25,16 @@ from backend import config
 # "tree" and "banner" were missing from the first version, so a whole Christmas tree came
 # back classified as a tree topper. An enum without the right box does not produce a blank;
 # it produces a confident wrong answer.
+#
+# santa/snowman/nutcracker/angel/elf/reindeer/teddy_bear used to all collapse into one
+# "figure" bucket — measured, that is exactly how a nutcracker matched a Santa at 0.82:
+# same kind, and "shape" alone wasn't specific enough to tell them apart. "figure" stays as
+# the catch-all for a figure that is none of these, not as the default every figure lands in.
 KINDS = Literal[
     "tree", "bauble", "ornament", "ribbon", "bow", "garland", "wreath", "swag", "tinsel",
-    "honeycomb", "banner", "star", "tree_topper", "figure", "lights", "gift_box", "lantern",
-    "flower", "pick", "bell", "other",
+    "honeycomb", "banner", "star", "tree_topper",
+    "santa", "snowman", "nutcracker", "angel", "elf", "reindeer", "teddy_bear", "figure",
+    "lights", "gift_box", "lantern", "flower", "pick", "bell", "other",
 ]
 FINISHES = Literal[
     "glossy", "matte", "mirror", "glitter", "frosted", "transparent", "metallic",
