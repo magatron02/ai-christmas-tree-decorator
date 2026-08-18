@@ -325,7 +325,8 @@ def refresh():
     _crop_users.cache_clear()
     _crop_verdicts.cache_clear()
     _kinds.cache_clear()
-_contested_codes.cache_clear()
+    _contested_codes.cache_clear()
+    _variants.cache_clear()
 
 
 def find(code):

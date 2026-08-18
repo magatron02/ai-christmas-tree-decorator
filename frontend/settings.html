@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tree Decorator — ตั้งค่า</title>
 <link rel="icon" href="/static/icon.ico">
-<link rel="stylesheet" href="/static/styles/tokens.css?v=8.22">
-<link rel="stylesheet" href="/static/styles/components.css?v=8.22">
-<script src="/static/theme.js?v=8.22"></script>
+<link rel="stylesheet" href="/static/styles/tokens.css?v=8.25">
+<link rel="stylesheet" href="/static/styles/components.css?v=8.25">
+<script src="/static/theme.js?v=8.25"></script>
 </head>
 <body>
 
@@ -26,7 +26,7 @@
   <main class="page stack">
 
     <section class="card stack">
-      <span class="caption">หน้าตา</span>
+      <span class="section-title">หน้าตา</span>
       <span class="hint">เก็บไว้ใน browser นี้เท่านั้น ไม่ส่งอะไรขึ้น server</span>
       <div class="btn-row">
         <button class="btn" id="theme-light">สว่าง</button>
@@ -36,7 +36,7 @@
     </section>
 
     <section class="card stack">
-      <span class="caption">OpenAI API key</span>
+      <span class="section-title">OpenAI API key</span>
       <div class="chip" id="key-state">กำลังตรวจ…</div>
       <span class="hint" id="key-where"></span>
       <input class="input" type="password" id="key-input" autocomplete="off"
@@ -56,7 +56,7 @@
     </section>
 
     <section class="card stack">
-      <span class="caption">เครื่องนี้มีอะไรพร้อมบ้าง</span>
+      <span class="section-title">เครื่องนี้มีอะไรพร้อมบ้าง</span>
       <div class="scroll-x">
         <table>
           <tbody id="status-rows"></tbody>
@@ -65,15 +65,18 @@
     </section>
 
     <section class="card stack">
-      <span class="caption">จัดการ catalogue</span>
-      <span class="hint">เพิ่มสินค้าทีละชิ้น ไม่มีแก้/ลบในหน้านี้ — แก้ไฟล์ catalog/ ตรง ๆ ถ้าต้องแก้จริง ๆ</span>
+      <span class="section-title">จัดการ catalogue</span>
+      <span class="hint">เพิ่มสินค้าทีละชิ้น หรือคลิกแถวด้านล่างเพื่อแก้ไข — ลบยังทำในหน้านี้ไม่ได้ แก้ไฟล์ catalog/ ตรง ๆ ถ้าต้องลบจริง ๆ</span>
       <input class="input" id="cat-code" placeholder="รหัสสินค้า เช่น 017-06">
       <input class="input" id="cat-size" placeholder="ขนาด — ไม่ใส่ก็ได้ เช่น 80 mm.">
       <input class="input" id="cat-section" placeholder="หมวด — ไม่ใส่ก็ได้">
       <input class="input" id="cat-book" placeholder="เล่ม — ไม่ใส่ก็ได้ เช่น 2026">
       <input class="input" type="file" id="cat-image" accept="image/jpeg,image/png">
+      <span class="hint" id="cat-image-hint" hidden>ไม่เลือกรูปใหม่ = รูปเดิมไม่เปลี่ยน</span>
+      <div class="chip" id="cat-edit-status" hidden></div>
       <div class="btn-row">
         <button class="btn" id="cat-add">เพิ่มสินค้า</button>
+        <button class="btn danger" id="cat-edit-cancel" hidden>ยกเลิกแก้ไข</button>
         <button class="btn" id="cat-sync">sync ดัชนีค้นหา</button>
       </div>
       <div class="notice" id="cat-error" hidden></div>
@@ -86,7 +89,7 @@
     </section>
 
     <section class="card stack" id="conflicts-panel" hidden>
-      <span class="caption">รหัสชนกัน — ต้องดูด้วยตา</span>
+      <span class="section-title">รหัสชนกัน — ต้องดูด้วยตา</span>
       <span class="hint">
         รหัสพวกนี้เจอสองความหมายคนละหน้า ระบบไม่กล้าเดาว่าอันไหนจริง เลยไม่โชว์ทั้งใน catalogue
         picker และค้นจากรูป จนกว่าจะมีคนตัดสินใจ (แก้ catalog/products.json ตรง ๆ)
@@ -102,6 +105,7 @@
   </main>
 </div>
 
-<script src="/static/settings.js?v=8.22"></script>
+<script src="/static/api.js?v=8.25"></script>
+<script src="/static/settings.js?v=8.25"></script>
 </body>
 </html>

@@ -29,6 +29,15 @@
   font-weight: 600;
   color: var(--text-primary);
 }
+/* one step below .panel-title: labels a sub-block within a panel/section, not the panel
+   itself. Same weight/colour as .caption (only the size was ever the bug) but a full step
+   up from body text, matching the title/description pairing DESIGN.md §13 already uses. */
+.section-title {
+  font-family: var(--font-th);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--text-muted);
+}
 .hint { font-size: var(--text-sm); color: var(--text-muted) }
 .mono { font-family: var(--font-body-en), var(--font-th); font-size: var(--text-sm) }
 .muted { color: var(--text-muted) }
@@ -280,12 +289,6 @@ input[type="file"].input::file-selector-button {
    Neither is acceptable. The column scrolls as a whole instead: predictable at every content
    length, and everything stays reachable inside the card, never past it. */
 .decoration-controls-col { gap: var(--space-4); min-height: 0; overflow-y: auto }
-#catalog-results {
-  max-height: 240px;
-  overflow-y: auto;
-  align-content: flex-start;
-  margin-top: 0;
-}
 @media (max-width: 720px) {
   .decoration-columns { grid-template-columns: minmax(0, 1fr) }
 }
@@ -403,6 +406,7 @@ input[type="file"].input::file-selector-button {
 .found .seen { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap }
 .candidates { display: flex; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-3) }
 .candidate {
+  position: relative;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: var(--space-2);
@@ -416,6 +420,37 @@ input[type="file"].input::file-selector-button {
 .candidate .code { font-family: var(--font-body-en); font-size: var(--text-sm); margin-top: var(--space-2) }
 .candidate .why { font-size: var(--text-xs); color: var(--text-muted); margin-top: var(--space-1) }
 .candidate .chip { padding: var(--space-1) var(--space-2); font-size: var(--text-xs); margin-top: var(--space-2) }
+/* a full-size look at one photo before deciding — a corner button rather than the whole card,
+   since the card's own click already means "use this one" (or is inert on a match result) */
+.candidate-expand {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  background: var(--thumb-code-bg);
+  color: var(--thumb-code-text);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: var(--space-1);
+  line-height: 1;
+  opacity: 0;
+  transition: opacity var(--transition-gentle);
+  cursor: pointer;
+}
+.candidate:hover .candidate-expand,
+.candidate-expand:focus-visible {
+  opacity: 1;
+}
+/* loading placeholder for the picker grid — same footprint as a real card, so the grid
+   doesn't reflow once results replace them */
+.candidate-skeleton {
+  aspect-ratio: 130 / 210;
+  background: var(--border);
+  animation: skeleton-pulse 1.2s ease-in-out infinite;
+}
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.5 }
+  50% { opacity: 1 }
+}
 
 /* ---- confirm dialog (section 6) ---- */
 dialog {
@@ -472,6 +507,18 @@ dialog h2 {
 /* .candidate carries a fixed width for the match strip, where the cards sit in a row; in the
    grid the track decides instead */
 .picker-grid .candidate { width: auto }
+
+/* ---- lightbox: one photo, full size ---- */
+.lightbox-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: min(900px, 94vw);
+  max-height: 90vh;
+  align-items: center;
+}
+.lightbox-dialog img { max-width: 100%; max-height: 80vh; object-fit: contain }
+
 dialog p { margin: 0 0 var(--space-3); font-size: var(--text-base); color: var(--text-muted) }
 #confirm-quantities { list-style: none; margin: 0 0 var(--space-3); padding: 0; display: flex; flex-direction: column; gap: var(--space-1) }
 
@@ -482,3 +529,5 @@ table { width: 100%; border-collapse: collapse; font-size: var(--text-sm) }
 th, td { text-align: left; padding: var(--space-2); border-bottom: 1px solid var(--border) }
 th { color: var(--text-muted) }
 td.shrink { width: 96px }
+.cat-recent-row { cursor: pointer }
+.cat-recent-row:hover { background: var(--surface-1) }

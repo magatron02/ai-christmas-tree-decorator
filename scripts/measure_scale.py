@@ -19,8 +19,7 @@ import numpy as np
 from PIL import Image
 from scipy import ndimage
 
-ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
+from _bootstrap import ROOT
 
 MIN_BLOB_PX = 12
 ROUNDNESS = (0.65, 1.55)

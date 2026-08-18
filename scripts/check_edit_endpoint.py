@@ -17,14 +17,10 @@ engines is a Product.md decision, not a Builder one (NonGoals.md #2).
 """
 
 import io
-import sys
-from pathlib import Path
 
-from dotenv import load_dotenv
 from PIL import Image
 
-ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
+from _bootstrap import ROOT
 
 MODEL = "gpt-image-2"
 SIZE = "1536x1920"
@@ -54,8 +50,6 @@ def describe(exc):
 
 
 def main():
-    load_dotenv(ROOT / ".env")
-
     import openai
     from openai import OpenAI
 

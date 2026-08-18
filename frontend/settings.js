@@ -30,8 +30,7 @@ function showKeyState(isSet) {
 }
 
 async function loadStatus() {
-  const response = await fetch("/api/settings");
-  const status = await response.json();
+  const status = await call("/api/settings");
   showKeyState(status.api_key_set);
   $("key-where").textContent = `เก็บไว้ที่ ${status.env_path}`;
 
@@ -60,7 +59,7 @@ async function loadStatus() {
 }
 
 async function loadConflicts() {
-  const { conflicts } = await (await fetch("/api/catalog/conflicts")).json();
+  const { conflicts } = await call("/api/catalog/conflicts");
   if (!conflicts.length) return;
   $("conflicts-panel").hidden = false;
   const host = $("conflicts-rows");
@@ -95,9 +94,7 @@ $("key-save").addEventListener("click", async () => {
   try {
     const body = new FormData();
     body.append("api_key", value);
-    const response = await fetch("/api/settings/api-key", { method: "POST", body });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(payload.error || response.statusText);
+    await call("/api/settings/api-key", { method: "POST", body });
     showKeyState(true);
   } catch (err) {
     $("key-error").textContent = err.message;
@@ -111,14 +108,46 @@ $("key-save").addEventListener("click", async () => {
 
 loadStatus();
 
-/* ---- catalogue admin: add only, no edit/delete ---- */
+/* ---- catalogue admin: add, or click a row below to edit its fields/photo in place ---- */
+let editingCode = null;
+
+function enterEditMode(item) {
+  editingCode = item.code;
+  $("cat-code").value = item.code;
+  $("cat-code").disabled = true;
+  $("cat-size").value = item.size_raw || "";
+  $("cat-section").value = item.section || "";
+  $("cat-book").value = item.book || "";
+  $("cat-image").value = "";
+  $("cat-image-hint").hidden = false;
+  $("cat-add").textContent = "บันทึกการแก้ไข";
+  $("cat-edit-status").hidden = false;
+  $("cat-edit-status").textContent = `กำลังแก้ไข ${item.code}`;
+  $("cat-edit-cancel").hidden = false;
+}
+
+function exitEditMode() {
+  editingCode = null;
+  $("cat-code").disabled = false;
+  ["cat-code", "cat-size", "cat-section", "cat-book", "cat-image"].forEach((id) => ($(id).value = ""));
+  $("cat-image-hint").hidden = true;
+  $("cat-add").textContent = "เพิ่มสินค้า";
+  $("cat-edit-status").hidden = true;
+  $("cat-edit-cancel").hidden = true;
+}
+
+$("cat-edit-cancel").addEventListener("click", () => {
+  $("cat-error").hidden = true;
+  exitEditMode();
+});
+
 async function loadRecentCatalog() {
-  const response = await fetch("/api/catalog/recent");
-  const { results } = await response.json();
+  const { results } = await call("/api/catalog/recent");
   const host = $("cat-recent");
   host.innerHTML = "";
   for (const item of results) {
     const row = document.createElement("tr");
+    row.className = "cat-recent-row";
     const photo = document.createElement("td");
     if (item.image) {
       const img = document.createElement("img");
@@ -134,6 +163,7 @@ async function loadRecentCatalog() {
     meta.className = "hint";
     meta.textContent = [item.size_raw, item.book].filter(Boolean).join(" · ");
     row.append(photo, code, meta);
+    row.addEventListener("click", () => enterEditMode(item));
     host.append(row);
   }
 }
@@ -141,23 +171,28 @@ async function loadRecentCatalog() {
 $("cat-add").addEventListener("click", async () => {
   $("cat-error").hidden = true;
   const image = $("cat-image").files[0];
-  if (!$("cat-code").value.trim() || !image) {
+  if (!editingCode && (!$("cat-code").value.trim() || !image)) {
     $("cat-error").textContent = "ต้องมีรหัสสินค้ากับรูปอย่างน้อย";
     $("cat-error").hidden = false;
     return;
   }
+
   $("cat-add").disabled = true;
   try {
     const body = new FormData();
-    body.append("code", $("cat-code").value.trim());
+    if (!editingCode) body.append("code", $("cat-code").value.trim());
     body.append("size_raw", $("cat-size").value.trim());
     body.append("section", $("cat-section").value.trim());
     body.append("book", $("cat-book").value.trim());
-    body.append("image", image);
-    const response = await fetch("/api/catalog/products", { method: "POST", body });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(payload.error || response.statusText);
-    ["cat-code", "cat-size", "cat-section", "cat-book", "cat-image"].forEach((id) => ($(id).value = ""));
+    if (image) body.append("image", image);
+
+    const url = editingCode
+      ? `/api/catalog/products/${encodeURIComponent(editingCode)}`
+      : "/api/catalog/products";
+    await call(url, { method: "POST", body });
+
+    if (editingCode) exitEditMode();
+    else ["cat-code", "cat-size", "cat-section", "cat-book", "cat-image"].forEach((id) => ($(id).value = ""));
     await loadRecentCatalog();
   } catch (err) {
     $("cat-error").textContent = err.message;
@@ -174,9 +209,7 @@ $("cat-sync").addEventListener("click", async () => {
   $("cat-status").className = "chip running";
   $("cat-status").textContent = "กำลัง sync…";
   try {
-    const response = await fetch("/api/catalog/sync", { method: "POST" });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(payload.error || response.statusText);
+    await call("/api/catalog/sync", { method: "POST" });
     $("cat-status").className = "chip done";
     $("cat-status").textContent = "sync แล้ว";
   } catch (err) {

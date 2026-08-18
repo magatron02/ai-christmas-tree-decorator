@@ -48,23 +48,6 @@ function showError(message) {
   box.hidden = !message;
 }
 
-async function call(url, options) {
-  let response;
-  try {
-    response = await fetch(url, options);
-  } catch {
-    throw new Error("เชื่อมต่อ server ไม่ได้ — เช็คว่า server ยังรันอยู่ไหม");
-  }
-  let payload = {};
-  try {
-    payload = await response.json();
-  } catch {
-    /* a non-JSON body means the server fell over; the status line still tells us enough */
-  }
-  if (!response.ok) throw new Error(payload.error || `${response.status} ${response.statusText}`);
-  return payload;
-}
-
 /* Mirrors the backend's all-or-nothing rule (catalog.scale_sentence): a code for the tree
  * and every decoration, or none at all — anything in between is refused server-side, so the
  * button catches it before a free /api/prepare round-trip has to say so. Checked live because
@@ -253,6 +236,31 @@ $("cut-btn").addEventListener("click", async () => {
   }
 });
 
+/* ---- lightbox: a full-size look at a candidate's photo before deciding ----
+ * A corner button, not a click on the card itself — .candidate.pickable's whole-card click
+ * already means "use this one" (catalogue picker) or is just inert (identify results), so
+ * the preview needs its own target and has to stop the click from reaching the card under it. */
+function openLightbox(src, alt) {
+  $("lightbox-image").src = src;
+  $("lightbox-image").alt = alt;
+  $("lightbox-dialog").showModal();
+}
+
+$("lightbox-close").addEventListener("click", () => $("lightbox-dialog").close());
+
+function expandButton(src, alt) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "candidate-expand";
+  button.setAttribute("aria-label", "ดูรูปเต็ม");
+  button.textContent = "⤢";
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    openLightbox(src, alt);
+  });
+  return button;
+}
+
 /* ---- catalogue picker: an alternate source for the same "element" slot ----
  * Skips the browser file upload entirely — the photo already lives on the server, so it
  * goes straight through the same rembg pipeline and lands in the same preview/accept flow.
@@ -282,7 +290,14 @@ function catalogCard(item) {
     which.textContent = `สี ${item.colour} จาก ${item.colours}`;
     card.append(which);
   }
+  if (item.image) card.append(expandButton(`/catalog/${item.image}`, item.code));
   card.addEventListener("click", () => useFromCatalog(item.code, item.image));
+  return card;
+}
+
+function skeletonCard() {
+  const card = document.createElement("div");
+  card.className = "candidate candidate-skeleton";
   return card;
 }
 
@@ -307,6 +322,7 @@ async function loadCatalogPage(restart) {
     catalogCodesShown = 0;
     catalogCardsShown = 0;
     host.innerHTML = "";
+    for (let i = 0; i < 10; i++) host.append(skeletonCard());
   }
   try {
     const { results, total, codes } = await call(
@@ -314,6 +330,7 @@ async function loadCatalogPage(restart) {
         `&category=${encodeURIComponent($("catalog-category").value)}` +
         `&limit=${CATALOG_PAGE}&offset=${catalogCodesShown}`
     );
+    if (restart) host.innerHTML = "";
     for (const item of results) host.append(catalogCard(item));
     catalogCodesShown += codes;
     catalogCardsShown += results.length;
@@ -323,6 +340,7 @@ async function loadCatalogPage(restart) {
       : "ไม่เจอสินค้าที่ตรงกับที่ค้น";
     $("catalog-more").hidden = catalogCodesShown >= total;
   } catch (err) {
+    if (restart) host.innerHTML = "";
     $("catalog-count").textContent = err.message;
   }
 }
@@ -536,7 +554,7 @@ function renderIdentified(result) {
         const photo = document.createElement("img");
         photo.src = `/catalog/${candidate.image}`;
         photo.alt = candidate.summary || candidate.code;
-        card.append(photo);
+        card.append(photo, expandButton(photo.src, photo.alt));
       }
       const code = document.createElement("div");
       code.className = "code";

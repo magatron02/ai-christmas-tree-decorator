@@ -27,9 +27,7 @@ function cell(row, text, className) {
 async function load() {
   let data;
   try {
-    const response = await fetch("/api/history");
-    data = await response.json();
-    if (!response.ok) throw new Error(data.error || response.statusText);
+    data = await call("/api/history");
   } catch (err) {
     $("error-box").textContent = err.message;
     $("error-box").hidden = false;

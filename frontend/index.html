@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tree Decorator</title>
 <link rel="icon" href="/static/icon.ico">
-<link rel="stylesheet" href="/static/styles/tokens.css?v=8.22">
-<link rel="stylesheet" href="/static/styles/components.css?v=8.22">
-<script src="/static/theme.js?v=8.22"></script>
+<link rel="stylesheet" href="/static/styles/tokens.css?v=8.25">
+<link rel="stylesheet" href="/static/styles/components.css?v=8.25">
+<script src="/static/theme.js?v=8.25"></script>
 </head>
 <body>
 
@@ -60,7 +60,7 @@
           <div class="stack decoration-controls-col">
 
             <div class="stack">
-              <span class="caption">1. บรรยากาศอ้างอิง (ไม่ใส่ก็ได้)</span>
+              <span class="section-title">1. บรรยากาศอ้างอิง (ไม่ใส่ก็ได้)</span>
               <span class="hint">รูปสถานที่ที่อยากให้ผลลัพธ์อยู่ — เอาแค่โทนแสง ไม่ลอกของในรูป</span>
               <input class="input" type="file" id="scene-reference-file" accept="image/jpeg,image/png">
               <div class="btn-row" id="scene-reference-actions" hidden>
@@ -70,7 +70,7 @@
             </div>
 
             <div class="stack">
-              <span class="caption">2. อัปโหลดของตกแต่ง</span>
+              <span class="section-title">2. อัปโหลดของตกแต่ง</span>
               <span class="hint">รูปของตกแต่งชิ้นเดียว แล้วกดตัดพื้นหลังก่อนใช้</span>
               <input class="input" type="file" id="element-file" accept="image/jpeg,image/png">
               <input class="input" id="element-code" list="element-code-list" autocomplete="off"
@@ -89,7 +89,7 @@
             </div>
 
             <div class="stack">
-              <span class="caption">3. หรือเลือกจาก catalogue</span>
+              <span class="section-title">3. หรือเลือกจาก catalogue</span>
               <span class="hint">ค้นจากสินค้าที่มีอยู่แล้ว ไม่ต้องหาไฟล์เอง</span>
               <button class="btn" id="catalog-toggle">เลือกจาก catalogue</button>
             </div>
@@ -119,7 +119,7 @@
     </div>
 
     <details class="card identify-toggle">
-      <summary><span class="caption">หาสินค้าจากรูป</span>
+      <summary><span class="section-title">หาสินค้าจากรูป</span>
         <span class="hint">อัปโหลดรูปที่มีของตกแต่งอยู่แล้ว เพื่อค้นแคตตาล็อกว่ามีอะไรใกล้เคียง (ไม่ใส่ก็ได้ ไม่ใช้ตอนสร้างภาพ)</span>
       </summary>
       <div class="identify-columns">
@@ -137,7 +137,7 @@
     </details>
 
     <section class="card stack" id="identify-panel" hidden>
-      <span class="caption">ของในรูปที่เราขาย</span>
+      <span class="section-title">ของในรูปที่เราขาย</span>
       <div class="notice" id="identify-note" hidden></div>
       <div class="stack" id="identify-results"></div>
     </section>
@@ -175,6 +175,13 @@
   </div>
 </dialog>
 
-<script src="/static/app.js?v=8.22"></script>
+<!-- Full-size look at one photo, opened from the small corner button on a .candidate card. -->
+<dialog id="lightbox-dialog" class="lightbox-dialog">
+  <button class="btn danger" id="lightbox-close">ปิด</button>
+  <img id="lightbox-image" alt="">
+</dialog>
+
+<script src="/static/api.js?v=8.25"></script>
+<script src="/static/app.js?v=8.25"></script>
 </body>
 </html>

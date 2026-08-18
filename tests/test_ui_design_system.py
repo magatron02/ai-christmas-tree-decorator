@@ -188,7 +188,7 @@ def test_rule_7_only_the_logo_and_the_modal_heading_carry_a_hardcoded_weight():
         for selector, body in re.findall(r"([^{}]+)\{([^}]*)\}", css)
         if re.search(r"font-weight:\s*(500|600|700|800|900)\b", body)
     ]
-    assert set(heavy) <= {".logo", "dialog h2", ".caption", ".panel-title"}, heavy
+    assert set(heavy) <= {".logo", "dialog h2", ".caption", ".panel-title", ".section-title"}, heavy
 
 
 # ---- rule 8: unreachable controls are disabled, never hidden -------------------------------

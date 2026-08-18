@@ -12,14 +12,10 @@ is not ready to recommend anything.
 """
 
 import sys
-from pathlib import Path
 
 import numpy as np
-from dotenv import load_dotenv
 
-ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
-load_dotenv(ROOT / ".env")
+from _bootstrap import ROOT
 
 from backend.services import matching  # noqa: E402
 

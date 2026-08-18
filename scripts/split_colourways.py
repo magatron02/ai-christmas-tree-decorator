@@ -24,13 +24,11 @@ Writes catalog/variants.json: code -> [image filename per colour], read by catal
 import argparse
 import json
 import sys
-from pathlib import Path
 
 import numpy as np
 from PIL import Image
 
-ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
+from _bootstrap import ROOT
 
 from backend.services import catalog  # noqa: E402
 

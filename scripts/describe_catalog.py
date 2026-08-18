@@ -15,13 +15,8 @@ import argparse
 import json
 import sys
 import time
-from pathlib import Path
 
-from dotenv import load_dotenv
-
-ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
-load_dotenv(ROOT / ".env")
+from _bootstrap import ROOT
 
 from backend.services import vision  # noqa: E402
 

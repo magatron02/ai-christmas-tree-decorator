@@ -351,13 +351,37 @@ def api_catalog_add(
     return catalog_admin.add_product(code, size_raw, section, book, data)
 
 
+@app.post("/api/catalog/products/{code}")
+def api_catalog_update(
+    code: str,
+    request: Request,
+    size_raw: str = Form(""),
+    section: str = Form(""),
+    book: str = Form(""),
+    image: UploadFile | None = File(None),
+):
+    """Edit one existing product's fields, and optionally its photo (settings page). Same
+    localhost-only gate as add — this writes files to disk too."""
+    from backend.services import catalog_admin, settings
+
+    if not settings.is_local(request):
+        raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
+
+    data = None
+    if image is not None:
+        data = _read(image, "Product photo")
+        validation.check_image(data, image.filename, image.content_type, "Product photo")
+    return catalog_admin.update_product(code, size_raw, section, book, data)
+
+
 @app.get("/api/catalog/recent")
 def api_catalog_recent(limit: int = 20):
     """Read-only list for the settings page, newest addition first."""
     return {
         "results": [
             {"code": row["code"], "image": catalog.image_for(row["code"]),
-             "size_raw": row["size_raw"], "book": row.get("book")}
+             "size_raw": row["size_raw"], "book": row.get("book"),
+             "section": row.get("section")}
             for row in catalog.recent(limit)
         ]
     }

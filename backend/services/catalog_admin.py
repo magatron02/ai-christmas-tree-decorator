@@ -28,7 +28,7 @@ def _load(path, default):
 
 def add_product(code, size_raw, section, book, image_bytes):
     """Append one product. Raises ValidationError on a duplicate code or bad input."""
-    code = (code or "").strip()
+    code = (code or "").strip().upper()
     if not code:
         raise ValidationError("ใส่รหัสสินค้าด้วย")
     if not image_bytes:
@@ -66,3 +66,47 @@ def add_product(code, size_raw, section, book, image_bytes):
     PRODUCT_IMAGES_PATH.write_text(json.dumps(images, indent=1, ensure_ascii=False), encoding="utf-8")
     catalog.refresh()
     return {"code": code, "image": filename}
+
+
+def update_product(code, size_raw, section, book, image_bytes=None):
+    """Edit an existing product's fields, and optionally its photo.
+
+    Never renames or deletes a code — the row is found by its existing code, which does not
+    change; that keeps this out of the image/variant-file migration a rename would need.
+    NonGoals.md 7/8 still govern the photo: a code split into colour variants
+    (catalog.variants_of returns more than one entry) is never something a single new photo
+    can safely replace, since the picker always shows the variant list over a lone crop —
+    refused before anything is written, same as every other check here.
+    """
+    code = (code or "").strip().upper()
+    products = _load(PRODUCTS_PATH, [])
+    row = next((r for r in products if r["code"] == code), None)
+    if row is None:
+        raise ValidationError(f"ไม่พบรหัส '{code}' ใน catalogue")
+    if image_bytes and len(catalog.variants_of(code)) > 1:
+        raise ValidationError(
+            f"'{code}' ถูกแยกเป็นหลายสีไว้แล้ว (catalog/variants.json) — "
+            "เปลี่ยนรูปเดี่ยวแบบนี้จะไม่ถูกใช้ แก้ไฟล์ variants ตรง ๆ แทน"
+        )
+
+    row["size_raw"] = size_raw.strip() or None
+    row["section"] = section.strip() or None
+    row["book"] = book.strip() or None
+    PRODUCTS_PATH.write_text(json.dumps(products, indent=1, ensure_ascii=False), encoding="utf-8")
+
+    if image_bytes:
+        filename = f"{code.replace('/', '_')}.png"
+        IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+        (IMAGES_DIR / filename).write_bytes(image_bytes)
+
+        images = _load(PRODUCT_IMAGES_PATH, [])
+        existing = next((im for im in images if im["code"] == code), None)
+        if existing:
+            existing["image"] = filename
+            existing["match"] = "manual"
+        else:
+            images.append({"code": code, "pdf_page": None, "image": filename, "match": "manual"})
+        PRODUCT_IMAGES_PATH.write_text(json.dumps(images, indent=1, ensure_ascii=False), encoding="utf-8")
+
+    catalog.refresh()
+    return {"code": code}
