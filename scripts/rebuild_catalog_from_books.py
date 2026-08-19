@@ -1,6 +1,13 @@
-"""Rebuild catalog/ from scratch, using ONLY book1.pdf and book2.pdf as the source.
+"""Rebuild catalog/ from scratch, using ONLY the current pair of catalogue PDFs as the source.
 
     python scripts/rebuild_catalog_from_books.py
+
+2026-08-19: repointed at a second, Canva-made pair of books (NewBook1/NewBook2 — 56 and 7
+pages) that supersedes the original book1.pdf/book2.pdf (128 pages). 94% of the codes in the
+new pair already existed in the catalogue the old pair built; the shop chose a full replace
+over a partial refresh, so the ~740 old codes absent from the new pair are dropped rather
+than kept alongside them. The old pair's extraction is not deleted from ac5-source/, only no
+longer read here — swap the SOURCES paths back to reverse this.
 
 Replaces scripts/ingest_new_book.py's merge-into-the-old-catalogue approach: the shop
 decided the old catalogue (built from a different, larger PDF) should be discarded, and the
@@ -31,8 +38,8 @@ import build_product_index as bpi  # noqa: E402
 import extract_catalog  # noqa: E402
 
 SOURCES = [
-    (ROOT / "ac5-source" / "book1.pdf", ROOT / "ac5-source" / "Book1", (1, 96), "book1"),
-    (ROOT / "ac5-source" / "book2.pdf", ROOT / "ac5-source" / "Book2", (1, 32), "book2"),
+    (ROOT / "ac5-source" / "NewBook1.pdf", ROOT / "ac5-source" / "NewBook1", (1, 56), "book1"),
+    (ROOT / "ac5-source" / "NewBook2.pdf", ROOT / "ac5-source" / "NewBook2", (1, 7), "book2"),
 ]
 
 CATALOG_DIR = ROOT / "catalog"

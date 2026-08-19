@@ -116,7 +116,7 @@ def test_every_parsed_size_is_a_positive_number():
 
 
 def test_the_catalogue_covers_what_the_ac5_run_used():
-    for code in ("05021-1", "04031-6", "017-04", "018-02", "5203-04"):
+    for code in ("04031-1", "05092-1", "017-06", "90665-18", "01801-1"):
         catalog.find(code)
 
 

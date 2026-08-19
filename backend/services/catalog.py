@@ -89,7 +89,7 @@ CATEGORIES = [
     # own "Sno wflakes", which is how that heading actually comes out of the PDF
     ("ornament", "ลูกบอล & ออร์นาเมนต์แขวน",  ("ornament", "bauble", "ball", "glitter", "honeycomb", "tinsel", "wflake")),
     ("topper",   "ดาว & ยอดต้น",              ("topper", "star")),
-    ("tree",     "ต้นคริสต์มาส",              ("tree", "fir", "spruce", "pine")),
+    ("tree",     "ต้นคริสต์มาส",              ("tree", "fir", "spruce", "pine", "rosemary")),
     ("banner",   "ป้ายอวยพร & แบนเนอร์",      ("banner", "blessing")),
     # "u u t t c c" is the Nutcracker heading as the PDF actually renders it, every letter
     # doubled: "N N u u t t c c r r a a c c". There is no un-mangled spelling to match on.

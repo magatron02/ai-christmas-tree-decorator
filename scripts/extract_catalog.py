@@ -38,10 +38,13 @@ import fitz
 
 ROOT = Path(__file__).resolve().parent.parent
 
-# 71016-1/DG/66 and 74026-1/D are real codes; the suffix is part of the product identity
-CODE = re.compile(r"\b(\d{3,5}-\d{1,3}(?:/[A-Za-z0-9]+)*)")
+# 71016-1/DG/66 and 74026-1/D are real codes; the suffix is part of the product identity.
+# 26022-2FK is the same thing with no slash (a finish letter glued straight onto the number,
+# 2026 book) — without the bare-letter branch this reads as plain 26022-2, which collided
+# with an unrelated real 26022-2 elsewhere on the same page and lost "flocked" silently.
+CODE = re.compile(r"\b(\d{3,5}-\d{1,3}(?:/[A-Za-z0-9]+)*(?:[A-Z]{1,3}\b)?)")
 SIZE_AFTER_CODE = re.compile(
-    r"\b\d{3,5}-\d{1,3}(?:/[A-Za-z0-9]+)*\s*\(([^)]{1,40})\)"
+    r"\b\d{3,5}-\d{1,3}(?:/[A-Za-z0-9]+)*(?:[A-Z]{1,3}\b)?\s*\(([^)]{1,40})\)"
 )
 
 FEET = re.compile(r"([\d.]+)\s*Ft", re.I)
