@@ -37,9 +37,14 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import build_product_index as bpi  # noqa: E402
 import extract_catalog  # noqa: E402
 
+# `book` already flows through products.json/product_images.json and the settings-page add
+# form ("เล่ม") — reused here as the shop/brand tag rather than adding a new field, since a
+# second shop's products are expected to join the same catalogue later and will need exactly
+# this kind of "whose product is this" label to tell the two apart.
+BRAND = "Bangkok Christmas"
 SOURCES = [
-    (ROOT / "ac5-source" / "NewBook1.pdf", ROOT / "ac5-source" / "NewBook1", (1, 56), "book1"),
-    (ROOT / "ac5-source" / "NewBook2.pdf", ROOT / "ac5-source" / "NewBook2", (1, 7), "book2"),
+    (ROOT / "ac5-source" / "NewBook1.pdf", ROOT / "ac5-source" / "NewBook1", (1, 56), BRAND),
+    (ROOT / "ac5-source" / "NewBook2.pdf", ROOT / "ac5-source" / "NewBook2", (1, 7), BRAND),
 ]
 
 CATALOG_DIR = ROOT / "catalog"

@@ -329,6 +329,24 @@ def api_element_from_catalog(code: str = Form(...), image: str = Form("")):
     return {"element": name, "element_url": _url(name)}
 
 
+@app.post("/api/tree/from-catalog")
+def api_tree_from_catalog(code: str = Form(...), image: str = Form("")):
+    """Same as /api/element/from-catalog, but for the tree slot: no background removal — a
+    tree is used with its own photographed background, never cut out."""
+    code = code.strip()
+    if image:
+        if image not in catalog.variants_of(code):
+            raise HTTPException(404, f"'{image}' ไม่ใช่รูปของ {code}")
+        path = config.CATALOG_PATH.parent / "images" / image
+    else:
+        path = catalog.image_path(code)
+    if not path or not path.is_file():
+        raise HTTPException(404, f"ไม่มีรูป catalogue ของ '{code}'")
+
+    name = _store(path.read_bytes(), "tree", "png")
+    return {"tree": name, "tree_url": _url(name)}
+
+
 @app.post("/api/catalog/products")
 def api_catalog_add(
     request: Request,

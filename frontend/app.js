@@ -271,6 +271,9 @@ let catalogTimer;
 let catalogQuery = "";
 let catalogCodesShown = 0;   // products consumed — what the next page's offset advances by
 let catalogCardsShown = 0;   // cards on screen, larger when a product has several colours
+let catalogPickerMode = "element";   // "element" (panel 2, any category) or "tree" (panel 1,
+                                      // locked to the tree category — the same dialog serves
+                                      // both rather than duplicating the whole grid/search/page
 
 function catalogCard(item) {
   const card = document.createElement("div");
@@ -291,7 +294,10 @@ function catalogCard(item) {
     card.append(which);
   }
   if (item.image) card.append(expandButton(`/catalog/${item.image}`, item.code));
-  card.addEventListener("click", () => useFromCatalog(item.code, item.image));
+  card.addEventListener("click", () => {
+    if (catalogPickerMode === "tree") useTreeFromCatalog(item.code, item.image);
+    else useFromCatalog(item.code, item.image);
+  });
   return card;
 }
 
@@ -345,13 +351,23 @@ async function loadCatalogPage(restart) {
   }
 }
 
-$("catalog-toggle").addEventListener("click", () => {
+/* Panel 1 opens the same dialog locked to the tree category; panel 2 opens it free. Always
+ * reloads on open rather than reusing whatever the grid last showed — otherwise switching
+ * from one panel's picker to the other's would show the wrong (stale-mode) results. */
+async function openCatalogPicker(mode) {
+  catalogPickerMode = mode;
+  const categorySelect = $("catalog-category");
+  // categories have to exist before "tree" can be selected, so this has to be awaited —
+  // firing it and moving on left the lock unset on whichever picker opened first
+  if (categorySelect.options.length <= 1) await loadCatalogCategories();
+  categorySelect.disabled = mode === "tree";
+  categorySelect.value = mode === "tree" ? "tree" : "";
   $("catalog-dialog").showModal();
-  if (!$("catalog-results").children.length) {
-    if ($("catalog-category").options.length <= 1) loadCatalogCategories();
-    loadCatalogPage(true);
-  }
-});
+  loadCatalogPage(true);
+}
+
+$("catalog-toggle").addEventListener("click", () => openCatalogPicker("element"));
+$("tree-catalog-toggle").addEventListener("click", () => openCatalogPicker("tree"));
 
 $("catalog-category").addEventListener("change", () => loadCatalogPage(true));
 
@@ -373,6 +389,29 @@ async function useFromCatalog(code, image) {
     showElementPreview(await call("/api/element/from-catalog", { method: "POST", body }));
     $("element-code").value = code;
     $("catalog-dialog").close();
+  } catch (err) {
+    $("catalog-dialog").close();
+    showError(err.message);
+  }
+}
+
+/* Same idea as useFromCatalog, but for the tree slot — no background removal (a tree keeps
+ * its own photographed background), so state.treeFile needs a real File the same way
+ * #tree-file's own change handler produces one, not just a stored server filename. */
+async function useTreeFromCatalog(code, image) {
+  showError("");
+  try {
+    const body = new FormData();
+    body.append("code", code);
+    if (image) body.append("image", image);
+    const result = await call("/api/tree/from-catalog", { method: "POST", body });
+    const blob = await (await fetch(result.tree_url)).blob();
+    state.treeFile = new File([blob], result.tree, { type: "image/png" });
+    $("tree-preview").src = result.tree_url;
+    $("tree-preview").hidden = false;
+    $("tree-code").value = code;
+    $("catalog-dialog").close();
+    resetRun();
   } catch (err) {
     $("catalog-dialog").close();
     showError(err.message);
