@@ -365,6 +365,19 @@ input[type="file"].input::file-selector-button {
 .triptych figure { margin: 0 }
 .triptych figcaption { margin-bottom: var(--space-2) }
 
+/* ---- settings page: quick app-level settings on the left (theme, key, status — short and
+   fixed-height), catalogue management on the right (a form plus a table that grows with the
+   catalogue) — the side that actually gets long is the one given the room to. ---- */
+.settings-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+@media (max-width: 720px) {
+  .settings-columns { grid-template-columns: minmax(0, 1fr) }
+}
+
 /* ---- find-from-photo (identify.html): controls on the left, the uploaded photo's preview
    on the right — otherwise both stack in one column and the card's right half sits empty ---- */
 .identify-columns {
