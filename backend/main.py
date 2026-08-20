@@ -548,10 +548,13 @@ def api_prepare(
     """Input A + one to five accepted decorations -> a `pending` request. Still free; still
     no API call.
 
-    Product codes are optional but all-or-nothing: with the tree and every decoration named,
-    the prompt gets each one's real millimetres (Product.md 8.2). Codes are resolved here
-    rather than at generation time so an unknown code costs nothing and is caught before the
-    confirm dialog.
+    Product codes are optional, and every named item's code has to resolve to something in
+    the catalogue or the whole request is refused (a typo is a wrong order). A code that
+    resolves but whose row has no printed size is different: that one item just falls back to
+    a believable, non-exact size (Product.md 8.2, NonGoals.md 8) and comes back in
+    `missing_sizes` so the confirm dialog can say so, rather than refusing outright. Codes are
+    resolved here rather than at generation time so a bad one costs nothing and is caught
+    before the confirm dialog.
     """
     upload = validation.exactly_one(files, "Tree image")
     data = _read(upload, "Tree image")
@@ -570,12 +573,21 @@ def api_prepare(
             "ใส่บางส่วนคำนวณขนาดจริงไม่ได้"
         )
 
-    scale = catalog.scale_sentence(tree_code, codes)
+    scale, missing_sizes = catalog.scale_sentence(tree_code, codes)
     quantities = None
     if tree_code and all(codes):
         from backend.services import matching
 
-        quantities = [matching.suggest_quantity(tree_code, code) for code in codes]
+        # a code with no catalogue size already means scale_sentence() fell back to
+        # "believable, not exact" for it — a quantity estimate needs the same real
+        # millimetres and has no such fallback, so that one item's suggestion is just absent
+        # rather than guessed (positional, so the frontend can still label the rest by index)
+        quantities = []
+        for code in codes:
+            try:
+                quantities.append(matching.suggest_quantity(tree_code, code))
+            except ValidationError:
+                quantities.append(None)
     reference = reference.strip()
     reference_name = _stored_path(reference).name if reference else None
     tree_name = _store(data, "tree", EXT_FOR_FORMAT[fmt])
@@ -599,7 +611,8 @@ def api_prepare(
         "element_count": len(elements),
         "reference_url": _url(reference_name),
         "scale": scale,
-        "exact_scale": bool(tree_code and all(codes)),
+        "exact_scale": bool(tree_code and all(codes) and not missing_sizes),
+        "missing_sizes": missing_sizes,
         "quantities": quantities,
     }
 
@@ -625,7 +638,11 @@ def api_generate(request_id: str):
         tree_path = _stored_path(row["tree_path"])
         elements = request_log.elements_of(row)
         element_paths = [_stored_path(e["path"]) for e in elements]
-        scale = catalog.scale_sentence(row["tree_code"], [e.get("code") for e in elements])
+        # missing_sizes already surfaced as a warning at prepare time; only the prompt text
+        # itself is needed again here
+        scale, _missing_sizes = catalog.scale_sentence(
+            row["tree_code"], [e.get("code") for e in elements]
+        )
 
         # Once the request is claimed it must reach a terminal state on every path, or it is
         # stranded at calling_api and can never be retried. So this catches everything, not
@@ -667,6 +684,51 @@ def api_delivered(request_id: str):
         return _row_json(request_log.get(conn, request_id))
     finally:
         conn.close()
+
+
+@app.post("/api/count/{request_id}")
+def api_count_result(request_id: str):
+    """Count the decorations in a finished picture.
+
+    Separate from the size-based suggestion /api/prepare returns, and a different question.
+    That one answers "how many of this product fit on a tree this size", from the catalogue
+    millimetres; this one answers "how many are in the picture I am about to show a customer",
+    which is what gets quoted. They disagree whenever gpt-image-2 renders the decorations off
+    the instructed scale, which measured is most of the time (scripts/measure_scale.py).
+
+    Its own endpoint, on a button, because it is a billed vision call — same rule as
+    /api/reference/{name}/analyse: nothing bills without being asked (AC-4). The token cost is
+    reported back but deliberately not written to the request's usage_json, which is the
+    generation's own billing record and the basis of usage_totals' generation count.
+    """
+    from backend.services import vision
+
+    conn = _db()
+    try:
+        row = request_log.get(conn, request_id)
+    finally:
+        conn.close()
+
+    if row is None:
+        raise HTTPException(404, "ไม่รู้จัก request นี้")
+    if not row["output_path"]:
+        raise ValidationError("request นี้ยังไม่มีภาพผลลัพธ์ให้นับ")
+
+    path = _stored_path(row["output_path"])
+    try:
+        counted, usage = vision.count_decorations(path.read_bytes())
+    except Exception as exc:
+        raise HTTPException(502, f"นับของในรูปไม่สำเร็จ ({type(exc).__name__}: {exc})")
+
+    return {
+        "request_id": request_id,
+        "kinds": [kind.model_dump() for kind in counted.kinds],
+        "usage": usage,
+        "note": (
+            "นับเฉพาะชิ้นที่มองเห็นในรูปนี้ ด้านหลังต้นกับที่บังกิ่งอยู่ไม่ได้นับ "
+            "ตัวเลขนี้มาจากรูปที่เจนออกมาจริง ไม่ใช่การคำนวณจากขนาดในแคตตาล็อก"
+        ),
+    }
 
 
 @app.get("/api/history")

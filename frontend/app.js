@@ -115,6 +115,8 @@ function resetRun() {
   $("out-result").hidden = true;
   $("result-actions").hidden = true;
   $("result-quantities").hidden = true;
+  $("count-actions").hidden = true;
+  $("count-note").hidden = true;
   $("result-empty").hidden = false;
   showError("");
   if (!codesConsistent()) setStatus("code_mismatch");
@@ -123,19 +125,25 @@ function resetRun() {
   refreshGenerateButton();
 }
 
-/* Shared by the pre-generate confirm dialog and the post-generate result panel — same
- * numbers, just shown before and after the paid call. Indexed against state.elements since
- * that is the order /api/prepare received them in. */
+/* The pre-generate estimate, in the confirm dialog: how many of this product fit on a tree
+ * that size, from the catalogue millimetres. Not reused against the finished picture — see
+ * the count button at the bottom of this file for why those are two different numbers.
+ * Indexed against state.elements since that is the order /api/prepare received them in. An
+ * entry is null when that item has no catalogue size — suggest_quantity() has no fallback for
+ * that case the way scale_sentence() does, so the item is skipped rather than invented. */
 function renderQuantities(target, quantities) {
   target.innerHTML = "";
+  let shown = false;
   if (quantities) {
     quantities.forEach((q, i) => {
+      if (!q) return;
       const li = document.createElement("li");
       li.textContent = `${state.elements[i].code}: ควรใช้ประมาณ ${q.low}–${q.high} ชิ้นบนต้นนี้`;
       target.append(li);
+      shown = true;
     });
   }
-  target.hidden = !quantities;
+  target.hidden = !shown;
 }
 
 function showTotals(totals) {
@@ -526,8 +534,16 @@ $("generate-btn").addEventListener("click", async () => {
         ? `ต้นจะถูกย้ายไปอยู่ในสถานที่ใหม่ตามรูปอ้างอิงที่ใส่ไว้ · `
         : `ต้นจะอยู่บนพื้นหลังเดิมของมัน · `) +
       (prepared.exact_scale
-        ? `ขนาดมาจากแคตตาล็อก`
-        : `ไม่ได้ใส่รหัสสินค้า ขนาดจึงขึ้นกับที่ model ตัดสินเอง`);
+        ? `ขนาดมาจากแคตตาล็อกทั้งหมด`
+        : prepared.missing_sizes.length
+          ? `บางชิ้นแคตตาล็อกไม่มีขนาด — ดูรายการด้านล่าง ชิ้นนั้น model จะกะขนาดเอง`
+          : `ไม่ได้ใส่รหัสสินค้า ขนาดจึงขึ้นกับที่ model ตัดสินเอง`);
+
+    const missingBox = $("confirm-missing-sizes");
+    missingBox.textContent = prepared.missing_sizes.length
+      ? `แคตตาล็อกไม่มีขนาดของ: ${prepared.missing_sizes.join(", ")} — ชิ้นนี้ model จะกะสัดส่วนเอง ไม่ใช่ตัวเลขจริง`
+      : "";
+    missingBox.hidden = !prepared.missing_sizes.length;
 
     state.quantities = prepared.quantities || null;
     renderQuantities($("confirm-quantities"), state.quantities);
@@ -563,7 +579,10 @@ $("confirm-btn").addEventListener("click", async () => {
     $("out-result").src = result.output_url;
     $("out-result").hidden = false;
     $("result-empty").hidden = true;
-    renderQuantities($("result-quantities"), state.quantities);
+    // the pre-generate suggestion is not shown against the finished picture: it answers "how
+    // many fit on a tree this size" from the catalogue millimetres, and the picture routinely
+    // does not honour that scale. Counting the picture itself is the button below.
+    $("count-actions").hidden = false;
     $("download-btn").href = result.output_url;
     $("result-meta").textContent =
       `${result.request_id} · ${result.size} · ${result.usage ? result.usage.total_tokens.toLocaleString() + " โทเคน" : "ไม่ทราบต้นทุน"}`;
@@ -581,6 +600,44 @@ $("confirm-btn").addEventListener("click", async () => {
     state.busy = false;
     refreshGenerateButton();
     refreshTotals();
+  }
+});
+
+/* ---- how many are actually in the finished picture ----
+ * A separate, billed vision call, so it is a button rather than something that runs itself
+ * after every generation — same rule the catalogue search follows. What it answers is the
+ * question the shop quotes from: the size-based suggestion says how many would fit on a tree
+ * that size, the picture regularly shows a different number, and the customer is looking at
+ * the picture. */
+$("count-btn").addEventListener("click", async () => {
+  if (!state.requestId) return;
+  const button = $("count-btn");
+  button.disabled = true;
+  button.textContent = "กำลังนับ…";
+  showError("");
+
+  try {
+    const counted = await call(`/api/count/${state.requestId}`, { method: "POST" });
+    const list = $("result-quantities");
+    list.innerHTML = "";
+    for (const kind of counted.kinds) {
+      const li = document.createElement("li");
+      li.textContent = `${kind.summary}: ${kind.count} ชิ้น`;
+      list.append(li);
+    }
+    if (!counted.kinds.length) {
+      const li = document.createElement("li");
+      li.textContent = "ไม่เจอของตกแต่งในรูปนี้";
+      list.append(li);
+    }
+    list.hidden = false;
+    $("count-note").textContent = counted.note;
+    $("count-note").hidden = false;
+  } catch (err) {
+    showError(err.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "นับของในรูปนี้";
   }
 });
 

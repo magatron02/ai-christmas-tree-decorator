@@ -7,9 +7,11 @@ which the model was free to interpret. With a tree code and an element code it c
 that an 80 mm bauble on a 1524 mm tree is one nineteenth of the tree's height, which is a
 fact rather than an adjective.
 
-Nothing here estimates. A code that is not in the catalogue, or one the catalogue prints no
-size for, produces a refusal — NonGoals.md 8 forbids guessing a dimension, because a guessed
-size becomes a quoted size the moment it reaches a customer.
+Nothing here estimates. A code that is not in the catalogue is a refusal outright — likely a
+typo, and a wrong code is a wrong order. A code that exists but has no printed size is
+different: scale_sentence() falls back to "believable, not exact" for that one item instead
+of refusing the whole request, and reports it as missing so the caller can warn instead of
+silently guessing — NonGoals.md 8 forbids inventing a dimension, not generating without one.
 """
 
 import json
@@ -439,22 +441,29 @@ def require_size(row):
     return millimetres
 
 
-def scale_sentence(tree_code, element_codes):
-    """The paragraph that replaces 'keep it in proportion' with actual numbers.
+_GENERIC_SCALE = (
+    "Keep every copy in proportion to the tree, as if it were the real object hanging there."
+)
 
-    `element_codes` is a list, one per decoration. Returns a generic instruction when no
-    codes were given — the caller always gets usable prompt text, and never gets an invented
-    measurement.
+
+def scale_sentence(tree_code, element_codes):
+    """The paragraph that replaces 'keep it in proportion' with actual numbers, for whichever
+    codes the catalogue actually prints a size for.
+
+    `element_codes` is a list, one per decoration. Returns `(sentence, missing)` — `missing`
+    lists describe()-strings for the tree and/or any decoration whose catalogue row has no
+    size, empty when every code resolved. A missing size never blocks the request and never
+    gets a guessed number either: NonGoals.md 8 forbids inventing a dimension, not generating
+    without one, so that one item falls back to "believable, not exact" instead — same as
+    when no code was given at all. The caller surfaces `missing` as a warning before the paid
+    call, since a mixed-exact result still needs the user to know which item is the guess.
     """
     if isinstance(element_codes, str) or element_codes is None:
         element_codes = [element_codes] if element_codes else []
     element_codes = [code for code in element_codes if code]
 
     if not tree_code and not element_codes:
-        return (
-            "Keep every copy in proportion to the tree, as if it were the real object "
-            "hanging there."
-        )
+        return (_GENERIC_SCALE, [])
     if not tree_code or not element_codes:
         raise ValidationError(
             "ใส่รหัสสินค้าให้ทั้งต้นไม้และของตกแต่งทุกชิ้น หรือไม่ใส่เลยก็ได้ — "
@@ -462,44 +471,78 @@ def scale_sentence(tree_code, element_codes):
         )
 
     tree = find(tree_code)
-    tree_mm = require_size(tree)
-    elements = [(find(code), require_size(find(code))) for code in element_codes]
+    tree_mm = longest_side_mm(tree)
+    elements = [(find(code), longest_side_mm(find(code))) for code in element_codes]
+    element_missing = [describe(row) for row, mm in elements if mm is None]
+    missing = ([describe(tree)] if tree_mm is None else []) + element_missing
 
-    if len(elements) > 1:
-        lines = [
+    if tree_mm is None:
+        # every ratio below needs the tree's own height as the denominator — without it
+        # nothing here can be exact, not even for a decoration whose own size is known
+        return (_GENERIC_SCALE, missing)
+
+    if not element_missing:
+        if len(elements) > 1:
+            lines = [
+                f"These are real products and their real sizes are known. The tree is "
+                f"{describe(tree)}, {tree_mm:.0f} mm tall. Each decoration has its own size "
+                f"and they are not interchangeable:"
+            ]
+            for row, millimetres in elements:
+                lines.append(
+                    f"- {describe(row)}: {millimetres:.0f} mm across, one "
+                    f"{tree_mm / millimetres:.0f}th of the tree's height."
+                )
+            lines.append(
+                "Draw each kind at its own size. A smaller product must look smaller than a "
+                "larger one in the picture, by that much. Judge every copy against the whole "
+                "tree, not against the branch it sits on."
+            )
+            return ("\n".join(lines), missing)
+
+        element, element_mm = elements[0]
+        ratio = tree_mm / element_mm
+
+        # Measured over four generations of the same tree and bauble:
+        #   nothing stated        0.59x the true ratio, sizes within one picture spread 1.86x
+        #   true size stated      0.70x, spread 1.38x
+        #   same, longer wording  0.67x, spread 1.12x
+        #   ratio pre-corrected   0.55x, spread 1.19x
+        #
+        # So stating the size makes the copies match each other, which was one of the AC-5
+        # defects. It does not make them the true size, and asking for a larger fraction to
+        # compensate made them smaller — the rendered size does not track the instructed
+        # fraction. The honest number is the one that stays.
+        return (
             f"These are real products and their real sizes are known. The tree is "
-            f"{describe(tree)}, {tree_mm:.0f} mm tall. Each decoration has its own size and "
-            f"they are not interchangeable:"
-        ]
-        for row, millimetres in elements:
+            f"{describe(tree)}, {tree_mm:.0f} mm tall. The decoration is {describe(element)}, "
+            f"{element_mm:.0f} mm across. So each decoration must be drawn at one "
+            f"{ratio:.0f}th of the tree's height — no larger, no smaller. Judge every copy "
+            f"against the whole tree, not against the branch it sits on.",
+            missing,
+        )
+
+    # at least one decoration has no catalogue size, but the tree does — mix exact lines
+    # with an explicit "unknown, do not guess" line rather than refusing the whole request
+    lines = [
+        f"The tree is {describe(tree)}, {tree_mm:.0f} mm tall, and is a real product with a "
+        f"known size. Some decorations below have a known real size too; others do not, and "
+        f"are marked as such — treat those two groups differently:"
+    ]
+    for row, millimetres in elements:
+        if millimetres is None:
+            lines.append(
+                f"- {describe(row)}: no catalogue size for this one — draw it at a believable "
+                f"size next to the tree and the other decorations, not a guessed measurement."
+            )
+        else:
             lines.append(
                 f"- {describe(row)}: {millimetres:.0f} mm across, one "
                 f"{tree_mm / millimetres:.0f}th of the tree's height."
             )
-        lines.append(
-            "Draw each kind at its own size. A smaller product must look smaller than a "
-            "larger one in the picture, by that much. Judge every copy against the whole "
-            "tree, not against the branch it sits on."
-        )
-        return "\n".join(lines)
-
-    element, element_mm = elements[0]
-    ratio = tree_mm / element_mm
-
-    # Measured over four generations of the same tree and bauble:
-    #   nothing stated        0.59x the true ratio, sizes within one picture spread 1.86x
-    #   true size stated      0.70x, spread 1.38x
-    #   same, longer wording  0.67x, spread 1.12x
-    #   ratio pre-corrected   0.55x, spread 1.19x
-    #
-    # So stating the size makes the copies match each other, which was one of the AC-5
-    # defects. It does not make them the true size, and asking for a larger fraction to
-    # compensate made them smaller — the rendered size does not track the instructed
-    # fraction. The honest number is the one that stays.
-    return (
-        f"These are real products and their real sizes are known. The tree is "
-        f"{describe(tree)}, {tree_mm:.0f} mm tall. The decoration is {describe(element)}, "
-        f"{element_mm:.0f} mm across. So each decoration must be drawn at one "
-        f"{ratio:.0f}th of the tree's height — no larger, no smaller. Judge every copy "
-        f"against the whole tree, not against the branch it sits on."
+    lines.append(
+        "Draw each kind at its own size wherever that size is known. A smaller product must "
+        "look smaller than a larger one in the picture, by that much. Judge every copy "
+        "against the whole tree, not against the branch it sits on."
     )
+    return ("\n".join(lines), missing)

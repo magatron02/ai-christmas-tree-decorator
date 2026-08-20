@@ -251,8 +251,22 @@ input[type="file"].input::file-selector-button {
      the page's (it grows). */
   height: calc(100vh - 220px);
 }
+/* ...and "each card's problem" has to actually be handled by each card. Only the decoration
+   panel owns designated scroll regions (its two inner columns); panels 1 and 3 are a plain
+   stack ending in a full-width .thumb, so once a preview or a result image was in them their
+   content ran straight past the border the definite height had just pinned — the download row
+   and the quantity line rendered outside the card. Scrolling the card itself covers all three
+   at once, and is a no-op for the decoration panel, whose inner columns never let it grow. */
+.panels > .card { overflow-y: auto }
+/* ...and both of those only hold while the three panels really are one row across. Wrapped,
+   the same definite height is split between stacked rows — at phone width three cards shared
+   one viewport height, about 160px each, and the download row and quantity line were pushed
+   straight out through the bottom border. Nothing is gained by pinning the height once the
+   layout is stacked: the page is already scrolling, so the cards size to their content and
+   the whole result stays inside its own card. */
 @media (max-width: 1100px) {
-  .panels { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+  .panels { grid-template-columns: repeat(2, minmax(0, 1fr)); height: auto }
+  .panels > .card { overflow-y: visible }
   .panels .role-decoration { grid-column: 1 / -1 }
 }
 @media (max-width: 720px) {

@@ -118,6 +118,37 @@ CROP_AUDIT_PROMPT = (
 )
 
 
+class CountedKind(BaseModel):
+    summary: str = Field(description="one short line naming this decoration, in English")
+    count: int = Field(description="how many separate copies of it are visible in the picture")
+
+
+class DecorationCounts(BaseModel):
+    kinds: list[CountedKind]
+
+
+# Counting the picture, not the catalogue. catalog.scale_sentence tells the model how big a
+# decoration should be, but measured it renders them at 0.55-0.70x of the instructed ratio
+# (scripts/measure_scale.py), so the number of pieces that fit in the finished picture is not
+# the number the sizes predict — a 457 mm tree with 279 mm flowers works out at 1-2 by
+# arithmetic while the generated image happily shows a dozen. The shop quotes from the picture
+# the customer is looking at, so the picture is what has to be counted.
+#
+# "Only what you can see" is the whole discipline here: the back of the tree is not in frame,
+# and a total that silently doubled the visible count to allow for it would be an invented
+# number (NonGoals.md 8). The caller says plainly that this is the front-facing count.
+COUNT_PROMPT = (
+    "This is a photo of a decorated Christmas tree. For each distinct kind of decoration on "
+    "it, count how many separate copies of that kind are visible, and give one short line "
+    "naming it.\n\n"
+    "Count only copies you can actually see in this picture. Do not add anything for pieces "
+    "that would be hidden behind branches or around the back of the tree, and do not round to "
+    "a convenient number — an exact count of what is visible is the useful answer.\n\n"
+    "Ignore the tree itself, its stand or pot, the floor and the background. One entry per "
+    "kind, not per copy. If there is nothing on the tree, return an empty list."
+)
+
+
 def _client():
     from openai import OpenAI
 
@@ -152,6 +183,23 @@ def describe_catalogue_photo(image_bytes, mime="image/png"):
 
 def describe_reference(image_bytes, mime="image/png"):
     return describe(image_bytes, REFERENCE_PROMPT, mime)
+
+
+def count_decorations(image_bytes, mime="image/png"):
+    """Returns (DecorationCounts, usage) — how many of each kind are visible in a finished
+    picture. Billed, so nothing calls this on its own; the user asks for it."""
+    response = _client().responses.parse(
+        model=config.VISION_MODEL,
+        input=[{"role": "user", "content": [{"type": "input_text", "text": COUNT_PROMPT},
+                                            _image_part(image_bytes, mime)]}],
+        text_format=DecorationCounts,
+    )
+    usage = response.usage
+    return response.output_parsed, {
+        "input_tokens": usage.input_tokens,
+        "output_tokens": usage.output_tokens,
+        "total_tokens": usage.total_tokens,
+    }
 
 
 def audit_crop(image_bytes, mime="image/png"):

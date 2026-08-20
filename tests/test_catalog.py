@@ -1,8 +1,10 @@
 """Catalogue lookup and the real-scale sentence — Product.md 8.2.
 
 The rule being enforced is NonGoals.md 8: never invent a dimension. A guessed size stops
-being a guess the moment it reaches a customer, so a missing size has to be a refusal and
-not a plausible number.
+being a guess the moment it reaches a customer — but the rule is about the number, not about
+refusing to generate. A code that resolves but has no printed size falls back to a
+non-exact "believable size" instruction for that one item and is reported back as missing,
+rather than blocking a request that has other, real sizes to work with.
 """
 
 import pytest
@@ -34,18 +36,19 @@ def test_an_unknown_code_is_refused():
 
 def test_the_scale_sentence_states_the_real_ratio():
     """1524 mm tree, 80 mm bauble — the model should be told 19, not 'in proportion'."""
-    sentence = catalog.scale_sentence("05021-1", "017-06")
+    sentence, missing = catalog.scale_sentence("05021-1", "017-06")
 
     assert "1524 mm" in sentence
     assert "80 mm" in sentence
     assert "19th" in sentence
+    assert missing == []
 
 
 def test_the_stated_ratio_is_the_true_one_not_a_corrected_one():
     """Asking for a larger fraction to compensate for the model drawing small was tried and
     measured worse than not correcting at all (0.55x against 0.70x). The sentence states the
     real ratio, and this test stops a compensation factor creeping back in unmeasured."""
-    sentence = catalog.scale_sentence("05021-1", "017-06")
+    sentence, _missing = catalog.scale_sentence("05021-1", "017-06")
 
     assert "one 19th" in sentence          # 1524 / 80, the truth
     assert "one 11th" not in sentence      # the correction that made it worse
@@ -53,13 +56,16 @@ def test_the_stated_ratio_is_the_true_one_not_a_corrected_one():
 
 
 def test_scale_falls_back_to_words_when_no_codes_are_given():
-    sentence = catalog.scale_sentence("", "")
+    sentence, missing = catalog.scale_sentence("", "")
     assert "proportion" in sentence
     assert "mm" not in sentence
+    assert missing == []
 
 
 def test_one_code_alone_is_refused():
-    """Half the information cannot produce a ratio, and a ratio is the whole point."""
+    """Half the information cannot produce a ratio, and a ratio is the whole point. Different
+    situation from a code with no catalogue size (below): here there is no code at all for
+    some item, which is a data-entry gap, not a catalogue gap."""
     with pytest.raises(ValidationError) as caught:
         catalog.scale_sentence("05021-1", [])
     assert "ใส่บางส่วน" in str(caught.value)
@@ -68,20 +74,37 @@ def test_one_code_alone_is_refused():
 def test_several_decorations_each_get_their_own_ratio():
     """A 40 mm bauble and a 300 mm one must not come out the same size, which is the whole
     reason multi-element needs the catalogue rather than one shared instruction."""
-    sentence = catalog.scale_sentence("05021-1", ["017-06", "018-02"])
+    sentence, missing = catalog.scale_sentence("05021-1", ["017-06", "018-02"])
 
     assert "80 mm across, one 19th" in sentence
     assert "40 mm across, one 38th" in sentence
     assert "not interchangeable" in sentence
+    assert missing == []
 
 
-def test_a_decoration_without_a_size_blocks_the_whole_set():
-    """Four known sizes and one unknown cannot produce a consistent instruction, and
-    guessing the fifth is what NonGoals 8 forbids."""
+def test_a_decoration_without_a_size_falls_back_for_that_one_item():
+    """The catalogue still doesn't get to guess a number for the sizeless one — but the tree
+    and the other decoration have real sizes, and generating with a clearly-flagged fallback
+    for one item beats refusing a request that is mostly exact."""
     sizeless = next(row for row in catalog._rows() if row["size"] is None)
 
-    with pytest.raises(ValidationError):
-        catalog.scale_sentence("05021-1", ["017-06", sizeless["code"]])
+    sentence, missing = catalog.scale_sentence("05021-1", ["017-06", sizeless["code"]])
+
+    assert "80 mm across, one 19th" in sentence   # the known one is still exact
+    assert "no catalogue size" in sentence        # the sizeless one is flagged, not guessed
+    assert missing == [catalog.describe(sizeless)]
+
+
+def test_a_treeless_tree_code_falls_back_for_everything():
+    """Every ratio needs the tree's own height as the denominator — a decoration's own known
+    size is useless without it, so a missing tree size degrades the whole sentence to the
+    generic fallback rather than only omitting the tree's own line."""
+    sizeless = next(row for row in catalog._rows() if row["size"] is None)
+
+    sentence, missing = catalog.scale_sentence(sizeless["code"], ["017-06"])
+
+    assert sentence == catalog._GENERIC_SCALE
+    assert missing == [catalog.describe(sizeless)]
 
 
 def test_a_product_with_no_printed_size_is_refused_not_estimated():

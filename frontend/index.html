@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tree Decorator</title>
 <link rel="icon" href="/static/icon.ico">
-<link rel="stylesheet" href="/static/styles/tokens.css?v=8.28">
-<link rel="stylesheet" href="/static/styles/components.css?v=8.28">
-<script src="/static/theme.js?v=8.28"></script>
+<link rel="stylesheet" href="/static/styles/tokens.css?v=8.30">
+<link rel="stylesheet" href="/static/styles/components.css?v=8.30">
+<script src="/static/theme.js?v=8.30"></script>
 </head>
 <body>
 
@@ -114,7 +114,12 @@
         <div class="notice" id="error-box" hidden></div>
         <span class="hint" id="result-empty">ภาพที่ได้จะปรากฏตรงนี้</span>
         <img class="thumb" id="out-result" alt="ต้นที่แต่งแล้ว" hidden>
+        <div class="btn-row" id="count-actions" hidden>
+          <button class="btn" id="count-btn">นับของในรูปนี้</button>
+          <span class="hint">อ่านรูปที่เจนแล้ว · เสียเงินเพิ่มเล็กน้อย</span>
+        </div>
         <ul class="hint" id="result-quantities" hidden></ul>
+        <span class="hint" id="count-note" hidden></span>
         <div class="btn-row" id="result-actions" hidden>
           <a class="btn" id="download-btn" download>ดาวน์โหลด</a>
           <span class="hint mono" id="result-meta"></span>
@@ -129,6 +134,7 @@
 <dialog id="confirm-dialog">
   <h2>สร้างภาพนี้เลยไหม</h2>
   <p id="confirm-body"></p>
+  <div class="notice warning" id="confirm-missing-sizes" hidden></div>
   <ul class="hint" id="confirm-quantities" hidden></ul>
   <div class="btn-row">
     <button class="btn success" id="confirm-btn">สร้างเลย</button>
@@ -162,7 +168,7 @@
   <img id="lightbox-image" alt="">
 </dialog>
 
-<script src="/static/api.js?v=8.28"></script>
-<script src="/static/app.js?v=8.28"></script>
+<script src="/static/api.js?v=8.30"></script>
+<script src="/static/app.js?v=8.30"></script>
 </body>
 </html>
