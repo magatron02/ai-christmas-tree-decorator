@@ -38,6 +38,10 @@
       <span class="section-title">หาสินค้าจากรูป</span>
       <span class="hint">อัปโหลดรูปที่มีของตกแต่งอยู่แล้ว เพื่อค้นแคตตาล็อกว่ามีอะไรใกล้เคียง</span>
       <div class="notice" id="error-box" hidden></div>
+      <input class="input" id="identify-tree-code" list="identify-tree-code-list" autocomplete="off"
+             placeholder="รหัสต้น — ไม่ใส่ก็ได้ ใส่แล้วจะบอกจำนวนของที่ควรใช้บนต้นนี้ด้วย">
+      <datalist id="identify-tree-code-list"></datalist>
+      <span class="hint" id="identify-tree-code-hint"></span>
       <div class="identify-columns">
         <div class="stack">
           <input class="input" type="file" id="identify-reference-file" accept="image/jpeg,image/png">

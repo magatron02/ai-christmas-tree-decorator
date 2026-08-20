@@ -46,6 +46,43 @@ function expandButton(src, alt) {
   return button;
 }
 
+/* ---- optional tree code: enables the quantity estimate below, same field/endpoint app.js's
+ * panel 1 uses, duplicated because this page carries its own self-contained script. The
+ * datalist is filled from the catalogue rather than typed from memory. */
+function wireCodePicker(inputId, listId, hintId) {
+  const input = $(inputId);
+  let timer;
+
+  input.addEventListener("input", () => {
+    clearTimeout(timer);
+    timer = setTimeout(async () => {
+      const query = input.value.trim();
+      if (query.length < 2) return;
+      try {
+        const { results } = await call(`/api/products?q=${encodeURIComponent(query)}`);
+        const list = $(listId);
+        list.innerHTML = "";
+        for (const product of results) {
+          const option = document.createElement("option");
+          option.value = product.code;
+          option.label = [product.size_raw, `p.${product.page}`].filter(Boolean).join(" · ");
+          list.append(option);
+        }
+        const exact = results.find((p) => p.code.toLowerCase() === query.toLowerCase());
+        $(hintId).textContent = exact
+          ? exact.size_raw
+            ? `${exact.code} — ${exact.size_raw} (catalogue หน้า ${exact.page})`
+            : `${exact.code} — แคตตาล็อกไม่ได้พิมพ์ขนาดของชิ้นนี้ไว้`
+          : "";
+      } catch {
+        /* the picker is a convenience; the server ignores an unrecognised code anyway */
+      }
+    }, 200);
+  });
+}
+
+wireCodePicker("identify-tree-code", "identify-tree-code-list", "identify-tree-code-hint");
+
 /* ---- the reference photo ---- */
 $("identify-reference-file").addEventListener("change", async (event) => {
   const file = event.target.files[0];
@@ -88,7 +125,11 @@ $("identify-btn").addEventListener("click", async () => {
   $("identify-note").hidden = true;
 
   try {
-    const result = await call(`/api/reference/${identifyReference}/analyse`, { method: "POST" });
+    const treeCode = $("identify-tree-code").value.trim();
+    const query = treeCode ? `?tree_code=${encodeURIComponent(treeCode)}` : "";
+    const result = await call(`/api/reference/${identifyReference}/analyse${query}`, {
+      method: "POST",
+    });
     renderIdentified(result);
   } catch (err) {
     $("identify-results").innerHTML = "";
