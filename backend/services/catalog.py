@@ -13,6 +13,7 @@ size becomes a quoted size the moment it reaches a customer.
 """
 
 import json
+import re
 from functools import lru_cache
 
 from backend import config
@@ -20,7 +21,7 @@ from backend.validation import ValidationError
 
 __all__ = [
     "find", "search", "browse", "longest_side_mm", "describe", "require_size",
-    "scale_sentence", "image_for", "image_path", "recent",
+    "scale_sentence", "image_for", "image_path", "recent", "parse_size",
 ]
 
 
@@ -356,6 +357,54 @@ def search(query, limit=20):
     ]
     hits.sort(key=lambda row: (not row["code"].lower().startswith(query), row["code"]))
     return hits[:limit]
+
+
+# shared with scripts/extract_catalog.py (which imports parse_size from here) — one
+# implementation for "what does this size text mean", whether it came off a printed page or
+# was typed into the settings-page add/edit form
+_FEET = re.compile(r"([\d.]+)\s*Ft", re.I)
+_INCHES = re.compile(r"([\d.]+)\s*in(?:c|ch|ches)?\b", re.I)
+_SERIES = re.compile(r"([\d.]+(?:\s*[x×]\s*[\d.]+)+)\s*(cm|mm|in(?:c|ch)?)", re.I)
+_CM = re.compile(r"([\d.]+)\s*cm", re.I)
+_MM = re.compile(r"([\d.]+)\s*mm", re.I)
+_METRES = re.compile(r"([\d.]+)\s*m\.", re.I)
+
+_MM_PER_FOOT = 304.8
+_MM_PER_INCH = 25.4
+
+
+def parse_size(raw):
+    """'5 Ft.' -> height 1524 mm · '80 mm.' -> diameter 80 · '12 inc.' -> 305 mm ·
+    '29 x 150 cm.' -> 290 x 1500 mm. Anything unrecognised returns None rather than a guess —
+    NonGoals.md 8 forbids inventing a dimension, so an unparsed size stays absent, not a
+    plausible-looking wrong number."""
+    text = " ".join(raw.split())
+
+    if match := _SERIES.search(text):
+        parts = [float(p) for p in re.split(r"[x×]", match.group(1))]
+        unit = match.group(2).lower()
+        unit = "inch" if unit.startswith("in") else unit
+        factor = 10 if unit == "cm" else _MM_PER_INCH if unit == "inch" else 1
+        return {"dimensions_mm": [round(p * factor) for p in parts], "unit_printed": unit}
+
+    if match := _FEET.search(text):
+        feet = float(match.group(1))
+        return {"feet": feet, "height_mm": round(feet * _MM_PER_FOOT), "unit_printed": "ft"}
+
+    if match := _INCHES.search(text):
+        inches = float(match.group(1))
+        return {"inches": inches, "size_mm": round(inches * _MM_PER_INCH), "unit_printed": "inch"}
+
+    if match := _MM.search(text):
+        return {"diameter_mm": float(match.group(1)), "unit_printed": "mm"}
+
+    if match := _CM.search(text):
+        return {"diameter_mm": round(float(match.group(1)) * 10), "unit_printed": "cm"}
+
+    if match := _METRES.search(text):
+        return {"size_mm": round(float(match.group(1)) * 1000), "unit_printed": "m"}
+
+    return None
 
 
 def longest_side_mm(row):

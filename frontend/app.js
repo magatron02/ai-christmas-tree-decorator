@@ -33,6 +33,7 @@ const state = {
   identifyReference: null, // stored filename of the optional catalogue-search photo (search only)
   requestId: null,
   busy: false,
+  quantities: null, // prepared.quantities from the last /api/prepare, indexed like state.elements
 };
 
 function setStatus(key, override) {
@@ -111,14 +112,31 @@ function renderElements() {
  * changes an input — that is the moment the previous run stops being the current one. */
 function resetRun() {
   state.requestId = null;
+  state.quantities = null;
   $("out-result").hidden = true;
   $("result-actions").hidden = true;
+  $("result-quantities").hidden = true;
   $("result-empty").hidden = false;
   showError("");
   if (!codesConsistent()) setStatus("code_mismatch");
   else if (state.treeFile && state.elements.length) setStatus("pending");
   else setStatus("waiting", "รอต้นเปล่ากับของตกแต่งอย่างน้อย 1 ชิ้น");
   refreshGenerateButton();
+}
+
+/* Shared by the pre-generate confirm dialog and the post-generate result panel — same
+ * numbers, just shown before and after the paid call. Indexed against state.elements since
+ * that is the order /api/prepare received them in. */
+function renderQuantities(target, quantities) {
+  target.innerHTML = "";
+  if (quantities) {
+    quantities.forEach((q, i) => {
+      const li = document.createElement("li");
+      li.textContent = `${state.elements[i].code}: ควรใช้ประมาณ ${q.low}–${q.high} ชิ้นบนต้นนี้`;
+      target.append(li);
+    });
+  }
+  target.hidden = !quantities;
 }
 
 function showTotals(totals) {
@@ -650,16 +668,8 @@ $("generate-btn").addEventListener("click", async () => {
         ? `ขนาดมาจากแคตตาล็อก`
         : `ไม่ได้ใส่รหัสสินค้า ขนาดจึงขึ้นกับที่ model ตัดสินเอง`);
 
-    const qlist = $("confirm-quantities");
-    qlist.innerHTML = "";
-    if (prepared.quantities) {
-      prepared.quantities.forEach((q, i) => {
-        const li = document.createElement("li");
-        li.textContent = `${state.elements[i].code}: ควรใช้ประมาณ ${q.low}–${q.high} ชิ้นบนต้นนี้`;
-        qlist.append(li);
-      });
-    }
-    qlist.hidden = !prepared.quantities;
+    state.quantities = prepared.quantities || null;
+    renderQuantities($("confirm-quantities"), state.quantities);
 
     $("confirm-btn").disabled = false;
     $("confirm-dialog").showModal();
@@ -692,6 +702,7 @@ $("confirm-btn").addEventListener("click", async () => {
     $("out-result").src = result.output_url;
     $("out-result").hidden = false;
     $("result-empty").hidden = true;
+    renderQuantities($("result-quantities"), state.quantities);
     $("download-btn").href = result.output_url;
     $("result-meta").textContent =
       `${result.request_id} · ${result.size} · ${result.usage ? result.usage.total_tokens.toLocaleString() + " โทเคน" : "ไม่ทราบต้นทุน"}`;

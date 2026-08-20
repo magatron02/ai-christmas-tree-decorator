@@ -354,6 +354,7 @@ def api_catalog_add(
     size_raw: str = Form(""),
     section: str = Form(""),
     book: str = Form(""),
+    price: str = Form(""),
     image: UploadFile = File(...),
 ):
     """Add one product by hand (settings page). Localhost only, same reasoning as the API-key
@@ -366,7 +367,7 @@ def api_catalog_add(
 
     data = _read(image, "Product photo")
     validation.check_image(data, image.filename, image.content_type, "Product photo")
-    return catalog_admin.add_product(code, size_raw, section, book, data)
+    return catalog_admin.add_product(code, size_raw, section, book, data, price)
 
 
 @app.post("/api/catalog/products/{code}")
@@ -376,6 +377,7 @@ def api_catalog_update(
     size_raw: str = Form(""),
     section: str = Form(""),
     book: str = Form(""),
+    price: str = Form(""),
     image: UploadFile | None = File(None),
 ):
     """Edit one existing product's fields, and optionally its photo (settings page). Same
@@ -389,7 +391,7 @@ def api_catalog_update(
     if image is not None:
         data = _read(image, "Product photo")
         validation.check_image(data, image.filename, image.content_type, "Product photo")
-    return catalog_admin.update_product(code, size_raw, section, book, data)
+    return catalog_admin.update_product(code, size_raw, section, book, data, price)
 
 
 @app.get("/api/catalog/recent")
@@ -399,7 +401,7 @@ def api_catalog_recent(limit: int = 20):
         "results": [
             {"code": row["code"], "image": catalog.image_for(row["code"]),
              "size_raw": row["size_raw"], "book": row.get("book"),
-             "section": row.get("section")}
+             "section": row.get("section"), "price": row.get("price")}
             for row in catalog.recent(limit)
         ]
     }

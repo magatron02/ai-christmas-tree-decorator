@@ -26,13 +26,29 @@ def _load(path, default):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def add_product(code, size_raw, section, book, image_bytes):
+def _parse_price(raw):
+    """Blank stays unpriced rather than free — this is manual entry, so a typo (an empty
+    field submitted by mistake) must not silently read as "0 บาท"."""
+    raw = (raw or "").strip()
+    if not raw:
+        return None
+    try:
+        price = float(raw)
+    except ValueError:
+        raise ValidationError(f"ราคา '{raw}' ไม่ใช่ตัวเลข")
+    if price < 0:
+        raise ValidationError("ราคาต้องไม่ติดลบ")
+    return price
+
+
+def add_product(code, size_raw, section, book, image_bytes, price=None):
     """Append one product. Raises ValidationError on a duplicate code or bad input."""
     code = (code or "").strip().upper()
     if not code:
         raise ValidationError("ใส่รหัสสินค้าด้วย")
     if not image_bytes:
         raise ValidationError("ใส่รูปสินค้าด้วย")
+    price = _parse_price(price)
 
     products = _load(PRODUCTS_PATH, [])
     if any(row["code"] == code for row in products):
@@ -41,16 +57,18 @@ def add_product(code, size_raw, section, book, image_bytes):
             "หรือถ้าตั้งใจจะแทนที่ตัวเดิมจริง ๆ ให้แก้ไฟล์ catalogue ตรง ๆ"
         )
 
+    size_raw = size_raw.strip() or None
     products.append({
         "code": code,
-        "size_raw": size_raw.strip() or None,
-        "size": None,
+        "size_raw": size_raw,
+        "size": catalog.parse_size(size_raw) if size_raw else None,
         "section": section.strip() or None,
         "page_headings": [],
         "pdf_page": None,
         "bbox": None,
         "duplicate": False,
         "book": book.strip() or None,
+        "price": price,
     })
 
     filename = f"{code.replace('/', '_')}.png"
@@ -68,7 +86,7 @@ def add_product(code, size_raw, section, book, image_bytes):
     return {"code": code, "image": filename}
 
 
-def update_product(code, size_raw, section, book, image_bytes=None):
+def update_product(code, size_raw, section, book, image_bytes=None, price=None):
     """Edit an existing product's fields, and optionally its photo.
 
     Never renames or deletes a code — the row is found by its existing code, which does not
@@ -88,10 +106,14 @@ def update_product(code, size_raw, section, book, image_bytes=None):
             f"'{code}' ถูกแยกเป็นหลายสีไว้แล้ว (catalog/variants.json) — "
             "เปลี่ยนรูปเดี่ยวแบบนี้จะไม่ถูกใช้ แก้ไฟล์ variants ตรง ๆ แทน"
         )
+    price = _parse_price(price)
 
-    row["size_raw"] = size_raw.strip() or None
+    size_raw = size_raw.strip() or None
+    row["size_raw"] = size_raw
+    row["size"] = catalog.parse_size(size_raw) if size_raw else None
     row["section"] = section.strip() or None
     row["book"] = book.strip() or None
+    row["price"] = price
     PRODUCTS_PATH.write_text(json.dumps(products, indent=1, ensure_ascii=False), encoding="utf-8")
 
     if image_bytes:

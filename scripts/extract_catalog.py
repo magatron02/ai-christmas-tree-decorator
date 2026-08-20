@@ -32,11 +32,12 @@ import json
 import re
 import sys
 from collections import Counter
-from pathlib import Path
 
 import fitz
 
-ROOT = Path(__file__).resolve().parent.parent
+from _bootstrap import ROOT  # noqa: E402
+
+from backend.services.catalog import parse_size  # noqa: E402
 
 # 71016-1/DG/66 and 74026-1/D are real codes; the suffix is part of the product identity.
 # 26022-2FK is the same thing with no slash (a finish letter glued straight onto the number,
@@ -46,48 +47,6 @@ CODE = re.compile(r"\b(\d{3,5}-\d{1,3}(?:/[A-Za-z0-9]+)*(?:[A-Z]{1,3}\b)?)")
 SIZE_AFTER_CODE = re.compile(
     r"\b\d{3,5}-\d{1,3}(?:/[A-Za-z0-9]+)*(?:[A-Z]{1,3}\b)?\s*\(([^)]{1,40})\)"
 )
-
-FEET = re.compile(r"([\d.]+)\s*Ft", re.I)
-INCHES = re.compile(r"([\d.]+)\s*in(?:c|ch|ches)?\b", re.I)
-SERIES = re.compile(r"([\d.]+(?:\s*[x×]\s*[\d.]+)+)\s*(cm|mm|in(?:c|ch)?)", re.I)
-CM = re.compile(r"([\d.]+)\s*cm", re.I)
-MM = re.compile(r"([\d.]+)\s*mm", re.I)
-METRES = re.compile(r"([\d.]+)\s*m\.", re.I)
-
-MM_PER_FOOT = 304.8
-MM_PER_INCH = 25.4
-
-
-def parse_size(raw):
-    """'5 Ft.' -> height 1524 mm · '80 mm.' -> diameter 80 · '12 inc.' -> 305 mm ·
-    '29 x 150 cm.' -> 290 x 1500 mm. Anything unrecognised returns None rather than a guess."""
-    text = " ".join(raw.split())
-
-    if match := SERIES.search(text):
-        parts = [float(p) for p in re.split(r"[x×]", match.group(1))]
-        unit = match.group(2).lower()
-        unit = "inch" if unit.startswith("in") else unit
-        factor = 10 if unit == "cm" else MM_PER_INCH if unit == "inch" else 1
-        return {"dimensions_mm": [round(p * factor) for p in parts], "unit_printed": unit}
-
-    if match := FEET.search(text):
-        feet = float(match.group(1))
-        return {"feet": feet, "height_mm": round(feet * MM_PER_FOOT), "unit_printed": "ft"}
-
-    if match := INCHES.search(text):
-        inches = float(match.group(1))
-        return {"inches": inches, "size_mm": round(inches * MM_PER_INCH), "unit_printed": "inch"}
-
-    if match := MM.search(text):
-        return {"diameter_mm": float(match.group(1)), "unit_printed": "mm"}
-
-    if match := CM.search(text):
-        return {"diameter_mm": round(float(match.group(1)) * 10), "unit_printed": "cm"}
-
-    if match := METRES.search(text):
-        return {"size_mm": round(float(match.group(1)) * 1000), "unit_printed": "m"}
-
-    return None
 
 
 def spans(page):

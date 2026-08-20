@@ -164,3 +164,67 @@ def test_the_edit_endpoint_is_localhost_only(client, temp_catalog, monkeypatch):
     )
 
     assert response.status_code == 403
+
+
+# ---- size_raw feeds catalog.parse_size(), same as the PDF pipeline ------------------------
+
+
+def test_add_parses_size_raw_into_the_structured_size(temp_catalog):
+    """A hand-added product used to get size: None unconditionally, which meant
+    require_size() always refused it — exact-scale math was never reachable for anything
+    typed in through the settings page."""
+    catalog_admin.add_product("017-06", "80 mm.", "", "", png_bytes())
+    row = catalog.find("017-06")
+    assert row["size"] == {"diameter_mm": 80.0, "unit_printed": "mm"}
+    assert catalog.longest_side_mm(row) == 80.0
+
+
+def test_edit_reparses_size_raw_when_it_changes(temp_catalog):
+    catalog_admin.add_product("017-06", "80 mm.", "", "", png_bytes())
+    catalog_admin.update_product("017-06", "5 Ft.", "", "")
+    row = catalog.find("017-06")
+    assert row["size"]["height_mm"] == 1524
+
+
+def test_an_unparseable_size_raw_leaves_size_null_not_a_guess(temp_catalog):
+    catalog_admin.add_product("017-06", "large-ish", "", "", png_bytes())
+    assert catalog.find("017-06")["size"] is None
+
+
+# ---- price: optional, numeric, never invented -----------------------------------------
+
+
+def test_add_stores_a_price(temp_catalog):
+    catalog_admin.add_product("017-06", "80 mm.", "", "", png_bytes(), price="350")
+    assert catalog.find("017-06")["price"] == 350.0
+
+
+def test_a_blank_price_stays_unset_rather_than_zero(temp_catalog):
+    catalog_admin.add_product("017-06", "80 mm.", "", "", png_bytes(), price="")
+    assert catalog.find("017-06")["price"] is None
+
+
+def test_a_non_numeric_price_is_refused(temp_catalog):
+    with pytest.raises(ValidationError):
+        catalog_admin.add_product("017-06", "80 mm.", "", "", png_bytes(), price="cheap")
+
+
+def test_a_negative_price_is_refused(temp_catalog):
+    with pytest.raises(ValidationError):
+        catalog_admin.add_product("017-06", "80 mm.", "", "", png_bytes(), price="-5")
+
+
+def test_edit_updates_the_price(temp_catalog):
+    catalog_admin.add_product("017-06", "80 mm.", "", "", png_bytes(), price="350")
+    catalog_admin.update_product("017-06", "80 mm.", "", "", price="400")
+    assert catalog.find("017-06")["price"] == 400.0
+
+
+def test_recent_endpoint_includes_price(client, temp_catalog, monkeypatch):
+    monkeypatch.setattr(settings, "is_local", lambda request: True)
+    catalog_admin.add_product("017-06", "80 mm.", "", "", png_bytes(), price="350")
+
+    response = client.get("/api/catalog/recent")
+
+    row = next(r for r in response.json()["results"] if r["code"] == "017-06")
+    assert row["price"] == 350.0

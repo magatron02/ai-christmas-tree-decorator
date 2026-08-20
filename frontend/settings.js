@@ -118,6 +118,7 @@ function enterEditMode(item) {
   $("cat-size").value = item.size_raw || "";
   $("cat-section").value = item.section || "";
   $("cat-book").value = item.book || "";
+  $("cat-price").value = item.price ?? "";
   $("cat-image").value = "";
   $("cat-image-hint").hidden = false;
   $("cat-add").textContent = "บันทึกการแก้ไข";
@@ -129,7 +130,7 @@ function enterEditMode(item) {
 function exitEditMode() {
   editingCode = null;
   $("cat-code").disabled = false;
-  ["cat-code", "cat-size", "cat-section", "cat-book", "cat-image"].forEach((id) => ($(id).value = ""));
+  ["cat-code", "cat-size", "cat-section", "cat-book", "cat-price", "cat-image"].forEach((id) => ($(id).value = ""));
   $("cat-image-hint").hidden = true;
   $("cat-add").textContent = "เพิ่มสินค้า";
   $("cat-edit-status").hidden = true;
@@ -161,7 +162,8 @@ async function loadRecentCatalog() {
     code.textContent = item.code;
     const meta = document.createElement("td");
     meta.className = "hint";
-    meta.textContent = [item.size_raw, item.book].filter(Boolean).join(" · ");
+    const priceText = item.price != null ? `${item.price} บาท` : null;
+    meta.textContent = [item.size_raw, priceText, item.book].filter(Boolean).join(" · ");
     row.append(photo, code, meta);
     row.addEventListener("click", () => enterEditMode(item));
     host.append(row);
@@ -184,6 +186,7 @@ $("cat-add").addEventListener("click", async () => {
     body.append("size_raw", $("cat-size").value.trim());
     body.append("section", $("cat-section").value.trim());
     body.append("book", $("cat-book").value.trim());
+    body.append("price", $("cat-price").value.trim());
     if (image) body.append("image", image);
 
     const url = editingCode
@@ -192,7 +195,7 @@ $("cat-add").addEventListener("click", async () => {
     await call(url, { method: "POST", body });
 
     if (editingCode) exitEditMode();
-    else ["cat-code", "cat-size", "cat-section", "cat-book", "cat-image"].forEach((id) => ($(id).value = ""));
+    else ["cat-code", "cat-size", "cat-section", "cat-book", "cat-price", "cat-image"].forEach((id) => ($(id).value = ""));
     await loadRecentCatalog();
   } catch (err) {
     $("cat-error").textContent = err.message;
