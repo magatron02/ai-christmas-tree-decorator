@@ -271,10 +271,13 @@ input[type="file"].input::file-selector-button {
 
 /* ---- decoration panel: picked items on the left, controls to add more on the right —
    picking something never has to open a full-size preview, so the whole left column is
-   built out of the same small thumbnail the accepted list already used. ---- */
+   built out of the same small thumbnail the accepted list already used, and only needs a
+   third of the row: a 140px floor covers one 40px thumbnail plus its remove button even when
+   the card itself is narrow (it sits in the 3-panel row, not the full page), and above that
+   floor it holds to a 1:2 share so the controls column keeps the rest. ---- */
 .decoration-columns {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  grid-template-columns: minmax(140px, 0.5fr) minmax(0, 1fr);
   gap: var(--space-4);
   align-items: stretch;
   flex: 1;
@@ -362,23 +365,8 @@ input[type="file"].input::file-selector-button {
 .triptych figure { margin: 0 }
 .triptych figcaption { margin-bottom: var(--space-2) }
 
-/* ---- collapsible reference-photo search — closed by default so it never adds page height
-   when nobody is using it; the panels above are the whole job on their own ---- */
-.identify-toggle { padding: var(--space-3) var(--space-4) }
-.identify-toggle > summary {
-  cursor: pointer;
-  list-style: none;
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-}
-.identify-toggle > summary::-webkit-details-marker { display: none }
-.identify-toggle > summary::before { content: "▸"; color: var(--text-muted); font-size: var(--text-sm) }
-.identify-toggle[open] > summary::before { content: "▾" }
-.identify-toggle[open] > summary { margin-bottom: var(--space-3) }
-/* controls on the left, the uploaded photo's preview on the right — otherwise both stack in
-   one column and the card's right half sits empty */
+/* ---- find-from-photo (identify.html): controls on the left, the uploaded photo's preview
+   on the right — otherwise both stack in one column and the card's right half sits empty ---- */
 .identify-columns {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

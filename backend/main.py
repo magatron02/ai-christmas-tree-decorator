@@ -167,6 +167,11 @@ def page_history():
     return FileResponse(config.FRONTEND_DIR / "history.html")
 
 
+@app.get("/identify", include_in_schema=False)
+def page_identify():
+    return FileResponse(config.FRONTEND_DIR / "identify.html")
+
+
 # ---------------------------------------------------------------- api
 
 

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tree Decorator — หาสินค้าจากรูป</title>
+<link rel="icon" href="/static/icon.ico">
+<link rel="stylesheet" href="/static/styles/tokens.css?v=8.28">
+<link rel="stylesheet" href="/static/styles/components.css?v=8.28">
+<script src="/static/theme.js?v=8.28"></script>
+</head>
+<body>
+
+<header class="topbar">
+  <span class="logo">Tree Decorator</span>
+  <span class="spacer"></span>
+  <div class="tile">
+    <span class="k caption">สร้างไปแล้ว</span>
+    <span class="v" id="generations">–</span>
+  </div>
+  <div class="tile">
+    <span class="k caption">token ที่ใช้</span>
+    <span class="v" id="tokens">–</span>
+  </div>
+</header>
+
+<div class="frame">
+  <nav class="sidebar">
+    <a class="row" href="/">หน้าแรก</a>
+    <a class="row active" href="/identify">หาสินค้าจากรูป</a>
+    <a class="row" href="/history">ประวัติ</a>
+    <a class="row" href="/settings">ตั้งค่า</a>
+  </nav>
+
+  <main class="page stack">
+
+    <section class="card stack">
+      <span class="section-title">หาสินค้าจากรูป</span>
+      <span class="hint">อัปโหลดรูปที่มีของตกแต่งอยู่แล้ว เพื่อค้นแคตตาล็อกว่ามีอะไรใกล้เคียง</span>
+      <div class="notice" id="error-box" hidden></div>
+      <div class="identify-columns">
+        <div class="stack">
+          <input class="input" type="file" id="identify-reference-file" accept="image/jpeg,image/png">
+          <div class="btn-row" id="identify-reference-actions" hidden>
+            <button class="btn" id="identify-btn">หาว่าในรูปมีของอะไรที่เราขาย</button>
+            <button class="btn danger" id="identify-reference-clear">เอารูปออก</button>
+          </div>
+        </div>
+        <div class="stack">
+          <img class="thumb-sm" id="identify-reference-preview" alt="รูปอ้างอิงหาสินค้า" hidden>
+        </div>
+      </div>
+    </section>
+
+    <section class="card stack" id="identify-panel" hidden>
+      <span class="section-title">ของในรูปที่เราขาย</span>
+      <div class="notice" id="identify-note" hidden></div>
+      <div class="stack" id="identify-results"></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Full-size look at one photo, opened from the small corner button on a .candidate card. -->
+<dialog id="lightbox-dialog" class="lightbox-dialog">
+  <button class="btn danger" id="lightbox-close">ปิด</button>
+  <img id="lightbox-image" alt="">
+</dialog>
+
+<script src="/static/api.js?v=8.28"></script>
+<script src="/static/identify.js?v=8.28"></script>
+</body>
+</html>
