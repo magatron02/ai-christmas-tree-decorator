@@ -25,7 +25,9 @@ def rows():
 
 
 def test_every_row_says_how_it_was_matched(rows):
-    allowed = {"directly_above", "above_far", "beside", "no_rule_fitted", "no_photo_found"}
+    # "manual" is catalog_admin.py's own rule for a hand-added/edited product: there is no
+    # geometric pairing to describe because there was no PDF page to pair it on.
+    allowed = {"directly_above", "above_far", "beside", "no_rule_fitted", "no_photo_found", "manual"}
     assert {row["match"] for row in rows} <= allowed
 
 

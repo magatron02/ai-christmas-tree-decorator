@@ -247,6 +247,16 @@ def api_products(q: str = "", limit: int = 20):
     }
 
 
+@app.get("/api/catalog/shops")
+def api_catalog_shops():
+    """Every brand/shop with a showable product, so the picker can offer "which shop" as its
+    own filter — a hardcoded pair of options would already be wrong (Product.md: more shops
+    are expected to join the catalogue over time)."""
+    return {
+        "shops": [{"key": book, "label": book, "count": count} for book, count in catalog.shops()]
+    }
+
+
 @app.get("/api/catalog/categories")
 def api_catalog_categories():
     """The browsing categories and how many showable products each holds, so the picker can
@@ -265,7 +275,7 @@ def api_catalog_categories():
 
 
 @app.get("/api/catalog/search")
-def api_catalog_search(q: str = "", category: str = "", limit: int = 60, offset: int = 0):
+def api_catalog_search(q: str = "", category: str = "", book: str = "", limit: int = 60, offset: int = 0):
     """Thumbnail picker for panel 2 — the catalogue photo alongside the code, so a decoration
     can be chosen without touching the filesystem.
 
@@ -282,9 +292,11 @@ def api_catalog_search(q: str = "", category: str = "", limit: int = 60, offset:
         ]
         if category:
             matched = [row for row in matched if catalog.category_of(row) == category]
+        if book:
+            matched = [row for row in matched if row.get("book") == book]
         rows, total = matched[offset : offset + limit], len(matched)
     else:
-        rows, total = catalog.browse(limit, offset, category or None)
+        rows, total = catalog.browse(limit, offset, category or None, book or None)
 
     # one card per colour, not per code: a product photographed across its colour range is one
     # code with several pictures, and picking "the whole photo" would hand the generator every

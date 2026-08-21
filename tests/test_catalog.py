@@ -138,6 +138,28 @@ def test_every_parsed_size_is_a_positive_number():
         assert millimetres is None or millimetres > 0, row["code"]
 
 
+def test_a_letter_labelled_dimension_pair_is_parsed():
+    """'H 215 x D 142 cm' — a second source's size format: each number carries its own axis
+    letter, which used to make the plain digit-x-digit series regex miss the whole string."""
+    assert catalog.parse_size("H 215 x D 142 cm") == {
+        "dimensions_mm": [2150, 1420], "unit_printed": "cm",
+    }
+
+
+def test_a_letter_labelled_dimension_pair_parses_either_order():
+    assert catalog.parse_size("D 142 x H 215 cm")["dimensions_mm"] == [1420, 2150]
+
+
+def test_a_three_axis_labelled_dimension_is_parsed():
+    assert catalog.parse_size("D80xL80xH10cm")["dimensions_mm"] == [800, 800, 100]
+
+
+def test_an_unlabelled_series_still_parses_the_same_as_before():
+    """The new labelled-series pattern is tried first — it must not shadow the plain series
+    that already worked (no axis letters at all, still by far the most common shape)."""
+    assert catalog.parse_size("18x12x51 cm.")["dimensions_mm"] == [180, 120, 510]
+
+
 def test_the_catalogue_covers_what_the_ac5_run_used():
     for code in ("04031-1", "05092-1", "017-06", "90665-18", "01801-1"):
         catalog.find(code)
@@ -163,6 +185,21 @@ def test_no_product_is_left_without_a_category():
     so this is the guard that a re-extraction has not broken the substrings that match them."""
     uncategorised = [row["code"] for row in catalog._rows() if catalog.category_of(row) is None]
     assert not uncategorised, f"{len(uncategorised)} products match no category: {uncategorised[:10]}"
+
+
+def test_shops_lists_every_brand_with_a_showable_product():
+    """The picker's shop filter has to reflect real data — a hardcoded pair of options is
+    already wrong the day a third shop's products land (Product.md)."""
+    names = dict(catalog.shops())
+    assert "Bangkok Christmas" in names
+    assert "MS Natural Design" in names
+    assert all(count > 0 for count in names.values())
+
+
+def test_browse_can_be_scoped_to_one_shop():
+    rows, total = catalog.browse(10_000, 0, book="MS Natural Design")
+    assert total > 0
+    assert all(row.get("book") == "MS Natural Design" for row in rows)
 
 
 def test_a_crop_shared_by_many_codes_is_not_showable():

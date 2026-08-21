@@ -36,6 +36,16 @@ def temp_catalog(tmp_path, monkeypatch):
     catalog.refresh()
 
 
+def test_add_records_shared_with_like_the_pdf_pipeline_does(temp_catalog):
+    """Regression: add_product's images.json entry used to omit shared_with entirely, so
+    test_product_index.py's "every image row is counted" guarantee silently didn't hold for
+    manual products — only caught once a real batch of them existed outside a temp catalogue."""
+    catalog_admin.add_product("017-06", "80 mm.", "", "", png_bytes())
+    images = json.loads((temp_catalog / "product_images.json").read_text(encoding="utf-8"))
+    row = next(r for r in images if r["code"] == "017-06")
+    assert row["shared_with"] == 0
+
+
 def test_edit_updates_fields(temp_catalog):
     catalog_admin.add_product("017-06", "80 mm.", "baubles", "2026", png_bytes())
     catalog_admin.update_product("017-06", "90 mm.", "ornaments", "2027")

@@ -23,7 +23,7 @@ from backend.validation import ValidationError
 
 __all__ = [
     "find", "search", "browse", "longest_side_mm", "describe", "require_size",
-    "scale_sentence", "image_for", "image_path", "recent", "parse_size",
+    "scale_sentence", "image_for", "image_path", "recent", "parse_size", "shops",
 ]
 
 
@@ -81,23 +81,27 @@ def recent(n=20):
 # against what the vision pass saw in the photo, and the first match wins. Order is therefore
 # load-bearing: "star topper" must reach `topper` before `tree` claims it for "tree topper".
 CATEGORIES = [
-    ("wreath",   "พวงหรีด & สวอก",           ("wreath", "swa")),
+    ("wreath",   "พวงหรีด & สวอก",           ("wreath", "swa", "พวงมาลัย")),
     ("garland",  "สายรุ้ง & การ์แลนด์",       ("garland", "bead", "pullout", "arch")),
-    ("light",    "ไฟประดับ & โคมไฟ",          ("lanter", "lighting", "lights", "llum")),
+    # "snake light" rather than a bare "light"/"ไฟ": a Christmas tree's own section or name
+    # routinely says "(มีไฟประดับ)" or "(ไม่มีไฟประดับ)" ("with/without lighting") — a needle
+    # that short would catch the tree line first and misfile every lit tree as a light fixture.
+    ("light",    "ไฟประดับ & โคมไฟ",          ("lanter", "lighting", "lights", "llum", "snake light")),
     ("ribbon",   "ริบบิ้น & โบว์",            ("ribbon", "bow")),
     ("bell",     "ระฆัง",                     ("bell",)),
     ("giftbox",  "กล่องของขวัญ",              ("gift", "box")),
-    ("flower",   "ดอกไม้ & ช่อประดับ",        ("flower", "spray", "branch", "pick", "stem", "butterfly")),
+    ("flower",   "ดอกไม้ & ช่อประดับ",        ("flower", "spray", "branch", "pick", "stem", "butterfly", "ดอกไม้")),
     # "wflake" rather than "snowflake": it matches both the clean spelling and the catalogue's
     # own "Sno wflakes", which is how that heading actually comes out of the PDF
-    ("ornament", "ลูกบอล & ออร์นาเมนต์แขวน",  ("ornament", "bauble", "ball", "glitter", "honeycomb", "tinsel", "wflake")),
+    ("ornament", "ลูกบอล & ออร์นาเมนต์แขวน",  ("ornament", "bauble", "ball", "glitter", "honeycomb", "tinsel", "wflake",
+                                              "ลูกบอล", "นกตกแต่ง", "นกตกเเต่ง")),
     ("topper",   "ดาว & ยอดต้น",              ("topper", "star")),
-    ("tree",     "ต้นคริสต์มาส",              ("tree", "fir", "spruce", "pine", "rosemary")),
+    ("tree",     "ต้นคริสต์มาส",              ("tree", "fir", "spruce", "pine", "rosemary", "ต้นคริสต์มาส")),
     ("banner",   "ป้ายอวยพร & แบนเนอร์",      ("banner", "blessing")),
     # "u u t t c c" is the Nutcracker heading as the PDF actually renders it, every letter
     # doubled: "N N u u t t c c r r a a c c". There is no un-mangled spelling to match on.
     ("figure",   "ตุ๊กตา & ของตั้งโชว์",      ("figure", "santa", "sleigh", "fantasy", "sculpture",
-                                              "foam", "display", "u u t t c c")),
+                                              "foam", "display", "u u t t c c", "ตุ๊กตา")),
 ]
 
 
@@ -304,7 +308,7 @@ def _with_photos():
     return [row for row in _rows() if crop_is_showable(row["code"])]
 
 
-def browse(limit=60, offset=0, category=None):
+def browse(limit=60, offset=0, category=None, book=None):
     """One page of the catalogue in printed order, plus how many pages' worth there are.
 
     Only the codes that have a photo worth showing: this backs a thumbnail grid, and a card
@@ -315,7 +319,21 @@ def browse(limit=60, offset=0, category=None):
     rows = _with_photos()
     if category:
         rows = [row for row in rows if category_of(row) == category]
+    if book:
+        rows = [row for row in rows if row.get("book") == book]
     return rows[offset : offset + limit], len(rows)
+
+
+def shops():
+    """Every brand/shop the catalogue actually holds a showable product for, with counts —
+    same shape as CATEGORIES' counts, so the picker can offer "pick the shop first" as a real
+    filter instead of a hardcoded pair that goes stale the day a third shop's products land."""
+    counts = {}
+    for row in _with_photos():
+        book = row.get("book")
+        if book:
+            counts[book] = counts.get(book, 0) + 1
+    return sorted(counts.items())
 
 
 def refresh():
@@ -367,6 +385,13 @@ def search(query, limit=20):
 _FEET = re.compile(r"([\d.]+)\s*Ft", re.I)
 _INCHES = re.compile(r"([\d.]+)\s*in(?:c|ch|ches)?\b", re.I)
 _SERIES = re.compile(r"([\d.]+(?:\s*[x×]\s*[\d.]+)+)\s*(cm|mm|in(?:c|ch)?)", re.I)
+# "H 215 x D 142 cm", "D80xL80xH10cm" — each number carries its own axis letter, so the plain
+# digit-x-digit _SERIES regex can't match (a letter sits between the "x" and the next number).
+# Tried before _SERIES: a labelled dimension is also a valid _SERIES-shaped string once you
+# ignore the letters, and _SERIES would silently mis-split it (no letters ever changed the
+# answer here, longest_side_mm only ever wants the largest of the numbers).
+_LABELLED_SERIES = re.compile(r"(?:[HDLW]\s*[\d.]+\s*[x×]\s*)+[HDLW]\s*[\d.]+\s*(cm|mm)", re.I)
+_NUMBER = re.compile(r"[\d.]+")
 _CM = re.compile(r"([\d.]+)\s*cm", re.I)
 _MM = re.compile(r"([\d.]+)\s*mm", re.I)
 _METRES = re.compile(r"([\d.]+)\s*m\.", re.I)
@@ -377,10 +402,16 @@ _MM_PER_INCH = 25.4
 
 def parse_size(raw):
     """'5 Ft.' -> height 1524 mm · '80 mm.' -> diameter 80 · '12 inc.' -> 305 mm ·
-    '29 x 150 cm.' -> 290 x 1500 mm. Anything unrecognised returns None rather than a guess —
-    NonGoals.md 8 forbids inventing a dimension, so an unparsed size stays absent, not a
-    plausible-looking wrong number."""
+    '29 x 150 cm.' -> 290 x 1500 mm · 'H 215 x D 142 cm' -> 2150 x 1420 mm. Anything
+    unrecognised returns None rather than a guess — NonGoals.md 8 forbids inventing a
+    dimension, so an unparsed size stays absent, not a plausible-looking wrong number."""
     text = " ".join(raw.split())
+
+    if match := _LABELLED_SERIES.search(text):
+        unit = match.group(1).lower()
+        factor = 10 if unit == "cm" else 1
+        numbers = [float(n) for n in _NUMBER.findall(match.group(0))]
+        return {"dimensions_mm": [round(n * factor) for n in numbers], "unit_printed": unit}
 
     if match := _SERIES.search(text):
         parts = [float(p) for p in re.split(r"[x×]", match.group(1))]

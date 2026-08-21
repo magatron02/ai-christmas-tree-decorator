@@ -333,6 +333,21 @@ function skeletonCard() {
   return card;
 }
 
+async function loadCatalogShops() {
+  try {
+    const { shops } = await call("/api/catalog/shops");
+    const select = $("catalog-shop");
+    for (const item of shops) {
+      const option = document.createElement("option");
+      option.value = item.key;
+      option.textContent = `${item.label} (${item.count})`;
+      select.append(option);
+    }
+  } catch {
+    /* the filter is a convenience; browsing every shop together still works without it */
+  }
+}
+
 async function loadCatalogCategories() {
   try {
     const { categories } = await call("/api/catalog/categories");
@@ -360,6 +375,7 @@ async function loadCatalogPage(restart) {
     const { results, total, codes } = await call(
       `/api/catalog/search?q=${encodeURIComponent(catalogQuery)}` +
         `&category=${encodeURIComponent($("catalog-category").value)}` +
+        `&book=${encodeURIComponent($("catalog-shop").value)}` +
         `&limit=${CATALOG_PAGE}&offset=${catalogCodesShown}`
     );
     if (restart) host.innerHTML = "";
@@ -379,13 +395,17 @@ async function loadCatalogPage(restart) {
 
 /* Panel 1 opens the same dialog locked to the tree category; panel 2 opens it free. Always
  * reloads on open rather than reusing whatever the grid last showed — otherwise switching
- * from one panel's picker to the other's would show the wrong (stale-mode) results. */
+ * from one panel's picker to the other's would show the wrong (stale-mode) results. The shop
+ * filter is never locked by mode — both shops sell trees, so panel 1 still needs to choose
+ * between them, just within the tree category. */
 async function openCatalogPicker(mode) {
   catalogPickerMode = mode;
   const categorySelect = $("catalog-category");
+  const shopSelect = $("catalog-shop");
   // categories have to exist before "tree" can be selected, so this has to be awaited —
   // firing it and moving on left the lock unset on whichever picker opened first
   if (categorySelect.options.length <= 1) await loadCatalogCategories();
+  if (shopSelect.options.length <= 1) await loadCatalogShops();
   categorySelect.disabled = mode === "tree";
   categorySelect.value = mode === "tree" ? "tree" : "";
   $("catalog-dialog").showModal();
@@ -394,6 +414,8 @@ async function openCatalogPicker(mode) {
 
 $("catalog-toggle").addEventListener("click", () => openCatalogPicker("element"));
 $("tree-catalog-toggle").addEventListener("click", () => openCatalogPicker("tree"));
+
+$("catalog-shop").addEventListener("change", () => loadCatalogPage(true));
 
 $("catalog-category").addEventListener("change", () => loadCatalogPage(true));
 

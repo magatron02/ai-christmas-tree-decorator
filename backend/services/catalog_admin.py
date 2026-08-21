@@ -77,7 +77,7 @@ def add_product(code, size_raw, section, book, image_bytes, price=None):
 
     images = _load(PRODUCT_IMAGES_PATH, [])
     images.append({
-        "code": code, "pdf_page": None, "image": filename, "match": "manual",
+        "code": code, "pdf_page": None, "image": filename, "match": "manual", "shared_with": 0,
     })
 
     PRODUCTS_PATH.write_text(json.dumps(products, indent=1, ensure_ascii=False), encoding="utf-8")
@@ -127,7 +127,9 @@ def update_product(code, size_raw, section, book, image_bytes=None, price=None):
             existing["image"] = filename
             existing["match"] = "manual"
         else:
-            images.append({"code": code, "pdf_page": None, "image": filename, "match": "manual"})
+            images.append({
+                "code": code, "pdf_page": None, "image": filename, "match": "manual", "shared_with": 0,
+            })
         PRODUCT_IMAGES_PATH.write_text(json.dumps(images, indent=1, ensure_ascii=False), encoding="utf-8")
 
     catalog.refresh()
