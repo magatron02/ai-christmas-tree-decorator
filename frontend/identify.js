@@ -65,14 +65,17 @@ function wireCodePicker(inputId, listId, hintId) {
         for (const product of results) {
           const option = document.createElement("option");
           option.value = product.code;
-          option.label = [product.size_raw, `p.${product.page}`].filter(Boolean).join(" · ");
+          option.label = [product.size_raw, product.page ? `p.${product.page}` : null]
+            .filter(Boolean).join(" · ");
           list.append(option);
         }
         const exact = results.find((p) => p.code.toLowerCase() === query.toLowerCase());
+        // pdf_page is null for anything not extracted from a book (the whole second shop),
+        // so the page reference is only appended when there actually is one
         $(hintId).textContent = exact
           ? exact.size_raw
-            ? `${exact.code} — ${exact.size_raw} (catalogue หน้า ${exact.page})`
-            : `${exact.code} — แคตตาล็อกไม่ได้พิมพ์ขนาดของชิ้นนี้ไว้`
+            ? `${exact.code} — ${exact.size_raw}` + (exact.page ? ` (หน้า ${exact.page})` : "")
+            : `${exact.code} — ไม่มีขนาดในแคตตาล็อก`
           : "";
       } catch {
         /* the picker is a convenience; the server ignores an unrecognised code anyway */
@@ -204,7 +207,9 @@ function renderIdentified(result) {
       code.textContent = `${candidate.code} · ${candidate.score.toFixed(2)}`;
       const why = document.createElement("div");
       why.className = "why";
-      why.textContent = `${candidate.kind || ""} · หน้า ${candidate.pdf_page}`;
+      // pdf_page is null for anything not extracted from a book (the whole second shop)
+      why.textContent = [candidate.kind, candidate.pdf_page ? `หน้า ${candidate.pdf_page}` : null]
+        .filter(Boolean).join(" · ");
       card.append(code, why);
       // shape is the field that discriminates: kind lumps every figure together, so a
       // nutcracker and a Santa agree on kind and disagree on shape

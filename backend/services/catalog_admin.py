@@ -41,6 +41,23 @@ def _parse_price(raw):
     return price
 
 
+def _saved_state(code):
+    """What the two generation-critical fields actually resolved to once saved.
+
+    Both are derived, not typed: `size_raw` only reaches the prompt if parse_size() can read
+    it, and `section` only reaches the picker if it matches a category's needles. Typing
+    something neither can use fails silently otherwise — the row saves, and the miss only
+    shows up as a product that never appears under a filter, or one that quietly can't do
+    exact scale. The form reports these back instead.
+    """
+    row = catalog.find(code)
+    millimetres = catalog.longest_side_mm(row)
+    return {
+        "size_mm": millimetres,
+        "category": catalog.category_of(row),
+    }
+
+
 def add_product(code, size_raw, section, book, image_bytes, price=None):
     """Append one product. Raises ValidationError on a duplicate code or bad input."""
     code = (code or "").strip().upper()
@@ -83,7 +100,7 @@ def add_product(code, size_raw, section, book, image_bytes, price=None):
     PRODUCTS_PATH.write_text(json.dumps(products, indent=1, ensure_ascii=False), encoding="utf-8")
     PRODUCT_IMAGES_PATH.write_text(json.dumps(images, indent=1, ensure_ascii=False), encoding="utf-8")
     catalog.refresh()
-    return {"code": code, "image": filename}
+    return {"code": code, "image": filename, **_saved_state(code)}
 
 
 def update_product(code, size_raw, section, book, image_bytes=None, price=None):
@@ -133,4 +150,4 @@ def update_product(code, size_raw, section, book, image_bytes=None, price=None):
         PRODUCT_IMAGES_PATH.write_text(json.dumps(images, indent=1, ensure_ascii=False), encoding="utf-8")
 
     catalog.refresh()
-    return {"code": code}
+    return {"code": code, **_saved_state(code)}

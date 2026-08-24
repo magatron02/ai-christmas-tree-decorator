@@ -16,6 +16,16 @@ const CHIP_CLASS = {
   delivered: "chip done",
 };
 
+/* The row used to print the raw state name ("api_success", "calling_api"). Same states as
+ * app.js's STATE_LABEL, worded for a log rather than for the run in progress. */
+const STATUS_LABEL = {
+  pending: "ยังไม่ได้สร้าง",
+  calling_api: "กำลังสร้าง",
+  api_success: "สร้างแล้ว",
+  api_failed: "ไม่สำเร็จ — ไม่ถูกคิดเงิน",
+  delivered: "ส่งถึงแล้ว",
+};
+
 function cell(row, text, className) {
   const td = document.createElement("td");
   if (className) td.className = className;
@@ -49,7 +59,7 @@ async function load() {
     const state = document.createElement("td");
     const chip = document.createElement("span");
     chip.className = CHIP_CLASS[request.status] || "chip";
-    chip.textContent = request.status;
+    chip.textContent = STATUS_LABEL[request.status] || request.status;
     chip.title = request.error || "";
     state.append(chip);
     row.append(state);

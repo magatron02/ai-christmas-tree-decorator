@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tree Decorator — ตั้งค่า</title>
 <link rel="icon" href="/static/icon.ico">
-<link rel="stylesheet" href="/static/styles/tokens.css?v=8.31">
-<link rel="stylesheet" href="/static/styles/components.css?v=8.31">
-<script src="/static/theme.js?v=8.31"></script>
+<link rel="stylesheet" href="/static/styles/tokens.css?v=8.39">
+<link rel="stylesheet" href="/static/styles/components.css?v=8.39">
+<script src="/static/theme.js?v=8.39"></script>
 </head>
 <body>
 
@@ -18,10 +18,22 @@
 
 <div class="frame">
   <nav class="sidebar">
-    <a class="row" href="/">หน้าแรก</a>
-    <a class="row" href="/identify">หาสินค้าจากรูป</a>
-    <a class="row" href="/history">ประวัติ</a>
-    <a class="row active" href="/settings">ตั้งค่า</a>
+    <a class="row" href="/">
+      <span class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg></span>
+      หน้าแรก
+    </a>
+    <a class="row" href="/identify">
+      <span class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-4 4-3-3-6 6"/></svg></span>
+      หาสินค้าจากรูป
+    </a>
+    <a class="row" href="/history">
+      <span class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>
+      ประวัติ
+    </a>
+    <a class="row active" href="/settings">
+      <span class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></span>
+      ตั้งค่า
+    </a>
   </nav>
 
   <main class="page">
@@ -31,7 +43,7 @@
 
         <section class="card stack">
           <span class="section-title">หน้าตา</span>
-          <span class="hint">เก็บไว้ใน browser นี้เท่านั้น ไม่ส่งอะไรขึ้น server</span>
+          <span class="hint">เก็บไว้ในเครื่องนี้เท่านั้น</span>
           <div class="btn-row">
             <button class="btn" id="theme-light">สว่าง</button>
             <button class="btn" id="theme-dark">มืด</button>
@@ -47,16 +59,12 @@
                  placeholder="sk-…">
           <div class="btn-row">
             <button class="btn primary" id="key-save">บันทึก key</button>
-            <span class="hint">
-              เขียนลงไฟล์ .env ในเครื่องนี้ · ค่าไม่เคยถูกส่งกลับมาแสดงในหน้านี้
-              กล่องด้านบนบอกได้แค่ว่าตั้งไว้แล้วหรือยัง
-            </span>
+            <span class="hint">เก็บไว้ในเครื่องนี้ · บันทึกแล้วจะไม่แสดงค่ากลับมาอีก</span>
           </div>
           <div class="notice" id="key-error" hidden></div>
-          <span class="hint">
-            ขอ key ได้ที่ platform.openai.com/api-keys · บัญชีต้องผูก billing ไว้
-            เพราะ gpt-image-2 ไม่มี free tier
-          </span>
+          <span class="hint">ขอ key ได้ที่
+            <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">platform.openai.com/api-keys</a>
+            · บัญชีต้องผูก billing ไว้</span>
         </section>
 
         <section class="card stack">
@@ -74,11 +82,21 @@
 
         <section class="card stack">
           <span class="section-title">จัดการ catalogue</span>
-          <span class="hint">เพิ่มสินค้าทีละชิ้น หรือคลิกแถวด้านล่างเพื่อแก้ไข — ลบยังทำในหน้านี้ไม่ได้ แก้ไฟล์ catalog/ ตรง ๆ ถ้าต้องลบจริง ๆ</span>
+          <span class="hint">เพิ่มสินค้าทีละชิ้น หรือคลิกแถวด้านล่างเพื่อแก้ไข</span>
           <input class="input" id="cat-code" placeholder="รหัสสินค้า เช่น 017-06">
-          <input class="input" id="cat-size" placeholder="ขนาด — ไม่ใส่ก็ได้ เช่น 80 mm.">
-          <input class="input" id="cat-section" placeholder="หมวด — ไม่ใส่ก็ได้">
-          <input class="input" id="cat-book" placeholder="เล่ม — ไม่ใส่ก็ได้ เช่น 2026">
+
+          <input class="input" id="cat-size" placeholder="ขนาด เช่น 80 mm. หรือ H 215 x D 142 cm">
+          <span class="hint">ต้องมีขนาด ภาพที่เจนถึงจะได้สัดส่วนตรงของจริง</span>
+
+          <input class="input" id="cat-section" list="cat-section-list" autocomplete="off"
+                 placeholder="หมวด เช่น ลูกบอล, ต้นคริสต์มาส, ตุ๊กตา">
+          <datalist id="cat-section-list"></datalist>
+          <span class="hint">ใช้จัดกลุ่มตอนเลือกของ ถ้าไม่ตรงหมวดไหนเลยจะหาไม่เจอในตัวกรอง</span>
+
+          <input class="input" id="cat-book" list="cat-book-list" autocomplete="off"
+                 placeholder="ร้าน เช่น Bangkok Christmas">
+          <datalist id="cat-book-list"></datalist>
+
           <input class="input" id="cat-price" type="number" min="0" step="0.01" placeholder="ราคา (บาท) — ไม่ใส่ก็ได้">
           <input class="input" type="file" id="cat-image" accept="image/jpeg,image/png">
           <span class="hint" id="cat-image-hint" hidden>ไม่เลือกรูปใหม่ = รูปเดิมไม่เปลี่ยน</span>
@@ -99,11 +117,8 @@
 
         <section class="card stack" id="conflicts-panel" hidden>
           <span class="section-title">รหัสชนกัน — ต้องดูด้วยตา</span>
-          <span class="hint">
-            รหัสพวกนี้เจอสองความหมายคนละหน้า ระบบไม่กล้าเดาว่าอันไหนจริง เลยไม่โชว์ทั้งใน catalogue
-            picker และค้นจากรูป จนกว่าจะมีคนตัดสินใจ (แก้ catalog/products.json ตรง ๆ)
-          </span>
-          <div class="scroll-x">
+          <span class="hint">รหัสพวกนี้ซ้ำกันสองที่ ยังไม่รู้ว่าอันไหนถูก จึงไม่แสดงในระบบจนกว่าจะแก้</span>
+          <div class="scroll-x wide">
             <table>
               <thead><tr><th>รหัส</th><th>เก็บไว้ (ใช้อยู่)</th><th>ตัวที่ชน</th></tr></thead>
               <tbody id="conflicts-rows"></tbody>
@@ -117,7 +132,7 @@
   </main>
 </div>
 
-<script src="/static/api.js?v=8.31"></script>
-<script src="/static/settings.js?v=8.31"></script>
+<script src="/static/api.js?v=8.39"></script>
+<script src="/static/settings.js?v=8.39"></script>
 </body>
 </html>

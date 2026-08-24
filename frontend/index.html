@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tree Decorator</title>
 <link rel="icon" href="/static/icon.ico">
-<link rel="stylesheet" href="/static/styles/tokens.css?v=8.31">
-<link rel="stylesheet" href="/static/styles/components.css?v=8.31">
-<script src="/static/theme.js?v=8.31"></script>
+<link rel="stylesheet" href="/static/styles/tokens.css?v=8.39">
+<link rel="stylesheet" href="/static/styles/components.css?v=8.39">
+<script src="/static/theme.js?v=8.39"></script>
 </head>
 <body>
 
@@ -26,10 +26,22 @@
 
 <div class="frame">
   <nav class="sidebar">
-    <a class="row active" href="/">หน้าแรก</a>
-    <a class="row" href="/identify">หาสินค้าจากรูป</a>
-    <a class="row" href="/history">ประวัติ</a>
-    <a class="row" href="/settings">ตั้งค่า</a>
+    <a class="row active" href="/">
+      <span class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg></span>
+      หน้าแรก
+    </a>
+    <a class="row" href="/identify">
+      <span class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-4 4-3-3-6 6"/></svg></span>
+      หาสินค้าจากรูป
+    </a>
+    <a class="row" href="/history">
+      <span class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>
+      ประวัติ
+    </a>
+    <a class="row" href="/settings">
+      <span class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></span>
+      ตั้งค่า
+    </a>
   </nav>
 
   <main class="page stack">
@@ -42,14 +54,13 @@
       <section class="card stack">
         <span class="panel-title">1 — ต้นเปล่า</span>
         <input class="input" type="file" id="tree-file" accept="image/jpeg,image/png">
-        <input class="input" id="tree-code" list="tree-code-list" autocomplete="off"
-               placeholder="รหัสสินค้า — ไม่ใส่ก็ได้ เช่น 05021-1">
-        <datalist id="tree-code-list"></datalist>
-        <span class="hint" id="tree-code-hint">ใส่รหัสให้ครบทุกชิ้น แล้วขนาดจริงจะถูกส่งเข้า prompt</span>
         <div class="btn-row">
           <button class="btn" id="tree-catalog-toggle">เลือกจาก catalogue</button>
         </div>
-        <img class="thumb" id="tree-preview" alt="ต้นเปล่า" hidden>
+        <div class="thumb-frame" id="tree-preview-frame" hidden>
+          <img class="thumb" id="tree-preview" alt="ต้นเปล่า">
+          <span class="thumb-code" id="tree-code-badge" hidden></span>
+        </div>
       </section>
 
       <section class="card stack role-decoration">
@@ -57,7 +68,7 @@
         <div class="decoration-columns">
 
           <div class="stack decoration-list-col">
-            <span class="hint" id="element-count-hint">ใส่ได้ถึง 5 ชิ้น แต่ละชิ้นตัดพื้นหลังแยกกัน จะได้ตรวจทีละอัน</span>
+            <span class="hint" id="element-count-hint">ใส่ได้ถึง 5 ชิ้น</span>
             <ul class="accepted" id="accepted-elements"></ul>
           </div>
 
@@ -65,7 +76,7 @@
 
             <div class="stack">
               <span class="section-title">1. บรรยากาศอ้างอิง (ไม่ใส่ก็ได้)</span>
-              <span class="hint">รูปสถานที่ที่อยากให้ผลลัพธ์อยู่ — เอาแค่โทนแสง ไม่ลอกของในรูป</span>
+              <span class="hint">รูปสถานที่ที่อยากให้ต้นไปอยู่</span>
               <input class="input" type="file" id="scene-reference-file" accept="image/jpeg,image/png">
               <div class="btn-row" id="scene-reference-actions" hidden>
                 <button class="btn danger" id="scene-reference-clear">เอารูปออก</button>
@@ -75,17 +86,16 @@
 
             <div class="stack">
               <span class="section-title">2. อัปโหลดของตกแต่ง</span>
-              <span class="hint">รูปของตกแต่งชิ้นเดียว แล้วกดตัดพื้นหลังก่อนใช้</span>
+              <span class="hint">รูปของตกแต่งชิ้นเดียว ตัดพื้นหลังก่อนใช้</span>
               <input class="input" type="file" id="element-file" accept="image/jpeg,image/png">
-              <input class="input" id="element-code" list="element-code-list" autocomplete="off"
-                     placeholder="รหัสสินค้า — ไม่ใส่ก็ได้ เช่น 017-06">
-              <datalist id="element-code-list"></datalist>
-              <span class="hint" id="element-code-hint"></span>
               <div class="btn-row">
                 <button class="btn" id="cut-btn" disabled>ตัดพื้นหลัง</button>
-                <span class="hint" id="cut-hint">ทำในเครื่อง ไม่เสียเงิน</span>
+                <span class="hint" id="cut-hint"></span>
               </div>
-              <img class="thumb-sm checker" id="element-preview" alt="ของตกแต่งที่ตัดพื้นหลังแล้ว" hidden>
+              <div class="thumb-frame-sm" id="element-preview-frame" hidden>
+                <img class="thumb-sm checker" id="element-preview" alt="ของตกแต่งที่ตัดพื้นหลังแล้ว">
+                <span class="thumb-code" id="element-code-badge" hidden></span>
+              </div>
               <div class="btn-row" id="element-actions" hidden>
                 <button class="btn" id="accept-btn">ใช้ชิ้นนี้</button>
                 <button class="btn danger" id="reject-btn">ทิ้ง แล้วลองใหม่</button>
@@ -94,7 +104,6 @@
 
             <div class="stack">
               <span class="section-title">3. หรือเลือกจาก catalogue</span>
-              <span class="hint">ค้นจากสินค้าที่มีอยู่แล้ว ไม่ต้องหาไฟล์เอง</span>
               <button class="btn" id="catalog-toggle">เลือกจาก catalogue</button>
             </div>
 
@@ -110,13 +119,12 @@
         <div class="btn-row">
           <button class="btn primary" id="generate-btn" disabled>สร้างภาพ</button>
         </div>
-        <span class="hint">ถามยืนยันก่อนเสมอ ขั้นนี้ขั้นเดียวที่เสียเงิน</span>
         <div class="notice" id="error-box" hidden></div>
         <span class="hint" id="result-empty">ภาพที่ได้จะปรากฏตรงนี้</span>
         <img class="thumb" id="out-result" alt="ต้นที่แต่งแล้ว" hidden>
         <div class="btn-row" id="count-actions" hidden>
           <button class="btn" id="count-btn">นับของในรูปนี้</button>
-          <span class="hint">อ่านรูปที่เจนแล้ว · เสียเงินเพิ่มเล็กน้อย</span>
+          <span class="hint">เสียเงินเพิ่มเล็กน้อย</span>
         </div>
         <ul class="hint" id="result-quantities" hidden></ul>
         <span class="hint" id="count-note" hidden></span>
@@ -171,7 +179,7 @@
   <img id="lightbox-image" alt="">
 </dialog>
 
-<script src="/static/api.js?v=8.31"></script>
-<script src="/static/app.js?v=8.31"></script>
+<script src="/static/api.js?v=8.39"></script>
+<script src="/static/app.js?v=8.39"></script>
 </body>
 </html>

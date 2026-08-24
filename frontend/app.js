@@ -17,17 +17,17 @@ const $ = (id) => document.getElementById(id);
 
 const STATE_LABEL = {
   pending: ["", "พร้อมสร้างภาพ"],
-  calling_api: ["running", "กำลังเรียก gpt-image-2…"],
+  calling_api: ["running", "กำลังสร้างภาพ…"],
   api_success: ["done", "ได้ภาพแล้ว"],
   api_failed: ["failed", "สร้างไม่สำเร็จ — ไม่ถูกคิดเงิน"],
   delivered: ["done", "ส่งถึงแล้ว"],
-  code_mismatch: ["failed", "ใส่รหัสสินค้าให้ทั้งต้นไม้และของตกแต่งทุกชิ้น หรือลบรหัสออกให้หมด"],
 };
 
 const MAX_ELEMENTS = 5;
 
 const state = {
   treeFile: null,
+  treeCode: null, // set only by the catalogue picker — an uploaded photo has no code
   elements: [], // {name, url, code} — one entry per accepted cut-out, up to MAX_ELEMENTS
   sceneReference: null, // stored filename of the optional scene/ambience photo (used at generate time)
   requestId: null,
@@ -48,21 +48,24 @@ function showError(message) {
   box.hidden = !message;
 }
 
-/* Mirrors the backend's all-or-nothing rule (catalog.scale_sentence): a code for the tree
- * and every decoration, or none at all — anything in between is refused server-side, so the
- * button catches it before a free /api/prepare round-trip has to say so. Checked live because
- * the catalogue picker fills element-code by itself; without this a decoration picked from
- * catalogue silently blocks generate until the user notices the tree has no code too. */
-function codesConsistent() {
-  const treeCode = $("tree-code").value.trim();
-  const codes = state.elements.map((element) => element.code || "");
-  if (!treeCode && !codes.some(Boolean)) return true;
-  return Boolean(treeCode) && codes.every(Boolean);
+/* Real millimetres need a code on the tree AND on every decoration: the prompt states a
+ * ratio between the two, and half of one is not a ratio (catalog.scale_sentence refuses a
+ * partial set outright).
+ *
+ * Codes are no longer typed — they arrive attached to whatever came out of the catalogue
+ * picker — so a mixed set (own photo of a tree, catalogue decoration) is now something the
+ * user cannot fix by filling a box. Generate stays available in that case and simply sends
+ * no codes at all, the same as a run where nothing was picked from the catalogue; the
+ * confirm dialog says the sizes will not be exact. Sending the half that exists is the one
+ * thing that must not happen — the server refuses it, and it could not produce a ratio
+ * anyway. */
+function exactScaleReady() {
+  return Boolean(state.treeCode) && state.elements.length > 0
+    && state.elements.every((element) => element.code);
 }
 
 function refreshGenerateButton() {
-  $("generate-btn").disabled =
-    !(state.treeFile && state.elements.length) || !codesConsistent() || state.busy;
+  $("generate-btn").disabled = !(state.treeFile && state.elements.length) || state.busy;
 }
 
 /* The accepted decorations, each removable. Shown as a list rather than a count so it is
@@ -101,10 +104,9 @@ function renderElements() {
 
   const room = MAX_ELEMENTS - state.elements.length;
   $("element-count-hint").textContent = room
-    ? `ใส่แล้ว ${state.elements.length} จาก ${MAX_ELEMENTS} ชิ้น แต่ละชิ้นตัดพื้นหลังแยกกัน จะได้ตรวจทีละอัน`
+    ? `ใส่แล้ว ${state.elements.length} จาก ${MAX_ELEMENTS} ชิ้น`
     : `ครบ ${MAX_ELEMENTS} ชิ้นแล้ว — เอาออกสักชิ้นถ้าจะเปลี่ยน`;
   $("element-file").disabled = room === 0;
-  $("element-code").disabled = room === 0;
 }
 
 /* The chip shows the pipeline state of the current run, so it is only reset when the user
@@ -119,8 +121,7 @@ function resetRun() {
   $("count-note").hidden = true;
   $("result-empty").hidden = false;
   showError("");
-  if (!codesConsistent()) setStatus("code_mismatch");
-  else if (state.treeFile && state.elements.length) setStatus("pending");
+  if (state.treeFile && state.elements.length) setStatus("pending");
   else setStatus("waiting", "รอต้นเปล่ากับของตกแต่งอย่างน้อย 1 ชิ้น");
   refreshGenerateButton();
 }
@@ -171,74 +172,56 @@ async function loadConfig() {
     select.append(option);
   }
   select.disabled = false;
-  $("cut-hint").textContent = `ทำในเครื่อง ไม่เสียเงิน · ไม่เกิน ${config.max_upload_mb} MB, JPG หรือ PNG`;
+  $("cut-hint").textContent = `ไม่เกิน ${config.max_upload_mb} MB, JPG หรือ PNG`;
 }
 
-/* ---- product codes ----
- * Optional, but they come in pairs: with both, the server can put the real millimetres in
- * the prompt instead of asking for "a believable size" (Product.md 8.2). The datalist is
- * filled from the catalogue rather than typed from memory — 1,092 codes is too many to
- * remember and a mistyped code is a wrong order. */
-function wireCodePicker(inputId, listId, hintId) {
-  const input = $(inputId);
-  let timer;
-
-  input.addEventListener("input", () => {
-    clearTimeout(timer);
-    timer = setTimeout(async () => {
-      const query = input.value.trim();
-      if (query.length < 2) return;
-      try {
-        const { results } = await call(`/api/products?q=${encodeURIComponent(query)}`);
-        const list = $(listId);
-        list.innerHTML = "";
-        for (const product of results) {
-          const option = document.createElement("option");
-          option.value = product.code;
-          option.label = [product.size_raw, `p.${product.page}`].filter(Boolean).join(" · ");
-          list.append(option);
-        }
-        const exact = results.find((p) => p.code.toLowerCase() === query.toLowerCase());
-        $(hintId).textContent = exact
-          ? exact.size_raw
-            ? `${exact.code} — ${exact.size_raw} (catalogue หน้า ${exact.page})`
-            : `${exact.code} — แคตตาล็อกไม่ได้พิมพ์ขนาดของชิ้นนี้ไว้`
-          : "";
-      } catch {
-        /* the picker is a convenience; the server re-checks the code on prepare anyway */
-      }
-    }, 200);
-  });
+/* Codes are never typed on this page: they ride along with whatever the catalogue picker
+ * hands over, and are shown burned onto the preview so they can still be read back.
+ * Product.md 8.2 wanted them so the prompt could state real millimetres; a code typed from
+ * memory out of ~1,300 was always a wrong order waiting to happen. Settings is where a code
+ * gets entered by hand, against the catalogue row it belongs to. */
+function showTreeCode(code) {
+  state.treeCode = code || null;
+  const badge = $("tree-code-badge");
+  badge.textContent = code || "";
+  badge.hidden = !code;
 }
 
-wireCodePicker("tree-code", "tree-code-list", "tree-code-hint");
-wireCodePicker("element-code", "element-code-list", "element-code-hint");
-$("tree-code").addEventListener("input", () => resetRun());
+function showElementCode(code) {
+  const badge = $("element-code-badge");
+  badge.textContent = code || "";
+  badge.hidden = !code;
+  $("element-preview").dataset.code = code || "";
+}
+
 renderElements();
 
 /* ---- step 1: bare tree ---- */
 $("tree-file").addEventListener("change", (event) => {
   const file = event.target.files[0] || null;
   state.treeFile = file;
-  const preview = $("tree-preview");
-  preview.hidden = !file;
-  if (file) preview.src = URL.createObjectURL(file);
+  $("tree-preview-frame").hidden = !file;
+  if (file) $("tree-preview").src = URL.createObjectURL(file);
+  // an own photo carries no catalogue code, and must not keep the one the picker left behind
+  showTreeCode(null);
   resetRun();
 });
 
 /* ---- step 2: element, background removed, previewed, accepted or discarded ---- */
 $("element-file").addEventListener("change", (event) => {
   $("cut-btn").disabled = !event.target.files[0];
-  $("element-preview").hidden = true;
+  $("element-preview-frame").hidden = true;
   $("element-actions").hidden = true;
+  showElementCode(null);
   resetRun();
 });
 
-function showElementPreview(result) {
+function showElementPreview(result, code = null) {
   $("element-preview").src = result.element_url;
-  $("element-preview").hidden = false;
+  $("element-preview-frame").hidden = false;
   $("element-actions").hidden = false;
   $("element-preview").dataset.name = result.element;
+  showElementCode(code);
 }
 
 $("cut-btn").addEventListener("click", async () => {
@@ -434,8 +417,7 @@ async function useFromCatalog(code, image) {
     const body = new FormData();
     body.append("code", code);
     if (image) body.append("image", image);
-    showElementPreview(await call("/api/element/from-catalog", { method: "POST", body }));
-    $("element-code").value = code;
+    showElementPreview(await call("/api/element/from-catalog", { method: "POST", body }), code);
     $("catalog-dialog").close();
   } catch (err) {
     $("catalog-dialog").close();
@@ -456,8 +438,9 @@ async function useTreeFromCatalog(code, image) {
     const blob = await (await fetch(result.tree_url)).blob();
     state.treeFile = new File([blob], result.tree, { type: "image/png" });
     $("tree-preview").src = result.tree_url;
-    $("tree-preview").hidden = false;
-    $("tree-code").value = code;
+    $("tree-preview-frame").hidden = false;
+    $("tree-file").value = "";  // the picker's tree replaces whatever was uploaded
+    showTreeCode(code);
     $("catalog-dialog").close();
     resetRun();
   } catch (err) {
@@ -471,15 +454,14 @@ $("accept-btn").addEventListener("click", () => {
   state.elements.push({
     name: preview.dataset.name,
     url: preview.src,
-    code: $("element-code").value.trim(),
+    code: preview.dataset.code || "",
   });
   // clear the slot so the next decoration starts from nothing
   $("element-file").value = "";
-  $("element-code").value = "";
-  $("element-code-hint").textContent = "";
-  preview.hidden = true;
+  $("element-preview-frame").hidden = true;
   $("element-actions").hidden = true;
   $("cut-btn").disabled = true;
+  showElementCode(null);
   renderElements();
   resetRun();
 });
@@ -488,9 +470,10 @@ $("accept-btn").addEventListener("click", () => {
  * ride to the end of the pipeline. */
 $("reject-btn").addEventListener("click", () => {
   $("element-file").value = "";
-  $("element-preview").hidden = true;
+  $("element-preview-frame").hidden = true;
   $("element-actions").hidden = true;
   $("cut-btn").disabled = true;
+  showElementCode(null);
   resetRun();
 });
 
@@ -532,15 +515,21 @@ $("generate-btn").addEventListener("click", async () => {
   refreshGenerateButton();
   showError("");
 
+  // all the codes or none: a partial set cannot produce a ratio and the server refuses it,
+  // and it is no longer something the user could complete by hand (see exactScaleReady)
+  const exact = exactScaleReady();
+  const droppedCodes = !exact
+    && (Boolean(state.treeCode) || state.elements.some((element) => element.code));
+
   try {
     const body = new FormData();
     body.append("files", state.treeFile);
     body.append("size", $("size-select").value);
-    body.append("tree_code", $("tree-code").value.trim());
+    body.append("tree_code", exact ? state.treeCode : "");
     if (state.sceneReference) body.append("reference", state.sceneReference);
     for (const element of state.elements) {
       body.append("element", element.name);
-      body.append("element_code", element.code);
+      body.append("element_code", exact ? element.code : "");
     }
 
     const prepared = await call("/api/prepare", { method: "POST", body });
@@ -550,20 +539,22 @@ $("generate-btn").addEventListener("click", async () => {
       ? `ของตกแต่ง ${prepared.element_count} ชิ้นผสมกัน`
       : `ของตกแต่ง 1 ชิ้น`;
     $("confirm-body").textContent =
-      `จะเรียก gpt-image-2 สร้างภาพ ${prepared.width} × ${prepared.height} หนึ่งภาพ ` +
-      `พร้อม${many} · คิดเงินจากบัญชี OpenAI ของคุณ และคิดเฉพาะตอนที่ได้ภาพกลับมา · ` +
+      `สร้างภาพ ${prepared.width} × ${prepared.height} หนึ่งภาพ พร้อม${many} · ` +
+      `เสียเงินเฉพาะตอนที่ได้ภาพกลับมา · ` +
       (prepared.reference_url
-        ? `ต้นจะถูกย้ายไปอยู่ในสถานที่ใหม่ตามรูปอ้างอิงที่ใส่ไว้ · `
-        : `ต้นจะอยู่บนพื้นหลังเดิมของมัน · `) +
+        ? `ต้นจะย้ายไปอยู่ในสถานที่ตามรูปอ้างอิง · `
+        : `ต้นจะอยู่บนพื้นหลังเดิม · `) +
       (prepared.exact_scale
-        ? `ขนาดมาจากแคตตาล็อกทั้งหมด`
+        ? `ขนาดตรงตามแคตตาล็อกทุกชิ้น`
         : prepared.missing_sizes.length
-          ? `บางชิ้นแคตตาล็อกไม่มีขนาด — ดูรายการด้านล่าง ชิ้นนั้น model จะกะขนาดเอง`
-          : `ไม่ได้ใส่รหัสสินค้า ขนาดจึงขึ้นกับที่ model ตัดสินเอง`);
+          ? `บางชิ้นไม่มีขนาดในแคตตาล็อก — ดูด้านล่าง`
+          : droppedCodes
+            ? `มีบางชิ้นที่ไม่ได้เลือกจาก catalogue ขนาดจึงไม่ตรงของจริง`
+            : `ไม่ได้เลือกจาก catalogue ขนาดจึงไม่ตรงของจริง`);
 
     const missingBox = $("confirm-missing-sizes");
     missingBox.textContent = prepared.missing_sizes.length
-      ? `แคตตาล็อกไม่มีขนาดของ: ${prepared.missing_sizes.join(", ")} — ชิ้นนี้ model จะกะสัดส่วนเอง ไม่ใช่ตัวเลขจริง`
+      ? `แคตตาล็อกไม่มีขนาดของ: ${prepared.missing_sizes.join(", ")} — ขนาดชิ้นนี้จะไม่ตรงของจริง`
       : "";
     missingBox.hidden = !prepared.missing_sizes.length;
 

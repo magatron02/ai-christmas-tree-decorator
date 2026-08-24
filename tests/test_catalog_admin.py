@@ -36,6 +36,32 @@ def temp_catalog(tmp_path, monkeypatch):
     catalog.refresh()
 
 
+def test_add_reports_what_the_derived_fields_resolved_to(temp_catalog):
+    """The form shows these back because neither fails loudly: an unreadable size just means
+    no exact scale, and a section matching no category just means the product never appears
+    under a picker filter."""
+    saved = catalog_admin.add_product("017-06", "80 mm.", "baubles", "", png_bytes())
+    assert saved["size_mm"] == 80
+    assert saved["category"] == "ornament"
+
+
+def test_add_reports_a_size_it_could_not_read(temp_catalog):
+    saved = catalog_admin.add_product("017-06", "large-ish", "baubles", "", png_bytes())
+    assert saved["size_mm"] is None
+
+
+def test_add_reports_a_section_matching_no_category(temp_catalog):
+    saved = catalog_admin.add_product("017-06", "80 mm.", "ไม่ตรงอะไรเลย", "", png_bytes())
+    assert saved["category"] is None
+
+
+def test_edit_reports_the_same_derived_fields(temp_catalog):
+    catalog_admin.add_product("017-06", "large-ish", "ไม่ตรงอะไรเลย", "", png_bytes())
+    saved = catalog_admin.update_product("017-06", "5 Ft.", "ต้นคริสต์มาส", "")
+    assert saved["size_mm"] == 1524
+    assert saved["category"] == "tree"
+
+
 def test_add_records_shared_with_like_the_pdf_pipeline_does(temp_catalog):
     """Regression: add_product's images.json entry used to omit shared_with entirely, so
     test_product_index.py's "every image row is counted" guarantee silently didn't hold for

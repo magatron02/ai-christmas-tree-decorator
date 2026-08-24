@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tree Decorator — ประวัติ</title>
 <link rel="icon" href="/static/icon.ico">
-<link rel="stylesheet" href="/static/styles/tokens.css?v=8.31">
-<link rel="stylesheet" href="/static/styles/components.css?v=8.31">
-<script src="/static/theme.js?v=8.31"></script>
+<link rel="stylesheet" href="/static/styles/tokens.css?v=8.39">
+<link rel="stylesheet" href="/static/styles/components.css?v=8.39">
+<script src="/static/theme.js?v=8.39"></script>
 </head>
 <body>
 
@@ -26,21 +26,30 @@
 
 <div class="frame">
   <nav class="sidebar">
-    <a class="row" href="/">หน้าแรก</a>
-    <a class="row" href="/identify">หาสินค้าจากรูป</a>
-    <a class="row active" href="/history">ประวัติ</a>
-    <a class="row" href="/settings">ตั้งค่า</a>
+    <a class="row" href="/">
+      <span class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg></span>
+      หน้าแรก
+    </a>
+    <a class="row" href="/identify">
+      <span class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-4 4-3-3-6 6"/></svg></span>
+      หาสินค้าจากรูป
+    </a>
+    <a class="row active" href="/history">
+      <span class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>
+      ประวัติ
+    </a>
+    <a class="row" href="/settings">
+      <span class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></span>
+      ตั้งค่า
+    </a>
   </nav>
 
   <main class="page">
     <section class="card stack">
-      <span class="section-title">ทุก request เรียงใหม่สุดก่อน</span>
-      <span class="hint">
-        ถ้า generation สำเร็จฝั่ง server แต่ผลไม่ถึง browser ภาพยังอยู่ที่นี่
-        และค่าใช้จ่ายยังถูกบันทึกไว้ ระบบไม่ retry ให้เองโดยอัตโนมัติ
-      </span>
+      <span class="section-title">ภาพที่สร้างทั้งหมด เรียงใหม่สุดก่อน</span>
+      <span class="hint">ภาพที่สร้างสำเร็จแต่ไม่ขึ้นบนหน้าจอ ยังโหลดได้จากตรงนี้</span>
       <div class="notice" id="error-box" hidden></div>
-      <div class="scroll-x">
+      <div class="scroll-x wide">
       <table>
         <thead>
           <tr>
@@ -60,7 +69,7 @@
   </main>
 </div>
 
-<script src="/static/api.js?v=8.31"></script>
-<script src="/static/history.js?v=8.31"></script>
+<script src="/static/api.js?v=8.39"></script>
+<script src="/static/history.js?v=8.39"></script>
 </body>
 </html>

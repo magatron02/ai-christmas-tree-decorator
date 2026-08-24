@@ -170,6 +170,44 @@ async function loadRecentCatalog() {
   }
 }
 
+/* The shop and category boxes are free text on purpose — a new shop has to be typeable — but
+ * both only do their job when they match what the rest of the app already knows, so what
+ * exists is offered as a datalist rather than left to memory. */
+async function loadCatalogLists() {
+  try {
+    const [{ shops }, { categories }] = await Promise.all([
+      call("/api/catalog/shops"),
+      call("/api/catalog/categories"),
+    ]);
+    const fill = (listId, items) => {
+      const list = $(listId);
+      list.innerHTML = "";
+      for (const item of items) {
+        const option = document.createElement("option");
+        option.value = item.label;
+        list.append(option);
+      }
+    };
+    fill("cat-book-list", shops);
+    fill("cat-section-list", categories);
+  } catch {
+    /* the lists are a convenience; both boxes still accept anything typed into them */
+  }
+}
+
+/* Says what the two derived fields actually resolved to, because neither fails loudly:
+ * an unreadable size just means no exact scale, and a section that matches no category just
+ * means the product never shows up under a filter. */
+function showSavedState(saved) {
+  const parts = [`บันทึก ${saved.code} แล้ว`];
+  parts.push(saved.size_mm ? `ขนาด ${Math.round(saved.size_mm)} mm` : "อ่านขนาดไม่ออก");
+  if (!saved.category) parts.push("ไม่ตรงหมวดไหน");
+  const chip = $("cat-status");
+  chip.className = saved.size_mm && saved.category ? "chip done" : "chip stale";
+  chip.textContent = parts.join(" · ");
+  chip.hidden = false;
+}
+
 $("cat-add").addEventListener("click", async () => {
   $("cat-error").hidden = true;
   const image = $("cat-image").files[0];
@@ -192,11 +230,13 @@ $("cat-add").addEventListener("click", async () => {
     const url = editingCode
       ? `/api/catalog/products/${encodeURIComponent(editingCode)}`
       : "/api/catalog/products";
-    await call(url, { method: "POST", body });
+    const saved = await call(url, { method: "POST", body });
 
     if (editingCode) exitEditMode();
     else ["cat-code", "cat-size", "cat-section", "cat-book", "cat-price", "cat-image"].forEach((id) => ($(id).value = ""));
+    showSavedState(saved);
     await loadRecentCatalog();
+    await loadCatalogLists();
   } catch (err) {
     $("cat-error").textContent = err.message;
     $("cat-error").hidden = false;
@@ -225,3 +265,4 @@ $("cat-sync").addEventListener("click", async () => {
 });
 
 loadRecentCatalog();
+loadCatalogLists();

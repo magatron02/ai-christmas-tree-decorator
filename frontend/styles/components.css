@@ -16,7 +16,7 @@
   letter-spacing: -0.01em;
 }
 .caption {
-  font-family: var(--font-th);
+  font-family: var(--font-heading);
   font-size: var(--text-sm);
   font-weight: 600;
   color: var(--text-muted);
@@ -24,7 +24,7 @@
 /* panel headings ("1 — ...", "2 — ...") need their own step above body text — .caption stays
    small for hints/stat-labels, this is the only thing that should read as a section title. */
 .panel-title {
-  font-family: var(--font-th);
+  font-family: var(--font-heading);
   font-size: var(--text-md);
   font-weight: 600;
   color: var(--text-primary);
@@ -33,12 +33,17 @@
    itself. Same weight/colour as .caption (only the size was ever the bug) but a full step
    up from body text, matching the title/description pairing DESIGN.md §13 already uses. */
 .section-title {
-  font-family: var(--font-th);
+  font-family: var(--font-heading);
   font-size: var(--text-lg);
   font-weight: 600;
   color: var(--text-muted);
 }
 .hint { font-size: var(--text-sm); color: var(--text-muted) }
+/* A link inside body copy keeps the copy's own colour and marks itself with an underline —
+   the browser default is a blue that exists nowhere else in the palette. */
+.hint a { color: inherit; text-decoration: underline }
+.hint a:hover,
+.hint a:focus-visible { color: var(--text-primary) }
 .mono { font-family: var(--font-body-en), var(--font-th); font-size: var(--text-sm) }
 .muted { color: var(--text-muted) }
 
@@ -194,13 +199,19 @@ input[type="file"].input::file-selector-button {
 
 /* ---- nav row ---- */
 .row {
-  display: block; width: 100%; text-align: left; border: none;
-  background: none; color: inherit; font: inherit; font-size: var(--text-base);
+  display: flex; align-items: center; gap: var(--space-2);
+  width: 100%; text-align: left; border: none;
+  background: none; color: inherit; font: inherit;
+  font-family: var(--font-heading); font-size: var(--text-base);
   padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); cursor: pointer;
   text-decoration: none;
 }
 .row:hover,
 .row.active { background: var(--modal-item-selected-bg); color: var(--modal-item-selected-text) }
+/* stroke="currentColor" in the markup, not a token here — the icon just inherits .row's own
+   text colour, active/hover included, the same way the label text already does */
+.row-icon { flex: none; display: flex }
+.row-icon svg { width: 18px; height: 18px }
 
 /* ---- frame ---- */
 .topbar {
@@ -321,6 +332,16 @@ input[type="file"].input::file-selector-button {
   gap: var(--space-2);
   font-size: var(--text-sm);
 }
+/* A preview with its catalogue code burned onto it, same treatment the accepted list uses —
+   the code is never typed any more, so the picture is the only place it can be read back.
+   Two variants because the tree preview fills its panel (.thumb, width 100%) while the
+   decoration preview is a fixed square (.thumb-sm) the frame has to shrink to. */
+.thumb-frame { position: relative; display: block }
+.thumb-frame-sm { position: relative; display: inline-block }
+/* .thumb-code's own 8px is sized for the 40px accepted-list thumbnail; on these larger
+   previews it has to be readable at a glance, since it is the code the order goes out with */
+.thumb-frame .thumb-code,
+.thumb-frame-sm .thumb-code { font-size: var(--text-sm); padding: var(--space-1) var(--space-2) }
 .thumb-wrap { position: relative; width: 40px; height: 40px; flex: none }
 .thumb-wrap img { width: 100%; height: 100%; object-fit: contain; border-radius: var(--radius-sm) }
 /* the product code as a caption burned onto the thumbnail itself, not a field next to it —
@@ -481,6 +502,7 @@ dialog {
 dialog::backdrop { background: var(--modal-backdrop) }
 dialog h2 {
   margin: 0 0 var(--space-3);
+  font-family: var(--font-heading);
   font-size: var(--text-lg);
   font-weight: 600;
 }
@@ -540,7 +562,11 @@ dialog p { margin: 0 0 var(--space-3); font-size: var(--text-base); color: var(-
 /* ---- history table ---- */
 .scroll-x { overflow-x: auto; max-width: 100% }
 table { width: 100%; border-collapse: collapse; font-size: var(--text-sm) }
-.scroll-x table { min-width: 560px }
+/* The 560px floor stops a genuinely wide table (history's six columns, the conflicts list's
+   three columns of long prose) from crushing its columns. It used to apply to every .scroll-x
+   table, which handed a scrollbar to the short two-column lists in settings as well — they
+   fit their column and had nothing to scroll to. Opt in, rather than opt out. */
+.scroll-x.wide table { min-width: 560px }
 th, td { text-align: left; padding: var(--space-2); border-bottom: 1px solid var(--border) }
 th { color: var(--text-muted) }
 td.shrink { width: 96px }

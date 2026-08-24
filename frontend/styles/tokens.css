@@ -8,45 +8,69 @@
    inside it — that's what made the sidebar nav buttons spill past their column. */
 *, *::before, *::after { box-sizing: border-box; }
 
+/* font-display: block, not swap, on every face here. swap paints the fallback first and
+   re-paints when the webfont lands, which is the flash of the wrong font on every page load.
+   These files are served from the same localhost as the page, so the "block" period (text
+   invisible, waiting) is imperceptible — and never shows the wrong typeface. */
 @font-face {
   font-family: "Fraunces";
   src: url("../fonts/fraunces.woff2") format("woff2");
   font-weight: 400 900;
-  font-display: swap;
+  font-display: block;
 }
 @font-face {
   font-family: "Inter";
   src: url("../fonts/inter.woff2") format("woff2");
   font-weight: 400 700;
-  font-display: swap;
+  font-display: block;
 }
+
+/* Bai Jamjuree — headings and the sidebar. Latin and Thai ship as separate subsets so a
+   page of Thai never downloads the Latin glyphs it will not draw. */
 @font-face {
-  font-family: "IBM Plex Sans Thai";
-  src: url("../fonts/ibm-plex-sans-thai-latin-400.woff2") format("woff2");
+  font-family: "Bai Jamjuree";
+  src: url("../fonts/bai-jamjuree-latin-400.woff2") format("woff2");
   font-weight: 400;
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  font-display: block;
 }
 @font-face {
-  font-family: "IBM Plex Sans Thai";
-  src: url("../fonts/ibm-plex-sans-thai-400.woff2") format("woff2");
+  font-family: "Bai Jamjuree";
+  src: url("../fonts/bai-jamjuree-400.woff2") format("woff2");
   font-weight: 400;
-  unicode-range: U+0E01-0E5B, U+200C-200D, U+25CC;
-  font-display: swap;
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+  font-display: block;
 }
 @font-face {
-  font-family: "IBM Plex Sans Thai";
-  src: url("../fonts/ibm-plex-sans-thai-latin-600.woff2") format("woff2");
+  font-family: "Bai Jamjuree";
+  src: url("../fonts/bai-jamjuree-latin-600.woff2") format("woff2");
   font-weight: 600;
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  font-display: block;
 }
 @font-face {
-  font-family: "IBM Plex Sans Thai";
-  src: url("../fonts/ibm-plex-sans-thai-600.woff2") format("woff2");
+  font-family: "Bai Jamjuree";
+  src: url("../fonts/bai-jamjuree-600.woff2") format("woff2");
   font-weight: 600;
-  unicode-range: U+0E01-0E5B, U+200C-200D, U+25CC;
-  font-display: swap;
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+  font-display: block;
+}
+
+/* Anuphan — body copy and every description/hint. A variable font, so one file per subset
+   covers the whole 400-600 range instead of shipping a file per weight. */
+@font-face {
+  font-family: "Anuphan";
+  src: url("../fonts/anuphan-latin.woff2") format("woff2");
+  font-weight: 400 600;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  font-display: block;
+}
+@font-face {
+  font-family: "Anuphan";
+  src: url("../fonts/anuphan.woff2") format("woff2");
+  font-weight: 400 600;
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+  font-display: block;
 }
 
 :root {
@@ -123,10 +147,12 @@
   --focus-ring-gap: #FFFFFF;
   --focus-ring-color: #2E2A22;
 
-  /* fonts */
+  /* fonts — --font-heading for headings and the sidebar, --font-th for everything that reads
+     as body copy. Both carry Thai and Latin, so a mixed Thai/English line stays in one face. */
   --font-header-en: "Fraunces", Georgia, serif;
   --font-body-en: "Inter", -apple-system, sans-serif;
-  --font-th: "IBM Plex Sans Thai", "Inter", sans-serif;
+  --font-heading: "Bai Jamjuree", "Inter", sans-serif;
+  --font-th: "Anuphan", "Inter", sans-serif;
 
   /* shape */
   --radius-sm: 4px;
