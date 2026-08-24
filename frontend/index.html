@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tree Decorator</title>
 <link rel="icon" href="/static/icon.ico">
-<link rel="stylesheet" href="/static/styles/tokens.css?v=8.39">
-<link rel="stylesheet" href="/static/styles/components.css?v=8.39">
-<script src="/static/theme.js?v=8.39"></script>
+<link rel="stylesheet" href="/static/styles/tokens.css?v=8.41">
+<link rel="stylesheet" href="/static/styles/components.css?v=8.41">
+<script src="/static/theme.js?v=8.41"></script>
 </head>
 <body>
 
@@ -56,7 +56,9 @@
         <input class="input" type="file" id="tree-file" accept="image/jpeg,image/png">
         <div class="btn-row">
           <button class="btn" id="tree-catalog-toggle">เลือกจาก catalogue</button>
+          <button class="btn" id="tree-sample-toggle">รูปตัวอย่าง</button>
         </div>
+        <div class="sample-strip" id="tree-samples" hidden></div>
         <div class="thumb-frame" id="tree-preview-frame" hidden>
           <img class="thumb" id="tree-preview" alt="ต้นเปล่า">
           <span class="thumb-code" id="tree-code-badge" hidden></span>
@@ -78,6 +80,10 @@
               <span class="section-title">1. บรรยากาศอ้างอิง (ไม่ใส่ก็ได้)</span>
               <span class="hint">รูปสถานที่ที่อยากให้ต้นไปอยู่</span>
               <input class="input" type="file" id="scene-reference-file" accept="image/jpeg,image/png">
+              <div class="btn-row">
+                <button class="btn" id="scene-sample-toggle">รูปตัวอย่าง</button>
+              </div>
+              <div class="sample-strip" id="scene-samples" hidden></div>
               <div class="btn-row" id="scene-reference-actions" hidden>
                 <button class="btn danger" id="scene-reference-clear">เอารูปออก</button>
               </div>
@@ -179,7 +185,7 @@
   <img id="lightbox-image" alt="">
 </dialog>
 
-<script src="/static/api.js?v=8.39"></script>
-<script src="/static/app.js?v=8.39"></script>
+<script src="/static/api.js?v=8.41"></script>
+<script src="/static/app.js?v=8.41"></script>
 </body>
 </html>

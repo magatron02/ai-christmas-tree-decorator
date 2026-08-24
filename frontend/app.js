@@ -509,6 +509,99 @@ $("scene-reference-clear").addEventListener("click", () => {
   resetRun();
 });
 
+/* ---- sample pictures ----
+ * A shop trying the app for the first time has no bare-tree photo and no room photo to hand,
+ * which is two dead ends before it can generate anything. These are committed under
+ * frontend/samples/ and served by the existing /static mount, so there is no endpoint here —
+ * each one is fetched as a blob and then goes through exactly the path a real upload takes:
+ * the tree becomes a File in state.treeFile, the room is POSTed to /api/reference. Nothing
+ * downstream can tell a sample from something the user chose, which is the point.
+ *
+ * A sample tree carries no catalogue code, the same as any other photo the user supplies. */
+const SAMPLE_TREES = [
+  { file: "tree-slim-green.jpg", label: "ต้นทรงสูงเรียว" },
+  { file: "tree-full-green.jpg", label: "ต้นทรงเต็ม" },
+  { file: "tree-tall-green.jpg", label: "ต้นทรงสูง" },
+];
+
+const SAMPLE_SCENES = [
+  { file: "living-fireplace-bright.jpg", label: "ห้องโล่ง เตาผิง แสงกลางวัน" },
+  { file: "living-fireplace-minimal.jpg", label: "ห้องโล่ง เตาฟืน" },
+  { file: "living-vintage-warm.jpg", label: "ห้องวินเทจ แสงอุ่น" },
+  { file: "empty-room-windows.jpg", label: "ห้องเปล่า หน้าต่างใหญ่" },
+  { file: "living-corner-window.jpg", label: "มุมโซฟาริมหน้าต่าง" },
+  { file: "living-plants-wood.jpg", label: "ห้องโทนอุ่น ต้นไม้" },
+];
+
+function buildSampleStrip(host, folder, samples, onPick) {
+  if (host.childElementCount) return;  // built once, on first open
+  for (const sample of samples) {
+    const url = `/static/samples/${folder}/${sample.file}`;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.title = sample.label;
+    const img = document.createElement("img");
+    img.src = url;
+    img.alt = sample.label;
+    // no loading="lazy" here, unlike the catalogue grid: the strip is only built the first
+    // time its button is pressed, so these are already fetched on demand — lazy on top of
+    // that just leaves them unloaded until the row happens to be scrolled into view.
+    button.append(img);
+    button.addEventListener("click", () => onPick(url, sample));
+    host.append(button);
+  }
+}
+
+function toggleSampleStrip(host) {
+  host.hidden = !host.hidden;
+}
+
+async function fetchSampleFile(url, type = "image/jpeg") {
+  const blob = await (await fetch(url)).blob();
+  return new File([blob], url.split("/").pop(), { type });
+}
+
+$("tree-sample-toggle").addEventListener("click", () => {
+  const host = $("tree-samples");
+  buildSampleStrip(host, "trees", SAMPLE_TREES, async (url) => {
+    showError("");
+    try {
+      state.treeFile = await fetchSampleFile(url);
+      $("tree-preview").src = url;
+      $("tree-preview-frame").hidden = false;
+      $("tree-file").value = "";
+      showTreeCode(null);
+      host.hidden = true;
+      resetRun();
+    } catch (err) {
+      showError(err.message);
+    }
+  });
+  toggleSampleStrip(host);
+});
+
+$("scene-sample-toggle").addEventListener("click", () => {
+  const host = $("scene-samples");
+  buildSampleStrip(host, "scenes", SAMPLE_SCENES, async (url) => {
+    showError("");
+    try {
+      const body = new FormData();
+      body.append("files", await fetchSampleFile(url));
+      const result = await call("/api/reference", { method: "POST", body });
+      state.sceneReference = result.reference;
+      $("scene-reference-preview").src = result.reference_url;
+      $("scene-reference-preview").hidden = false;
+      $("scene-reference-actions").hidden = false;
+      $("scene-reference-file").value = "";
+      host.hidden = true;
+      resetRun();
+    } catch (err) {
+      showError(err.message);
+    }
+  });
+  toggleSampleStrip(host);
+});
+
 /* ---- step 4 + 5: prepare, confirm, generate ---- */
 $("generate-btn").addEventListener("click", async () => {
   state.busy = true;

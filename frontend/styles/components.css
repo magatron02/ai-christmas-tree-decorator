@@ -336,6 +336,23 @@ input[type="file"].input::file-selector-button {
    the code is never typed any more, so the picture is the only place it can be read back.
    Two variants because the tree preview fills its panel (.thumb, width 100%) while the
    decoration preview is a fixed square (.thumb-sm) the frame has to shrink to. */
+/* Sample pictures, shown inline under their own button rather than in a modal: there are a
+   handful of them, they are a starting point rather than a browse, and a dialog for six
+   thumbnails would be more chrome than content. */
+.sample-strip { display: flex; gap: var(--space-2); flex-wrap: wrap }
+.sample-strip button {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-0);
+  padding: 0;
+  cursor: pointer;
+  line-height: 0;
+}
+/* neutral on hover, not the gold accent: gold is the decoration panel's role colour
+   (DESIGN.md section 2) and a sample thumbnail is not that role. */
+.sample-strip button:hover { border-color: var(--text-muted) }
+.sample-strip img { width: 64px; height: 64px; object-fit: cover; border-radius: var(--radius-sm) }
+
 .thumb-frame { position: relative; display: block }
 .thumb-frame-sm { position: relative; display: inline-block }
 /* .thumb-code's own 8px is sized for the 40px accepted-list thumbnail; on these larger
