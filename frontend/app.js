@@ -802,9 +802,15 @@ function enhanceSelect(select) {
       row.className = "select-option" + (i === select.selectedIndex ? " modal-item" : "");
       row.textContent = opt.textContent;
       row.setAttribute("role", "option");
+      row.setAttribute("aria-selected", i === select.selectedIndex ? "true" : "false");
       row.tabIndex = 0;
       const choose = () => {
+        if (select.value === opt.value) { closePopup(); trigger.focus(); return; }
         select.value = opt.value;
+        // Setting .value from script never fires 'change' on its own — without this the shop
+        // and category filters silently do nothing, because loadCatalogPage is bound to that
+        // event. A native <select> fires it when the user picks, so this popup must too.
+        select.dispatchEvent(new Event("change", { bubbles: true }));
         closePopup();
         trigger.focus();
       };
@@ -825,6 +831,12 @@ function enhanceSelect(select) {
   trigger.addEventListener("click", () => (popup.hidden ? openPopup() : closePopup()));
   trigger.addEventListener("keydown", (event) => {
     if (event.key === "ArrowDown" || event.key === "ArrowUp") { event.preventDefault(); openPopup(); }
+    else if (event.key === "Escape") closePopup();
+  });
+  // Tabbing out of the popup would otherwise leave it open behind whatever got focus next.
+  // The timeout is needed because focusout fires before the new activeElement settles.
+  wrap.addEventListener("focusout", () => {
+    setTimeout(() => { if (!wrap.contains(document.activeElement)) closePopup(); }, 0);
   });
   document.addEventListener("click", (event) => {
     if (!wrap.contains(event.target)) closePopup();
