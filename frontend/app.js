@@ -747,5 +747,106 @@ $("count-btn").addEventListener("click", async () => {
   }
 });
 
+/* ---- custom-styled dropdown, layered over a real <select> ----
+ * The select stays in the DOM and keeps doing the actual work — value, disabled, options,
+ * dispatched change events — every call site above (loadConfig, loadCatalogShops,
+ * loadCatalogCategories, openCatalogPicker, ...) keeps using it exactly as before. This only
+ * adds a styled trigger + popup on top and keeps the two in sync, so a native <select>'s own
+ * popup — which CSS can only ever touch for color and font, never radius or shadow — never
+ * has to ship as the visible UI.
+ */
+function enhanceSelect(select) {
+  const wrap = document.createElement("div");
+  wrap.className = "select-wrap";
+  if (select.id) wrap.dataset.for = select.id;
+  select.before(wrap);
+
+  const trigger = document.createElement("button");
+  trigger.type = "button";
+  trigger.className = `${select.className} select-trigger`;
+  trigger.setAttribute("aria-haspopup", "listbox");
+  trigger.setAttribute("aria-expanded", "false");
+
+  const popup = document.createElement("div");
+  popup.className = "select-popup";
+  popup.setAttribute("role", "listbox");
+  popup.hidden = true;
+
+  wrap.append(trigger, popup, select);
+  select.classList.add("select-native");
+  select.tabIndex = -1;
+  select.setAttribute("aria-hidden", "true");
+
+  function syncTrigger() {
+    const opt = select.options[select.selectedIndex];
+    trigger.textContent = opt ? opt.textContent : "";
+    trigger.disabled = select.disabled;
+  }
+
+  function closePopup() {
+    popup.hidden = true;
+    trigger.setAttribute("aria-expanded", "false");
+  }
+
+  function focusRow(index) {
+    const rows = popup.children;
+    if (!rows.length) return;
+    rows[(index + rows.length) % rows.length].focus();
+  }
+
+  function openPopup() {
+    if (select.disabled) return;
+    popup.innerHTML = "";
+    [...select.options].forEach((opt, i) => {
+      const row = document.createElement("div");
+      row.className = "select-option" + (i === select.selectedIndex ? " modal-item" : "");
+      row.textContent = opt.textContent;
+      row.setAttribute("role", "option");
+      row.tabIndex = 0;
+      const choose = () => {
+        select.value = opt.value;
+        closePopup();
+        trigger.focus();
+      };
+      row.addEventListener("click", choose);
+      row.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") { event.preventDefault(); choose(); }
+        else if (event.key === "ArrowDown") { event.preventDefault(); focusRow(i + 1); }
+        else if (event.key === "ArrowUp") { event.preventDefault(); focusRow(i - 1); }
+        else if (event.key === "Escape") { closePopup(); trigger.focus(); }
+      });
+      popup.append(row);
+    });
+    popup.hidden = false;
+    trigger.setAttribute("aria-expanded", "true");
+    focusRow(Math.max(select.selectedIndex, 0));
+  }
+
+  trigger.addEventListener("click", () => (popup.hidden ? openPopup() : closePopup()));
+  trigger.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") { event.preventDefault(); openPopup(); }
+  });
+  document.addEventListener("click", (event) => {
+    if (!wrap.contains(event.target)) closePopup();
+  });
+
+  // select.value and .disabled keep working exactly as every call site above already uses
+  // them (including ones that set .value without dispatching change) — this only appends a
+  // trigger-sync step after whichever native setter runs.
+  for (const prop of ["value", "disabled"]) {
+    const { get, set } = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, prop);
+    Object.defineProperty(select, prop, {
+      get,
+      set(v) { set.call(select, v); syncTrigger(); },
+    });
+  }
+
+  // options are populated after the fact (loadConfig, loadCatalogShops, loadCatalogCategories)
+  new MutationObserver(syncTrigger).observe(select, { childList: true });
+  syncTrigger();
+}
+
+document.querySelectorAll("select.input").forEach(enhanceSelect);
+
 loadConfig().catch((err) => showError(err.message));
 refreshTotals();

@@ -128,6 +128,65 @@ input[type="file"].input::file-selector-button {
   cursor: pointer;
 }
 
+/* select — a native <select>'s own popup takes color/font from CSS but never radius or
+   shadow, so app.js's enhanceSelect() layers a styled trigger + popup over it instead. The
+   select itself stays in the DOM (value/disabled/options/change all still work exactly as
+   every call site uses them) but is shrunk out of view — .select-trigger is what's seen. */
+select.select-native {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+}
+.select-wrap { position: relative }
+.select-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  text-align: left;
+  cursor: pointer;
+}
+.select-trigger:disabled { cursor: default }
+/* a masked shape rather than a background-image, so the arrow's colour comes from
+   background: var(--text-primary) instead of a literal hex baked into the data URI
+   (test_ui_design_system.py's rule 1 bans literal colour anywhere outside tokens.css) — the
+   SVG only carries the shape (as alpha), never says what colour it comes out. */
+.select-trigger::after {
+  content: "";
+  width: 12px;
+  height: 12px;
+  flex: none;
+  background: var(--text-primary);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat center / contain;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat center / contain;
+}
+.select-popup {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 0;
+  min-width: 100%;
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--modal-shadow);
+  padding: var(--space-1);
+  z-index: 20;
+}
+.select-option {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.select-option:hover, .select-option:focus { background: var(--btn-ghost-bg-hover); outline: none }
+.select-option.modal-item { background: var(--modal-item-selected-bg); color: var(--modal-item-selected-text) }
+
 /* ---- card ---- */
 .card {
   background: var(--surface-1);
@@ -547,7 +606,8 @@ dialog h2 {
 /* category first, then free text: the category is the coarse cut a shop worker reaches for,
    the search box is for when they already know part of a code */
 .picker-filters { display: flex; gap: var(--space-3); flex-wrap: wrap }
-.picker-filters #catalog-category { flex: 0 1 220px }
+.picker-filters [data-for="catalog-category"] { flex: 0 1 220px }
+.picker-filters [data-for="catalog-shop"] { flex: 0 1 180px }
 .picker-filters #catalog-search { flex: 1 1 220px; min-width: 0 }
 .picker-grid {
   display: grid;
