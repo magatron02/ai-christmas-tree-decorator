@@ -6,10 +6,20 @@ without going through the Architect (NonGoals.md #2). The only env var this proj
 reads is OPENAI_API_KEY, and the OpenAI SDK reads that itself.
 """
 
+import sys
 from pathlib import Path
 
 BACKEND_DIR = Path(__file__).resolve().parent
-ROOT = BACKEND_DIR.parent
+
+# Everything the app writes — .env, data/app.db, storage/, and the catalogue the settings page
+# edits — is ROOT-relative. Running from source that is the repo. Frozen by PyInstaller the
+# code lives inside _internal/, which is the wrong place for any of it: the installed copy has
+# to keep its data beside the exe, where the installer put the shipped catalogue and where a
+# per-user install can actually write.
+if getattr(sys, "frozen", False):
+    ROOT = Path(sys.executable).resolve().parent
+else:
+    ROOT = BACKEND_DIR.parent
 
 IMAGE_MODEL = "gpt-image-2"
 

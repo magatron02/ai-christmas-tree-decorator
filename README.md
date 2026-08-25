@@ -14,7 +14,11 @@ Internal single-user tool. See `Product.md`, `Spec.md`, `AcceptanceCriteria.md`,
 step-by-step from a machine with nothing installed, including what the billed prompts mean
 and what to do when something doesn't start.
 
-**Windows, one step:** double-click `setup.bat`. It creates the venv, installs everything,
+**Shipping it to a machine that has nothing installed:** build the desktop installer instead
+(see [Desktop installer](#desktop-installer) below). The shop gets one `.exe`, a desktop
+shortcut, and a server that starts on click — no Python, no venv, no terminal.
+
+**Windows, one step (development):** double-click `setup.bat`. It creates the venv, installs everything,
 asks for your OpenAI key on first run, unzips `catalog-images*.zip` into `catalog/images/`
 if that bundle is sitting next to it, offers to run the two one-time billed checks below,
 and starts the server. Safe to run again later — it skips whatever's already done.
@@ -74,6 +78,44 @@ are large or derived:
 
   Both are resumable — interrupting and rerunning only pays for what's still missing.
   Without this step the app still runs; catalogue search just returns nothing.
+
+## Desktop installer
+
+For handing the app to someone who will never open a terminal. Produces
+`dist_installer\TreeDecorator-Setup-1.0.0.exe`: they run it, get a desktop shortcut, and one
+click starts the server and opens the browser at it.
+
+```bash
+build_installer.bat
+```
+
+Needs [Inno Setup 6](https://jrsoftware.org/isdl.php) (`winget install JRSoftware.InnoSetup`)
+and `pyinstaller` in the venv. The three pieces:
+
+| File | What it is |
+|---|---|
+| `scripts/launcher.py` | the entry point the shortcut runs — picks a free port, waits for the server to answer, opens the browser, and leaves a console window that doubles as the quit button |
+| `TreeDecorator.spec` | PyInstaller build of the Python side (code + deps only) |
+| `installer/TreeDecorator.iss` | Inno Setup script — ships the frozen app plus `frontend/`, `catalog/` and the rembg model, and makes the shortcuts |
+
+### Why it installs per-user
+
+`PrivilegesRequired=lowest`, so it lands in `%LOCALAPPDATA%\Programs\Tree Decorator` rather
+than Program Files. This app keeps live data *beside its own exe* — the catalogue the settings
+page edits, `data/app.db`, generated pictures, and the API key in `.env`. In Program Files
+every one of those would be read-only, so the settings page would fail to save and the spend
+log would fail to write. `backend/config.py` points `ROOT` at the exe's folder when frozen,
+which is what makes that layout work.
+
+### What ships and what doesn't
+
+Bundled: the frozen app, `frontend/`, the whole catalogue including the ~96 MB of product
+photos, and rembg's 168 MB `u2net.onnx` (so the first background removal works offline
+instead of downloading it mid-click). About 600 MB installed, ~300 MB compressed.
+
+Deliberately not bundled: `.env` (the API key is the installing user's, entered on the
+settings page), `storage/` (generated pictures), `data/app.db` (the spend log). Uninstall
+leaves the catalogue and those three alone so a reinstall picks up where it left off.
 
 ## How it fits together
 
