@@ -1,0 +1,5 @@
+* text=auto
+
+# Windows batch files are parsed by cmd.exe, which mis-reads LF endings: setlocal
+# becomes "tlocal" and the script dies. Force CRLF regardless of platform.
+*.bat text eol=crlf
