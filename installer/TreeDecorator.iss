@@ -54,6 +54,11 @@ Source: "..\catalog\*.json"; DestDir: "{app}\catalog"; Flags: onlyifdoesntexist
 Source: "..\catalog\embeddings.npy"; DestDir: "{app}\catalog"; Flags: onlyifdoesntexist
 Source: "..\catalog\images\*"; DestDir: "{app}\catalog\images"; Flags: ignoreversion recursesubdirs createallsubdirs
 
+; Cut-outs made ahead of time by scripts/precut_catalog.py, so picking a decoration is a file
+; read instead of a run of rembg. skipifsourcedoesntexist because they are an optimisation:
+; a build without them still produces a working installer, just one that cuts on the fly.
+Source: "..\catalog\cutouts\*"; DestDir: "{app}\catalog\cutouts"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+
 ; rembg's cut-out model, so the first background removal works offline instead of pulling
 ; 168 MB down mid-click. scripts/launcher.py points U2NET_HOME here.
 Source: "..\build_assets\models\u2net.onnx"; DestDir: "{app}\models"; Flags: ignoreversion

@@ -37,6 +37,10 @@ def main():
     images = ROOT / "catalog" / "images"
     if images.is_dir():
         shutil.copytree(images, catalog_out / "images", dirs_exist_ok=True)
+    # optional: without them the app cuts on the fly, same as before they existed
+    cutouts = ROOT / "catalog" / "cutouts"
+    if cutouts.is_dir():
+        shutil.copytree(cutouts, catalog_out / "cutouts", dirs_exist_ok=True)
     print("staged catalog/")
 
     model = ROOT / "build_assets" / "models" / "u2net.onnx"

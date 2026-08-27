@@ -68,6 +68,9 @@ async def no_cache_static(request: Request, call_next):
 # catalogue product crops, so a proposed code can be shown as a picture. Mounted only if the
 # index has been built — the app works without it, minus the reference matching.
 CATALOG_IMAGES = config.CATALOG_PATH.parent / "images"
+# Cut-outs made ahead of time by scripts/precut_catalog.py. Optional: without them a pick
+# still works, it just pays for rembg on the spot the way it always did.
+CATALOG_CUTOUTS = config.CATALOG_PATH.parent / "cutouts"
 if CATALOG_IMAGES.is_dir():
     app.mount("/catalog", StaticFiles(directory=CATALOG_IMAGES), name="catalog")
 
@@ -328,6 +331,21 @@ def api_catalog_search(q: str = "", category: str = "", book: str = "", limit: i
     return {"total": total, "codes": len(rows), "results": results}
 
 
+def _precut(path):
+    """The pre-made cut-out for a catalogue photo, or None if it was never made.
+
+    A catalogue photo never changes, so neither does its cut-out — running rembg again per
+    pick was recomputing a constant. Falling back rather than requiring the file keeps a
+    catalogue that has not been pre-cut (a freshly added product, an install that skipped the
+    step) working exactly as before, just slower.
+    """
+    try:
+        candidate = CATALOG_CUTOUTS / path.relative_to(CATALOG_IMAGES)
+    except ValueError:  # not under images/ — nothing could have been pre-cut for it
+        return None
+    return candidate.read_bytes() if candidate.is_file() else None
+
+
 @app.post("/api/element/from-catalog")
 def api_element_from_catalog(code: str = Form(...), image: str = Form("")):
     """Same as /api/remove-bg, except the source photo already lives in the catalogue instead
@@ -348,7 +366,7 @@ def api_element_from_catalog(code: str = Form(...), image: str = Form("")):
     if not path or not path.is_file():
         raise HTTPException(404, f"ไม่มีรูป catalogue ของ '{code}'")
 
-    cut = background_removal.remove_background(path.read_bytes())
+    cut = _precut(path) or background_removal.remove_background(path.read_bytes())
     name = _store(cut, "element", "png")
     return {"element": name, "element_url": _url(name)}
 
