@@ -54,6 +54,49 @@ def test_without_a_precut_file_it_still_cuts_live(client, cutouts, fake_rembg):
     assert fake_rembg.count == 1
 
 
+def test_a_live_cut_is_kept_so_the_next_pick_does_not_repeat_it(client, cutouts, fake_rembg):
+    """A product added from the settings page has no pre-cut file. Without keeping the first
+    live cut, every pick of it would pay for rembg again — the same recomputation the pre-cut
+    step exists to avoid, one product at a time."""
+    code, name = _a_pickable_image()
+
+    first = client.post("/api/element/from-catalog", data={"code": code})
+    assert first.status_code == 200
+    assert fake_rembg.count == 1
+    assert (cutouts / name).is_file(), "the live cut should have been kept"
+
+    second = client.post("/api/element/from-catalog", data={"code": code})
+    assert second.status_code == 200
+    assert fake_rembg.count == 1, "the second pick must reuse the kept cut-out"
+
+
+def test_nothing_is_left_behind_when_the_cutout_cannot_be_written(client, monkeypatch,
+                                                                  fake_rembg, tmp_path):
+    """Keeping the cut-out is a convenience. A read-only or full disk must not turn a pick
+    that already succeeded into an error."""
+    code, _name = _a_pickable_image()
+    blocked = tmp_path / "blocked"
+    blocked.write_text("not a directory")  # mkdir under this can only fail
+    monkeypatch.setattr(main, "CATALOG_CUTOUTS", blocked / "cutouts")
+
+    response = client.post("/api/element/from-catalog", data={"code": code})
+
+    assert response.status_code == 200
+    assert fake_rembg.count == 1
+
+
+def test_a_half_written_cutout_is_never_served(client, cutouts, fake_rembg):
+    """The cut-out is written to a temporary name and moved into place, so a crash mid-write
+    cannot leave a truncated PNG that is then served as this product's cut-out forever."""
+    code, name = _a_pickable_image()
+
+    client.post("/api/element/from-catalog", data={"code": code})
+
+    leftovers = list(cutouts.rglob("*.part"))
+    assert not leftovers, f"staging files were left behind: {leftovers}"
+    assert (cutouts / name).read_bytes() == transparent_png_bytes()
+
+
 def test_precut_only_covers_images_the_picker_can_reach(cutouts):
     """Of the PNGs on disk only a fraction are offerable — the rest belong to codes that are
     contested, share a crop with too many others, or are page furniture. Cutting those would

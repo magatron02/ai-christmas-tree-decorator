@@ -331,6 +331,14 @@ def api_catalog_search(q: str = "", category: str = "", book: str = "", limit: i
     return {"total": total, "codes": len(rows), "results": results}
 
 
+def _cutout_path(path):
+    """Where this catalogue photo's cut-out lives, or None if it is not a catalogue photo."""
+    try:
+        return CATALOG_CUTOUTS / path.relative_to(CATALOG_IMAGES)
+    except ValueError:  # not under images/ — nothing could have been pre-cut for it
+        return None
+
+
 def _precut(path):
     """The pre-made cut-out for a catalogue photo, or None if it was never made.
 
@@ -339,11 +347,33 @@ def _precut(path):
     catalogue that has not been pre-cut (a freshly added product, an install that skipped the
     step) working exactly as before, just slower.
     """
+    candidate = _cutout_path(path)
+    return candidate.read_bytes() if candidate and candidate.is_file() else None
+
+
+def _keep_cutout(path, cut):
+    """Remember a cut-out that had to be made live, so the next pick reads it instead.
+
+    A product added from the settings page has no pre-cut file, and without this every pick of
+    it would pay for rembg again — the same recomputation scripts/precut_catalog.py exists to
+    avoid, just spread out one product at a time.
+
+    Written to a temporary name and moved into place: a half-written PNG left by a crash or a
+    full disk would be served as this product's cut-out from then on, and unlike the slow path
+    that failure would be permanent. Any write problem is swallowed — the caller already has
+    the cut-out it needs, and a read-only or full disk must not turn a working pick into an
+    error.
+    """
+    target = _cutout_path(path)
+    if target is None:
+        return
     try:
-        candidate = CATALOG_CUTOUTS / path.relative_to(CATALOG_IMAGES)
-    except ValueError:  # not under images/ — nothing could have been pre-cut for it
-        return None
-    return candidate.read_bytes() if candidate.is_file() else None
+        target.parent.mkdir(parents=True, exist_ok=True)
+        staged = target.with_name(f"{target.name}.{uuid.uuid4().hex}.part")
+        staged.write_bytes(cut)
+        staged.replace(target)
+    except OSError:
+        pass
 
 
 @app.post("/api/element/from-catalog")
@@ -366,7 +396,10 @@ def api_element_from_catalog(code: str = Form(...), image: str = Form("")):
     if not path or not path.is_file():
         raise HTTPException(404, f"ไม่มีรูป catalogue ของ '{code}'")
 
-    cut = _precut(path) or background_removal.remove_background(path.read_bytes())
+    cut = _precut(path)
+    if cut is None:
+        cut = background_removal.remove_background(path.read_bytes())
+        _keep_cutout(path, cut)
     name = _store(cut, "element", "png")
     return {"element": name, "element_url": _url(name)}
 
