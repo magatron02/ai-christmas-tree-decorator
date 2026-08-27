@@ -6,10 +6,15 @@ by construction rather than by remembering to check a flag (NonGoals.md #3, AC-4
 """
 
 import io
+import threading
 
 from PIL import Image
 
 _session = None
+# _session_once can now be reached from two threads at once — the desktop launcher warms the
+# model in the background while the user is free to pick something immediately. Without the
+# lock both threads see None and each builds its own onnx session, paying the load twice.
+_session_lock = threading.Lock()
 
 
 class BackgroundRemovalError(RuntimeError):
@@ -19,11 +24,27 @@ class BackgroundRemovalError(RuntimeError):
 def _session_once():
     # the u2net model is ~180 MB and downloads on first use; don't pay for it at import time
     global _session
-    if _session is None:
-        from rembg import new_session
+    with _session_lock:
+        if _session is None:
+            from rembg import new_session
 
-        _session = new_session()
+            _session = new_session()
     return _session
+
+
+def warm():
+    """Build the onnx session now, so the first cut-out does not have to.
+
+    Loading the model is what made the first background removal take 10s on a dev box and 68s
+    on a cold installed copy — long enough that picking a decoration from the catalogue read
+    as the program hanging. Nothing here needs the result: the point is only that _session is
+    populated by the time a user gets around to clicking. Failures are swallowed because this
+    is speculative work — if the model is genuinely broken the real call will say so properly.
+    """
+    try:
+        _session_once()
+    except Exception:
+        pass
 
 
 def remove_background(data):

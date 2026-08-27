@@ -126,6 +126,14 @@ def main():
     import uvicorn
 
     from backend.main import app
+    from backend.services import background_removal
+
+    # Load the cut-out model now rather than on the first click. It is the single slowest
+    # thing this app does on a cold start, and paying for it here — while the user is still
+    # looking at the browser opening — is time they were spending anyway. The server is
+    # already usable meanwhile; a pick that lands mid-warm just waits for the same load it
+    # would have triggered itself.
+    threading.Thread(target=background_removal.warm, daemon=True).start()
 
     try:
         uvicorn.run(app, host=HOST, port=port, log_level="warning")

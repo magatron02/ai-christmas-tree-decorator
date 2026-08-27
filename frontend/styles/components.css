@@ -622,6 +622,15 @@ dialog h2 {
    grid the track decides instead */
 .picker-grid .candidate { width: auto }
 
+/* While a pick is being cut out, the grid stops taking clicks and says so by dimming. The
+   cut runs rembg, which is slow enough on the first pick after launch (measured 10s warm,
+   68s on a cold installed copy) that an unchanged grid reads as a frozen program — and every
+   further click would start another cut on top of the one already running. */
+.picker-grid.is-busy {
+  opacity: .5;
+  pointer-events: none;
+}
+
 /* ---- lightbox: one photo, full size ---- */
 .lightbox-dialog[open] {
   display: flex;

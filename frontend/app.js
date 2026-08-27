@@ -411,8 +411,23 @@ $("catalog-search").addEventListener("input", () => {
   catalogTimer = setTimeout(() => loadCatalogPage(true), 200);
 });
 
+/* Picking a decoration runs the same background removal an upload does, and the first one
+ * after launch pays for loading the model: measured 10s on a warm dev box and 68s on a cold
+ * installed copy. Without this the dialog just sat there looking frozen, and every further
+ * click started another cut — several rembg calls fighting over one session, which is what
+ * turned a slow pick into a stuck one. Same treatment the upload button already gets. */
+let catalogBusy = false;
+
+function setCatalogBusy(busy, message) {
+  catalogBusy = busy;
+  $("catalog-results").classList.toggle("is-busy", busy);
+  if (busy) $("catalog-count").textContent = message;
+}
+
 async function useFromCatalog(code, image) {
+  if (catalogBusy) return;
   showError("");
+  setCatalogBusy(true, "กำลังตัดพื้นหลัง… ครั้งแรกหลังเปิดโปรแกรมจะนานหน่อย");
   try {
     const body = new FormData();
     body.append("code", code);
@@ -422,6 +437,10 @@ async function useFromCatalog(code, image) {
   } catch (err) {
     $("catalog-dialog").close();
     showError(err.message);
+  } finally {
+    // the count line is rewritten by the next loadCatalogPage, so it only has to stop saying
+    // "working" — reopening the picker reloads it anyway
+    setCatalogBusy(false);
   }
 }
 
@@ -429,7 +448,9 @@ async function useFromCatalog(code, image) {
  * its own photographed background), so state.treeFile needs a real File the same way
  * #tree-file's own change handler produces one, not just a stored server filename. */
 async function useTreeFromCatalog(code, image) {
+  if (catalogBusy) return;
   showError("");
+  setCatalogBusy(true, "กำลังโหลดรูปต้น…");
   try {
     const body = new FormData();
     body.append("code", code);
@@ -446,6 +467,8 @@ async function useTreeFromCatalog(code, image) {
   } catch (err) {
     $("catalog-dialog").close();
     showError(err.message);
+  } finally {
+    setCatalogBusy(false);
   }
 }
 
