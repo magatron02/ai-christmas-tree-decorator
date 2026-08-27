@@ -202,6 +202,34 @@ def test_browse_can_be_scoped_to_one_shop():
     assert all(row.get("book") == "MS Natural Design" for row in rows)
 
 
+def test_a_shops_categories_are_only_the_ones_it_actually_stocks():
+    """The picker offered categories counted across every shop while a shop filter was on, so
+    MS Natural Design advertised ribbons, bells and toppers — all Bangkok Christmas stock —
+    and choosing one produced an empty grid. Scoping the count is what stops a filter being
+    offered with nothing behind it."""
+    for book, _count in catalog.shops():
+        rows, _total = catalog.browse(10_000, 0, None, book)
+        stocked = {catalog.category_of(row) for row in rows}
+        for key, _label, _needles in catalog.CATEGORIES:
+            if key not in stocked:
+                continue
+            in_shop = [r for r in rows if catalog.category_of(r) == key]
+            assert in_shop, f"{book} offers {key} with nothing in it"
+
+
+def test_the_two_shops_really_do_stock_different_categories():
+    """Guards the test above from passing trivially: if every shop carried every category,
+    scoping the counts would be a no-op and the bug could come back unnoticed."""
+    per_shop = {}
+    for book, _count in catalog.shops():
+        rows, _total = catalog.browse(10_000, 0, None, book)
+        per_shop[book] = {catalog.category_of(row) for row in rows}
+
+    everywhere = set.intersection(*per_shop.values())
+    anywhere = set.union(*per_shop.values())
+    assert anywhere - everywhere, "expected at least one category unique to a single shop"
+
+
 def test_a_crop_shared_by_many_codes_is_not_showable():
     """It cannot be a picture of any one of them, whatever it depicts."""
     shared = [c for c, n in catalog._crop_users().items() if n + 1 >= catalog.MAX_SHARED_CROP]

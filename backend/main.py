@@ -258,11 +258,18 @@ def api_catalog_shops():
 
 
 @app.get("/api/catalog/categories")
-def api_catalog_categories():
+def api_catalog_categories(book: str = ""):
     """The browsing categories and how many showable products each holds, so the picker can
-    label its filters with real counts instead of offering an empty one."""
+    label its filters with real counts instead of offering an empty one.
+
+    Scoped to one shop when `book` is given. Counting across every shop while a shop filter
+    was active is what made the picker offer categories that shop does not stock: with MS
+    Natural Design selected it still listed ribbons (43), bells (25) and toppers (15), all of
+    which are Bangkok Christmas products, so choosing one produced an empty grid. A category
+    with nothing behind it in the chosen shop is now simply not offered.
+    """
     counts = {}
-    for row, _total in [(r, None) for r in catalog.browse(10_000, 0)[0]]:
+    for row in catalog.browse(10_000, 0, None, book or None)[0]:
         key = catalog.category_of(row)
         counts[key] = counts.get(key, 0) + 1
     return {

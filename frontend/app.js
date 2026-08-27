@@ -331,16 +331,30 @@ async function loadCatalogShops() {
   }
 }
 
+/* The category list belongs to whichever shop is selected, so it is rebuilt whenever that
+ * changes rather than fetched once. Counted across every shop it advertised stock the chosen
+ * shop does not carry — MS Natural Design still offered ribbons (43), bells (25) and toppers
+ * (15), all of them Bangkok Christmas products, and picking one gave an empty grid.
+ * The current choice is kept when the new shop also has that category and falls back to
+ * "every category" when it does not, so switching shop never leaves a filter selected that
+ * matches nothing. */
 async function loadCatalogCategories() {
+  const select = $("catalog-category");
+  const wanted = select.value;
   try {
-    const { categories } = await call("/api/catalog/categories");
-    const select = $("catalog-category");
+    const shop = $("catalog-shop").value;
+    const { categories } = await call(
+      `/api/catalog/categories?book=${encodeURIComponent(shop)}`
+    );
+    // everything after the "ทุกหมวด" option is the previous shop's list
+    while (select.options.length > 1) select.remove(1);
     for (const item of categories) {
       const option = document.createElement("option");
       option.value = item.key;
       option.textContent = `${item.label} (${item.count})`;
       select.append(option);
     }
+    select.value = categories.some((item) => item.key === wanted) ? wanted : "";
   } catch {
     /* the filter is a convenience; browsing everything still works without it */
   }
@@ -385,10 +399,11 @@ async function openCatalogPicker(mode) {
   catalogPickerMode = mode;
   const categorySelect = $("catalog-category");
   const shopSelect = $("catalog-shop");
-  // categories have to exist before "tree" can be selected, so this has to be awaited —
-  // firing it and moving on left the lock unset on whichever picker opened first
-  if (categorySelect.options.length <= 1) await loadCatalogCategories();
+  // shops first: the category list is scoped to the selected shop, so it cannot be built
+  // until the shop select holds a real value. Both awaited — firing and moving on left the
+  // "tree" lock unset on whichever picker opened first.
   if (shopSelect.options.length <= 1) await loadCatalogShops();
+  await loadCatalogCategories();
   categorySelect.disabled = mode === "tree";
   categorySelect.value = mode === "tree" ? "tree" : "";
   $("catalog-dialog").showModal();
@@ -398,7 +413,13 @@ async function openCatalogPicker(mode) {
 $("catalog-toggle").addEventListener("click", () => openCatalogPicker("element"));
 $("tree-catalog-toggle").addEventListener("click", () => openCatalogPicker("tree"));
 
-$("catalog-shop").addEventListener("change", () => loadCatalogPage(true));
+$("catalog-shop").addEventListener("change", async () => {
+  // categories first: the grid must not be reloaded against a filter the new shop has no
+  // stock for, which is exactly what the old order left on screen
+  await loadCatalogCategories();
+  if (catalogPickerMode === "tree") $("catalog-category").value = "tree";
+  loadCatalogPage(true);
+});
 
 $("catalog-category").addEventListener("change", () => loadCatalogPage(true));
 
