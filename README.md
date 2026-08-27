@@ -107,6 +107,26 @@ every one of those would be read-only, so the settings page would fail to save a
 log would fail to write. `backend/config.py` points `ROOT` at the exe's folder when frozen,
 which is what makes that layout work.
 
+### Pre-cut catalogue photos
+
+`scripts/precut_catalog.py` runs the background removal over every catalogue photo the picker
+can offer and leaves the results in `catalog/cutouts/`, which the installer ships. Picking a
+decoration then reads a file instead of running rembg: measured 0.03s on a freshly installed
+copy, against 68s before any of this.
+
+```bash
+python scripts/precut_catalog.py            # cut what is missing
+python scripts/precut_catalog.py --recut    # redo everything
+```
+
+Only the 657 images the picker can actually reach are cut, not all 1,748 on disk — the rest
+belong to codes that are contested, over-share a crop, or were judged page furniture, and
+`crop_is_showable` already keeps them out of the grid. Takes about five minutes and produces
+~66 MB. Re-runnable and interruptible: finished files are skipped.
+
+The cut-outs are an optimisation, not a requirement. A product added from the settings page
+after the last run has no cut-out and is simply cut on the fly when picked, as before.
+
 ### What ships and what doesn't
 
 Bundled: the frozen app, `frontend/`, the whole catalogue including the ~96 MB of product
