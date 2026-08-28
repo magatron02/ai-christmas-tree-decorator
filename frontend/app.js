@@ -33,6 +33,8 @@ const state = {
   requestId: null,
   busy: false,
   quantities: null, // prepared.quantities from the last /api/prepare, indexed like state.elements
+  treeRatio: null, // width/height of whatever photo is in the tree slot right now
+  sceneRatio: null, // width/height of the scene reference, when one is set
 };
 
 function setStatus(key, override) {
@@ -160,8 +162,11 @@ async function refreshTotals() {
   }
 }
 
+let sizePresets = []; // [{key, width, height}] from /api/config, used by refreshAutoSize below
+
 async function loadConfig() {
   const config = await call("/api/config");
+  sizePresets = config.sizes;
   const select = $("size-select");
   select.innerHTML = "";
   for (const size of config.sizes) {
@@ -173,6 +178,57 @@ async function loadConfig() {
   }
   select.disabled = false;
   $("cut-hint").textContent = `ไม่เกิน ${config.max_upload_mb} MB, JPG หรือ PNG`;
+}
+
+/* ---- picking the output size from the photos actually given, not a fixed default ----
+ * The size selector used to just sit on Product.md's 4:5 default until a user thought to
+ * change it — which most never did, so a landscape room or a wide tree photo generated into
+ * a portrait canvas regardless. This reads the real width/height of whatever is in the tree
+ * and scene slots and moves the selector to whichever preset is the closest match, so
+ * "what I picked" and "what came out" agree without the user having to know gpt-image-2's
+ * five fixed ratios exist.
+ *
+ * The scene reference wins when both are present. It is what the final crop actually has to
+ * live inside — the tree photo's own framing gets discarded anyway once a setting is
+ * composited behind it (image_gen.REFERENCE_SCENE), so matching the tree's shape would aim
+ * at a frame the result does not keep. */
+function imageDimensions(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("อ่านขนาดรูปไม่ได้"));
+    };
+    img.src = url;
+  });
+}
+
+function nearestSizeKey(ratio) {
+  if (!sizePresets.length || !ratio) return null;
+  // compared in log space so a 2:1 landscape and a 1:2 portrait are equally "far" from
+  // square — a plain numeric difference would treat every landscape preset as closer to
+  // square than any portrait one just because their ratio values happen to be larger
+  let best = null;
+  let bestDiff = Infinity;
+  for (const preset of sizePresets) {
+    const diff = Math.abs(Math.log(preset.width / preset.height) - Math.log(ratio));
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      best = preset.key;
+    }
+  }
+  return best;
+}
+
+function refreshAutoSize() {
+  const ratio = state.sceneRatio || state.treeRatio;
+  const key = nearestSizeKey(ratio);
+  if (key) $("size-select").value = key;
 }
 
 /* Codes are never typed on this page: they ride along with whatever the catalogue picker
@@ -197,13 +253,23 @@ function showElementCode(code) {
 renderElements();
 
 /* ---- step 1: bare tree ---- */
-$("tree-file").addEventListener("change", (event) => {
+$("tree-file").addEventListener("change", async (event) => {
   const file = event.target.files[0] || null;
   state.treeFile = file;
   $("tree-preview-frame").hidden = !file;
   if (file) $("tree-preview").src = URL.createObjectURL(file);
   // an own photo carries no catalogue code, and must not keep the one the picker left behind
   showTreeCode(null);
+  state.treeRatio = null;
+  if (file) {
+    try {
+      const { width, height } = await imageDimensions(file);
+      state.treeRatio = width / height;
+    } catch {
+      /* size auto-pick is a convenience; a photo the browser can't measure still uploads fine */
+    }
+    refreshAutoSize();
+  }
   resetRun();
 });
 
@@ -483,6 +549,13 @@ async function useTreeFromCatalog(code, image) {
     $("tree-preview-frame").hidden = false;
     $("tree-file").value = "";  // the picker's tree replaces whatever was uploaded
     showTreeCode(code);
+    try {
+      const { width, height } = await imageDimensions(state.treeFile);
+      state.treeRatio = width / height;
+      refreshAutoSize();
+    } catch {
+      /* size auto-pick is a convenience */
+    }
     $("catalog-dialog").close();
     resetRun();
   } catch (err) {
@@ -538,6 +611,13 @@ $("scene-reference-file").addEventListener("change", async (event) => {
     $("scene-reference-preview").src = result.reference_url;
     $("scene-reference-preview").hidden = false;
     $("scene-reference-actions").hidden = false;
+    try {
+      const { width, height } = await imageDimensions(file);
+      state.sceneRatio = width / height;
+      refreshAutoSize();
+    } catch {
+      /* size auto-pick is a convenience */
+    }
   } catch (err) {
     showError(err.message);
     $("scene-reference-file").value = "";
@@ -547,9 +627,11 @@ $("scene-reference-file").addEventListener("change", async (event) => {
 
 $("scene-reference-clear").addEventListener("click", () => {
   state.sceneReference = null;
+  state.sceneRatio = null;
   $("scene-reference-file").value = "";
   $("scene-reference-preview").hidden = true;
   $("scene-reference-actions").hidden = true;
+  refreshAutoSize(); // falls back to the tree photo's own ratio, if any
   resetRun();
 });
 
@@ -615,6 +697,9 @@ $("tree-sample-toggle").addEventListener("click", () => {
       $("tree-preview-frame").hidden = false;
       $("tree-file").value = "";
       showTreeCode(null);
+      const { width, height } = await imageDimensions(state.treeFile);
+      state.treeRatio = width / height;
+      refreshAutoSize();
       host.hidden = true;
       resetRun();
     } catch (err) {
@@ -629,14 +714,18 @@ $("scene-sample-toggle").addEventListener("click", () => {
   buildSampleStrip(host, "scenes", SAMPLE_SCENES, async (url) => {
     showError("");
     try {
+      const sceneFile = await fetchSampleFile(url);
       const body = new FormData();
-      body.append("files", await fetchSampleFile(url));
+      body.append("files", sceneFile);
       const result = await call("/api/reference", { method: "POST", body });
       state.sceneReference = result.reference;
       $("scene-reference-preview").src = result.reference_url;
       $("scene-reference-preview").hidden = false;
       $("scene-reference-actions").hidden = false;
       $("scene-reference-file").value = "";
+      const { width, height } = await imageDimensions(sceneFile);
+      state.sceneRatio = width / height;
+      refreshAutoSize();
       host.hidden = true;
       resetRun();
     } catch (err) {
