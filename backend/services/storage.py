@@ -97,6 +97,10 @@ def prune(conn, older_than_hours=24, dry_run=False):
                 )
         for path in files:
             path.unlink()
+            # the history thumbnail is derived from this file and outlives it otherwise —
+            # orphans() only globs loose files, so nothing else would ever collect it
+            thumb = config.THUMBS_DIR / f"{path.stem}.jpg"
+            thumb.unlink(missing_ok=True)
 
     return requests, files
 

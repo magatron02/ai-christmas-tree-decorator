@@ -647,6 +647,25 @@ dialog p { margin: 0 0 var(--space-3); font-size: var(--text-base); color: var(-
 
 /* ---- history table ---- */
 .scroll-x { overflow-x: auto; max-width: 100% }
+/* the history table's picture column: the thumbnail is the button, so the whole image is the
+   click target for opening it full size */
+.history-preview {
+  display: block;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-0);
+  cursor: pointer;
+  overflow: hidden;
+}
+.history-preview img {
+  display: block;
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+.history-preview:hover { border-color: var(--text-muted) }
+
 table { width: 100%; border-collapse: collapse; font-size: var(--text-sm) }
 /* The 560px floor stops a genuinely wide table (history's six columns, the conflicts list's
    three columns of long prose) from crushing its columns. It used to apply to every .scroll-x

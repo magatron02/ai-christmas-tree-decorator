@@ -53,6 +53,7 @@
       <table>
         <thead>
           <tr>
+            <th class="caption">รูป</th>
             <th class="caption">เมื่อไหร่</th>
             <th class="caption">request</th>
             <th class="caption">ขนาด</th>
@@ -68,6 +69,12 @@
     </section>
   </main>
 </div>
+
+<!-- Full-size look at a finished picture, so a row can be checked without downloading it. -->
+<dialog id="lightbox-dialog" class="lightbox-dialog">
+  <button class="btn danger" id="lightbox-close">ปิด</button>
+  <img id="lightbox-image" alt="">
+</dialog>
 
 <script src="/static/api.js?v=8.41"></script>
 <script src="/static/history.js?v=8.41"></script>

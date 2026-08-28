@@ -33,6 +33,10 @@ API_TIMEOUT_S = 300.0
 
 DATA_DIR = ROOT / "data"
 STORAGE_DIR = ROOT / "storage"
+# Small JPEGs of stored images, for the history table. A subdirectory rather than a suffix in
+# STORAGE_DIR so storage.orphans(), which globs that directory for loose files, never sees
+# them as rubbish to delete — they are cleaned up alongside the image they are made from.
+THUMBS_DIR = STORAGE_DIR / "thumbs"
 DB_PATH = DATA_DIR / "app.db"
 PROMPT_PATH = BACKEND_DIR / "prompts" / "compositing_prompt.txt"
 FRONTEND_DIR = ROOT / "frontend"

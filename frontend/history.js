@@ -34,6 +34,49 @@ function cell(row, text, className) {
   return td;
 }
 
+/* ---- the picture each row produced ----
+ * A row used to be six columns of text with a download button, so the only way to see what a
+ * run actually made was to fetch the file again — several megabytes to answer "was this the
+ * good one?". The thumbnail answers it in the table, and clicking opens the real image.
+ *
+ * The preview is /api/thumbnail, not the stored file scaled down by CSS: at ~3.3 MB each,
+ * drawing a hundred postage stamps from the originals would cost more than the download it
+ * is there to save. Loaded lazily so only the rows on screen are fetched at all. */
+function openLightbox(src, alt) {
+  $("lightbox-image").src = src;
+  $("lightbox-image").alt = alt;
+  $("lightbox-dialog").showModal();
+}
+
+$("lightbox-close").addEventListener("click", () => $("lightbox-dialog").close());
+
+function previewCell(row, request) {
+  const td = document.createElement("td");
+  td.className = "shrink";
+  const name = fileNameFrom(request.output_url);
+  if (name) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "history-preview";
+    button.title = "ดูรูปเต็ม";
+    const img = document.createElement("img");
+    img.src = `/api/thumbnail/${name}`;
+    img.alt = `ผลลัพธ์ของ ${request.request_id.slice(0, 8)}`;
+    img.loading = "lazy";
+    button.append(img);
+    button.addEventListener("click", () => openLightbox(request.output_url, img.alt));
+    td.append(button);
+  } else {
+    td.textContent = "—";
+  }
+  row.append(td);
+}
+
+/* output_url is "/files/<stored name>"; the thumbnail endpoint takes the name on its own. */
+function fileNameFrom(url) {
+  return url ? url.split("/").pop() : null;
+}
+
 async function load() {
   let data;
   try {
@@ -52,6 +95,7 @@ async function load() {
   body.innerHTML = "";
   for (const request of data.requests) {
     const row = document.createElement("tr");
+    previewCell(row, request);
     cell(row, request.created_at, "mono");
     cell(row, request.request_id.slice(0, 8), "mono");
     cell(row, request.size, "mono");

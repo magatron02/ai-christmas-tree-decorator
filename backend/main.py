@@ -28,6 +28,7 @@ import uuid
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
+from PIL import Image
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -128,6 +129,36 @@ def _stored_path(name):
 
 def _url(name):
     return f"/files/{name}" if name else None
+
+
+# History shows one row per generation, up to 100 of them. A finished picture is ~3.3 MB, so
+# putting the real file in each row would have the page pull hundreds of megabytes to draw
+# postage stamps — the opposite of the point, which is seeing what a run produced without
+# fetching it again.
+THUMB_MAX_PX = 320
+
+
+def _thumbnail_path(name):
+    """A small copy of a stored image, made once and kept.
+
+    Cheap enough to build on demand that there is no reason to make generating an image any
+    slower for it, and old runs from before this existed get one the first time they are
+    looked at.
+    """
+    source = _stored_path(name)
+    thumb = config.THUMBS_DIR / f"{source.stem}.jpg"
+    if thumb.is_file() and thumb.stat().st_mtime >= source.stat().st_mtime:
+        return thumb
+
+    config.THUMBS_DIR.mkdir(parents=True, exist_ok=True)
+    with Image.open(source) as image:
+        # JPEG has no alpha; a cut-out would otherwise come out with a black background
+        image = image.convert("RGB")
+        image.thumbnail((THUMB_MAX_PX, THUMB_MAX_PX))
+        staged = thumb.with_name(f"{thumb.name}.{uuid.uuid4().hex}.part")
+        image.save(staged, format="JPEG", quality=82)
+    staged.replace(thumb)
+    return thumb
 
 
 def _db():
@@ -795,6 +826,17 @@ def api_count_result(request_id: str):
         "usage": usage,
         "note": "นับเฉพาะชิ้นที่เห็นในรูป ด้านหลังต้นกับที่บังกิ่งอยู่ไม่ได้นับ",
     }
+
+
+@app.get("/api/thumbnail/{name}")
+def api_thumbnail(name: str):
+    """A small JPEG of a stored image, for the history table.
+
+    Separate from /files/{name} rather than an option on it: the history page wants a preview
+    it can afford to draw a hundred of, and the download button next to it wants the real
+    file. Serving one URL for both would mean either a slow page or a downgraded download.
+    """
+    return FileResponse(_thumbnail_path(name), media_type="image/jpeg")
 
 
 @app.get("/api/history")
