@@ -6,6 +6,8 @@ storage/
 *.db-shm
 
 scripts/risk_gate_output.png
+scripts/risk_gate_*.png
+launcher.log
 
 # AC-5 material: catalogue exports in, generated results out. Both are large image sets,
 # and the verdicts that matter live in results.csv, which you can copy out by hand.

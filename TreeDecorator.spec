@@ -56,7 +56,7 @@ exe = EXE(
     debug=False,
     strip=False,
     upx=False,
-    console=True,  # the window is the quit button — see scripts/launcher.py
+    console=False,  # the system tray icon is the quit button now — see scripts/launcher.py
     icon="frontend/icon.ico",
 )
 

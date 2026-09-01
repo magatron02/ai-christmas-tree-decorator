@@ -37,14 +37,15 @@ Keep the setting exactly as it is: the background, the floor, the framing, the c
 anything else in the shot. Only the decorations are new."""
 
 REFERENCE_SCENE = """\
-The last image is a reference for the setting, not for the tree and not for the decorations.
-Take only its mood from it: the kind of place, the time of day, the colour of the light, how
-warm or cool it is, how soft or hard the shadows are, the overall palette.
+The last image is the exact setting the tree goes into — treat it exactly the way the tree's
+own background would be treated with no reference photo at all: keep it exactly as it is, the
+room, the floor, the furniture, the framing, the crop, and anything else already in that shot.
+Do not repaint it, do not regenerate it, and do not treat it as a mood or a style to
+reinterpret — composite the decorated tree into these actual pixels.
 
-Place the decorated tree into a setting of that kind. Relight the tree to match — the light
-has to fall on it from the same direction and in the same colour as the setting implies, or
-it will look pasted in. Do not copy any object, furniture, decoration or person from the
-reference image, and do not copy its composition."""
+Relight only the tree to match this setting's real light: the same direction, colour, and
+softness of shadow the setting already has, so the tree reads as if it were photographed in
+that room. Do not relight, move, add to, or remove anything else in the reference photo."""
 
 
 def describe_scene(has_reference):
@@ -57,22 +58,23 @@ def describe_scene(has_reference):
     return REFERENCE_SCENE if has_reference else NO_REFERENCE_SCENE
 
 
-def load_prompt(scale, element_count=1, has_reference=False):
+def load_prompt(scale, element_count=1, has_reference=False, density=None):
     """Read the template on every call and fill in what changes between runs.
 
     Prompt design is the highest-risk part of this project and gets tuned constantly
     (Spec.md 4), so editing the file takes effect on the next generation without a restart
     and without touching code.
 
-    Three substitutions, all existing so whoever tunes the prompt controls where the text
+    Four substitutions, all existing so whoever tunes the prompt controls where the text
     goes rather than the code appending it somewhere fixed: `{scene}` says what happens to
-    the background, `{elements}` how many decorations there are, and `{scale}` how big they
-    really are.
+    the background, `{elements}` how many decorations there are, `{scale}` how big they
+    really are, and `{density}` how many decorations to place. `density` is the sentence
+    text (from config.DENSITY_PRESETS), not a bare key — the same shape as `scale`.
     """
     text = config.PROMPT_PATH.read_text(encoding="utf-8").strip()
     if not text:
         raise ImageGenError(f"ไฟล์ prompt template ที่ {config.PROMPT_PATH} ว่างเปล่า")
-    for token in ("{scale}", "{elements}", "{scene}"):
+    for token in ("{scale}", "{elements}", "{scene}", "{density}"):
         if token not in text:
             raise ImageGenError(
                 f"ไฟล์ prompt template ที่ {config.PROMPT_PATH} ไม่มี {token} แล้ว "
@@ -82,6 +84,7 @@ def load_prompt(scale, element_count=1, has_reference=False):
         text.replace("{scene}", describe_scene(has_reference))
         .replace("{elements}", describe_elements(element_count))
         .replace("{scale}", scale)
+        .replace("{density}", density or config.DENSITY_PRESETS[config.DEFAULT_DENSITY])
     )
 
 
@@ -92,14 +95,17 @@ def _part(name, data):
     return (f"{name}.{ext}", io.BytesIO(data), mime)
 
 
-def generate(tree_image, element_pngs, width, height, scale, reference=None):
+def generate(tree_image, element_pngs, width, height, scale, reference=None, density=None):
     """Composite the transparent decorations onto the bare tree.
 
-    `element_pngs` is a list of one to five cut-outs. `scale` is the sentence saying how big
-    each really is next to the tree, built from the catalogue when product codes were given
-    (backend/services/catalog.py). `reference`, if given, is a photo whose setting and light
-    the result should adopt — it goes last so "the last image" in the prompt is unambiguous
-    however many decorations there are.
+    `element_pngs` is a list of one to MAX_ELEMENTS cut-outs. `scale` is the sentence saying
+    how big each really is next to the tree, built from the catalogue when product codes were
+    given (backend/services/catalog.py). `reference`, if given, is a photo whose setting and
+    light the result should adopt — it goes last so "the last image" in the prompt is
+    unambiguous however many decorations there are. `density` is the sentence saying how many
+    decorations to place (backend/config.py's DENSITY_PRESETS); appended after `reference`
+    rather than inserted earlier so existing positional callers/tests reading args[0..5]
+    (tree, elements, width, height, scale, reference) are unaffected by this addition.
 
     Returns (png_bytes, usage). `usage` is whatever token accounting the API reported, kept
     because it is the only per-image record of what a generation actually cost.
@@ -117,7 +123,7 @@ def generate(tree_image, element_pngs, width, height, scale, reference=None):
                 + [_part(f"element{n}", data) for n, data in enumerate(element_pngs, 1)]
                 + ([_part("reference", reference)] if reference else [])
             ),
-            prompt=load_prompt(scale, len(element_pngs), reference is not None),
+            prompt=load_prompt(scale, len(element_pngs), reference is not None, density),
             size=f"{width}x{height}",
         )
     except Exception as exc:

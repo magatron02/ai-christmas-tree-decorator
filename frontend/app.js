@@ -23,7 +23,10 @@ const STATE_LABEL = {
   delivered: ["done", "ส่งถึงแล้ว"],
 };
 
-const MAX_ELEMENTS = 5;
+// Pre-fetch fallback only — renderElements() runs before loadConfig()'s await resolves.
+// loadConfig() overwrites this with the real backend.config.MAX_ELEMENTS once it lands, so
+// the two never have to be kept in sync by hand.
+let MAX_ELEMENTS = 5;
 
 const state = {
   treeFile: null,
@@ -162,21 +165,46 @@ async function refreshTotals() {
   }
 }
 
-let sizePresets = []; // [{key, width, height}] from /api/config, used by refreshAutoSize below
+let sizePresets = []; // [{key, width, height, orientation}] from /api/config, for refreshAutoSize below
+
+const ORIENTATION_TH = { portrait: "แนวตั้ง", landscape: "แนวนอน", square: "จัตุรัส" };
 
 async function loadConfig() {
   const config = await call("/api/config");
   sizePresets = config.sizes;
+  MAX_ELEMENTS = config.max_elements;
+  renderElements(); // the "ใส่ได้ถึง N ชิ้น" hint was built against the pre-fetch fallback
+
   const select = $("size-select");
   select.innerHTML = "";
+  // "match the scene photo's own ratio" — resolved into a concrete size server-side
+  // (fit_custom_size) once a scene reference exists; see refreshAutoSize below for how it
+  // gets auto-selected the moment a scene photo is set.
+  const auto = document.createElement("option");
+  auto.value = "auto";
+  auto.textContent = "ตามสัดส่วนรูปบรรยากาศ";
+  select.append(auto);
   for (const size of config.sizes) {
     const option = document.createElement("option");
     option.value = size.key;
-    option.textContent = `${size.key} — ${size.width} × ${size.height}`;
+    option.textContent =
+      `${size.key} — ${size.width} × ${size.height} (${ORIENTATION_TH[size.orientation]})`;
     option.selected = size.key === config.default_size;
     select.append(option);
   }
   select.disabled = false;
+
+  const densitySelect = $("density-select");
+  densitySelect.innerHTML = "";
+  for (const density of config.densities) {
+    const option = document.createElement("option");
+    option.value = density.key;
+    option.textContent = density.label;
+    option.selected = density.key === config.default_density;
+    densitySelect.append(option);
+  }
+  densitySelect.disabled = false;
+
   $("cut-hint").textContent = `ไม่เกิน ${config.max_upload_mb} MB, JPG หรือ PNG`;
 }
 
@@ -226,8 +254,15 @@ function nearestSizeKey(ratio) {
 }
 
 function refreshAutoSize() {
-  const ratio = state.sceneRatio || state.treeRatio;
-  const key = nearestSizeKey(ratio);
+  // a scene reference wins outright — "auto" sends its exact ratio (fit_custom_size on the
+  // backend), so there is no "nearest of five" step to run once one is set. Without a scene,
+  // the tree photo's own ratio still snaps to the closest preset, same as before this option
+  // existed. Either way the user can still override manually via the dropdown afterward.
+  if (state.sceneRatio) {
+    $("size-select").value = "auto";
+    return;
+  }
+  const key = nearestSizeKey(state.treeRatio);
   if (key) $("size-select").value = key;
 }
 
@@ -751,6 +786,10 @@ $("generate-btn").addEventListener("click", async () => {
     const body = new FormData();
     body.append("files", state.treeFile);
     body.append("size", $("size-select").value);
+    if ($("size-select").value === "auto") {
+      body.append("scene_ratio", String(state.sceneRatio || state.treeRatio || ""));
+    }
+    body.append("density", $("density-select").value);
     body.append("tree_code", exact ? state.treeCode : "");
     if (state.sceneReference) body.append("reference", state.sceneReference);
     for (const element of state.elements) {

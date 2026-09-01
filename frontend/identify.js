@@ -219,6 +219,14 @@ function renderIdentified(result) {
         warn.textContent = `รูปทรงเป็น ${candidate.shape || "อย่างอื่น"}`;
         card.append(warn);
       }
+      // colour is the other field a shape-only comparison misses — same shape, wrong shade
+      // (a gold star and a red star agree on shape and kind, and are still different orders)
+      if (candidate.colour_agrees === false) {
+        const warn = document.createElement("div");
+        warn.className = "chip stale";
+        warn.textContent = `สีเป็น ${candidate.primary_colour || "อย่างอื่น"}`;
+        card.append(warn);
+      }
       row.append(card);
     }
     block.append(row);

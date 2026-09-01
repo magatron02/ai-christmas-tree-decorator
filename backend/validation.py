@@ -50,6 +50,15 @@ def element_count(elements):
     return elements
 
 
+def resolve_density(key):
+    """Density key -> the prompt sentence. Same shape as resolve_size: users pick a level,
+    never the sentence itself."""
+    if key not in config.DENSITY_PRESETS:
+        allowed = ", ".join(config.DENSITY_PRESETS)
+        raise ValidationError(f"ไม่รู้จักความหนาแน่น '{key}' · เลือกจาก: {allowed}")
+    return config.DENSITY_PRESETS[key]
+
+
 def check_size(nbytes, field):
     if nbytes <= 0:
         raise ValidationError(f"{field}: ไฟล์ว่างเปล่า")
@@ -108,8 +117,50 @@ def validate_dimensions(width, height):
 
 
 def resolve_size(key):
-    """Preset key -> (width, height). Users pick a ratio, never raw pixels."""
-    if key not in config.SIZE_PRESETS:
-        allowed = ", ".join(config.SIZE_PRESETS)
-        raise ValidationError(f"ไม่รู้จักขนาด '{key}' · เลือกจาก: {allowed}")
-    return validate_dimensions(*config.SIZE_PRESETS[key])
+    """Preset key, or a literal 'WxH' computed by fit_custom_size(), -> (width, height).
+
+    The literal-size path exists for "match the scene photo's own ratio": /api/prepare
+    resolves that ratio into a concrete size once (via fit_custom_size) and stores the
+    literal string, so /api/generate re-resolving the same row later doesn't need to know
+    where the size came from — it is just another size key by the time it is stored.
+    """
+    if key in config.SIZE_PRESETS:
+        return validate_dimensions(*config.SIZE_PRESETS[key])
+    if "x" in key:
+        try:
+            width, height = (int(part) for part in key.split("x", 1))
+        except ValueError:
+            raise ValidationError(f"ไม่รู้จักขนาด '{key}'")
+        return validate_dimensions(width, height)
+    allowed = ", ".join(config.SIZE_PRESETS)
+    raise ValidationError(f"ไม่รู้จักขนาด '{key}' · เลือกจาก: {allowed}")
+
+
+def fit_custom_size(ratio):
+    """The closest valid width x height to a real photo's aspect ratio — for "match the scene
+    photo's own ratio", not one of the five fixed presets.
+
+    Anchored to DEFAULT_SIZE's pixel count rather than maxed out to MAX_DIMENSION: gpt-image-2
+    bills by canvas size, and a shop opting into "match my photo" should not silently pay for
+    up to 3x the pixels of a normal run just because their room photo happens to be wide.
+    Same divisible-by-16 / ratio / max-dimension rules as every preset, via validate_dimensions.
+    """
+    ratio = min(max(ratio, config.MIN_RATIO), config.MAX_RATIO)
+    m = config.DIMENSION_MULTIPLE
+    max_w, max_h = config.MAX_DIMENSION
+    anchor_w, anchor_h = config.SIZE_PRESETS[config.DEFAULT_SIZE]
+    area = anchor_w * anchor_h
+
+    height = (area / ratio) ** 0.5
+    width = height * ratio
+    width = max(m, round(width / m) * m)
+    height = max(m, round(height / m) * m)
+
+    if width > max_w:
+        width = max_w - (max_w % m)
+        height = max(m, round(width / ratio / m) * m)
+    if height > max_h:
+        height = max_h - (max_h % m)
+        width = max(m, round(height * ratio / m) * m)
+
+    return validate_dimensions(width, height)

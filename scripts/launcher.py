@@ -1,12 +1,22 @@
-"""Desktop entry point: start the server, open the browser, stay running.
+"""Desktop entry point: start the server, sit in the system tray, stay running.
 
 This is what the installed shortcut points at. The web app is unchanged — this only does the
-three things a double-click has to do that `uvicorn backend.main:app` on a terminal does not:
-pick a port that is actually free, wait until the server answers before opening a browser at
-it, and leave a window on screen that explains how to quit.
+things a double-click has to do that `uvicorn backend.main:app` on a terminal does not: pick
+a port that is actually free, wait until the server answers before opening a browser at it,
+and give the user a way to quit that does not require a visible window.
 
-Not a service and not silent on purpose: this is one shop's own machine, and a console window
-the user closes is a quit button they can find without being taught one.
+No console window (TreeDecorator.spec sets console=False) — a command-prompt window sitting
+in the taskbar for the life of the program read as "this program is broken" to a shop that
+never opens a terminal. The system tray icon is the quit button instead: "เปิดหน้าเว็บ" opens
+the app again, "ปิดโปรแกรม" shuts the server down and exits. Running from source
+(`python scripts/launcher.py`) goes through the same tray path — one code path, not a
+`--console` dev-only branch to keep in sync with the real one.
+
+Because there is no console, nothing here may assume `print`/`input` work: sys.stdout can be
+None. `_log()` is the one place that touches it, and every informational message — including
+a crash before the tray exists to say anything — goes through it, appended to launcher.log
+beside the exe (or the repo root, running from source) plus a native message box for
+failures, since a log file nobody is looking at might as well not exist.
 """
 
 import os
@@ -25,14 +35,48 @@ from pathlib import Path
 if not getattr(sys, "frozen", False):
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-def _make_console_utf8_safe():
-    """Stop Thai text from killing the app before it starts.
+# Computed independently of backend.config: this has to work even if importing the backend
+# package itself is what failed, since the crash handler at the bottom still needs it.
+ROOT = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) \
+    else Path(__file__).resolve().parent.parent
+LOG_PATH = ROOT / "launcher.log"
 
-    A frozen console app on Windows gets cp1252 stdout, and the first print of a Thai line
-    raises UnicodeEncodeError — the whole program dies on launch, which is exactly what
-    happened the first time this exe was run. Reconfiguring with errors="replace" means the
-    worst case is a mangled character rather than no program; switching the console to UTF-8
-    lets it render properly wherever the console font has Thai glyphs.
+
+def _log(message):
+    """Print when there is a console to read it (dev/source runs), always append to
+    launcher.log (there usually is not one). Never raises — a logging failure must not turn
+    into the reason the app doesn't start."""
+    try:
+        if sys.stdout is not None:
+            print(message)
+    except Exception:
+        pass
+    try:
+        with LOG_PATH.open("a", encoding="utf-8") as f:
+            f.write(message + "\n")
+    except OSError:
+        pass
+
+
+def _message_box(text):
+    """The one UI surface available before the tray icon exists (or if building it failed) —
+    stdlib ctypes only, no GUI dependency beyond what Windows already ships."""
+    if sys.platform != "win32":
+        return
+    try:
+        import ctypes
+
+        ctypes.windll.user32.MessageBoxW(0, text, "Tree Decorator", 0x10)  # MB_ICONERROR
+    except Exception:
+        pass
+
+
+def _make_console_utf8_safe():
+    """Stop Thai text from killing the app before it starts, on the rare path that does have
+    a console (running from source). A frozen console app used to get cp1252 stdout, and the
+    first print of a Thai line raised UnicodeEncodeError before this existed. Harmless no-op
+    now that the shipped build has no console at all — sys.stdout is None, reconfigure()
+    raises AttributeError on None, which is exactly what is caught below.
     """
     if sys.platform == "win32":
         try:
@@ -87,7 +131,7 @@ def _open_when_ready(url, port):
             webbrowser.open(url)
             return
         time.sleep(0.3)
-    print(f"เซิร์ฟเวอร์ยังไม่ตอบใน {STARTUP_TIMEOUT_S} วินาที — เปิดเองที่ {url}")
+    _log(f"Server did not answer within {STARTUP_TIMEOUT_S}s — open {url} yourself")
 
 
 def _use_bundled_rembg_model():
@@ -103,6 +147,34 @@ def _use_bundled_rembg_model():
         os.environ.setdefault("U2NET_HOME", str(bundled))
 
 
+def _build_tray_icon(url, server):
+    """The quit button, now that there is no console window to be one.
+
+    pystray's Icon.run() has to own the main thread on Windows, which is why uvicorn runs in
+    a background thread via uvicorn.Server (not the blocking uvicorn.run()) — "ปิดโปรแกรม" sets
+    should_exit on that server object and stops the icon, and both threads unwind cleanly from
+    there without killing a request that happens to be in flight.
+    """
+    import pystray
+    from PIL import Image
+
+    icon_path = ROOT / "frontend" / "icon.ico"
+    image = Image.open(icon_path) if icon_path.is_file() else Image.new("RGB", (32, 32), "#7A2E2E")
+
+    def on_open(icon, item):
+        webbrowser.open(url)
+
+    def on_quit(icon, item):
+        server.should_exit = True
+        icon.stop()
+
+    menu = pystray.Menu(
+        pystray.MenuItem("เปิดหน้าเว็บ", on_open, default=True),
+        pystray.MenuItem("ปิดโปรแกรม", on_quit),
+    )
+    return pystray.Icon("TreeDecorator", image, "Tree Decorator", menu)
+
+
 def main():
     _make_console_utf8_safe()
     _use_bundled_rembg_model()
@@ -110,16 +182,11 @@ def main():
     url = f"http://{HOST}:{port}"
 
     if running:
-        print(f"Already running at {url} — opening the browser")
-        print(f"เปิดอยู่แล้วที่ {url} — กำลังเปิดหน้าเว็บให้")
+        _log(f"Already running at {url} — opening the browser")
         webbrowser.open(url)
         return
 
-    print("=" * 58)
-    print("  Tree Decorator")
-    print(f"  {url}")
-    print("  Close this window to quit  /  ปิดหน้าต่างนี้เพื่อออกจากโปรแกรม")
-    print("=" * 58)
+    _log(f"Starting Tree Decorator at {url}")
 
     threading.Thread(target=_open_when_ready, args=(url, port), daemon=True).start()
 
@@ -135,10 +202,11 @@ def main():
     # would have triggered itself.
     threading.Thread(target=background_removal.warm, daemon=True).start()
 
-    try:
-        uvicorn.run(app, host=HOST, port=port, log_level="warning")
-    except KeyboardInterrupt:
-        pass
+    server = uvicorn.Server(uvicorn.Config(app, host=HOST, port=port, log_level="warning"))
+    threading.Thread(target=server.run, daemon=True).start()
+
+    icon = _build_tray_icon(url, server)
+    icon.run()  # blocks the main thread until "ปิดโปรแกรม" calls icon.stop()
 
 
 if __name__ == "__main__":
@@ -146,10 +214,11 @@ if __name__ == "__main__":
         main()
     except SystemExit:
         raise
-    except Exception as exc:  # a frozen app has no terminal to leave a traceback on
+    except Exception as exc:
         import traceback
 
-        traceback.print_exc()
-        print(f"\nเปิดโปรแกรมไม่สำเร็จ: {exc}")
-        input("\nกด Enter เพื่อปิด...")
+        _log(traceback.format_exc())
+        _message_box(
+            f"เปิดโปรแกรมไม่สำเร็จ:\n{exc}\n\nรายละเอียดอยู่ที่ {LOG_PATH}"
+        )
         sys.exit(1)

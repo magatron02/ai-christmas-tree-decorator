@@ -130,6 +130,88 @@ def test_quantity_refuses_when_a_size_is_unknown():
         matching.suggest_quantity("05021-1", sizeless["code"])
 
 
+# ---- shape/colour bonus (ranking only, never the refusal threshold) ---------------------
+
+
+@pytest.mark.parametrize(
+    "value, bucket, expected",
+    [
+        ("cone", matching.SHAPE_BUCKETS, "cone"),
+        ("conical", matching.SHAPE_BUCKETS, "cone"),
+        ("tree", matching.SHAPE_BUCKETS, "cone"),
+        ("mini tree", matching.SHAPE_BUCKETS, "cone"),
+        ("sphere", matching.SHAPE_BUCKETS, "sphere"),
+        ("round", matching.SHAPE_BUCKETS, "sphere"),
+        ("something never seen before", matching.SHAPE_BUCKETS, "something never seen before"),
+        (None, matching.SHAPE_BUCKETS, ""),
+        ("gold", matching.COLOUR_BUCKETS, "gold"),  # no bucket for it; passes through as-is
+        ("rainbow", matching.COLOUR_BUCKETS, "multicolour"),
+        ("grey", matching.COLOUR_BUCKETS, "silver"),
+    ],
+)
+def test_normalize_buckets_known_synonyms_together(value, bucket, expected):
+    assert matching._normalize(value, bucket) == expected
+
+
+def test_a_shape_matching_lower_cosine_candidate_outranks_a_higher_cosine_mismatch(monkeypatch):
+    """The exact failure the module's own docstring documents: a star scored 0.812 against a
+    round bauble, same category, wrong shape. This pins the fix — same gap, shape now decides
+    which one shows up first."""
+    codes = ["star-code", "bauble-code"]
+    # bauble has the higher raw cosine; star matches the query's shape
+    matrix = np.array([[0.90], [0.92]], dtype=np.float32)
+    monkeypatch.setattr(matching, "_vectors", lambda: (codes, matrix))
+    monkeypatch.setattr(matching, "_descriptions", lambda: [
+        {"code": "star-code", "attributes": {"shape": "star", "primary_colour": "gold"}},
+        {"code": "bauble-code", "attributes": {"shape": "sphere", "primary_colour": "gold"}},
+    ])
+    monkeypatch.setattr(matching, "embed", lambda texts: np.array([[1.0]], dtype=np.float32))
+
+    matches, refused = matching.find("query", top_n=2, query_shape="star")
+
+    assert refused is False
+    assert matches[0]["code"] == "star-code", "shape agreement should have moved it to first"
+    assert matches[0]["score"] == pytest.approx(0.90), (
+        "the displayed score must stay the raw cosine, not the bonus-adjusted one"
+    )
+    assert matches[1]["code"] == "bauble-code"
+
+
+def test_the_shape_bonus_never_lets_a_raw_refusal_through(monkeypatch):
+    """Calibration-safety regression: a candidate whose RAW score sits just under MIN_SCORE
+    must still be refused even when a shape bonus would push the adjusted score over the
+    line — the bonus may reorder what is shown, it must never decide whether anything is."""
+    just_under = matching.MIN_SCORE - 0.01
+    assert just_under + matching.SHAPE_BONUS > matching.MIN_SCORE, (
+        "test setup: the bonus must be large enough to actually cross the threshold, "
+        "or this test proves nothing"
+    )
+    codes = ["almost-code"]
+    matrix = np.array([[just_under]], dtype=np.float32)
+    monkeypatch.setattr(matching, "_vectors", lambda: (codes, matrix))
+    monkeypatch.setattr(matching, "_descriptions", lambda: [
+        {"code": "almost-code", "attributes": {"shape": "star", "primary_colour": "gold"}},
+    ])
+    monkeypatch.setattr(matching, "embed", lambda texts: np.array([[1.0]], dtype=np.float32))
+
+    matches, refused = matching.find("query", top_n=1, query_shape="star")
+
+    assert refused is True, "a shape-agreeing bonus pushed a genuinely weak match past MIN_SCORE"
+    assert matches[0]["score"] == pytest.approx(just_under)
+
+
+def test_colour_agrees_flag_reflects_bucketed_comparison(fake_embed):
+    codes, _ = matching._vectors()
+    matches, _ = matching.find(codes[0], query_colour="green")
+
+    for match in matches:
+        if match["primary_colour"] is None:
+            assert match["colour_agrees"] is False or match["colour_agrees"] is None
+        else:
+            expected = matching._normalize(match["primary_colour"], matching.COLOUR_BUCKETS) == "green"
+            assert match["colour_agrees"] == expected
+
+
 def test_the_threshold_sits_inside_the_measured_gap():
     """Calibrated 2026-08-05: real products scored 0.564 and up, things nobody sells scored
     0.463 and down. A threshold outside that gap either refuses genuine products or accepts

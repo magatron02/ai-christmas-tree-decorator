@@ -32,8 +32,8 @@ def prepare(client, tokens, **extra):
     )
 
 
-@pytest.mark.parametrize("count", [1, 2, 3, 5])
-def test_between_one_and_five_decorations_all_reach_the_api(
+@pytest.mark.parametrize("count", [1, 2, 3, 5, 10])
+def test_between_one_and_ten_decorations_all_reach_the_api(
     client, conn, fake_gen, fake_rembg, count
 ):
     tokens = cut_out(client, count)
@@ -47,11 +47,11 @@ def test_between_one_and_five_decorations_all_reach_the_api(
     assert len(element_images) == count, "a decoration went missing on the way to the API"
 
 
-def test_six_is_refused(client, fake_gen, fake_rembg):
-    response = prepare(client, cut_out(client, 6))
+def test_eleven_is_refused(client, fake_gen, fake_rembg):
+    response = prepare(client, cut_out(client, 11))
 
     assert response.status_code == 422
-    assert "มากสุด 5" in response.json()["error"]
+    assert "มากสุด 10" in response.json()["error"]
     assert fake_gen.count == 0
 
 

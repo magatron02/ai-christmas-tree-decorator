@@ -39,6 +39,44 @@ from backend.validation import ValidationError
 MIN_SCORE = 0.51
 TOP_N = 3
 
+# Free-text shape/colour, bucketed by hand from what actually appears in catalog/descriptions.json
+# (checked directly, e.g. "sphere"/"round", "cone"/"conical"/"tree"/"mini tree"/"fir tree" all
+# name the same shape). Ranking-only — see find()'s SHAPE_BONUS/COLOUR_BONUS comment for why
+# this never touches the refusal threshold. Hand-maintained on purpose: if this keeps growing,
+# that is the signal to constrain vision.Decoration.shape to a fixed enum (like `kind` and
+# `finish` already are) and re-run scripts/describe_catalog.py + embed_catalog.py properly —
+# not before, since that costs ~1,053 real vision calls.
+SHAPE_BUCKETS = {
+    "sphere": {"sphere", "round", "ball", "globe"},
+    "cone": {"cone", "conical", "tree", "conical tree", "mini tree", "christmas tree",
+             "fir tree"},
+    "star": {"star", "five-point star"},
+    "spray": {"spray", "flower spray", "poinsettia flower spray"},
+    "teardrop": {"teardrop", "elongated teardrop", "onion"},
+    "bow": {"bow", "bow with long ribbon tails", "ribbon bow", "ribbon bow with long tails"},
+    "flower": {"flower", "poinsettia flower"},
+    "figure": {"figure", "bear figure"},
+    "box": {"box", "cube"},
+    "strand": {"long strand", "long strip"},
+}
+COLOUR_BUCKETS = {
+    "multicolour": {"multicolour", "multi", "rainbow"},
+    "silver": {"silver", "grey"},
+}
+SHAPE_BONUS = 0.03
+COLOUR_BONUS = 0.03
+
+
+def _normalize(value, buckets):
+    """A free-text field's bucket name, or the lowercased value itself when no bucket claims
+    it — so an unbucketed shape/colour still compares by exact match, same as before this
+    existed."""
+    value = (value or "").strip().lower()
+    for bucket, synonyms in buckets.items():
+        if value in synonyms:
+            return bucket
+    return value
+
 
 @lru_cache(maxsize=1)
 def _descriptions():
@@ -99,7 +137,8 @@ def embed(texts):
     return matrix / np.linalg.norm(matrix, axis=1, keepdims=True)
 
 
-def find(query_text, top_n=TOP_N, min_score=MIN_SCORE, query_kind=None, query_shape=None):
+def find(query_text, top_n=TOP_N, min_score=MIN_SCORE, query_kind=None, query_shape=None,
+         query_colour=None):
     """Closest catalogue products to one described decoration.
 
     This is a nearest-neighbour search, not an identification. Measured on a real photo it
@@ -109,9 +148,18 @@ def find(query_text, top_n=TOP_N, min_score=MIN_SCORE, query_kind=None, query_sh
     "a Christmas decoration" from "a coffee mug"; it does not separate one Christmas
     decoration from another.
 
-    So the score is not the whole answer. `kind_agrees` and `shape_agrees` are returned per
-    candidate, because the disagreements are exactly the cases a person needs to catch, and
-    a number in the nineties reads as certainty when it is not.
+    Shape and colour agreement nudges *which* candidates rank in the top N (a small bonus
+    added to an `adjusted` score, SHAPE_BONUS/COLOUR_BONUS) — that is the whole fix for the
+    star/bauble case above: same cosine, but the star now outranks the bauble once shape
+    agreement is counted. `scores`/the returned `"score"` and the refusal check stay on raw
+    cosine, never the adjusted value: MIN_SCORE was calibrated against pure cosine similarity
+    (see the module comment above, and test_the_threshold_sits_inside_the_measured_gap), and
+    a boosted score crossing that line would silently invalidate the calibration — a bonus
+    may change the order of the results shown, it must never change whether they get shown.
+
+    `kind_agrees`, `shape_agrees` and `colour_agrees` are still returned per candidate on top
+    of that, because a disagreement is exactly the case a person needs to catch, and a number
+    in the nineties reads as certainty when it is not.
 
     Returns (matches, refused). When refused, `matches` is still filled in so the closest
     rows can be seen — but the caller must present them as "nothing close".
@@ -120,23 +168,41 @@ def find(query_text, top_n=TOP_N, min_score=MIN_SCORE, query_kind=None, query_sh
     by_code = {row["code"]: row for row in _descriptions()}
 
     scores = matrix @ embed([query_text])[0]
-    order = np.argsort(-scores)[:top_n]
+    adjusted = scores.copy()
+
+    query_shape_bucket = _normalize(query_shape, SHAPE_BUCKETS) if query_shape else None
+    query_colour_bucket = _normalize(query_colour, COLOUR_BUCKETS) if query_colour else None
+    if query_shape_bucket or query_colour_bucket:
+        for i, code in enumerate(codes):
+            attributes = by_code.get(code, {}).get("attributes", {})
+            if query_shape_bucket and _normalize(attributes.get("shape"), SHAPE_BUCKETS) == query_shape_bucket:
+                adjusted[i] += SHAPE_BONUS
+            if query_colour_bucket and _normalize(attributes.get("primary_colour"), COLOUR_BUCKETS) == query_colour_bucket:
+                adjusted[i] += COLOUR_BONUS
+
+    order = np.argsort(-adjusted)[:top_n]
 
     matches = []
     for position in order:
         code = codes[position]
         row = by_code.get(code, {})
         attributes = row.get("attributes", {})
+        candidate_shape = attributes.get("shape")
+        candidate_colour = attributes.get("primary_colour")
         matches.append({
             "code": code,
             "score": round(float(scores[position]), 4),
             "text": row.get("text"),
             "summary": attributes.get("summary"),
             "kind": attributes.get("kind"),
-            "shape": attributes.get("shape"),
+            "shape": candidate_shape,
+            "primary_colour": candidate_colour,
             "kind_agrees": None if query_kind is None else attributes.get("kind") == query_kind,
             "shape_agrees": None if query_shape is None else (
-                (attributes.get("shape") or "").lower() == query_shape.lower()
+                _normalize(candidate_shape, SHAPE_BUCKETS) == _normalize(query_shape, SHAPE_BUCKETS)
+            ),
+            "colour_agrees": None if query_colour is None else (
+                _normalize(candidate_colour, COLOUR_BUCKETS) == _normalize(query_colour, COLOUR_BUCKETS)
             ),
             "image": row.get("image"),
             "pdf_page": row.get("pdf_page"),
@@ -144,7 +210,10 @@ def find(query_text, top_n=TOP_N, min_score=MIN_SCORE, query_kind=None, query_sh
             "photo_match": row.get("match"),
         })
 
-    refused = not matches or matches[0]["score"] < min_score
+    # refusal is decided on raw cosine over the WHOLE catalogue, not just the (possibly
+    # re-ordered) top N — the bonus must not let a genuinely unrelated photo sneak past the
+    # threshold just because it happened to share a shape/colour bucket with something
+    refused = bool(len(scores) == 0 or float(scores.max()) < min_score)
     return matches, refused
 
 

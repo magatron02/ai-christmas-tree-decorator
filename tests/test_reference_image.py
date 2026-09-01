@@ -75,22 +75,27 @@ def test_without_a_reference_the_prompt_protects_the_background():
     assert "reference" not in prompt.lower()
 
 
-def test_with_a_reference_the_prompt_asks_for_a_new_setting():
+def test_with_a_reference_the_prompt_keeps_the_reference_exactly():
+    """Reworded from an earlier "take only the mood" design: the shop wants its actual room
+    photo untouched, with only the decorated tree added — not a new scene "of that kind"."""
     prompt = image_gen.load_prompt("scale", 1, has_reference=True)
 
-    assert "The last image is a reference for the setting" in prompt
-    assert "Keep the setting exactly as it is" not in prompt, (
-        "the two instructions contradict each other; only one may be present"
+    assert "keep it exactly as it is" in prompt
+    assert "composite the decorated tree into these actual pixels" in prompt
+    assert "The last image is a reference for the setting" not in prompt, (
+        "the old mood-only wording must not still be present alongside the new one"
     )
 
 
-def test_the_reference_prompt_forbids_copying_objects_from_it():
-    """Taking the mood is the feature. Taking someone's furniture or their decorations is a
-    different picture than the one that was asked for."""
+def test_the_reference_prompt_only_relights_the_tree():
+    """The reference photo's own furniture/objects are now deliberately kept — the opposite
+    of the old "do not copy any object" instruction, which asked the model to repaint them
+    away. Only the tree may be touched."""
     prompt = image_gen.load_prompt("scale", 1, has_reference=True)
 
-    assert "Do not copy any object" in prompt
-    assert "Relight the tree to match" in prompt
+    assert "Relight only the tree" in prompt
+    assert "Do not relight, move, add to, or remove anything else" in prompt
+    assert "Do not copy any object" not in prompt, "that instruction described the old design"
 
 
 def test_a_template_missing_the_scene_placeholder_is_refused(monkeypatch, tmp_path):

@@ -45,6 +45,10 @@ CREATE TABLE IF NOT EXISTS requests (
     element_code TEXT,
     -- optional photo whose setting and light the result should adopt (Product.md 8.3)
     reference_path TEXT,
+    -- how tightly to decorate the tree — a DENSITY_PRESETS key, NULL on rows written before
+    -- this existed (read back as DEFAULT_DENSITY, same fallback the "size" column never
+    -- needed since it has always been NOT NULL)
+    density      TEXT,
     error        TEXT,
     usage_json   TEXT,
     created_at   TEXT NOT NULL,
@@ -70,26 +74,28 @@ def connect(path=None):
     # older databases keep their rows and gain whatever columns arrived since — the log is
     # the spend record, so it outlives schema changes rather than being rebuilt
     existing = {row["name"] for row in conn.execute("PRAGMA table_info(requests)")}
-    for column in ("usage_json", "tree_code", "element_code", "elements_json", "reference_path"):
+    for column in (
+        "usage_json", "tree_code", "element_code", "elements_json", "reference_path", "density",
+    ):
         if column not in existing:
             conn.execute(f"ALTER TABLE requests ADD COLUMN {column} TEXT")
     conn.commit()
     return conn
 
 
-def create(conn, tree_path, elements, size, tree_code=None, reference_path=None):
-    """`elements` is a list of {"path": ..., "code": ...}, one to five of them."""
+def create(conn, tree_path, elements, size, tree_code=None, reference_path=None, density=None):
+    """`elements` is a list of {"path": ..., "code": ...}, one to MAX_ELEMENTS of them."""
     request_id = uuid.uuid4().hex
     stamp = now()
     first = elements[0]
     with conn:
         conn.execute(
             "INSERT INTO requests (request_id, status, tree_path, element_path,"
-            " elements_json, size, tree_code, element_code, reference_path,"
+            " elements_json, size, tree_code, element_code, reference_path, density,"
             " created_at, updated_at)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (request_id, PENDING, tree_path, first["path"], json.dumps(elements), size,
-             tree_code, first.get("code"), reference_path, stamp, stamp),
+             tree_code, first.get("code"), reference_path, density, stamp, stamp),
         )
     return request_id
 

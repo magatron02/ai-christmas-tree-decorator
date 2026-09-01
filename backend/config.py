@@ -45,10 +45,11 @@ CATALOG_PATH = ROOT / "catalog" / "products.json"
 # Spec.md 3. gpt-image-2's own per-file ceiling is higher; this is ours.
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 
-# Decorations per image (Product.md 8.2). Five is the product's number, not a technical
-# limit — each one is another reference image the model has to keep straight, and the
-# quality of a five-way mix is what AC-7 has to establish.
-MAX_ELEMENTS = 5
+# Decorations per image (Product.md 8.2). Not a technical limit — each one is another
+# reference image the model has to keep straight. Raised from 5 to 10 after
+# scripts/check_scale_and_ratio.py confirmed the real API accepts a 12-image request
+# (tree + 10 elements + reference) at full quality.
+MAX_ELEMENTS = 10
 ALLOWED_EXT = {".jpg", ".jpeg", ".png"}
 ALLOWED_MIME = {"image/jpeg", "image/png"}
 ALLOWED_FORMATS = {"JPEG", "PNG"}  # what Pillow reports after sniffing the actual bytes
@@ -63,6 +64,29 @@ SIZE_PRESETS = {
     "16:9": (2048, 1152),  # not 1920x1080 — 1080 is not divisible by 16
 }
 DEFAULT_SIZE = "4:5"
+
+# How tightly the tree gets decorated. "normal" is worded identically to what the prompt
+# always said, so the default behaviour is unchanged — this only exists so a shop that wants
+# a sparser or fuller look has a control for it, without hand-editing the prompt file.
+DENSITY_PRESETS = {
+    "light": (
+        "A lightly decorated tree: roughly 8 to 12 decorations in total for a full-height "
+        "tree, counting every kind together, fewer if they are large. Leave generous gaps of "
+        "bare branch between them."
+    ),
+    "normal": (
+        "A naturally decorated tree, not a covered one: roughly 12 to 20 decorations in "
+        "total for a full-height tree, counting every kind together, fewer if they are "
+        "large. Leave visible gaps of bare branch between them."
+    ),
+    "full": (
+        "A fully decorated tree: roughly 20 to 30 decorations in total for a full-height "
+        "tree, counting every kind together, fewer if they are large. Leave only small gaps "
+        "of bare branch between them."
+    ),
+}
+DENSITY_LABELS = {"light": "โปร่ง", "normal": "ปกติ", "full": "แน่น"}
+DEFAULT_DENSITY = "normal"
 
 # There is deliberately no scale-correction constant here. gpt-image-2 renders decorations
 # at roughly 0.55-0.70 of the fraction it is told, so correcting for it looks obvious: ask

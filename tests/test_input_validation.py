@@ -111,6 +111,54 @@ def test_unknown_size_key_is_rejected():
     assert "ไม่รู้จักขนาด" in str(caught.value)
 
 
+# ---- "match the scene photo's own ratio" -----------------------------------------------
+
+
+def test_resolve_size_accepts_a_literal_wxh_string():
+    assert validation.resolve_size("1536x1920") == (1536, 1920)
+
+
+def test_resolve_size_still_rejects_garbage_containing_an_x():
+    with pytest.raises(ValidationError):
+        validation.resolve_size("abcxdef")
+
+
+@pytest.mark.parametrize(
+    "ratio", [0.1, 0.333, 0.8, 1.0, 1.5, 1.778, 2.5, 3.0, 10.0],
+)
+def test_fit_custom_size_always_produces_a_valid_size(ratio):
+    width, height = validation.fit_custom_size(ratio)
+    # must not raise — validate_dimensions is the same gate every preset goes through
+    assert validation.validate_dimensions(width, height) == (width, height)
+
+
+def test_fit_custom_size_stays_close_to_the_requested_ratio_when_unclamped():
+    # 4:5 (0.8) is well inside the allowed range and doesn't hit the max-dimension clamp,
+    # so the result should land close to the ratio actually asked for
+    width, height = validation.fit_custom_size(0.8)
+    assert abs(width / height - 0.8) < 0.02
+
+
+def test_fit_custom_size_clamps_extreme_ratios_into_the_allowed_range():
+    width, height = validation.fit_custom_size(100.0)
+    assert config.MIN_RATIO <= width / height <= config.MAX_RATIO
+
+    width, height = validation.fit_custom_size(0.001)
+    assert config.MIN_RATIO <= width / height <= config.MAX_RATIO
+
+
+def test_fit_custom_size_does_not_wildly_inflate_the_pixel_budget():
+    """Anchored to DEFAULT_SIZE's pixel count rather than maxed out to MAX_DIMENSION — a shop
+    opting into "match my photo" should not silently pay for several times the normal canvas
+    just because their room photo is wide."""
+    anchor_w, anchor_h = config.SIZE_PRESETS[config.DEFAULT_SIZE]
+    anchor_area = anchor_w * anchor_h
+
+    width, height = validation.fit_custom_size(1.0)  # square: no clamp kicks in
+
+    assert width * height < anchor_area * 1.5
+
+
 # ---- through the API -------------------------------------------------------------------
 
 

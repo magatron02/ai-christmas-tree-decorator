@@ -146,12 +146,19 @@ def test_rule_4_the_settings_page_has_exactly_one_primary():
     assert len(PRIMARY.findall(read(FRONTEND / "settings.html"))) == 1
 
 
+PRIMARY_WORD = re.compile(r"(?<![a-zA-Z_])primary(?![a-zA-Z_])")
+
+
 @pytest.mark.parametrize("path", SCRIPTS, ids=lambda p: p.name)
 def test_rule_4_scripts_do_not_mint_extra_primaries(path):
     """Looks for the word inside a className assignment, not inside prose — theme.js quotes
-    DESIGN.md's "Light theme — primary" in a comment, which is not a second button."""
+    DESIGN.md's "Light theme — primary" in a comment, which is not a second button.
+
+    Bounded so it does not fire on an unrelated identifier that happens to contain "primary"
+    as a substring, like the vision schema's own `primary_colour` field
+    (backend/services/vision.py) — a data field, not a button class."""
     text = strip_comments(read(path))
-    assert "primary" not in text, f"{path.name} mentions 'primary' outside a comment"
+    assert not PRIMARY_WORD.search(text), f"{path.name} mentions 'primary' outside a comment"
 
 
 # ---- rule 5: borders are 1px --------------------------------------------------------------

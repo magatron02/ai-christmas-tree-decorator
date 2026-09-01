@@ -176,6 +176,7 @@ def _row_json(row):
         # so there is no flag that can disagree with the record of what happened
         "billed": row["usage_json"] is not None,
         "size": row["size"],
+        "density": row["density"],
         "tree_code": row["tree_code"],
         "element_code": row["element_code"],
         "error": row["error"],
@@ -250,15 +251,27 @@ def api_set_key(request: Request, api_key: str = Form(...)):
     return {"api_key_set": True}
 
 
+def _orientation(width, height):
+    if width == height:
+        return "square"
+    return "portrait" if width < height else "landscape"
+
+
 @app.get("/api/config")
 def api_config():
     """So the frontend never re-declares limits that live in config.py."""
     return {
         "sizes": [
-            {"key": key, "width": w, "height": h} for key, (w, h) in config.SIZE_PRESETS.items()
+            {"key": key, "width": w, "height": h, "orientation": _orientation(w, h)}
+            for key, (w, h) in config.SIZE_PRESETS.items()
         ],
         "default_size": config.DEFAULT_SIZE,
+        "densities": [
+            {"key": key, "label": config.DENSITY_LABELS[key]} for key in config.DENSITY_PRESETS
+        ],
+        "default_density": config.DEFAULT_DENSITY,
         "max_upload_mb": config.MAX_UPLOAD_BYTES // (1024 * 1024),
+        "max_elements": config.MAX_ELEMENTS,
         "model": config.IMAGE_MODEL,
     }
 
@@ -603,7 +616,8 @@ def api_analyse_reference(name: str, tree_code: str = ""):
     for decoration in described.decorations:
         text = vision.as_text(decoration)
         matches, refused = matching.find(
-            text, query_kind=decoration.kind, query_shape=decoration.shape
+            text, query_kind=decoration.kind, query_shape=decoration.shape,
+            query_colour=decoration.primary_colour,
         )
         entry = {
             "seen": decoration.model_dump(),
@@ -641,12 +655,14 @@ def api_prepare(
     files: list[UploadFile] = File(...),
     element: list[str] = Form(...),
     size: str = Form(config.DEFAULT_SIZE),
+    scene_ratio: str = Form(""),
+    density: str = Form(config.DEFAULT_DENSITY),
     tree_code: str = Form(""),
     element_code: list[str] = Form(default=[]),
     reference: str = Form(""),
 ):
-    """Input A + one to five accepted decorations -> a `pending` request. Still free; still
-    no API call.
+    """Input A + one to MAX_ELEMENTS accepted decorations -> a `pending` request. Still free;
+    still no API call.
 
     Product codes are optional, and every named item's code has to resolve to something in
     the catalogue or the whole request is refused (a typo is a wrong order). A code that
@@ -655,12 +671,26 @@ def api_prepare(
     `missing_sizes` so the confirm dialog can say so, rather than refusing outright. Codes are
     resolved here rather than at generation time so a bad one costs nothing and is caught
     before the confirm dialog.
+
+    `size == "auto"` means "match the scene reference photo's own ratio" — resolved here into
+    a concrete WxH via fit_custom_size(scene_ratio) and stored as that literal string, so
+    /api/generate later re-resolves it through the exact same resolve_size() path as any
+    preset, with no memory of where the number came from.
     """
     upload = validation.exactly_one(files, "Tree image")
     data = _read(upload, "Tree image")
     fmt, _dimensions = validation.check_image(data, upload.filename, upload.content_type, "Tree image")
 
-    width, height = validation.resolve_size(size)
+    if size == "auto":
+        try:
+            ratio = float(scene_ratio)
+        except ValueError:
+            raise ValidationError("ขอสัดส่วนรูปจริงไม่ได้ — ไม่มีข้อมูลอัตราส่วน")
+        width, height = validation.fit_custom_size(ratio)
+        size = f"{width}x{height}"
+    else:
+        width, height = validation.resolve_size(size)
+    validation.resolve_density(density)  # fail fast; the sentence itself is re-resolved at generate time
     names = validation.element_count([e.strip() for e in element if e.strip()])
     paths = [_stored_path(name) for name in names]
 
@@ -696,7 +726,7 @@ def api_prepare(
     conn = _db()
     try:
         request_id = request_log.create(
-            conn, tree_name, elements, size, tree_code or None, reference_name
+            conn, tree_name, elements, size, tree_code or None, reference_name, density
         )
     finally:
         conn.close()
@@ -750,12 +780,14 @@ def api_generate(request_id: str):
         # image and should be runnable again.
         reference = row["reference_path"]
         reference_bytes = _stored_path(reference).read_bytes() if reference else None
+        # old rows have no density column value (written before this existed)
+        density_sentence = validation.resolve_density(row["density"] or config.DEFAULT_DENSITY)
 
         try:
             output, usage = image_gen.generate(
                 tree_path.read_bytes(),
                 [path.read_bytes() for path in element_paths],
-                width, height, scale, reference_bytes,
+                width, height, scale, reference_bytes, density_sentence,
             )
             name = _store(output, "output", "png")
         except Exception as exc:

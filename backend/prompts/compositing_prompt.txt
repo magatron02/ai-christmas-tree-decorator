@@ -24,9 +24,7 @@ Placement
   better.
 
 Density
-- A naturally decorated tree, not a covered one: roughly 12 to 20 decorations in total for a
-  full-height tree, counting every kind together, fewer if they are large.
-- Leave visible gaps of bare branch between them.
+- {density}
 
 Scale
 - {scale}
