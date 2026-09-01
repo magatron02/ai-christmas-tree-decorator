@@ -202,7 +202,13 @@ def main():
     # would have triggered itself.
     threading.Thread(target=background_removal.warm, daemon=True).start()
 
-    server = uvicorn.Server(uvicorn.Config(app, host=HOST, port=port, log_level="warning"))
+    # log_config=None: uvicorn's default logging setup builds a formatter that calls
+    # sys.stdout.isatty() to decide whether to colourize, and sys.stdout is None with no
+    # console attached — that crashed uvicorn.Config() itself before the server ever started.
+    # There is nothing to colourize for either — no console reads it either way.
+    server = uvicorn.Server(
+        uvicorn.Config(app, host=HOST, port=port, log_level="warning", log_config=None)
+    )
     threading.Thread(target=server.run, daemon=True).start()
 
     icon = _build_tray_icon(url, server)
