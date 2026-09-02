@@ -24,6 +24,7 @@ from backend.validation import ValidationError
 __all__ = [
     "find", "search", "browse", "longest_side_mm", "describe", "require_size",
     "scale_sentence", "image_for", "image_path", "recent", "parse_size", "shops",
+    "nearest_tree", "auto_pool", "feet_to_mm", "row_matches_tone",
 ]
 
 
@@ -106,17 +107,23 @@ CATEGORIES = [
 
 
 @lru_cache(maxsize=1)
+def _descriptions():
+    """The vision pass's own file, by code — same one matching.py reads. Shared loader so
+    category/kind lookups and auto_pool()'s colour lookup read the file once, not per caller."""
+    path = config.CATALOG_PATH.parent / "descriptions.json"
+    if not path.is_file():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+@lru_cache(maxsize=1)
 def _kinds():
     """What the vision pass called each photo, by code. Second haystack for categorising: a
     section heading is printed once per page and carried forward, so it is often vaguer than
     the photo itself."""
-    path = config.CATALOG_PATH.parent / "descriptions.json"
-    if not path.is_file():
-        return {}
-    described = json.loads(path.read_text(encoding="utf-8"))
     return {
         code: (entry.get("attributes") or {}).get("kind", "")
-        for code, entry in described.items()
+        for code, entry in _descriptions().items()
     }
 
 
@@ -324,6 +331,55 @@ def browse(limit=60, offset=0, category=None, book=None):
     return rows[offset : offset + limit], len(rows)
 
 
+def nearest_tree(target_mm):
+    """The showable, sized tree product closest to a requested real height — the wizard's
+    "ไซส์ต้น" step. `None` if the catalogue has no tree with a known size to compare against."""
+    candidates = [
+        (row, longest_side_mm(row)) for row in _with_photos() if category_of(row) == "tree"
+    ]
+    candidates = [(row, mm) for row, mm in candidates if mm is not None]
+    if not candidates:
+        return None
+    return min(candidates, key=lambda pair: abs(pair[1] - target_mm))[0]
+
+
+def row_matches_tone(row, tone_colours):
+    """Whether a product's own colour falls inside a tone preset's colour list. `None` when
+    `tone_colours` is empty (the question doesn't apply), so a caller can tell "doesn't match"
+    apart from "wasn't asked". Exposed per-row, not just inside auto_pool(), so a candidate
+    from a relaxed pool can still be labelled against the tone that was actually requested —
+    wayfinder ticket #4's per-candidate badges."""
+    from backend.services.matching import COLOUR_BUCKETS, _normalize
+
+    if not tone_colours:
+        return None
+    wanted = {_normalize(c, COLOUR_BUCKETS) for c in tone_colours}
+    attrs = (_descriptions().get(row["code"]) or {}).get("attributes") or {}
+    return _normalize(attrs.get("primary_colour"), COLOUR_BUCKETS) in wanted
+
+
+def auto_pool(category, tone_colours, max_price):
+    """Decorations in one category, priced at or under a budget ceiling, for the wizard's Auto
+    pipeline. Unpriced rows are excluded outright, never treated as free — NonGoals.md 8
+    forbids inventing a number, and sorting a null price into a budget comparison is exactly
+    that (wayfinder map #1's own decision).
+
+    `tone_colours` is optional — `None` (or empty) means no colour filter, which is how the
+    empty-pool relax cascade (wayfinder ticket #4) drops the tone constraint first.
+    """
+    pool = []
+    for row in _with_photos():
+        if category_of(row) != category:
+            continue
+        price = row.get("price")
+        if price is None or price > max_price:
+            continue
+        if tone_colours and not row_matches_tone(row, tone_colours):
+            continue
+        pool.append(row)
+    return pool
+
+
 def shops():
     """Every brand/shop the catalogue actually holds a showable product for, with counts —
     same shape as CATEGORIES' counts, so the picker can offer "pick the shop first" as a real
@@ -348,6 +404,7 @@ def refresh():
     _kinds.cache_clear()
     _contested_codes.cache_clear()
     _variants.cache_clear()
+    _descriptions.cache_clear()
 
 
 def find(code):
@@ -398,6 +455,13 @@ _METRES = re.compile(r"([\d.]+)\s*m\.", re.I)
 
 _MM_PER_FOOT = 304.8
 _MM_PER_INCH = 25.4
+
+
+def feet_to_mm(feet):
+    """Same conversion parse_size() uses for a printed 'N Ft.' size — public so the wizard's
+    height picker (config.WIZARD_TREE_HEIGHTS_FT) can convert its own request to millimetres
+    for nearest_tree() without duplicating the constant."""
+    return feet * _MM_PER_FOOT
 
 
 def parse_size(raw):
@@ -477,7 +541,7 @@ _GENERIC_SCALE = (
 )
 
 
-def scale_sentence(tree_code, element_codes):
+def scale_sentence(tree_code, element_codes, tree_mm_override=None, element_mm_overrides=None):
     """The paragraph that replaces 'keep it in proportion' with actual numbers, for whichever
     codes the catalogue actually prints a size for.
 
@@ -488,10 +552,22 @@ def scale_sentence(tree_code, element_codes):
     without one, so that one item falls back to "believable, not exact" instead — same as
     when no code was given at all. The caller surfaces `missing` as a warning before the paid
     call, since a mixed-exact result still needs the user to know which item is the guess.
+
+    `tree_mm_override`/`element_mm_overrides` (a list aligned with `element_codes`, `None`
+    entries meaning "no override") let a caller supply a real millimetre figure for a code
+    whose catalogue row has none — the frontend's blocking manual-size gate — without this
+    function ever inventing one itself. An overridden item is not "missing": the number came
+    from a person, not a guess.
     """
     if isinstance(element_codes, str) or element_codes is None:
         element_codes = [element_codes] if element_codes else []
-    element_codes = [code for code in element_codes if code]
+    if element_mm_overrides is None:
+        element_mm_overrides = [None] * len(element_codes)
+    paired = [
+        (code, override) for code, override in zip(element_codes, element_mm_overrides) if code
+    ]
+    element_codes = [code for code, _override in paired]
+    overrides = [override for _code, override in paired]
 
     if not tree_code and not element_codes:
         return (_GENERIC_SCALE, [])
@@ -502,8 +578,11 @@ def scale_sentence(tree_code, element_codes):
         )
 
     tree = find(tree_code)
-    tree_mm = longest_side_mm(tree)
-    elements = [(find(code), longest_side_mm(find(code))) for code in element_codes]
+    tree_mm = tree_mm_override if tree_mm_override is not None else longest_side_mm(tree)
+    elements = [
+        (find(code), overrides[i] if overrides[i] is not None else longest_side_mm(find(code)))
+        for i, code in enumerate(element_codes)
+    ]
     element_missing = [describe(row) for row, mm in elements if mm is None]
     missing = ([describe(tree)] if tree_mm is None else []) + element_missing
 

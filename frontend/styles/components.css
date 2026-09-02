@@ -380,16 +380,25 @@ select.select-native {
   .decoration-columns { grid-template-columns: minmax(0, 1fr) }
 }
 
-/* ---- accepted decorations list ---- */
+/* ---- accepted decorations list ----
+   Each item is a small column now, not just a row: the top row (thumb, density pill, remove)
+   plus an optional blocking size-input row underneath when the catalogue has no size for that
+   code — same pattern the tree slot's #tree-size-gate uses (buildSizeRow in app.js). */
 .accepted { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2) }
 .accepted li {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: var(--space-2);
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: var(--space-2);
   font-size: var(--text-sm);
+}
+.accepted li.has-warning { border-color: var(--state-warning-border); background: var(--state-warning-bg) }
+.accepted-item-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 /* A preview with its catalogue code burned onto it, same treatment the accepted list uses —
    the code is never typed any more, so the picture is the only place it can be read back.
@@ -440,6 +449,44 @@ select.select-native {
 }
 .cat-thumb { width: 40px; height: 40px; object-fit: contain; border-radius: var(--radius-sm) }
 .accepted .btn.danger { padding: var(--space-1) var(--space-2); font-size: var(--text-sm) }
+
+/* ---- per-item density (tree slot + every accepted element) ---- */
+.density-pill {
+  display: inline-flex;
+  gap: 1px;
+  margin-left: auto;
+  background: var(--surface-0);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 2px;
+}
+.density-pill button {
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-family: var(--font-heading);
+  font-size: 10.5px;
+  color: var(--text-muted);
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+}
+.role-decoration .density-pill button[aria-pressed="true"] {
+  background: var(--fill-gold-block);
+  color: var(--btn-primary-text);
+}
+
+/* ---- blocking manual-size gate (tree slot + every accepted element) ----
+   NonGoals.md 8: a code with no catalogue size must not be guessed at — Generate stays
+   disabled (refreshGenerateButton/anyManualSizeMissing in app.js) until this row is filled. */
+.size-input-row { display: flex; align-items: center; gap: var(--space-2) }
+.size-input-row .input { width: 90px; padding: 4px 8px; font-size: var(--text-xs) }
+.size-input-row .unit { font-size: var(--text-xs); color: var(--text-muted) }
+.size-warn-text { font-size: var(--text-xs); color: var(--state-warning-text); flex: 1 }
+/* --text-success is the result panel's own role accent (DESIGN.md section 2, "one accent per
+   role") — this affirmation shows up outside that panel too, so it stays neutral and lets the
+   ✓ glyph carry the "done" meaning instead of borrowing a colour that means something else here */
+.size-ok-text { font-size: var(--text-xs); color: var(--text-muted); flex: 1 }
 
 /* rough-preview only — picking a decoration (cut-out or catalogue) never opens the full-size
    .thumb treatment the tree/result panels use; a small square is enough to confirm the pick */
@@ -677,3 +724,101 @@ th { color: var(--text-muted) }
 td.shrink { width: 96px }
 .cat-recent-row { cursor: pointer }
 .cat-recent-row:hover { background: var(--surface-1) }
+
+/* ---- wizard.js: mode switch, 3-step stepper, tone picker + auto-pick preview strip.
+   Selection states below deliberately reuse --modal-item-selected-bg/text (the existing
+   "this option is chosen" pair, e.g. the select-popup's own highlighted row) rather than a
+   panel role colour (--fill-primary etc.) — DESIGN.md section 2 scopes those to one accent
+   per functional role (.role-decoration, .role-result), and the wizard isn't a new role,
+   it's a selection state like any dropdown's. The mode switch itself reuses .btn/.btn.primary
+   outright, toggled by wizard.js, rather than inventing a third way to say "active". */
+.mode-switch { display: inline-flex; gap: var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-1) }
+.mode-switch .row { width: auto; border-radius: calc(var(--radius-md) - 2px) }
+
+.stepper-progress { display: flex; align-items: center; gap: 0; margin-bottom: var(--space-4) }
+.stepper-progress .seg { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative }
+.stepper-progress .seg:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 13px;
+  left: 56%;
+  width: 88%;
+  height: 1px;
+  background: var(--border);
+}
+.stepper-progress .seg.done:not(:last-child)::after { background: var(--state-success-bg) }
+.stepper-progress .dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  z-index: 1;
+}
+.stepper-progress .seg.current .dot { border-color: var(--modal-item-selected-text); color: var(--modal-item-selected-text) }
+.stepper-progress .seg.done .dot { border-color: var(--state-success-bg); background: var(--state-success-bg); color: var(--state-success-text) }
+.stepper-progress .seg-label { font-size: var(--text-xs); color: var(--text-muted) }
+.stepper-progress .seg.current .seg-label { color: var(--text-primary) }
+.stepper-card { max-width: 520px; margin: 0 auto; text-align: center; padding: var(--space-4) }
+.stepper-card h2 { font-family: var(--font-heading); font-size: var(--text-xl); margin: 0 0 4px }
+.stepper-card .chip-select { justify-content: center; margin-top: var(--space-4) }
+.stepper-nav { display: flex; justify-content: space-between; max-width: 520px; margin: var(--space-4) auto 0 }
+
+.chip-select { display: flex; gap: var(--space-2); flex-wrap: wrap }
+.chip-select button {
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-sm);
+}
+.chip-select button[aria-pressed="true"] {
+  border-color: var(--modal-item-selected-text);
+  background: var(--modal-item-selected-bg);
+  color: var(--modal-item-selected-text);
+}
+.chip-select button:disabled { opacity: .4; cursor: default }
+
+.tone-row { display: flex; gap: var(--space-2); flex-wrap: wrap }
+.tone-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+  background: var(--surface-1);
+}
+.tone-card[aria-pressed="true"] { border-color: var(--modal-item-selected-text); background: var(--modal-item-selected-bg) }
+.tone-name { font-family: var(--font-heading); font-size: var(--text-sm) }
+
+.chip.warn { color: var(--state-warning-text); background: var(--state-warning-bg); border-color: var(--state-warning-border) }
+
+.auto-preview-strip {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: var(--space-4);
+  background: var(--surface-0);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+.auto-pick { width: 84px; display: flex; flex-direction: column; align-items: center; gap: 4px }
+.auto-pick-thumb {
+  width: 84px;
+  height: 84px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.auto-pick.is-tree .auto-pick-thumb { border-color: var(--state-success-bg) }
+.auto-pick-code { font-size: 9px; font-family: var(--font-body-en); color: var(--text-muted); text-align: center }

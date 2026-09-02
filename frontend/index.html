@@ -46,10 +46,19 @@
 
   <main class="page stack">
 
+    <!-- Two ways in: "กำหนดเอง" is the panels below, unchanged. "Auto ตามโทน" is a simple
+         helper for a customer who doesn't know what to pick — a 3-step wizard (ไซส์ → งบ →
+         แนว, wayfinder map #1) that auto-fills the same panels via wizard.js, then hands off
+         to the exact same generate flow. Neither mode replaces the other. -->
+    <div class="mode-switch" role="tablist" aria-label="โหมดสร้างภาพ">
+      <button type="button" class="row active" id="mode-btn-custom" aria-pressed="true">กำหนดเอง</button>
+      <button type="button" class="row" id="mode-btn-auto" aria-pressed="false">Auto ตามโทน</button>
+    </div>
+
     <!-- The three-panel flow the design is built around: bare tree in, decorations in,
          result out. Generate lives inside the result panel — it is the button that fills
          this panel, so it sits where its effect appears rather than in a card of its own. -->
-    <div class="panels">
+    <div class="panels" id="mode-custom">
 
       <section class="card stack">
         <span class="panel-title">1 — ต้นเปล่า</span>
@@ -63,6 +72,7 @@
           <img class="thumb" id="tree-preview" alt="ต้นเปล่า">
           <span class="thumb-code" id="tree-code-badge" hidden></span>
         </div>
+        <div id="tree-size-gate" hidden></div>
       </section>
 
       <section class="card stack role-decoration">
@@ -143,6 +153,10 @@
 
     </div>
 
+    <!-- Owned entirely by wizard.js — the 3-step stepper, then the tone/preview step, built
+         the same way #accepted-elements is: a container the script fills in. -->
+    <div id="mode-auto" hidden></div>
+
   </main>
 </div>
 
@@ -188,5 +202,6 @@
 
 <script src="/static/api.js?v=8.41"></script>
 <script src="/static/app.js?v=8.41"></script>
+<script src="/static/wizard.js?v=8.41"></script>
 </body>
 </html>

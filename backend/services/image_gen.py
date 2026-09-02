@@ -88,6 +88,29 @@ def load_prompt(scale, element_count=1, has_reference=False, density=None):
     )
 
 
+def describe_element_density(elements):
+    """The `{density}` sentence, built from each accepted item's own density choice.
+
+    `elements` is the list of per-item dicts read back from request_log's elements_json —
+    each carries an optional "density" key (a DENSITY_PRESETS key; absent/None falls back to
+    DEFAULT_DENSITY, same as before per-item density existed). When every item shares one
+    density — including the common case of nobody touching the control at all — this returns
+    config.DENSITY_PRESETS[key] verbatim: the exact sentence every generation already sent
+    before this feature existed, so the default path never sees new prompt text. Only once
+    items actually disagree does it build one line per item from ELEMENT_DENSITY_PHRASES,
+    which is worded per-kind rather than as a whole-tree total.
+    """
+    keys = [element.get("density") or config.DEFAULT_DENSITY for element in elements]
+    if len(set(keys)) <= 1:
+        return config.DENSITY_PRESETS[keys[0] if keys else config.DEFAULT_DENSITY]
+
+    lines = ["How densely each kind is used is not the same for every kind:"]
+    for element, key in zip(elements, keys):
+        label = element.get("code") or "this decoration"
+        lines.append(f"- {label}: {config.ELEMENT_DENSITY_PHRASES[key]}.")
+    return "\n".join(lines)
+
+
 def _part(name, data):
     """Describe the upload honestly — the tree keeps whatever format it was shot in."""
     jpeg = data[:3] == b"\xff\xd8\xff"

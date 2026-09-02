@@ -88,6 +88,46 @@ DENSITY_PRESETS = {
 DENSITY_LABELS = {"light": "โปร่ง", "normal": "ปกติ", "full": "แน่น"}
 DEFAULT_DENSITY = "normal"
 
+# Per-item density phrasing (workstream C) — same 3 levels/labels as DENSITY_PRESETS above,
+# different vocabulary: DENSITY_PRESETS states a total count for the whole tree, which reads
+# fine as one sentence but makes no sense repeated once per decoration kind when kinds differ.
+# image_gen.describe_element_density() reaches for DENSITY_PRESETS verbatim (unchanged prompt)
+# whenever every accepted item shares one density, and only builds a per-item list from this
+# dict when they actually differ — so the common case never sees new prompt text.
+ELEMENT_DENSITY_PHRASES = {
+    "light": (
+        "used sparingly on the tree — a few scattered copies with clear gaps between each one"
+    ),
+    "normal": (
+        "spread across the tree at a natural, even frequency, with visible gaps of bare "
+        "branch between them"
+    ),
+    "full": (
+        "used generously on the tree — placed closely together, filling most of the space "
+        "this kind would cover"
+    ),
+}
+
+# The wizard's "ไซส์ต้น" step (wayfinder map #1) offers a real tree height in feet, resolved
+# to the catalogue's closest actual sized tree by catalog.nearest_tree() — never a guessed
+# product, just the nearest real one to what was asked for.
+WIZARD_TREE_HEIGHTS_FT = [4, 5, 6, 7, 8]
+
+# The wizard's "แนว" step: catalog.CATEGORIES minus the ones nobody adds *onto* a tree —
+# wreath, banner, and the tree itself (wayfinder ticket #3's Q8 decision).
+WIZARD_CATEGORIES = ["ornament", "flower", "bell", "topper", "giftbox", "light", "figure", "ribbon"]
+
+# Auto-mode's colour-tone presets, reviewed as the 5-tone mockup this session. Colours are
+# free strings matched through matching._normalize()/COLOUR_BUCKETS, so no separate bucket
+# table lives here — catalog.auto_pool() does the matching.
+TONE_PRESETS = {
+    "redgold": {"label": "แดง-ทอง คลาสสิก", "colours": ["red", "gold"]},
+    "whitesilver": {"label": "ขาว-เงิน มินิมอล", "colours": ["white", "silver"]},
+    "natural": {"label": "ธรรมชาติ ใบไม้", "colours": ["green", "brown"]},
+    "pastel": {"label": "พาสเทลหวาน", "colours": ["pink", "blue"]},
+    "luxe": {"label": "น้ำเงิน-เงิน หรู", "colours": ["blue", "silver"]},
+}
+
 # There is deliberately no scale-correction constant here. gpt-image-2 renders decorations
 # at roughly 0.55-0.70 of the fraction it is told, so correcting for it looks obvious: ask
 # for 1/11 to get a true 1/19. Measured, that produced 0.55x — smaller than the uncorrected

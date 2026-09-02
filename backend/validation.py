@@ -50,6 +50,23 @@ def element_count(elements):
     return elements
 
 
+def parse_manual_mm(raw, field):
+    """A person-typed real size (mm) for a code the catalogue has none for — the blocking
+    manual-size gate's own input. Empty string means "no override" and returns None; anything
+    else must be a plain positive number, since this value stands in for a catalogue lookup
+    and a bad one would be a wrong scale in the finished picture."""
+    raw = (raw or "").strip()
+    if not raw:
+        return None
+    try:
+        value = float(raw)
+    except ValueError:
+        raise ValidationError(f"{field}: '{raw}' ไม่ใช่ตัวเลข")
+    if value <= 0:
+        raise ValidationError(f"{field}: ขนาดต้องมากกว่า 0")
+    return value
+
+
 def resolve_density(key):
     """Density key -> the prompt sentence. Same shape as resolve_size: users pick a level,
     never the sentence itself."""

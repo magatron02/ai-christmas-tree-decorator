@@ -31,7 +31,12 @@ let MAX_ELEMENTS = 5;
 const state = {
   treeFile: null,
   treeCode: null, // set only by the catalogue picker — an uploaded photo has no code
-  elements: [], // {name, url, code} — one entry per accepted cut-out, up to MAX_ELEMENTS
+  treeSizeMm: null, // the tree code's catalogue size, or null if it has none (blocking gate)
+  treeManualMm: null, // person-typed override when treeSizeMm is null
+  // {name, url, code, sizeMm, manualMm, density} — one entry per accepted cut-out, up to
+  // MAX_ELEMENTS. sizeMm is the code's catalogue size (null = none, blocking gate);
+  // manualMm is a person-typed override; density is a DENSITY_PRESETS key, per item.
+  elements: [],
   sceneReference: null, // stored filename of the optional scene/ambience photo (used at generate time)
   requestId: null,
   busy: false,
@@ -39,6 +44,18 @@ const state = {
   treeRatio: null, // width/height of whatever photo is in the tree slot right now
   sceneRatio: null, // width/height of the scene reference, when one is set
 };
+
+// A code-bearing item (tree or element) whose catalogue row has no size, and that has not
+// been given a manual one yet — the thing the blocking gate exists to stop. NonGoals.md 8:
+// the app must not guess this number, so Generate simply cannot be pressed until it is filled.
+function needsManualSize(code, sizeMm, manualMm) {
+  return Boolean(code) && sizeMm == null && manualMm == null;
+}
+
+function anyManualSizeMissing() {
+  return needsManualSize(state.treeCode, state.treeSizeMm, state.treeManualMm)
+    || state.elements.some((e) => needsManualSize(e.code, e.sizeMm, e.manualMm));
+}
 
 function setStatus(key, override) {
   const [cls, text] = STATE_LABEL[key] || ["", key];
@@ -70,7 +87,74 @@ function exactScaleReady() {
 }
 
 function refreshGenerateButton() {
-  $("generate-btn").disabled = !(state.treeFile && state.elements.length) || state.busy;
+  $("generate-btn").disabled =
+    !(state.treeFile && state.elements.length) || state.busy || anyManualSizeMissing();
+}
+
+const DENSITY_LEVELS = ["light", "normal", "full"];
+const DENSITY_LABEL_TH = { light: "โปร่ง", normal: "ปกติ", full: "แน่น" };
+
+/* The blocking size-input row + density pill shared by the tree slot and every accepted
+ * element — one small builder so the two call sites (renderTreeSizeGate, renderElements)
+ * agree on markup and behaviour instead of drifting apart. */
+function buildSizeRow(sizeMm, manualMm, onInput) {
+  const row = document.createElement("div");
+  row.className = "size-input-row";
+  if (sizeMm != null) {
+    row.hidden = true;
+    return row;
+  }
+  const warn = document.createElement("span");
+  const input = document.createElement("input");
+  input.className = "input";
+  input.type = "number";
+  input.min = "1";
+  input.placeholder = "เช่น 150";
+  if (manualMm != null) {
+    warn.className = "size-ok-text";
+    warn.textContent = `✓ ใช้ ${manualMm} มม. ในการคำนวณสัดส่วน`;
+    input.value = manualMm;
+  } else {
+    warn.className = "size-warn-text";
+    warn.textContent = "ระบบจะไม่เดาขนาดให้ — ใส่ขนาดจริงก่อนสร้างภาพ";
+  }
+  input.addEventListener("input", () => onInput(input.value));
+  const unit = document.createElement("span");
+  unit.className = "unit";
+  unit.textContent = "มม.";
+  row.append(warn, input, unit);
+  return row;
+}
+
+function buildDensityPill(current, onPick) {
+  const wrap = document.createElement("div");
+  wrap.className = "density-pill";
+  wrap.title = "ความหนาแน่นของชิ้นนี้";
+  for (const level of DENSITY_LEVELS) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = DENSITY_LABEL_TH[level];
+    button.setAttribute("aria-pressed", String(level === current));
+    button.addEventListener("click", () => onPick(level));
+    wrap.append(button);
+  }
+  return wrap;
+}
+
+/* Panel 1's own blocking gate — same rule as an accepted element, for the tree slot. Only
+ * ever shown when the tree came from the catalogue (an uploaded photo has no code and no
+ * catalogue size question to ask). */
+function renderTreeSizeGate() {
+  const host = $("tree-size-gate");
+  host.innerHTML = "";
+  host.hidden = !state.treeCode;
+  if (!state.treeCode) return;
+  host.append(buildSizeRow(state.treeSizeMm, state.treeManualMm, (value) => {
+    const parsed = Number(value);
+    state.treeManualMm = value && parsed > 0 ? parsed : null;
+    renderTreeSizeGate();
+    refreshGenerateButton();
+  }));
 }
 
 /* The accepted decorations, each removable. Shown as a list rather than a count so it is
@@ -80,6 +164,10 @@ function renderElements() {
   list.innerHTML = "";
   state.elements.forEach((element, index) => {
     const item = document.createElement("li");
+    item.className = needsManualSize(element.code, element.sizeMm, element.manualMm)
+      ? "has-warning" : "";
+    const top = document.createElement("div");
+    top.className = "accepted-item-top";
     const thumbWrap = document.createElement("div");
     thumbWrap.className = "thumb-wrap";
     const thumb = document.createElement("img");
@@ -95,6 +183,10 @@ function renderElements() {
       badge.textContent = element.code;
       thumbWrap.append(badge);
     }
+    const pill = buildDensityPill(element.density || "normal", (level) => {
+      element.density = level;
+      renderElements();
+    });
     const drop = document.createElement("button");
     drop.className = "btn danger";
     drop.textContent = "เอาออก";
@@ -103,7 +195,14 @@ function renderElements() {
       renderElements();
       resetRun();
     });
-    item.append(thumbWrap, drop);
+    top.append(thumbWrap, pill, drop);
+    const sizeRow = buildSizeRow(element.sizeMm, element.manualMm, (value) => {
+      const parsed = Number(value);
+      element.manualMm = value && parsed > 0 ? parsed : null;
+      renderElements();
+      refreshGenerateButton();
+    });
+    item.append(top, sizeRow);
     list.append(item);
   });
 
@@ -271,18 +370,22 @@ function refreshAutoSize() {
  * Product.md 8.2 wanted them so the prompt could state real millimetres; a code typed from
  * memory out of ~1,300 was always a wrong order waiting to happen. Settings is where a code
  * gets entered by hand, against the catalogue row it belongs to. */
-function showTreeCode(code) {
+function showTreeCode(code, sizeMm = null) {
   state.treeCode = code || null;
+  state.treeSizeMm = code ? sizeMm : null;
+  state.treeManualMm = null; // a new tree slot starts its own gate over from nothing
   const badge = $("tree-code-badge");
   badge.textContent = code || "";
   badge.hidden = !code;
+  renderTreeSizeGate();
 }
 
-function showElementCode(code) {
+function showElementCode(code, sizeMm = null) {
   const badge = $("element-code-badge");
   badge.textContent = code || "";
   badge.hidden = !code;
   $("element-preview").dataset.code = code || "";
+  $("element-preview").dataset.sizeMm = code && sizeMm != null ? sizeMm : "";
 }
 
 renderElements();
@@ -317,12 +420,12 @@ $("element-file").addEventListener("change", (event) => {
   resetRun();
 });
 
-function showElementPreview(result, code = null) {
+function showElementPreview(result, code = null, sizeMm = null) {
   $("element-preview").src = result.element_url;
   $("element-preview-frame").hidden = false;
   $("element-actions").hidden = false;
   $("element-preview").dataset.name = result.element;
-  showElementCode(code);
+  showElementCode(code, sizeMm);
 }
 
 $("cut-btn").addEventListener("click", async () => {
@@ -554,7 +657,8 @@ async function useFromCatalog(code, image) {
     const body = new FormData();
     body.append("code", code);
     if (image) body.append("image", image);
-    showElementPreview(await call("/api/element/from-catalog", { method: "POST", body }), code);
+    const result = await call("/api/element/from-catalog", { method: "POST", body });
+    showElementPreview(result, code, result.size_mm);
     $("catalog-dialog").close();
   } catch (err) {
     $("catalog-dialog").close();
@@ -583,7 +687,7 @@ async function useTreeFromCatalog(code, image) {
     $("tree-preview").src = result.tree_url;
     $("tree-preview-frame").hidden = false;
     $("tree-file").value = "";  // the picker's tree replaces whatever was uploaded
-    showTreeCode(code);
+    showTreeCode(code, result.size_mm);
     try {
       const { width, height } = await imageDimensions(state.treeFile);
       state.treeRatio = width / height;
@@ -603,10 +707,14 @@ async function useTreeFromCatalog(code, image) {
 
 $("accept-btn").addEventListener("click", () => {
   const preview = $("element-preview");
+  const code = preview.dataset.code || "";
   state.elements.push({
     name: preview.dataset.name,
     url: preview.src,
-    code: preview.dataset.code || "",
+    code,
+    sizeMm: code && preview.dataset.sizeMm ? Number(preview.dataset.sizeMm) : null,
+    manualMm: null,
+    density: "normal",
   });
   // clear the slot so the next decoration starts from nothing
   $("element-file").value = "";
@@ -791,10 +899,13 @@ $("generate-btn").addEventListener("click", async () => {
     }
     body.append("density", $("density-select").value);
     body.append("tree_code", exact ? state.treeCode : "");
+    body.append("tree_manual_mm", state.treeManualMm != null ? String(state.treeManualMm) : "");
     if (state.sceneReference) body.append("reference", state.sceneReference);
     for (const element of state.elements) {
       body.append("element", element.name);
       body.append("element_code", exact ? element.code : "");
+      body.append("element_manual_mm", element.manualMm != null ? String(element.manualMm) : "");
+      body.append("element_density", element.density || "");
     }
 
     const prepared = await call("/api/prepare", { method: "POST", body });

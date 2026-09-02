@@ -364,3 +364,54 @@ def test_an_uncontested_code_is_unaffected():
         if r["code"] not in catalog._contested_codes() and catalog.image_for(r["code"])
     )
     assert not catalog.code_is_contested(uncontested)
+
+
+# ---------------------------------------------------------------- scale_sentence overrides
+# workstream C's blocking manual-size gate: a person-supplied mm figure for a code the
+# catalogue has none for, threaded through instead of falling back to "believable, not exact".
+
+
+def test_a_manual_tree_override_replaces_the_catalogue_lookup():
+    sentence, missing = catalog.scale_sentence(
+        "05021-1", "017-06", tree_mm_override=2000,
+    )
+    assert "2000 mm" in sentence
+    assert "1524 mm" not in sentence  # the real catalogue height must not leak in too
+    assert missing == []
+
+
+def test_a_manual_element_override_replaces_the_catalogue_lookup():
+    """describe()'s own '017-06 (80 mm.)' label still shows the catalogue's printed size —
+    that's just what the code is called, independent of the override. What must change is the
+    *measurement* used for the ratio, which is what "150 mm across" checks."""
+    sentence, missing = catalog.scale_sentence(
+        "05021-1", "017-06", element_mm_overrides=[150],
+    )
+    assert "150 mm across" in sentence
+    assert "one 10th" in sentence  # 1524 / 150, not 1524 / 80 ("one 19th")
+    assert missing == []
+
+
+def test_an_override_stops_the_item_counting_as_missing():
+    """Without an override a size-less code is reported in `missing` (the warning banner).
+    With one, the caller supplied the real number, so it is not a guess and not missing."""
+    # a code the catalogue prints no size for, paired with a tree that does
+    unsized = next(
+        r["code"] for r in catalog._rows()
+        if catalog.longest_side_mm(r) is None and catalog.image_for(r["code"])
+    )
+    _sentence, missing = catalog.scale_sentence("05021-1", unsized)
+    assert missing == [catalog.describe(catalog.find(unsized))]
+
+    _sentence, missing_with_override = catalog.scale_sentence(
+        "05021-1", unsized, element_mm_overrides=[42],
+    )
+    assert missing_with_override == []
+
+
+def test_overrides_default_to_none_and_change_nothing_when_omitted():
+    """Zero behaviour change for every existing caller: omitting the new params must produce
+    the exact same sentence as before they existed."""
+    with_overrides = catalog.scale_sentence("05021-1", "017-06", None, [None])
+    without = catalog.scale_sentence("05021-1", "017-06")
+    assert with_overrides == without

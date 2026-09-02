@@ -23,6 +23,7 @@ are blocking and slow, and a single-user internal tool has nothing to gain from 
 """
 
 import json
+import random
 import re
 import uuid
 
@@ -445,7 +446,11 @@ def api_element_from_catalog(code: str = Form(...), image: str = Form("")):
         cut = background_removal.remove_background(path.read_bytes())
         _keep_cutout(path, cut)
     name = _store(cut, "element", "png")
-    return {"element": name, "element_url": _url(name)}
+    row = catalog.find(code)
+    return {
+        "element": name, "element_url": _url(name),
+        "size_mm": catalog.longest_side_mm(row),
+    }
 
 
 @app.post("/api/tree/from-catalog")
@@ -463,7 +468,11 @@ def api_tree_from_catalog(code: str = Form(...), image: str = Form("")):
         raise HTTPException(404, f"ไม่มีรูป catalogue ของ '{code}'")
 
     name = _store(path.read_bytes(), "tree", "png")
-    return {"tree": name, "tree_url": _url(name)}
+    row = catalog.find(code)
+    return {
+        "tree": name, "tree_url": _url(name),
+        "size_mm": catalog.longest_side_mm(row),
+    }
 
 
 @app.post("/api/catalog/products")
@@ -650,6 +659,108 @@ def api_analyse_reference(name: str, tree_code: str = ""):
     }
 
 
+@app.get("/api/wizard/config")
+def api_wizard_config():
+    """What the budget wizard (wayfinder map #1) offers at each step: real tree heights,
+    categories with how much priced stock actually backs each one (so the picker can grey out
+    an empty one instead of offering a dead end), tone presets, and reference-only history
+    counts (wayfinder ticket #5 — display only, never fed back into a filter)."""
+    from backend.services import request_stats
+
+    categories = []
+    for key in config.WIZARD_CATEGORIES:
+        label = next((lbl for k, lbl, _needles in catalog.CATEGORIES if k == key), key)
+        categories.append({
+            "key": key, "label": label,
+            "count": len(catalog.auto_pool(key, None, float("inf"))),
+        })
+
+    conn = _db()
+    try:
+        history_counts = request_stats.category_counts(conn)
+    finally:
+        conn.close()
+
+    return {
+        "tree_heights": [
+            {"ft": ft, "mm": round(catalog.feet_to_mm(ft))}
+            for ft in config.WIZARD_TREE_HEIGHTS_FT
+        ],
+        "categories": categories,
+        "tones": [
+            {"key": key, "label": preset["label"]} for key, preset in config.TONE_PRESETS.items()
+        ],
+        "history_counts": history_counts,
+    }
+
+
+@app.post("/api/wizard/pick")
+def api_wizard_pick(
+    size_ft: float = Form(...),
+    budget: float = Form(...),
+    category: str = Form(...),
+    tone: str = Form(...),
+    exclude: list[str] = Form(default=[]),
+):
+    """Auto-pick a tree + up to 4 decoration candidates for the wizard's Auto-mode step.
+
+    Runs wayfinder ticket #4's relax cascade: try the full filter (category + tone + budget),
+    drop tone if that leaves nothing, then drop category too if it is still empty — budget
+    never relaxes, since it is the one constraint the customer actually set. Every candidate is
+    still tagged against the tone/category that was actually requested regardless of which
+    relax step produced the pool, so the frontend can badge whichever ones don't really match.
+    Touches no storage — free to call again for "สุ่มใหม่" (pass the codes already shown as
+    `exclude` to avoid repeats where the pool allows it).
+    """
+    if category not in config.WIZARD_CATEGORIES:
+        raise ValidationError(f"ไม่รู้จักแนว '{category}'")
+    if tone not in config.TONE_PRESETS:
+        raise ValidationError(f"ไม่รู้จักโทน '{tone}'")
+
+    tone_colours = config.TONE_PRESETS[tone]["colours"]
+    relaxed = []
+    pool = catalog.auto_pool(category, tone_colours, budget)
+    if not pool:
+        relaxed.append("tone")
+        pool = catalog.auto_pool(category, None, budget)
+    if not pool:
+        relaxed.append("category")
+        pool = []
+        for other in config.WIZARD_CATEGORIES:
+            pool.extend(catalog.auto_pool(other, None, budget))
+
+    pool_size = len(pool)
+    excluded = set(exclude)
+    choosable = [row for row in pool if row["code"] not in excluded] or pool
+    sample = random.sample(choosable, k=min(4, len(choosable))) if choosable else []
+
+    tree = catalog.nearest_tree(catalog.feet_to_mm(size_ft))
+
+    return {
+        "tree": (
+            {
+                "code": tree["code"],
+                "size_mm": catalog.longest_side_mm(tree),
+                "image_url": f"/catalog/{catalog.image_for(tree['code'])}",
+            }
+            if tree else None
+        ),
+        "decorations": [
+            {
+                "code": row["code"],
+                "price": row.get("price"),
+                "image_url": f"/catalog/{catalog.image_for(row['code'])}",
+                "matches_category": catalog.category_of(row) == category,
+                "matches_tone": catalog.row_matches_tone(row, tone_colours),
+            }
+            for row in sample
+        ],
+        "pool_size": pool_size,
+        "relaxed": relaxed,
+        "low_pool": pool_size < 3,
+    }
+
+
 @app.post("/api/prepare")
 def api_prepare(
     files: list[UploadFile] = File(...),
@@ -660,6 +771,9 @@ def api_prepare(
     tree_code: str = Form(""),
     element_code: list[str] = Form(default=[]),
     reference: str = Form(""),
+    tree_manual_mm: str = Form(""),
+    element_manual_mm: list[str] = Form(default=[]),
+    element_density: list[str] = Form(default=[]),
 ):
     """Input A + one to MAX_ELEMENTS accepted decorations -> a `pending` request. Still free;
     still no API call.
@@ -668,9 +782,17 @@ def api_prepare(
     the catalogue or the whole request is refused (a typo is a wrong order). A code that
     resolves but whose row has no printed size is different: that one item just falls back to
     a believable, non-exact size (Product.md 8.2, NonGoals.md 8) and comes back in
-    `missing_sizes` so the confirm dialog can say so, rather than refusing outright. Codes are
-    resolved here rather than at generation time so a bad one costs nothing and is caught
-    before the confirm dialog.
+    `missing_sizes` so the confirm dialog can say so, rather than refusing outright — unless
+    the frontend's blocking manual-size gate already collected a real number for it, sent
+    here as `tree_manual_mm`/`element_manual_mm` (positional, aligned with `element_code`,
+    empty string meaning "no override"). Codes are resolved here rather than at generation
+    time so a bad one costs nothing and is caught before the confirm dialog.
+
+    `element_density` is a per-item DENSITY_PRESETS key, positional with `element_code` the
+    same way; empty entries fall back to DEFAULT_DENSITY. `density` (the old, whole-request
+    field) still selects the tree's overall feel when nobody has touched per-item density —
+    image_gen.describe_element_density() is what actually decides which of the two the prompt
+    sees, at generate time.
 
     `size == "auto"` means "match the scene reference photo's own ratio" — resolved here into
     a concrete WxH via fit_custom_size(scene_ratio) and stored as that literal string, so
@@ -703,7 +825,22 @@ def api_prepare(
             "ใส่บางส่วนคำนวณขนาดจริงไม่ได้"
         )
 
-    scale, missing_sizes = catalog.scale_sentence(tree_code, codes)
+    tree_mm_override = validation.parse_manual_mm(tree_manual_mm, "ขนาดต้นไม้ (กรอกเอง)")
+    manual_mm = [m.strip() for m in element_manual_mm][: len(paths)]
+    manual_mm += [""] * (len(paths) - len(manual_mm))
+    element_mm_overrides = [
+        validation.parse_manual_mm(m, f"ขนาดของตกแต่งชิ้นที่ {i + 1} (กรอกเอง)")
+        for i, m in enumerate(manual_mm)
+    ]
+    densities = [d.strip() for d in element_density][: len(paths)]
+    densities += [""] * (len(paths) - len(densities))
+    for d in densities:
+        if d:
+            validation.resolve_density(d)  # fail fast, per item
+
+    scale, missing_sizes = catalog.scale_sentence(
+        tree_code, codes, tree_mm_override, element_mm_overrides
+    )
     quantities = None
     if tree_code and all(codes):
         from backend.services import matching
@@ -721,12 +858,24 @@ def api_prepare(
     reference = reference.strip()
     reference_name = _stored_path(reference).name if reference else None
     tree_name = _store(data, "tree", EXT_FOR_FORMAT[fmt])
-    elements = [{"path": p.name, "code": c or None} for p, c in zip(paths, codes)]
+    # a per-item density that was never touched falls back to the whole-request selector, not
+    # straight to DEFAULT_DENSITY — that selector is still what "everyone gets the same feel"
+    # means, per-item is only for a shop that actually wants some kinds sparser than others
+    elements = [
+        {
+            "path": p.name,
+            "code": c or None,
+            "manual_mm": mm,
+            "density": d or density,
+        }
+        for p, c, mm, d in zip(paths, codes, element_mm_overrides, densities)
+    ]
 
     conn = _db()
     try:
         request_id = request_log.create(
-            conn, tree_name, elements, size, tree_code or None, reference_name, density
+            conn, tree_name, elements, size, tree_code or None, reference_name, density,
+            tree_mm_override,
         )
     finally:
         conn.close()
@@ -769,9 +918,17 @@ def api_generate(request_id: str):
         elements = request_log.elements_of(row)
         element_paths = [_stored_path(e["path"]) for e in elements]
         # missing_sizes already surfaced as a warning at prepare time; only the prompt text
-        # itself is needed again here
+        # itself is needed again here. tree_manual_mm/each element's manual_mm are re-read
+        # from storage rather than trusted from prepare time, same reasoning as re-resolving
+        # size and density below — the row is the one source of truth once a request exists.
+        tree_mm_override = float(row["tree_manual_mm"]) if row["tree_manual_mm"] not in (None, "") else None
+        element_mm_overrides = [
+            float(e["manual_mm"]) if e.get("manual_mm") not in (None, "") else None
+            for e in elements
+        ]
         scale, _missing_sizes = catalog.scale_sentence(
-            row["tree_code"], [e.get("code") for e in elements]
+            row["tree_code"], [e.get("code") for e in elements],
+            tree_mm_override, element_mm_overrides,
         )
 
         # Once the request is claimed it must reach a terminal state on every path, or it is
@@ -780,8 +937,17 @@ def api_generate(request_id: str):
         # image and should be runnable again.
         reference = row["reference_path"]
         reference_bytes = _stored_path(reference).read_bytes() if reference else None
-        # old rows have no density column value (written before this existed)
-        density_sentence = validation.resolve_density(row["density"] or config.DEFAULT_DENSITY)
+        # per-item density when accepted items actually disagree, else the same single
+        # whole-tree sentence every generation sent before per-item density existed. Rows
+        # written before per-item density existed have no per-element "density" at all, so
+        # they fall back to the request-level column here rather than to DEFAULT_DENSITY —
+        # otherwise an old row that explicitly chose "full" would silently regenerate as
+        # "normal" the next time it was reused.
+        fallback_density = row["density"] or config.DEFAULT_DENSITY
+        elements_for_density = [
+            {**e, "density": e.get("density") or fallback_density} for e in elements
+        ]
+        density_sentence = image_gen.describe_element_density(elements_for_density)
 
         try:
             output, usage = image_gen.generate(
