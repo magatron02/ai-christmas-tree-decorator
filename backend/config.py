@@ -94,17 +94,28 @@ DEFAULT_DENSITY = "normal"
 # image_gen.describe_element_density() reaches for DENSITY_PRESETS verbatim (unchanged prompt)
 # whenever every accepted item shares one density, and only builds a per-item list from this
 # dict when they actually differ — so the common case never sees new prompt text.
+# A real billed check (scripts/check_per_item_density.py, 2026-09-02) went through two rounds:
+#   1. qualitative words alone ("sparingly" vs "generously") -> 25 vs 18 copies, no real
+#      contrast at all.
+#   2. a number range per kind (4-6 vs 18-24, the same trick DENSITY_PRESETS already uses for
+#      the whole tree) -> "full" landed in range (~30) but "light" still overshot to ~17 —
+#      the model has a strong prior toward "a normally decorated tree" that a soft range
+#      doesn't override on the sparse side.
+# Round 3: "light" states a hard ceiling ("never more than N") rather than a range, since the
+# failure mode is specifically overshooting upward, never undershooting.
 ELEMENT_DENSITY_PHRASES = {
     "light": (
-        "used sparingly on the tree — a few scattered copies with clear gaps between each one"
+        "a strict maximum of 6 copies of this kind — never more than 6, even if that leaves "
+        "large bare patches of branch where this kind could have gone. Fewer than 6 is fine; "
+        "more than 6 is wrong."
     ),
     "normal": (
-        "spread across the tree at a natural, even frequency, with visible gaps of bare "
-        "branch between them"
+        "roughly 8 to 12 copies of this kind, spread out with visible gaps of bare branch "
+        "between them."
     ),
     "full": (
-        "used generously on the tree — placed closely together, filling most of the space "
-        "this kind would cover"
+        "at least 18 copies of this kind, up to about 24 — noticeably more than a normal "
+        "amount. Place them closely together, filling most of the space this kind would cover."
     ),
 }
 

@@ -104,10 +104,23 @@ def describe_element_density(elements):
     if len(set(keys)) <= 1:
         return config.DENSITY_PRESETS[keys[0] if keys else config.DEFAULT_DENSITY]
 
-    lines = ["How densely each kind is used is not the same for every kind:"]
+    lines = [
+        "Each kind below has its own separate density — these are hard limits, not "
+        "suggestions or a starting point. Do not average them together or use the same "
+        "amount for every kind; count only copies of that one kind toward its own limit. "
+        "Before you finish, count how many of each kind you actually placed and check it "
+        "against its limit below — remove copies of a kind that went over, add copies of a "
+        "kind that fell short of its minimum:"
+    ]
     for element, key in zip(elements, keys):
         label = element.get("code") or "this decoration"
-        lines.append(f"- {label}: {config.ELEMENT_DENSITY_PHRASES[key]}.")
+        lines.append(f"- {label}: {config.ELEMENT_DENSITY_PHRASES[key]}")
+    if "light" in keys:
+        lines.append(
+            "Whichever kind above has a strict maximum must end up visibly sparser than the "
+            "others in the finished picture — if you are unsure how many to place, place "
+            "fewer of it, never more."
+        )
     return "\n".join(lines)
 
 
