@@ -25,6 +25,7 @@ OUT_PATH = ROOT / "catalog" / "product_worksheet.xlsx"
 THUMB_PX = 60
 
 RED = PatternFill("solid", fgColor="FFC7CE")
+AMBER = PatternFill("solid", fgColor="FFE8A3")
 HEADER_FILL = PatternFill("solid", fgColor="2E4A3B")
 HEADER_FONT = Font(bold=True, color="FFFFFF")
 
@@ -35,6 +36,54 @@ COLUMNS = ["#", "รหัสสินค้า", "รูปสินค้า",
 def load_descriptions():
     path = catalog.config.CATALOG_PATH.parent / "descriptions.json"
     return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+
+
+def siblings_by_image(rows):
+    """code -> every code (including itself) whose photo is byte-identical to it.
+
+    Every code gets its own <code>.png filename even when several codes were printed with
+    the exact same photo (catalog.py's crop_is_ambiguous docstring: "35072-1.png is
+    byte-identical to 34072-1, 36072-1..."), so grouping by filename finds nothing — this
+    groups by the file's actual content hash instead, the same signal
+    product_images.json's own `shared_with` count was built from.
+    """
+    import hashlib
+
+    digest_of = {}
+    by_digest = {}
+    for row in rows:
+        path = catalog.image_path(row["code"])
+        if not path or not path.is_file():
+            continue
+        digest = hashlib.sha1(path.read_bytes()).hexdigest()
+        digest_of[row["code"]] = digest
+        by_digest.setdefault(digest, []).append(row["code"])
+    return {code: by_digest[digest] for code, digest in digest_of.items()}
+
+
+def hard_image_problem(code):
+    """Reasons a photo must never be shown at all, not even with a caveat — it is not a
+    picture of any real product (page furniture) or the code itself is in dispute. Distinct
+    from crop_is_ambiguous(), which is a *shared* photo of real products — see
+    ambiguous_note() below for why that one still gets shown.
+    """
+    if not catalog.image_for(code):
+        return "ไม่มีรูป"
+    if catalog.crop_is_not_a_product(code):
+        return f"ไม่ใช่รูปสินค้า ({catalog._crop_verdicts().get(code)})"
+    if catalog.code_is_contested(code):
+        return "โค้ดนี้มีสองความหมายในแคตตาล็อก — ดูหน้า Settings"
+    return None
+
+
+def ambiguous_note(code, groups):
+    """When this code's photo is shared with others: which ones, so staff can at least tell
+    "this is one of these N products" from a real picture, rather than nothing. None when the
+    photo is this code's alone."""
+    if not catalog.crop_is_ambiguous(code):
+        return None
+    others = [c for c in groups.get(code, []) if c != code]
+    return f"รูปนี้ใช้ร่วมกับ {', '.join(others)} — เช็ครหัสให้ตรงก่อนยืนยันสินค้าจริง"
 
 
 def thumbnail_bytes(path):
@@ -59,6 +108,7 @@ def thumbnail_bytes(path):
 def build():
     rows = json.loads(catalog.config.CATALOG_PATH.read_text(encoding="utf-8"))
     descriptions = load_descriptions()
+    groups = siblings_by_image(rows)
 
     wb = Workbook()
     ws = wb.active
@@ -71,11 +121,11 @@ def build():
     ws.freeze_panes = "A2"
     ws.auto_filter.ref = f"A1:{get_column_letter(len(COLUMNS))}1"
 
-    widths = [4, 12, 10, 16, 16, 11, 12, 12, 12, 40]
+    widths = [4, 12, 26, 16, 16, 11, 12, 12, 12, 40]
     for i, w in enumerate(widths, start=1):
         ws.column_dimensions[get_column_letter(i)].width = w
 
-    missing_image = missing_size = missing_shape = missing_colour = missing_price = 0
+    missing_image = missing_size = missing_shape = missing_colour = missing_price = ambiguous_count = 0
 
     for i, row in enumerate(rows, start=1):
         r = i + 1
@@ -92,14 +142,20 @@ def build():
         ws.cell(r, 1, i)
         ws.cell(r, 2, code)
 
-        thumb = thumbnail_bytes(catalog.image_path(code))
+        problem = hard_image_problem(code)
+        thumb = None if problem else thumbnail_bytes(catalog.image_path(code))
         if thumb:
             xl_img = XLImage(thumb)
             xl_img.width = xl_img.height = THUMB_PX
             ws.add_image(xl_img, f"C{r}")
         else:
-            ws.cell(r, 3, "ไม่มีรูป").fill = RED
+            ws.cell(r, 3, problem or "รูปอ่านไฟล์ไม่ได้").fill = RED
             missing_image += 1
+
+        note = ambiguous_note(code, groups)
+        if note:
+            ws.cell(r, 10, note).fill = AMBER
+            ambiguous_count += 1
 
         ws.cell(r, 4, category or "")
         if not category:
@@ -131,6 +187,7 @@ def build():
     print(f"wrote {OUT_PATH} — {len(rows)} products")
     print(f"missing: image={missing_image} size={missing_size} shape={missing_shape} "
           f"colour={missing_colour} price={missing_price}")
+    print(f"ambiguous (photo shown, sibling note added): {ambiguous_count}")
 
 
 if __name__ == "__main__":
