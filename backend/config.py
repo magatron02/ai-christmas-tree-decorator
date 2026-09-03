@@ -139,6 +139,12 @@ TONE_PRESETS = {
     "luxe": {"label": "น้ำเงิน-เงิน หรู", "colours": ["blue", "silver"]},
 }
 
+# Prompt mode: a free-text description the shop types instead of picking a density — see
+# validation.parse_custom_prompt() and image_gen's {density} substitution. A ceiling, not a
+# quota — this is a paid prompt, and an unbounded paste is a real cost/abuse surface even for
+# an internal tool.
+PROMPT_MODE_MAX_CHARS = 500
+
 # There is deliberately no scale-correction constant here. gpt-image-2 renders decorations
 # at roughly 0.55-0.70 of the fraction it is told, so correcting for it looks obvious: ask
 # for 1/11 to get a true 1/19. Measured, that produced 0.55x — smaller than the uncorrected

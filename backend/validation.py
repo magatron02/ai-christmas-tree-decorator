@@ -67,6 +67,21 @@ def parse_manual_mm(raw, field):
     return value
 
 
+def parse_custom_prompt(raw):
+    """Prompt mode's free-text description — replaces the density system outright for a
+    request that has one (image_gen.py substitutes it straight into {density}). Empty means
+    "not used, fall back to the usual density text"; anything longer than the configured
+    ceiling is refused rather than silently truncated, since a cut-off instruction could read
+    as something the shop never asked for."""
+    raw = (raw or "").strip()
+    if len(raw) > config.PROMPT_MODE_MAX_CHARS:
+        raise ValidationError(
+            f"ข้อความยาวเกิน {config.PROMPT_MODE_MAX_CHARS} ตัวอักษร "
+            f"(ตอนนี้ {len(raw)} ตัวอักษร)"
+        )
+    return raw
+
+
 def resolve_density(key):
     """Density key -> the prompt sentence. Same shape as resolve_size: users pick a level,
     never the sentence itself."""

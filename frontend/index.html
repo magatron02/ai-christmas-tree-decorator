@@ -46,12 +46,15 @@
 
   <main class="page stack">
 
-    <!-- Two ways in: "กำหนดเอง" is the panels below, unchanged. "Auto ตามโทน" is a simple
+    <!-- Three ways in: "กำหนดเอง" is the panels below, unchanged. "Auto ตามโทน" is a simple
          helper for a customer who doesn't know what to pick — a 3-step wizard (ไซส์ → งบ →
-         แนว, wayfinder map #1) that auto-fills the same panels via wizard.js, then hands off
-         to the exact same generate flow. Neither mode replaces the other. -->
+         แนว, wayfinder map #1) that auto-fills the same panels via wizard.js. "Prompt mode"
+         is a chat-style page (prompt.js): attach the same tree/decorations/scene as chips,
+         type a free description instead of picking a density, send once. None of the three
+         replaces another. -->
     <div class="mode-switch" role="tablist" aria-label="โหมดสร้างภาพ">
       <button type="button" class="row active" id="mode-btn-custom" aria-pressed="true">กำหนดเอง</button>
+      <button type="button" class="row" id="mode-btn-prompt" aria-pressed="false">Prompt mode</button>
       <button type="button" class="row" id="mode-btn-auto" aria-pressed="false">Auto ตามโทน</button>
     </div>
 
@@ -157,6 +160,50 @@
          the same way #accepted-elements is: a container the script fills in. -->
     <div id="mode-auto" hidden></div>
 
+    <!-- Owned entirely by prompt.js. A chat log (bot greeting, then a user message + a bot
+         reply per send) above a composer: attachment chips, a free-text box, and Send —
+         built the same "script fills in the container" way as #mode-auto. -->
+    <div id="mode-prompt" class="chat-shell" hidden>
+      <div class="chat-log" id="prompt-log">
+        <div class="msg bot">
+          <div class="msg-bubble">แนบต้นไม้กับของตกแต่ง แล้วบอกว่าอยากได้แบบไหน กด ส่ง ครั้งเดียวจบ</div>
+        </div>
+      </div>
+      <div class="composer">
+        <div class="composer-attachments" id="prompt-attachments"></div>
+        <div class="composer-box">
+          <div class="composer-attach-row">
+            <button type="button" class="attach-btn" id="prompt-attach-tree">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M5 8l14 0M7 8l-3 6h16l-3-6M6 14l-2 4h16l-2-4"/></svg>
+              แนบต้นไม้
+            </button>
+            <button type="button" class="attach-btn" id="prompt-attach-element">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 4v2M12 18v2"/></svg>
+              แนบของตกแต่ง
+            </button>
+            <button type="button" class="attach-btn" id="prompt-attach-scene">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8" cy="10" r="1.5"/><path d="M3 16l5-4 4 3 5-5 4 4"/></svg>
+              แนบสถานที่จริง (บรรยากาศ)
+            </button>
+            <input type="file" id="prompt-tree-file" accept="image/jpeg,image/png" hidden>
+            <input type="file" id="prompt-element-file" accept="image/jpeg,image/png" hidden>
+            <input type="file" id="prompt-scene-file" accept="image/jpeg,image/png" hidden>
+          </div>
+          <textarea class="composer-textarea" id="prompt-textarea"
+            placeholder="อยากได้แบบไหน เช่น “แต่งโทนแดง-ทอง หรูหรา เว้นระยะห่างพอสมควร”"></textarea>
+          <div class="composer-footer">
+            <div class="composer-footer-left">
+              <select class="input size-select-mini" id="prompt-size-select" disabled></select>
+              <span class="char-count" id="prompt-char-count">0 / 500</span>
+            </div>
+            <button type="button" class="btn send-btn" id="prompt-send" disabled aria-label="ส่ง" title="ส่ง">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -168,6 +215,19 @@
   <div class="btn-row">
     <button class="btn success" id="confirm-btn">สร้างเลย</button>
     <button class="btn danger" id="cancel-btn">ยกเลิก</button>
+  </div>
+</dialog>
+
+<!-- prompt.js's own confirm dialog — a near-duplicate of #confirm-dialog above (own ids), kept
+     separate rather than shared so app.js's and prompt.js's confirm/cancel handlers never
+     both fire on the same <dialog>. -->
+<dialog id="prompt-confirm-dialog">
+  <h2>สร้างภาพนี้เลยไหม</h2>
+  <p id="prompt-confirm-body"></p>
+  <div class="confirm-prompt-preview" id="prompt-confirm-preview" hidden></div>
+  <div class="btn-row">
+    <button class="btn success" id="prompt-confirm-yes">สร้างเลย</button>
+    <button class="btn danger" id="prompt-confirm-no">ยกเลิก</button>
   </div>
 </dialog>
 
@@ -203,5 +263,6 @@
 <script src="/static/api.js?v=8.41"></script>
 <script src="/static/app.js?v=8.41"></script>
 <script src="/static/wizard.js?v=8.41"></script>
+<script src="/static/prompt.js?v=8.41"></script>
 </body>
 </html>

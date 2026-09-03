@@ -487,9 +487,13 @@ let catalogTimer;
 let catalogQuery = "";
 let catalogCodesShown = 0;   // products consumed — what the next page's offset advances by
 let catalogCardsShown = 0;   // cards on screen, larger when a product has several colours
-let catalogPickerMode = "element";   // "element" (panel 2, any category) or "tree" (panel 1,
-                                      // locked to the tree category — the same dialog serves
-                                      // both rather than duplicating the whole grid/search/page
+let catalogPickerMode = "element";   // "element" (any category) or "tree" (locked to the
+                                      // tree category) — the same dialog serves every caller
+                                      // (panel 1, panel 2, prompt.js's chat chips) rather than
+                                      // duplicating the whole grid/search/page machinery
+let catalogPickerCallback = null;    // (code, image) => void — set by openCatalogPicker(),
+                                      // called by catalogCard()'s click instead of a hardcoded
+                                      // if/else, so a new caller needs no new branch here
 
 function catalogCard(item) {
   const card = document.createElement("div");
@@ -510,10 +514,7 @@ function catalogCard(item) {
     card.append(which);
   }
   if (item.image) card.append(expandButton(`/catalog/${item.image}`, item.code));
-  card.addEventListener("click", () => {
-    if (catalogPickerMode === "tree") useTreeFromCatalog(item.code, item.image);
-    else useFromCatalog(item.code, item.image);
-  });
+  card.addEventListener("click", () => catalogPickerCallback(item.code, item.image));
   return card;
 }
 
@@ -602,8 +603,9 @@ async function loadCatalogPage(restart) {
  * from one panel's picker to the other's would show the wrong (stale-mode) results. The shop
  * filter is never locked by mode — both shops sell trees, so panel 1 still needs to choose
  * between them, just within the tree category. */
-async function openCatalogPicker(mode) {
+async function openCatalogPicker(mode, onPick) {
   catalogPickerMode = mode;
+  catalogPickerCallback = onPick;
   const categorySelect = $("catalog-category");
   const shopSelect = $("catalog-shop");
   // shops first: the category list is scoped to the selected shop, so it cannot be built
@@ -617,8 +619,8 @@ async function openCatalogPicker(mode) {
   loadCatalogPage(true);
 }
 
-$("catalog-toggle").addEventListener("click", () => openCatalogPicker("element"));
-$("tree-catalog-toggle").addEventListener("click", () => openCatalogPicker("tree"));
+$("catalog-toggle").addEventListener("click", () => openCatalogPicker("element", useFromCatalog));
+$("tree-catalog-toggle").addEventListener("click", () => openCatalogPicker("tree", useTreeFromCatalog));
 
 $("catalog-shop").addEventListener("change", async () => {
   // categories first: the grid must not be reloaded against a filter the new shop has no
@@ -1148,3 +1150,23 @@ document.querySelectorAll("select.input").forEach(enhanceSelect);
 
 loadConfig().catch((err) => showError(err.message));
 refreshTotals();
+
+/* ---- mode switch — one primitive shared by every mode's own button/container pair, so
+ * wizard.js and prompt.js each only have to say which name is theirs. Reuses the sidebar
+ * nav's .row/.row.active pattern for "which is active", the same reasoning wizard.js's own
+ * comment already gives: Generate is the one control allowed the primary-button colour on
+ * this page (test_ui_design_system.py rule 4), and a mode tab is navigation, not that. */
+const MODES = [
+  { name: "custom", btn: "mode-btn-custom", panel: "mode-custom" },
+  { name: "prompt", btn: "mode-btn-prompt", panel: "mode-prompt" },
+  { name: "auto", btn: "mode-btn-auto", panel: "mode-auto" },
+];
+function showMode(name) {
+  for (const mode of MODES) {
+    const active = mode.name === name;
+    $(mode.btn).classList.toggle("active", active);
+    $(mode.btn).setAttribute("aria-pressed", String(active));
+    $(mode.panel).hidden = !active;
+  }
+}
+$("mode-btn-custom").addEventListener("click", () => showMode("custom"));

@@ -53,6 +53,9 @@ CREATE TABLE IF NOT EXISTS requests (
     -- means "no override, use the catalogue lookup (or the generic fallback)", same meaning
     -- as an absent per-element "manual_mm" in elements_json below
     tree_manual_mm REAL,
+    -- Prompt mode's free-text description — wins outright over `density` at generate time
+    -- when non-empty (image_gen.py). Empty/NULL means "not used, fall back as usual".
+    custom_prompt TEXT,
     error        TEXT,
     usage_json   TEXT,
     created_at   TEXT NOT NULL,
@@ -80,7 +83,7 @@ def connect(path=None):
     existing = {row["name"] for row in conn.execute("PRAGMA table_info(requests)")}
     for column in (
         "usage_json", "tree_code", "element_code", "elements_json", "reference_path", "density",
-        "tree_manual_mm",
+        "tree_manual_mm", "custom_prompt",
     ):
         if column not in existing:
             conn.execute(f"ALTER TABLE requests ADD COLUMN {column} TEXT")
@@ -89,12 +92,13 @@ def connect(path=None):
 
 
 def create(conn, tree_path, elements, size, tree_code=None, reference_path=None, density=None,
-           tree_manual_mm=None):
+           tree_manual_mm=None, custom_prompt=None):
     """`elements` is a list of {"path": ..., "code": ...}, one to MAX_ELEMENTS of them —
     each entry may also carry "manual_mm" (a person-supplied real size, when the code's
     catalogue row has none) and "density" (a per-item DENSITY_PRESETS key); both optional,
     read back by elements_of() callers via plain dict access so old rows without them still
-    work. `tree_manual_mm` is the same idea for the tree slot."""
+    work. `tree_manual_mm` is the same idea for the tree slot. `custom_prompt` is Prompt
+    mode's free-text description, or None/"" for every other mode."""
     request_id = uuid.uuid4().hex
     stamp = now()
     first = elements[0]
@@ -102,10 +106,11 @@ def create(conn, tree_path, elements, size, tree_code=None, reference_path=None,
         conn.execute(
             "INSERT INTO requests (request_id, status, tree_path, element_path,"
             " elements_json, size, tree_code, element_code, reference_path, density,"
-            " tree_manual_mm, created_at, updated_at)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            " tree_manual_mm, custom_prompt, created_at, updated_at)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (request_id, PENDING, tree_path, first["path"], json.dumps(elements), size,
-             tree_code, first.get("code"), reference_path, density, tree_manual_mm, stamp, stamp),
+             tree_code, first.get("code"), reference_path, density, tree_manual_mm,
+             custom_prompt or None, stamp, stamp),
         )
     return request_id
 

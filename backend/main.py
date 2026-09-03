@@ -273,6 +273,7 @@ def api_config():
         "default_density": config.DEFAULT_DENSITY,
         "max_upload_mb": config.MAX_UPLOAD_BYTES // (1024 * 1024),
         "max_elements": config.MAX_ELEMENTS,
+        "prompt_mode_max_chars": config.PROMPT_MODE_MAX_CHARS,
         "model": config.IMAGE_MODEL,
     }
 
@@ -779,6 +780,7 @@ def api_prepare(
     tree_manual_mm: str = Form(""),
     element_manual_mm: list[str] = Form(default=[]),
     element_density: list[str] = Form(default=[]),
+    custom_prompt: str = Form(""),
 ):
     """Input A + one to MAX_ELEMENTS accepted decorations -> a `pending` request. Still free;
     still no API call.
@@ -799,6 +801,9 @@ def api_prepare(
     image_gen.describe_element_density() is what actually decides which of the two the prompt
     sees, at generate time.
 
+    `custom_prompt` (Prompt mode) wins outright over both `density` and `element_density` at
+    generate time when non-empty — see /api/generate's own comment on this.
+
     `size == "auto"` means "match the scene reference photo's own ratio" — resolved here into
     a concrete WxH via fit_custom_size(scene_ratio) and stored as that literal string, so
     /api/generate later re-resolves it through the exact same resolve_size() path as any
@@ -818,6 +823,7 @@ def api_prepare(
     else:
         width, height = validation.resolve_size(size)
     validation.resolve_density(density)  # fail fast; the sentence itself is re-resolved at generate time
+    custom_prompt = validation.parse_custom_prompt(custom_prompt)
     names = validation.element_count([e.strip() for e in element if e.strip()])
     paths = [_stored_path(name) for name in names]
 
@@ -880,7 +886,7 @@ def api_prepare(
     try:
         request_id = request_log.create(
             conn, tree_name, elements, size, tree_code or None, reference_name, density,
-            tree_mm_override,
+            tree_mm_override, custom_prompt,
         )
     finally:
         conn.close()
@@ -952,7 +958,11 @@ def api_generate(request_id: str):
         elements_for_density = [
             {**e, "density": e.get("density") or fallback_density} for e in elements
         ]
-        density_sentence = image_gen.describe_element_density(elements_for_density)
+        # Prompt mode: a free-text description the shop typed instead of picking a density
+        # wins outright, verbatim, over the whole density system above — it lands in exactly
+        # the same {density} slot in the template (backend/services/image_gen.py:load_prompt),
+        # which sits after the template's hard preservation rules, never before them.
+        density_sentence = row["custom_prompt"] or image_gen.describe_element_density(elements_for_density)
 
         try:
             output, usage = image_gen.generate(

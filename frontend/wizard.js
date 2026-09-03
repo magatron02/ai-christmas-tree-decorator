@@ -311,26 +311,10 @@ async function confirmWizardPick() {
   }
 }
 
-/* ---- mode switch — reuses the sidebar nav's own .row/.row.active pattern for "which is
- * active" rather than the Generate button's colour: Generate is the one control on this page
- * allowed to carry that emphasis (test_ui_design_system.py rule 4 — exactly one per page, and
- * no script may mint another one), and a mode tab is navigation, not a call to action. ---- */
-$("mode-btn-custom").addEventListener("click", () => {
-  $("mode-btn-custom").classList.add("active");
-  $("mode-btn-custom").setAttribute("aria-pressed", "true");
-  $("mode-btn-auto").classList.remove("active");
-  $("mode-btn-auto").setAttribute("aria-pressed", "false");
-  $("mode-custom").hidden = false;
-  $("mode-auto").hidden = true;
-});
-
+/* ---- mode switch — showMode() (app.js) owns showing/hiding every mode's button+container;
+ * this only adds what's specific to entering Auto mode. ---- */
 $("mode-btn-auto").addEventListener("click", async () => {
-  $("mode-btn-auto").classList.add("active");
-  $("mode-btn-auto").setAttribute("aria-pressed", "true");
-  $("mode-btn-custom").classList.remove("active");
-  $("mode-btn-custom").setAttribute("aria-pressed", "false");
-  $("mode-custom").hidden = true;
-  $("mode-auto").hidden = false;
+  showMode("auto");
   showError("");
   try {
     await loadWizardConfig();
