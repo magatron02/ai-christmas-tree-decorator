@@ -478,15 +478,21 @@ select.select-native {
 
 /* ---- blocking manual-size gate (tree slot + every accepted element) ----
    NonGoals.md 8: a code with no catalogue size must not be guessed at — Generate stays
-   disabled (refreshGenerateButton/anyManualSizeMissing in app.js) until this row is filled. */
-.size-input-row { display: flex; align-items: center; gap: var(--space-2) }
+   disabled (refreshGenerateButton/anyManualSizeMissing in app.js) until this row is filled.
+   Stacked vertically, not a single tight row: the accepted-element card lives in
+   .decoration-list-col, which can be as narrow as 140px (a thumbnail-and-remove-button
+   column originally) — the warning text plus an input plus a unit label never fit on one
+   line there without wrapping into a single word per line. Full-width text on its own line,
+   then the input+unit below it, reads fine at any column width. */
+.size-input-row { display: flex; flex-direction: column; align-items: stretch; gap: var(--space-1) }
+.size-input-field { display: flex; align-items: center; gap: var(--space-2) }
 .size-input-row .input { width: 90px; padding: 4px 8px; font-size: var(--text-xs) }
 .size-input-row .unit { font-size: var(--text-xs); color: var(--text-muted) }
-.size-warn-text { font-size: var(--text-xs); color: var(--state-warning-text); flex: 1 }
+.size-warn-text { font-size: var(--text-xs); color: var(--state-warning-text) }
 /* --text-success is the result panel's own role accent (DESIGN.md section 2, "one accent per
    role") — this affirmation shows up outside that panel too, so it stays neutral and lets the
    ✓ glyph carry the "done" meaning instead of borrowing a colour that means something else here */
-.size-ok-text { font-size: var(--text-xs); color: var(--text-muted); flex: 1 }
+.size-ok-text { font-size: var(--text-xs); color: var(--text-muted) }
 
 /* rough-preview only — picking a decoration (cut-out or catalogue) never opens the full-size
    .thumb treatment the tree/result panels use; a small square is enough to confirm the pick */

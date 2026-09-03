@@ -122,7 +122,10 @@ function buildSizeRow(sizeMm, manualMm, onInput) {
   const unit = document.createElement("span");
   unit.className = "unit";
   unit.textContent = "มม.";
-  row.append(warn, input, unit);
+  const field = document.createElement("div");
+  field.className = "size-input-field";
+  field.append(input, unit);
+  row.append(warn, field);
   return row;
 }
 
