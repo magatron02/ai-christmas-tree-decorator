@@ -160,3 +160,25 @@ def test_exclude_avoids_repeats_where_the_pool_allows_it(client, monkeypatch):
     }).json()
     codes = {d["code"] for d in body["decorations"]}
     assert codes == {"O-EXTRA-2"}
+
+
+# ---------------------------------------------------------------- omitted tone (live count)
+# the wizard's single-panel step (ไซส์/งบ/แนว) previews how many decorations match before a
+# tone has even been chosen — tone comes later, in its own screen
+
+
+def test_omitted_tone_pools_by_category_and_budget_only(client):
+    body = client.post("/api/wizard/pick", data={
+        "size_ft": 5, "budget": 200, "category": "ornament", "tone": "",
+    }).json()
+    codes = {d["code"] for d in body["decorations"]}
+    # both cheap ornaments qualify regardless of colour — no tone was given to filter by
+    assert codes == {"O-RED-CHEAP", "O-GREEN-CHEAP"}
+    assert body["relaxed"] == []
+
+
+def test_omitted_tone_leaves_matches_tone_null_not_false(client):
+    body = client.post("/api/wizard/pick", data={
+        "size_ft": 5, "budget": 200, "category": "ornament", "tone": "",
+    }).json()
+    assert all(d["matches_tone"] is None for d in body["decorations"])

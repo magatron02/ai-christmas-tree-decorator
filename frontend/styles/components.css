@@ -822,3 +822,15 @@ td.shrink { width: 96px }
 }
 .auto-pick.is-tree .auto-pick-thumb { border-color: var(--state-success-bg) }
 .auto-pick-code { font-size: 9px; font-family: var(--font-body-en); color: var(--text-muted); text-align: center }
+
+/* one field group in the wizard's single-panel step (variant B) — a label above its own
+   chip-select, several of these stacked in the left card */
+.filter-field { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-4) }
+.filter-field:last-child { margin-bottom: 0 }
+.filter-field label { font-family: var(--font-heading); font-size: var(--text-sm); color: var(--text-muted) }
+
+/* the wizard panel's live match count — --font-header-en (Fraunces) is .logo's alone
+   (test_ui_design_system.py), so this is the same heading face every other emphasised label
+   in the app already uses, just larger */
+.live-count { font-family: var(--font-heading); font-size: 34px; line-height: 1; margin-top: 4px }
+.live-count-unit { font-size: var(--text-lg); color: var(--text-muted) }

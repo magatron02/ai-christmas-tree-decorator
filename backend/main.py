@@ -699,10 +699,15 @@ def api_wizard_pick(
     size_ft: float = Form(...),
     budget: float = Form(...),
     category: str = Form(...),
-    tone: str = Form(...),
+    tone: str = Form(""),
     exclude: list[str] = Form(default=[]),
 ):
     """Auto-pick a tree + up to 4 decoration candidates for the wizard's Auto-mode step.
+
+    `tone` is optional: an empty string means "no tone chosen yet" rather than "chose no
+    tone" — the live count in the wizard's single-panel step (ไซส์/งบ/แนว, before the tone
+    screen) calls this the same way, just without a tone, to preview how many decorations
+    the budget+category alone leave before tone narrows it further.
 
     Runs wayfinder ticket #4's relax cascade: try the full filter (category + tone + budget),
     drop tone if that leaves nothing, then drop category too if it is still empty — budget
@@ -714,13 +719,13 @@ def api_wizard_pick(
     """
     if category not in config.WIZARD_CATEGORIES:
         raise ValidationError(f"ไม่รู้จักแนว '{category}'")
-    if tone not in config.TONE_PRESETS:
+    if tone and tone not in config.TONE_PRESETS:
         raise ValidationError(f"ไม่รู้จักโทน '{tone}'")
 
-    tone_colours = config.TONE_PRESETS[tone]["colours"]
+    tone_colours = config.TONE_PRESETS[tone]["colours"] if tone else None
     relaxed = []
     pool = catalog.auto_pool(category, tone_colours, budget)
-    if not pool:
+    if not pool and tone_colours:
         relaxed.append("tone")
         pool = catalog.auto_pool(category, None, budget)
     if not pool:

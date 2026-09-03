@@ -8,17 +8,17 @@
 const wizard = {
   loaded: false,
   config: null,
-  step: 0,        // 0 = ไซส์, 1 = งบ, 2 = แนว
-  screen: "stepper", // "stepper" | "tone"
+  screen: "panel", // "panel" | "tone" — variant B: one panel, no step navigation
   sizeFt: null,
   budget: 0,
   category: null,
   tone: null,
-  pick: null,     // last /api/wizard/pick response
+  pick: null,      // last /api/wizard/pick response (tone screen)
   exclude: [],
+  preview: null,   // last live /api/wizard/pick response (panel screen, tone omitted)
+  previewTimer: null,
 };
 
-const WIZARD_STEP_LABELS = ["ไซส์ต้น", "งบประมาณ", "แนว"];
 const WIZARD_BUDGET_QUICKPICK = [3000, 5000, 10000, 20000];
 
 async function loadWizardConfig() {
@@ -27,49 +27,63 @@ async function loadWizardConfig() {
   wizard.loaded = true;
 }
 
-function wizardCanAdvance() {
-  if (wizard.step === 0) return wizard.sizeFt != null;
-  if (wizard.step === 1) return wizard.budget > 0;
-  return wizard.category != null;
+/* ---- screen 1: variant B — every field visible and editable at once, no steps. A live
+ * count (via /api/wizard/pick with tone omitted — see the backend docstring) updates as any
+ * field changes, debounced the same way app.js's own catalogue search already is. ---- */
+function wizardPanelReady() {
+  return wizard.sizeFt != null && wizard.budget > 0 && wizard.category != null;
 }
 
-/* ---- screen 1: the 3-step stepper ---- */
-function renderWizardStepper() {
-  const progress = WIZARD_STEP_LABELS.map((label, i) => `
-    <div class="seg ${i < wizard.step ? "done" : ""} ${i === wizard.step ? "current" : ""}">
-      <div class="dot">${i < wizard.step ? "✓" : i + 1}</div>
-      <div class="seg-label">${label}</div>
-    </div>`).join("");
+function scheduleWizardPreview() {
+  clearTimeout(wizard.previewTimer);
+  if (!wizardPanelReady()) {
+    wizard.preview = null;
+    renderWizardPanel();
+    return;
+  }
+  wizard.previewTimer = setTimeout(async () => {
+    const body = new FormData();
+    body.append("size_ft", String(wizard.sizeFt));
+    body.append("budget", String(wizard.budget));
+    body.append("category", wizard.category);
+    try {
+      wizard.preview = await call("/api/wizard/pick", { method: "POST", body });
+    } catch (err) {
+      wizard.preview = null;
+      wizard.previewError = err.message;
+    }
+    renderWizardPanel();
+  }, 250);
+}
 
-  let body = "";
-  if (wizard.step === 0) {
-    body = `
-      <h2>ต้นสูงเท่าไหร่</h2>
-      <p class="hint">เลือกขนาดต้นคริสต์มาสจริงที่ลูกค้าจะใช้</p>
+function renderWizardPanel() {
+  const counts = wizard.config.history_counts || {};
+  const preview = wizard.preview;
+
+  const left = `
+    <div class="filter-field">
+      <label>ไซส์ต้น</label>
       <div class="chip-select" id="wizard-size-chips">
         ${wizard.config.tree_heights.map((h) => `
           <button type="button" data-ft="${h.ft}" aria-pressed="${wizard.sizeFt === h.ft}">
             ${h.ft} Ft. <span class="hint">(${h.mm} มม.)</span>
           </button>`).join("")}
-      </div>`;
-  } else if (wizard.step === 1) {
-    body = `
-      <h2>งบประมาณเท่าไหร่</h2>
-      <p class="hint">รวมทั้งต้นไม้และของตกแต่ง — เลือกไว หรือพิมพ์เอง</p>
+      </div>
+    </div>
+    <div class="filter-field">
+      <label>งบประมาณ (บาท) — รวมทั้งต้นไม้และของตกแต่ง</label>
       <div class="chip-select" id="wizard-budget-chips">
         ${WIZARD_BUDGET_QUICKPICK.map((v) => `
           <button type="button" data-budget="${v}" aria-pressed="${wizard.budget === v}">
             ฿${v.toLocaleString("th-TH")}
           </button>`).join("")}
       </div>
-      <input class="input" type="number" id="wizard-budget-input" placeholder="หรือพิมพ์งบเอง (บาท)"
-        style="width:200px;text-align:center;margin-top:var(--space-3)"
-        value="${WIZARD_BUDGET_QUICKPICK.includes(wizard.budget) ? "" : (wizard.budget || "")}">`;
-  } else {
-    const counts = wizard.config.history_counts || {};
-    body = `
-      <h2>เน้นแนวไหน</h2>
-      <p class="hint">เลือก 1 แนวหลัก — ตัวเลขในวงเล็บคือจำนวนของที่พร้อมใช้ตามงบที่ตั้งไว้</p>
+      <input class="input" type="number" id="wizard-budget-input" placeholder="หรือพิมพ์งบเอง"
+        style="width:180px;margin-top:var(--space-2)"
+        value="${WIZARD_BUDGET_QUICKPICK.includes(wizard.budget) ? "" : (wizard.budget || "")}">
+    </div>
+    <div class="filter-field">
+      <label>แนว — เลือก 1 แนวหลัก</label>
       <div class="chip-select" id="wizard-category-chips">
         ${wizard.config.categories.map((c) => `
           <button type="button" data-category="${c.key}" aria-pressed="${wizard.category === c.key}"
@@ -77,63 +91,64 @@ function renderWizardStepper() {
             ${c.label} (${c.count})
             ${counts[c.key] ? `<span class="hint">· เคยเลือก ${counts[c.key]} ครั้ง</span>` : ""}
           </button>`).join("")}
-      </div>`;
-  }
-
-  const canNext = wizardCanAdvance();
-  $("mode-auto").innerHTML = `
-    <div class="card stack" style="gap:var(--space-4)">
-      <div class="stepper-progress">${progress}</div>
-      <div class="stepper-card">${body}</div>
-      <div class="stepper-nav">
-        <button class="btn" id="wizard-back" ${wizard.step === 0 ? "disabled" : ""}>← ย้อนกลับ</button>
-        <button class="btn" id="wizard-next" ${canNext ? "" : "disabled"}>
-          ${wizard.step < 2 ? "ถัดไป →" : "ยืนยัน แล้วไปต่อ →"}
-        </button>
       </div>
     </div>`;
 
-  if (wizard.step === 0) {
-    for (const button of $("wizard-size-chips").querySelectorAll("button")) {
-      button.addEventListener("click", () => {
-        wizard.sizeFt = Number(button.dataset.ft);
-        renderWizardStepper();
-      });
-    }
-  } else if (wizard.step === 1) {
-    for (const button of $("wizard-budget-chips").querySelectorAll("button")) {
-      button.addEventListener("click", () => {
-        wizard.budget = Number(button.dataset.budget);
-        renderWizardStepper();
-      });
-    }
-    $("wizard-budget-input").addEventListener("input", (event) => {
-      wizard.budget = Number(event.target.value) || 0;
-      renderWizardStepper();
-    });
-  } else {
-    for (const button of $("wizard-category-chips").querySelectorAll("button")) {
-      button.addEventListener("click", () => {
-        wizard.category = button.dataset.category;
-        renderWizardStepper();
-      });
-    }
-  }
+  const right = !wizardPanelReady()
+    ? `<p class="hint">เลือกไซส์ + งบ + แนวให้ครบ เพื่อดูว่ามีของอะไรพร้อมใช้บ้าง</p>`
+    : !preview
+      ? `<p class="hint">${wizard.previewError || "กำลังค้นหา…"}</p>`
+      : `
+    <span class="hint">ของที่ตรงเงื่อนไขตอนนี้</span>
+    <div class="live-count">${preview.pool_size}<span class="live-count-unit"> ชิ้น</span></div>
+    <div class="auto-preview-strip" style="margin-top:var(--space-3)">
+      ${preview.decorations.length ? preview.decorations.map((d) => `
+        <div class="auto-pick">
+          <div class="auto-pick-thumb"><img src="${d.image_url}" alt="${d.code}" style="width:100%;height:100%;object-fit:contain"></div>
+          <span class="auto-pick-code"><b>${d.code}</b> · ฿${d.price.toLocaleString("th-TH")}</span>
+        </div>`).join("") : `<span class="hint">ยังไม่เข้าเงื่อนไขไหนเลย — ลองขยับงบหรือเปลี่ยนแนว</span>`}
+    </div>`;
 
-  $("wizard-back").addEventListener("click", () => {
-    wizard.step = Math.max(0, wizard.step - 1);
-    renderWizardStepper();
+  $("mode-auto").innerHTML = `
+    <div class="card stack" style="gap:var(--space-4)">
+      <span class="panel-title">ตั้งเงื่อนไขแพ็กเกจ</span>
+      <p class="hint">ปรับได้พร้อมกันทั้งหมด ผลลัพธ์อัปเดตสด ไม่มีขั้นตอนแยก</p>
+      <div class="identify-columns">
+        <div class="card stack">${left}</div>
+        <div class="card">${right}</div>
+      </div>
+      <div class="btn-row" style="justify-content:flex-end;padding-top:var(--space-2);border-top:1px solid var(--border)">
+        <button class="btn" id="wizard-next" ${wizardPanelReady() ? "" : "disabled"}>เลือกโทนสีต่อ →</button>
+      </div>
+    </div>`;
+
+  for (const button of $("wizard-size-chips").querySelectorAll("button")) {
+    button.addEventListener("click", () => {
+      wizard.sizeFt = Number(button.dataset.ft);
+      scheduleWizardPreview();
+    });
+  }
+  for (const button of $("wizard-budget-chips").querySelectorAll("button")) {
+    button.addEventListener("click", () => {
+      wizard.budget = Number(button.dataset.budget);
+      scheduleWizardPreview();
+    });
+  }
+  $("wizard-budget-input").addEventListener("input", (event) => {
+    wizard.budget = Number(event.target.value) || 0;
+    scheduleWizardPreview();
   });
+  for (const button of $("wizard-category-chips").querySelectorAll("button")) {
+    button.addEventListener("click", () => {
+      wizard.category = button.dataset.category;
+      scheduleWizardPreview();
+    });
+  }
   $("wizard-next").addEventListener("click", () => {
-    if (!wizardCanAdvance()) return;
-    if (wizard.step < 2) {
-      wizard.step += 1;
-      renderWizardStepper();
-    } else {
-      wizard.screen = "tone";
-      wizard.exclude = [];
-      renderWizardTone();
-    }
+    if (!wizardPanelReady()) return;
+    wizard.screen = "tone";
+    wizard.exclude = [];
+    renderWizardTone();
   });
 }
 
@@ -233,8 +248,8 @@ function renderWizardTone() {
     renderWizardTone();
   });
   $("wizard-tone-back").addEventListener("click", () => {
-    wizard.screen = "stepper";
-    renderWizardStepper();
+    wizard.screen = "panel";
+    renderWizardPanel();
   });
   $("wizard-confirm").addEventListener("click", confirmWizardPick);
 
@@ -319,7 +334,7 @@ $("mode-btn-auto").addEventListener("click", async () => {
   showError("");
   try {
     await loadWizardConfig();
-    if (wizard.screen === "stepper") renderWizardStepper();
+    if (wizard.screen === "panel") renderWizardPanel();
     else renderWizardTone();
   } catch (err) {
     $("mode-auto").innerHTML = `<div class="notice">${err.message}</div>`;
