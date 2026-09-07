@@ -16,6 +16,7 @@ controls how thickly the result is decorated, and an uploaded tree photo has no 
   substituting an off-tone product — the tone is the only thing the shop asked for.
 - The gate's supporting machinery goes with it (tree-height presets, nearest-tree lookup, foot-to-
   millimetre conversion, the history category counts, the stepper UI and its tests). The pool
-  builder survives with its budget and category inputs removed.
+  builder survives with its budget ceiling removed; it still takes a category, but the recipe
+  supplies that now rather than a person.
 - Auto pick still hands its proposal to the normal panels for review before anything is generated;
   a two-click generate would spend real money on a set the shop had not seen.

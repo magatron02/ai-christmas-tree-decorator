@@ -119,16 +119,28 @@ ELEMENT_DENSITY_PHRASES = {
     ),
 }
 
-# The wizard's "ไซส์ต้น" step (wayfinder map #1) offers a real tree height in feet, resolved
-# to the catalogue's closest actual sized tree by catalog.nearest_tree() — never a guessed
-# product, just the nearest real one to what was asked for.
-WIZARD_TREE_HEIGHTS_FT = [4, 5, 6, 7, 8]
+# What auto pick places on every tree: the same mix of categories and counts for every tone
+# and every tree size (ADR-0003). The tone decides which products fill these slots, never what
+# the slots are, and the tree's size does not enter into it — density already governs how
+# thickly the result reads, and an uploaded tree photo has no known size to reason from.
+#
+# Lights and figures are deliberately absent. A light string is not a single hangable object
+# the compositor places well, and a figure is prominent enough to deserve being chosen on
+# purpose rather than arriving in a mix.
+#
+# Ordered, and kept under MAX_ELEMENTS: this is the whole proposal, and the order is the order
+# the shop sees it in.
+AUTO_RECIPE = (
+    ("ornament", 3),
+    ("ribbon", 1),
+    ("topper", 1),
+    ("flower", 1),
+    ("bell", 1),
+    ("giftbox", 1),
+)
+AUTO_RECIPE_TOTAL = sum(count for _category, count in AUTO_RECIPE)
 
-# The wizard's "แนว" step: catalog.CATEGORIES minus the ones nobody adds *onto* a tree —
-# wreath, banner, and the tree itself (wayfinder ticket #3's Q8 decision).
-WIZARD_CATEGORIES = ["ornament", "flower", "bell", "topper", "giftbox", "light", "figure", "ribbon"]
-
-# Auto-mode's colour-tone presets, reviewed as the 5-tone mockup this session. Colours are
+# Auto pick's colour-tone presets, reviewed as the 5-tone mockup. Colours are
 # free strings matched through matching._normalize()/COLOUR_BUCKETS, so no separate bucket
 # table lives here — catalog.auto_pool() does the matching.
 TONE_PRESETS = {

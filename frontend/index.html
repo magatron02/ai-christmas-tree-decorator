@@ -47,8 +47,8 @@
   <main class="page stack">
 
     <!-- Three ways in: "กำหนดเอง" is the panels below, unchanged. "Auto ตามโทน" is a simple
-         helper for a customer who doesn't know what to pick — a 3-step wizard (ไซส์ → งบ →
-         แนว, wayfinder map #1) that auto-fills the same panels via wizard.js. "Prompt mode"
+         helper for a customer who doesn't know what to pick — one question, the tone, then a
+         fixed recipe of decorations auto-filled into the same panels via auto.js. "Prompt mode"
          is a chat-style page (prompt.js): attach the same tree/decorations/scene as chips,
          type a free description instead of picking a density, send once. None of the three
          replaces another. -->
@@ -156,8 +156,8 @@
 
     </div>
 
-    <!-- Owned entirely by wizard.js — the 3-step stepper, then the tone/preview step, built
-         the same way #accepted-elements is: a container the script fills in. -->
+    <!-- Owned entirely by auto.js — the tone row and the proposed decorations, built the
+         same way #accepted-elements is: a container the script fills in. -->
     <div id="mode-auto" hidden></div>
 
     <!-- Owned entirely by prompt.js. A chat log (bot greeting, then a user message + a bot
@@ -262,7 +262,7 @@
 
 <script src="/static/api.js?v=8.41"></script>
 <script src="/static/app.js?v=8.41"></script>
-<script src="/static/wizard.js?v=8.41"></script>
+<script src="/static/auto.js?v=8.41"></script>
 <script src="/static/prompt.js?v=8.41"></script>
 </body>
 </html>

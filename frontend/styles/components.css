@@ -731,66 +731,15 @@ td.shrink { width: 96px }
 .cat-recent-row { cursor: pointer }
 .cat-recent-row:hover { background: var(--surface-1) }
 
-/* ---- wizard.js: mode switch, 3-step stepper, tone picker + auto-pick preview strip.
+/* ---- auto.js: mode switch, tone picker + the proposed-decorations strip.
    Selection states below deliberately reuse --modal-item-selected-bg/text (the existing
    "this option is chosen" pair, e.g. the select-popup's own highlighted row) rather than a
    panel role colour (--fill-primary etc.) — DESIGN.md section 2 scopes those to one accent
-   per functional role (.role-decoration, .role-result), and the wizard isn't a new role,
-   it's a selection state like any dropdown's. The mode switch itself reuses .btn/.btn.primary
-   outright, toggled by wizard.js, rather than inventing a third way to say "active". */
+   per functional role (.role-decoration, .role-result), and auto pick isn't a new role,
+   it's a selection state like any dropdown's. The mode switch reuses the sidebar nav's
+   .row/.row.active pair rather than inventing a third way to say "active". */
 .mode-switch { display: inline-flex; gap: var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-1) }
 .mode-switch .row { width: auto; border-radius: calc(var(--radius-md) - 2px) }
-
-.stepper-progress { display: flex; align-items: center; gap: 0; margin-bottom: var(--space-4) }
-.stepper-progress .seg { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative }
-.stepper-progress .seg:not(:last-child)::after {
-  content: "";
-  position: absolute;
-  top: 13px;
-  left: 56%;
-  width: 88%;
-  height: 1px;
-  background: var(--border);
-}
-.stepper-progress .seg.done:not(:last-child)::after { background: var(--state-success-bg) }
-.stepper-progress .dot {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--surface-1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--text-sm);
-  color: var(--text-muted);
-  z-index: 1;
-}
-.stepper-progress .seg.current .dot { border-color: var(--modal-item-selected-text); color: var(--modal-item-selected-text) }
-.stepper-progress .seg.done .dot { border-color: var(--state-success-bg); background: var(--state-success-bg); color: var(--state-success-text) }
-.stepper-progress .seg-label { font-size: var(--text-xs); color: var(--text-muted) }
-.stepper-progress .seg.current .seg-label { color: var(--text-primary) }
-.stepper-card { max-width: 520px; margin: 0 auto; text-align: center; padding: var(--space-4) }
-.stepper-card h2 { font-family: var(--font-heading); font-size: var(--text-xl); margin: 0 0 4px }
-.stepper-card .chip-select { justify-content: center; margin-top: var(--space-4) }
-.stepper-nav { display: flex; justify-content: space-between; max-width: 520px; margin: var(--space-4) auto 0 }
-
-.chip-select { display: flex; gap: var(--space-2); flex-wrap: wrap }
-.chip-select button {
-  border: 1px solid var(--border);
-  background: var(--surface-1);
-  border-radius: var(--radius-md);
-  padding: var(--space-2) var(--space-3);
-  cursor: pointer;
-  font: inherit;
-  font-size: var(--text-sm);
-}
-.chip-select button[aria-pressed="true"] {
-  border-color: var(--modal-item-selected-text);
-  background: var(--modal-item-selected-bg);
-  color: var(--modal-item-selected-text);
-}
-.chip-select button:disabled { opacity: .4; cursor: default }
 
 .tone-row { display: flex; gap: var(--space-2); flex-wrap: wrap }
 .tone-card {
@@ -826,27 +775,14 @@ td.shrink { width: 96px }
   justify-content: center;
   overflow: hidden;
 }
-.auto-pick.is-tree .auto-pick-thumb { border-color: var(--state-success-bg) }
+.auto-pick-img { width: 100%; height: 100%; object-fit: contain }
 .auto-pick-code { font-size: 9px; font-family: var(--font-body-en); color: var(--text-muted); text-align: center }
-
-/* one field group in the wizard's single-panel step (variant B) — a label above its own
-   chip-select, several of these stacked in the left card */
-.filter-field { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-4) }
-.filter-field:last-child { margin-bottom: 0 }
-.filter-field label { font-family: var(--font-heading); font-size: var(--text-sm); color: var(--text-muted) }
-
-/* the wizard panel's live match count — --font-header-en (Fraunces) is .logo's alone
-   (test_ui_design_system.py), so this is the same heading face every other emphasised label
-   in the app already uses, just larger */
-.live-count { font-family: var(--font-heading); font-size: 34px; line-height: 1; margin-top: 4px }
-.live-count-unit { font-size: var(--text-lg); color: var(--text-muted) }
 
 /* ---- prompt.js: "Prompt mode", a chat-style third way to generate. Ported from the
    grilled-and-approved prototype (scratchpad, artifact 0fbfa3ee) verbatim except for two
    role-token substitutions test_ui_design_system.py's rule 2 forces: an "is-tree" accent
-   reuses --state-success-bg rather than --fill-success (same substitution .auto-pick.is-tree
-   above already made), and .attach-btn's hover drops the gold accent for the same neutral
-   ghost-hover every other bare .btn already uses. ---- */
+   reuses --state-success-bg rather than --fill-success, and .attach-btn's hover drops the
+   gold accent for the same neutral ghost-hover every other bare .btn already uses. ---- */
 .chat-shell {
   flex: 1;
   min-height: 0;

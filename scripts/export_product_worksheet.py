@@ -2,8 +2,9 @@
 every field the app actually needs — highlighting whichever of them is still blank.
 
 Ad-hoc export, not part of the app or its tests — run it whenever the catalogue needs a fresh
-"fill this in" pass (started for wayfinder ticket #2, backfilling `price` for the budget-wizard
-map at issue #1). Needs openpyxl (`pip install openpyxl` into .venv — not in requirements.txt,
+"fill this in" pass. Started as the price backfill for the retired budget wizard (wayfinder
+map #1); the pricing queue at issue #10 is what supersedes it as the in-app way to do this.
+Needs openpyxl (`pip install openpyxl` into .venv — not in requirements.txt,
 this script never runs in production).
 
     python scripts/export_product_worksheet.py

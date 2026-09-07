@@ -24,7 +24,7 @@ from backend.validation import ValidationError
 __all__ = [
     "find", "search", "browse", "longest_side_mm", "describe", "require_size",
     "scale_sentence", "image_for", "image_path", "recent", "parse_size", "shops",
-    "nearest_tree", "auto_pool", "feet_to_mm", "row_matches_tone",
+    "auto_pool", "row_matches_tone", "label_for",
 ]
 
 
@@ -125,6 +125,12 @@ def _kinds():
         code: (entry.get("attributes") or {}).get("kind", "")
         for code, entry in _descriptions().items()
     }
+
+
+def label_for(category):
+    """The Thai label a category is shown under, or the key itself if it isn't one of ours.
+    Lives here rather than at the call site because CATEGORIES is catalogue data."""
+    return next((label for key, label, _needles in CATEGORIES if key == category), category)
 
 
 def category_of(row):
@@ -331,24 +337,10 @@ def browse(limit=60, offset=0, category=None, book=None):
     return rows[offset : offset + limit], len(rows)
 
 
-def nearest_tree(target_mm):
-    """The showable, sized tree product closest to a requested real height — the wizard's
-    "ไซส์ต้น" step. `None` if the catalogue has no tree with a known size to compare against."""
-    candidates = [
-        (row, longest_side_mm(row)) for row in _with_photos() if category_of(row) == "tree"
-    ]
-    candidates = [(row, mm) for row, mm in candidates if mm is not None]
-    if not candidates:
-        return None
-    return min(candidates, key=lambda pair: abs(pair[1] - target_mm))[0]
-
-
 def row_matches_tone(row, tone_colours):
     """Whether a product's own colour falls inside a tone preset's colour list. `None` when
     `tone_colours` is empty (the question doesn't apply), so a caller can tell "doesn't match"
-    apart from "wasn't asked". Exposed per-row, not just inside auto_pool(), so a candidate
-    from a relaxed pool can still be labelled against the tone that was actually requested —
-    wayfinder ticket #4's per-candidate badges."""
+    apart from "wasn't asked"."""
     from backend.services.matching import COLOUR_BUCKETS, _normalize
 
     if not tone_colours:
@@ -358,21 +350,20 @@ def row_matches_tone(row, tone_colours):
     return _normalize(attrs.get("primary_colour"), COLOUR_BUCKETS) in wanted
 
 
-def auto_pool(category, tone_colours, max_price):
-    """Decorations in one category, priced at or under a budget ceiling, for the wizard's Auto
-    pipeline. Unpriced rows are excluded outright, never treated as free — NonGoals.md 8
-    forbids inventing a number, and sorting a null price into a budget comparison is exactly
-    that (wayfinder map #1's own decision).
+def auto_pool(category, tone_colours):
+    """Every showable product in one category whose colour fits a tone — what auto pick draws
+    a recipe slot from.
 
-    `tone_colours` is optional — `None` (or empty) means no colour filter, which is how the
-    empty-pool relax cascade (wayfinder ticket #4) drops the tone constraint first.
+    Price is not consulted. It used to be: a budget ceiling excluded unpriced products
+    outright, and since only 191 of 829 products carry a price that quietly reduced auto pick
+    to a quarter of the catalogue while appearing to search all of it. Nothing is being costed
+    at pick time, so the ceiling bought nothing and cost most of the stock (ADR-0003).
+
+    `tone_colours` is optional — `None` (or empty) means no colour filter.
     """
     pool = []
     for row in _with_photos():
         if category_of(row) != category:
-            continue
-        price = row.get("price")
-        if price is None or price > max_price:
             continue
         if tone_colours and not row_matches_tone(row, tone_colours):
             continue
@@ -455,13 +446,6 @@ _METRES = re.compile(r"([\d.]+)\s*m\.", re.I)
 
 _MM_PER_FOOT = 304.8
 _MM_PER_INCH = 25.4
-
-
-def feet_to_mm(feet):
-    """Same conversion parse_size() uses for a printed 'N Ft.' size — public so the wizard's
-    height picker (config.WIZARD_TREE_HEIGHTS_FT) can convert its own request to millimetres
-    for nearest_tree() without duplicating the constant."""
-    return feet * _MM_PER_FOOT
 
 
 def parse_size(raw):

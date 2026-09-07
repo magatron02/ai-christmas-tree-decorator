@@ -1152,8 +1152,8 @@ loadConfig().catch((err) => showError(err.message));
 refreshTotals();
 
 /* ---- mode switch — one primitive shared by every mode's own button/container pair, so
- * wizard.js and prompt.js each only have to say which name is theirs. Reuses the sidebar
- * nav's .row/.row.active pattern for "which is active", the same reasoning wizard.js's own
+ * auto.js and prompt.js each only have to say which name is theirs. Reuses the sidebar
+ * nav's .row/.row.active pattern for "which is active", the same reasoning auto.js's own
  * comment already gives: Generate is the one control allowed the primary-button colour on
  * this page (test_ui_design_system.py rule 4), and a mode tab is navigation, not that. */
 const MODES = [

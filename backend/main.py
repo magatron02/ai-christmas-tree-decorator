@@ -660,110 +660,75 @@ def api_analyse_reference(name: str, tree_code: str = ""):
     }
 
 
-@app.get("/api/wizard/config")
-def api_wizard_config():
-    """What the budget wizard (wayfinder map #1) offers at each step: real tree heights,
-    categories with how much priced stock actually backs each one (so the picker can grey out
-    an empty one instead of offering a dead end), tone presets, and reference-only history
-    counts (wayfinder ticket #5 — display only, never fed back into a filter)."""
-    from backend.services import request_stats
+@app.get("/api/auto/config")
+def api_auto_config():
+    """What auto pick offers: the tone presets, and the recipe it will fill (ADR-0003).
 
-    categories = []
-    for key in config.WIZARD_CATEGORIES:
-        label = next((lbl for k, lbl, _needles in catalog.CATEGORIES if k == key), key)
-        categories.append({
-            "key": key, "label": label,
-            "count": len(catalog.auto_pool(key, None, float("inf"))),
-        })
-
-    conn = _db()
-    try:
-        history_counts = request_stats.category_counts(conn)
-    finally:
-        conn.close()
-
+    No tree heights, no category picker, no budget: the shop is asked for a tone and nothing
+    else, and the recipe is the same for every tone and every tree.
+    """
     return {
-        "tree_heights": [
-            {"ft": ft, "mm": round(catalog.feet_to_mm(ft))}
-            for ft in config.WIZARD_TREE_HEIGHTS_FT
-        ],
-        "categories": categories,
         "tones": [
             {"key": key, "label": preset["label"]} for key, preset in config.TONE_PRESETS.items()
         ],
-        "history_counts": history_counts,
+        "recipe": [
+            {"category": key, "label": catalog.label_for(key), "count": count}
+            for key, count in config.AUTO_RECIPE
+        ],
     }
 
 
-@app.post("/api/wizard/pick")
-def api_wizard_pick(
-    size_ft: float = Form(...),
-    budget: float = Form(...),
-    category: str = Form(...),
-    tone: str = Form(""),
-    exclude: list[str] = Form(default=[]),
-):
-    """Auto-pick a tree + up to 4 decoration candidates for the wizard's Auto-mode step.
+@app.post("/api/auto/pick")
+def api_auto_pick(tone: str = Form(...), exclude: list[str] = Form(default=[])):
+    """Fill the recipe with products in one tone — the whole of auto pick.
 
-    `tone` is optional: an empty string means "no tone chosen yet" rather than "chose no
-    tone" — the live count in the wizard's single-panel step (ไซส์/งบ/แนว, before the tone
-    screen) calls this the same way, just without a tone, to preview how many decorations
-    the budget+category alone leave before tone narrows it further.
+    Each recipe slot draws from its own category's pool. A category with nothing in this tone
+    contributes nothing and is reported in `missing`; a category with less stock than the
+    recipe asks for contributes what it has and is reported in `short`. Neither case is filled
+    with an off-tone product: the tone is the only thing the shop asked for, so substituting
+    against it destroys the one reason they chose it.
 
-    Runs wayfinder ticket #4's relax cascade: try the full filter (category + tone + budget),
-    drop tone if that leaves nothing, then drop category too if it is still empty — budget
-    never relaxes, since it is the one constraint the customer actually set. Every candidate is
-    still tagged against the tone/category that was actually requested regardless of which
-    relax step produced the pool, so the frontend can badge whichever ones don't really match.
-    Touches no storage — free to call again for "สุ่มใหม่" (pass the codes already shown as
-    `exclude` to avoid repeats where the pool allows it).
+    Touches no storage and bills nothing — free to call again for "สุ่มใหม่", passing the codes
+    already shown as `exclude` to avoid repeats where the pool allows it. `exclude` is a
+    preference, never a filter: a slot takes unshown products first and then tops itself back
+    up from the shown ones. Letting it truncate instead would shrink the proposal on every
+    re-roll — the shop asked for a different set, not a smaller one.
+
+    No tree is proposed. The tree is the shop's own — uploaded or picked from the catalogue,
+    the same as in กำหนดเอง — and the size question that used to justify guessing one is gone.
     """
-    if category not in config.WIZARD_CATEGORIES:
-        raise ValidationError(f"ไม่รู้จักแนว '{category}'")
-    if tone and tone not in config.TONE_PRESETS:
+    if tone not in config.TONE_PRESETS:
         raise ValidationError(f"ไม่รู้จักโทน '{tone}'")
 
-    tone_colours = config.TONE_PRESETS[tone]["colours"] if tone else None
-    relaxed = []
-    pool = catalog.auto_pool(category, tone_colours, budget)
-    if not pool and tone_colours:
-        relaxed.append("tone")
-        pool = catalog.auto_pool(category, None, budget)
-    if not pool:
-        relaxed.append("category")
-        pool = []
-        for other in config.WIZARD_CATEGORIES:
-            pool.extend(catalog.auto_pool(other, None, budget))
-
-    pool_size = len(pool)
+    tone_colours = config.TONE_PRESETS[tone]["colours"]
     excluded = set(exclude)
-    choosable = [row for row in pool if row["code"] not in excluded] or pool
-    sample = random.sample(choosable, k=min(4, len(choosable))) if choosable else []
+    decorations, missing, short = [], [], {}
 
-    tree = catalog.nearest_tree(catalog.feet_to_mm(size_ft))
-
-    return {
-        "tree": (
-            {
-                "code": tree["code"],
-                "size_mm": catalog.longest_side_mm(tree),
-                "image_url": f"/catalog/{catalog.image_for(tree['code'])}",
-            }
-            if tree else None
-        ),
-        "decorations": [
-            {
+    for category, wanted in config.AUTO_RECIPE:
+        pool = catalog.auto_pool(category, tone_colours)
+        if not pool:
+            missing.append(category)
+            continue
+        fresh = [row for row in pool if row["code"] not in excluded]
+        shown = [row for row in pool if row["code"] in excluded]
+        chosen = random.sample(fresh, k=min(wanted, len(fresh)))
+        if len(chosen) < wanted and shown:
+            chosen += random.sample(shown, k=min(wanted - len(chosen), len(shown)))
+        if len(chosen) < wanted:
+            short[category] = len(chosen)
+        for row in chosen:
+            decorations.append({
                 "code": row["code"],
+                "category": category,
                 "price": row.get("price"),
                 "image_url": f"/catalog/{catalog.image_for(row['code'])}",
-                "matches_category": catalog.category_of(row) == category,
-                "matches_tone": catalog.row_matches_tone(row, tone_colours),
-            }
-            for row in sample
-        ],
-        "pool_size": pool_size,
-        "relaxed": relaxed,
-        "low_pool": pool_size < 3,
+            })
+
+    return {
+        "decorations": decorations,
+        "requested": config.AUTO_RECIPE_TOTAL,
+        "missing": missing,
+        "short": short,
     }
 
 
