@@ -18,7 +18,9 @@ from functools import lru_cache
 from backend import config
 from backend.validation import ValidationError
 
-__all__ = ["overlay_path", "fields_for", "set_fields", "refresh", "NEVER_OVERLAYABLE"]
+__all__ = [
+    "overlay_path", "fields_for", "set_fields", "all_fields", "refresh", "NEVER_OVERLAYABLE",
+]
 
 # `code` is the key the overlay, the generation history and the staff worksheet all join on —
 # a wrong code is fixed by deleting the product and creating it again, never by overlaying a
@@ -43,6 +45,12 @@ def _overlay():
 def fields_for(code):
     """The fields this shop has set on one code. Empty means the book has the last word."""
     return _overlay().get(code, {})
+
+
+def all_fields():
+    """Every code the overlay holds an opinion on, and what it holds — for catalog.orphans()
+    to compare against the current base. Nothing else needs the whole overlay at once."""
+    return dict(_overlay())
 
 
 def set_fields(code, fields, speaks_for=None):

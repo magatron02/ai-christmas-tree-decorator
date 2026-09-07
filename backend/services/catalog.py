@@ -25,7 +25,7 @@ from backend.validation import ValidationError
 __all__ = [
     "find", "search", "browse", "longest_side_mm", "describe", "require_size",
     "scale_sentence", "image_for", "image_path", "recent", "parse_size", "shops",
-    "auto_pool", "row_matches_tone", "label_for",
+    "auto_pool", "row_matches_tone", "label_for", "orphans",
 ]
 
 
@@ -378,6 +378,22 @@ def auto_pool(category, tone_colours):
             continue
         pool.append(row)
     return pool
+
+
+def orphans():
+    """Shop overlays whose code no longer appears in the current base (ADR-0001, issue #9).
+
+    A code a re-import drops has no book position or photo left to show it with, so it does
+    not resurface in find/search/browse — but the shop paid for the work in its overlay with
+    its own time, so it is never deleted: it stays on disk and is surfaced here, in its own
+    listing, for the shop to see and decide what to do about.
+    """
+    known = set(_by_code())
+    return [
+        {"code": code, **fields}
+        for code, fields in shop_overlay.all_fields().items()
+        if code not in known
+    ]
 
 
 def shops():

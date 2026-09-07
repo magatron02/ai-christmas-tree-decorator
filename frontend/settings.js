@@ -18,6 +18,18 @@ function applyTheme(theme) {
   $("theme-now").textContent = theme === "dark" ? "กำลังใช้ธีมมืด" : "กำลังใช้ธีมสว่าง";
 }
 
+/* One row of a settings table: cells is [{tag, text, className}], tag defaults to "td". */
+function addRow(host, cells) {
+  const row = document.createElement("tr");
+  for (const { tag = "td", text, className } of cells) {
+    const cell = document.createElement(tag);
+    if (className) cell.className = className;
+    cell.textContent = text;
+    row.append(cell);
+  }
+  host.append(row);
+}
+
 $("theme-dark").addEventListener("click", () => applyTheme("dark"));
 $("theme-light").addEventListener("click", () => applyTheme("light"));
 applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light");
@@ -44,18 +56,14 @@ async function loadStatus() {
   const host = $("status-rows");
   host.innerHTML = "";
   for (const [name, value] of rows) {
-    const row = document.createElement("tr");
-    const key = document.createElement("th");
-    key.className = "caption";
-    key.textContent = name;
-    const detail = document.createElement("td");
-    detail.className = "mono";
-    detail.textContent = value;
-    row.append(key, detail);
-    host.append(row);
+    addRow(host, [
+      { tag: "th", className: "caption", text: name },
+      { className: "mono", text: value },
+    ]);
   }
 
   if (status.catalog_conflicts) loadConflicts();
+  if (status.catalog_orphans) loadOrphans();
 }
 
 async function loadConflicts() {
@@ -65,22 +73,32 @@ async function loadConflicts() {
   const host = $("conflicts-rows");
   host.innerHTML = "";
   for (const item of conflicts) {
-    const row = document.createElement("tr");
-
-    const code = document.createElement("th");
-    code.className = "mono";
-    code.textContent = item.code;
-
-    const kept = document.createElement("td");
-    kept.textContent = `${item.kept.section || "(ไม่ระบุหมวด)"} · ${item.kept.size_raw || "ไม่มีขนาด"} · เล่ม ${item.kept.book || "?"} หน้า ${item.kept.page ?? "?"}`;
-
-    const lost = document.createElement("td");
-    lost.textContent = item.lost
+    const kept = `${item.kept.section || "(ไม่ระบุหมวด)"} · ${item.kept.size_raw || "ไม่มีขนาด"} · เล่ม ${item.kept.book || "?"} หน้า ${item.kept.page ?? "?"}`;
+    const lost = item.lost
       .map(l => `${l.section || "(ไม่ระบุหมวด)"} · ${l.size_raw || "ไม่มีขนาด"} · เล่ม ${l.book || "?"} หน้า ${l.page ?? "?"}`)
       .join(" / ");
+    addRow(host, [
+      { tag: "th", className: "mono", text: item.code },
+      { text: kept },
+      { text: lost },
+    ]);
+  }
+}
 
-    row.append(code, kept, lost);
-    host.append(row);
+async function loadOrphans() {
+  const { orphans } = await call("/api/catalog/orphans");
+  if (!orphans.length) return;
+  $("orphans-panel").hidden = false;
+  const host = $("orphans-rows");
+  host.innerHTML = "";
+  for (const item of orphans) {
+    const priceText = item.price != null ? `${item.price} บาท` : null;
+    const detail = [item.size_raw, priceText, item.section, item.book]
+      .filter(Boolean).join(" · ") || "(ไม่มีข้อมูลอื่น)";
+    addRow(host, [
+      { tag: "th", className: "mono", text: item.code },
+      { text: detail },
+    ]);
   }
 }
 

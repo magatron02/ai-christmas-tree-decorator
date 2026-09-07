@@ -229,6 +229,7 @@ def api_settings():
         "catalog_products": config.CATALOG_PATH.is_file(),
         "catalog_searchable": (config.CATALOG_PATH.parent / "embeddings.npy").is_file(),
         "catalog_conflicts": len(catalog.conflicts()),
+        "catalog_orphans": len(catalog.orphans()),
     }
 
 
@@ -238,6 +239,13 @@ def api_catalog_conflicts():
     side is picked automatically (catalog.code_is_contested) — this is what Settings shows so
     someone who knows the product line can say which one is real."""
     return {"conflicts": catalog.conflicts()}
+
+
+@app.get("/api/catalog/orphans")
+def api_catalog_orphans():
+    """Shop overlays a re-import's book no longer prints a code for — kept, never dropped
+    (ADR-0001, issue #9). What Settings shows so the shop can see what it needs to act on."""
+    return {"orphans": catalog.orphans()}
 
 
 @app.post("/api/settings/api-key")
