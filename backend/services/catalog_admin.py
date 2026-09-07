@@ -165,3 +165,30 @@ def update_product(code, size_raw, section, book, image_bytes=None, price=None):
 
     catalog.refresh()
     return {"code": code, **_saved_state(code)}
+
+
+def queue_set_price(code, price):
+    """The pricing queue's one field (issue #10) — sets just the price, nothing else.
+
+    Unlike update_product this never diffs against the book: everything reaching the queue
+    already has no book price (pricing_queue() only lists those), so any typed number is by
+    definition the shop's own opinion. A blank clears that opinion and puts the product back
+    in the queue, same "absent means no opinion" rule as everywhere else in the overlay.
+    """
+    code = (code or "").strip().upper()
+    catalog.find(code)  # raises ValidationError on an unknown code
+    parsed = _parse_price(price)
+    shop_overlay.set_fields(code, {"price": parsed} if parsed is not None else {}, speaks_for=("price",))
+    catalog.refresh()
+    return {"code": code, "price": parsed}
+
+
+def skip_pricing(code):
+    """Mark a product as one the shop will never price (issue #10) — it leaves the queue for
+    good, but stays exactly as usable everywhere else: auto_pool never looks at price
+    (ADR-0003), and nothing downstream requires one."""
+    code = (code or "").strip().upper()
+    catalog.find(code)
+    shop_overlay.set_fields(code, {"price_skipped": True}, speaks_for=("price_skipped",))
+    catalog.refresh()
+    return {"code": code}
