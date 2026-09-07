@@ -26,7 +26,7 @@ __all__ = [
     "find", "search", "browse", "longest_side_mm", "describe", "require_size",
     "scale_sentence", "image_for", "image_path", "recent", "parse_size", "shops",
     "auto_pool", "row_matches_tone", "label_for", "orphans", "pricing_queue",
-    "overridden_fields", "product_detail",
+    "overridden_fields", "product_detail", "resolve_image_path",
 ]
 
 
@@ -68,15 +68,36 @@ def _images_by_code():
 
 
 def image_for(code):
-    """The catalogue crop filename for a code, or None if none was paired (Product.md 8.1
-    phase B is a confidence-scored guess, not every code gets one)."""
+    """The picture to show for a code: the shop's own photo if it has taken one (issue #12),
+    else the catalogue crop paired at import time, or None if neither exists.
+
+    A shop photo is returned as a URL path rooted at "/" (`/shop-photos/<file>`); a book crop
+    as a bare filename under catalog/images/, unchanged from before this existed. Every
+    frontend caller already goes through api.js's catalogImageUrl() to tell the two apart, so
+    this is the one place that distinction has to be made.
+    """
+    shop_photo = shop_overlay.fields_for(code).get("shop_photo")
+    if shop_photo:
+        return f"/shop-photos/{shop_photo}"
     return _images_by_code().get(code)
 
 
+def resolve_image_path(image):
+    """Absolute path for any image string this module hands out: a bare book-crop filename, a
+    "variants/<name>" colour split, or a "/shop-photos/<file>" shop photo (issue #12). Every
+    caller that turns a picked `image` value back into bytes goes through this rather than
+    joining catalog/images itself, so a shop photo resolves correctly wherever it is picked.
+    """
+    if image is None:
+        return None
+    if image.startswith("/shop-photos/"):
+        return config.SHOP_PHOTOS_DIR / image.removeprefix("/shop-photos/")
+    return config.CATALOG_PATH.parent / "images" / image
+
+
 def image_path(code):
-    """Absolute path to the crop on disk, or None."""
-    image = image_for(code)
-    return (config.CATALOG_PATH.parent / "images" / image) if image else None
+    """Absolute path to the picture on disk, or None."""
+    return resolve_image_path(image_for(code))
 
 
 def recent(n=20):
@@ -292,7 +313,15 @@ def conflicts():
 
 
 def crop_is_showable(code):
-    """The one question the picker asks: can this photo stand for this code on a card?"""
+    """The one question the picker asks: can this photo stand for this code on a card?
+
+    A shop's own photo (issue #12) is trusted outright, bypassing every book-crop failure
+    mode below — the shop took it of the real product, so a shared crop, page furniture, or a
+    contested code no longer describes what is being shown. This is the mechanism by which
+    photographing a product un-hides it.
+    """
+    if shop_overlay.fields_for(code).get("shop_photo"):
+        return True
     return (
         bool(image_for(code))
         and not crop_is_ambiguous(code)
@@ -397,13 +426,19 @@ def product_detail(row):
     book's (issue #11) — shared by the recent list, the find-by-code lookup and the clear-
     override endpoint so all three show the same "overridden" badges from one source of
     truth. The book-derived position fields (bbox, pdf_page) are never part of this shape, so
-    they never reach any caller of it either (ADR-0001)."""
+    they never reach any caller of it either (ADR-0001).
+
+    `has_shop_photo` (issue #12) is separate from `overridden`: a photo is not one of the
+    text fields find-and-correct clears through CLEARABLE_FIELDS, so the screen needs its own
+    flag to know whether "remove shop photo" applies to this code.
+    """
     return {
         "code": row["code"], "image": image_for(row["code"]),
         "size_raw": row.get("size_raw"), "book": row.get("book"),
         "section": row.get("section"), "price": row.get("price"),
         "category": category_of(row),
         "overridden": overridden_fields(row["code"]),
+        "has_shop_photo": bool(shop_overlay.fields_for(row["code"]).get("shop_photo")),
     }
 
 

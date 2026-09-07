@@ -33,6 +33,9 @@ API_TIMEOUT_S = 300.0
 
 DATA_DIR = ROOT / "data"
 STORAGE_DIR = ROOT / "storage"
+# The shop's own product photos (issue #12) — beside the overlay and the spend log, not
+# inside catalog/, which a book re-import or a reinstall can overwrite wholesale (ADR-0001).
+SHOP_PHOTOS_DIR = DATA_DIR / "shop_photos"
 # Small JPEGs of stored images, for the history table. A subdirectory rather than a suffix in
 # STORAGE_DIR so storage.orphans(), which globs that directory for loose files, never sees
 # them as rubbish to delete — they are cleaned up alongside the image they are made from.
@@ -53,6 +56,13 @@ MAX_ELEMENTS = 10
 ALLOWED_EXT = {".jpg", ".jpeg", ".png"}
 ALLOWED_MIME = {"image/jpeg", "image/png"}
 ALLOWED_FORMATS = {"JPEG", "PNG"}  # what Pillow reports after sniffing the actual bytes
+
+# What validation.check_image()'s sniffed format actually is, in the two shapes the rest of
+# the pipeline needs it in: a filename extension to save under, and the MIME string a vision
+# call has to be told rather than assume — a JPEG shop photo sniffed as JPEG but described as
+# "image/png" is a request the model is free to fail on.
+FORMAT_EXT = {"PNG": "png", "JPEG": "jpg"}
+FORMAT_MIME = {"PNG": "image/png", "JPEG": "image/jpeg"}
 
 # gpt-image-2 constraints (Spec.md 5): both sides divisible by 16, ratio inside 1:3..3:1,
 # no larger than 3840x2160. Every preset below is checked against that by validate_dimensions.

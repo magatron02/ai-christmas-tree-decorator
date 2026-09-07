@@ -81,48 +81,14 @@ def test_edit_updates_fields(temp_catalog):
     assert row["book"] == "2027"
 
 
-def test_edit_with_a_new_photo_overwrites_the_file(temp_catalog):
-    catalog_admin.add_product("017-06", "80 mm.", "", "", png_bytes(color=(10, 10, 10, 255)))
-    original = (temp_catalog / "images" / "017-06.png").read_bytes()
-
-    catalog_admin.update_product("017-06", "80 mm.", "", "", png_bytes(color=(250, 250, 250, 255)))
-    updated = (temp_catalog / "images" / "017-06.png").read_bytes()
-
-    assert updated != original
-
-
-def test_edit_without_a_photo_leaves_the_image_untouched(temp_catalog):
-    catalog_admin.add_product("017-06", "80 mm.", "", "", png_bytes())
-    before = (temp_catalog / "images" / "017-06.png").read_bytes()
-
-    catalog_admin.update_product("017-06", "90 mm.", "", "")
-    after = (temp_catalog / "images" / "017-06.png").read_bytes()
-
-    assert after == before
-
-
 def test_an_unknown_code_is_refused():
     with pytest.raises(ValidationError) as caught:
         catalog_admin.update_product("99999-9", "80 mm.", "", "")
     assert "ไม่พบรหัส" in str(caught.value)
 
 
-def test_a_variant_split_codes_photo_edit_is_refused(temp_catalog):
-    """variants_of() always prefers the colour-split list over a single crop, so a lone new
-    photo would never be shown — refusing this is the whole point of the check."""
-    catalog_admin.add_product("017-06", "80 mm.", "", "", png_bytes())
-    (temp_catalog / "variants.json").write_text(
-        json.dumps({"017-06": ["017-06--1.png", "017-06--2.png"]}), encoding="utf-8"
-    )
-    catalog.refresh()
-
-    with pytest.raises(ValidationError) as caught:
-        catalog_admin.update_product("017-06", "80 mm.", "", "", png_bytes())
-    assert "แยกเป็นหลายสี" in str(caught.value)
-
-    # the field-only edit path is still fine for a variant-split code
-    catalog_admin.update_product("017-06", "90 mm.", "", "")
-    assert catalog.find("017-06")["size_raw"] == "90 mm."
+# Photo editing is set_shop_photo/remove_shop_photo now (issue #12) — see
+# tests/test_shop_photo.py, including the variant-split refusal these tests used to cover.
 
 
 def test_refresh_actually_clears_contested_codes(temp_catalog):

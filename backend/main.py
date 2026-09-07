@@ -44,10 +44,15 @@ load_dotenv(config.ROOT / ".env")
 
 config.STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 config.DATA_DIR.mkdir(parents=True, exist_ok=True)
+config.SHOP_PHOTOS_DIR.mkdir(parents=True, exist_ok=True)
 
 app = FastAPI(title="AI Christmas Tree Decorator")
 app.mount("/files", StaticFiles(directory=config.STORAGE_DIR), name="files")
 app.mount("/static", StaticFiles(directory=config.FRONTEND_DIR), name="static")
+# The shop's own product photos (issue #12) — a separate mount from /catalog, because they
+# live in data/ rather than catalog/ (ADR-0001: never where a re-import or reinstall can
+# overwrite them).
+app.mount("/shop-photos", StaticFiles(directory=config.SHOP_PHOTOS_DIR), name="shop-photos")
 
 
 PAGE_PATHS = {"/", "/history", "/settings"}
@@ -485,7 +490,7 @@ def api_element_from_catalog(code: str = Form(...), image: str = Form("")):
     if image:
         if image not in catalog.variants_of(code):
             raise HTTPException(404, f"'{image}' ไม่ใช่รูปของ {code}")
-        path = config.CATALOG_PATH.parent / "images" / image
+        path = catalog.resolve_image_path(image)
     else:
         path = catalog.image_path(code)
     if not path or not path.is_file():
@@ -511,7 +516,7 @@ def api_tree_from_catalog(code: str = Form(...), image: str = Form("")):
     if image:
         if image not in catalog.variants_of(code):
             raise HTTPException(404, f"'{image}' ไม่ใช่รูปของ {code}")
-        path = config.CATALOG_PATH.parent / "images" / image
+        path = catalog.resolve_image_path(image)
     else:
         path = catalog.image_path(code)
     if not path or not path.is_file():
@@ -556,20 +561,44 @@ def api_catalog_update(
     section: str = Form(""),
     book: str = Form(""),
     price: str = Form(""),
-    image: UploadFile | None = File(None),
 ):
-    """Edit one existing product's fields, and optionally its photo (settings page). Same
-    localhost-only gate as add — this writes files to disk too."""
+    """Edit one existing product's fields (settings page). Same localhost-only gate as add —
+    this writes to data/shop_overlay.json. The photo is a separate action now (issue #12):
+    see /api/catalog/products/{code}/photo."""
     from backend.services import catalog_admin, settings
 
     if not settings.is_local(request):
         raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
 
-    data = None
-    if image is not None:
-        data = _read(image, "Product photo")
-        validation.check_image(data, image.filename, image.content_type, "Product photo")
-    return catalog_admin.update_product(code, size_raw, section, book, data, price)
+    return catalog_admin.update_product(code, size_raw, section, book, price)
+
+
+@app.post("/api/catalog/products/{code}/photo")
+def api_catalog_set_shop_photo(code: str, request: Request, image: UploadFile = File(...)):
+    """Upload a shop photo for one product (issue #12) — it supersedes the book crop
+    everywhere, un-hides a bad-crop code, and re-runs its search description/embedding.
+    Localhost only, same reasoning as every other catalogue write."""
+    from backend.services import catalog_admin, settings
+
+    if not settings.is_local(request):
+        raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
+
+    data = _read(image, "Product photo")
+    fmt, _dimensions = validation.check_image(data, image.filename, image.content_type, "Product photo")
+    catalog_admin.set_shop_photo(code, data, fmt)
+    return catalog.product_detail(catalog.find(code))
+
+
+@app.delete("/api/catalog/products/{code}/photo")
+def api_catalog_remove_shop_photo(code: str, request: Request):
+    """Falls back to the book photo (issue #12). Localhost only."""
+    from backend.services import catalog_admin, settings
+
+    if not settings.is_local(request):
+        raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
+
+    catalog_admin.remove_shop_photo(code)
+    return catalog.product_detail(catalog.find(code))
 
 
 @app.get("/api/catalog/recent")

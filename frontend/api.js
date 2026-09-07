@@ -17,3 +17,11 @@ async function call(url, options) {
   if (!response.ok) throw new Error(payload.error || `${response.status} ${response.statusText}`);
   return payload;
 }
+
+/* A catalogue `image` value is either a bare book-crop filename (served under /catalog/) or,
+ * once a shop has photographed the product itself, an absolute URL already rooted at "/"
+ * (served under /shop-photos/ — issue #12). Every page that draws a catalogue picture goes
+ * through this rather than hardcoding the /catalog/ prefix, so a shop photo just works. */
+function catalogImageUrl(image) {
+  return image.startsWith("/") ? image : `/catalog/${image}`;
+}

@@ -24,6 +24,7 @@ _TMP = Path(tempfile.mkdtemp(prefix="tree-decorator-tests-"))
 config.DATA_DIR = _TMP / "data"
 config.STORAGE_DIR = _TMP / "storage"
 config.DB_PATH = config.DATA_DIR / "app.db"
+config.SHOP_PHOTOS_DIR = config.DATA_DIR / "shop_photos"
 config.DATA_DIR.mkdir(parents=True, exist_ok=True)
 config.STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -31,7 +32,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 from backend import main  # noqa: E402
 from backend.models import request_log  # noqa: E402
-from backend.services import background_removal, image_gen, shop_overlay  # noqa: E402
+from backend.services import background_removal, image_gen, shop_overlay, vision  # noqa: E402
 
 from helpers import png_bytes, transparent_png_bytes  # noqa: E402
 
@@ -53,6 +54,10 @@ def fresh_db():
     for leftover in config.STORAGE_DIR.glob("*"):
         if leftover.is_file():
             leftover.unlink()
+    if config.SHOP_PHOTOS_DIR.is_dir():
+        for leftover in config.SHOP_PHOTOS_DIR.glob("*"):
+            if leftover.is_file():
+                leftover.unlink()
     shop_overlay.overlay_path().unlink(missing_ok=True)
     shop_overlay.refresh()
     conn = request_log.connect()
@@ -115,4 +120,20 @@ def fake_gen(monkeypatch):
 def fake_rembg(monkeypatch):
     spy = Spy(result=transparent_png_bytes())
     monkeypatch.setattr(background_removal, "remove_background", spy)
+    return spy
+
+
+FAKE_VISION_USAGE = {"input_tokens": 120, "output_tokens": 40, "total_tokens": 160}
+FAKE_DECORATION = vision.Decoration(
+    kind="ornament", primary_colour="red", other_colours=[], finish="matte",
+    shape="sphere", pattern="", packaging="single", summary="a red glass ball ornament",
+)
+
+
+@pytest.fixture
+def fake_vision(monkeypatch):
+    """The vision test seam issue #12 introduces: stands in for the one billed call a shop
+    photo upload makes (describing it, to rebuild search) — reused by issue #14."""
+    spy = Spy(result=(vision.DecorationList(decorations=[FAKE_DECORATION]), FAKE_VISION_USAGE))
+    monkeypatch.setattr(vision, "describe_catalogue_photo", spy)
     return spy

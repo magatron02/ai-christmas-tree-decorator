@@ -21,7 +21,7 @@ async function loadNext() {
   currentCode = next.code;
   $("queue-code").textContent = next.code;
   $("queue-meta").textContent = [next.size_raw, next.section, next.book].filter(Boolean).join(" · ");
-  $("queue-photo").src = next.image ? `/catalog/${next.image}` : "";
+  $("queue-photo").src = next.image ? catalogImageUrl(next.image) : "";
   $("queue-photo").hidden = !next.image;
   $("queue-price").value = "";
   $("queue-price").focus();

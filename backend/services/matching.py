@@ -137,6 +137,35 @@ def embed(texts):
     return matrix / np.linalg.norm(matrix, axis=1, keepdims=True)
 
 
+def upsert_embedding(code, text):
+    """Add or replace one code's vector in the on-disk embeddings (issue #12) — a shop photo
+    upload re-embeds only that code, not the whole catalogue the way scripts/embed_catalog.py
+    does. Safe to call before either file exists (a fresh catalogue with nothing embedded
+    yet); the pair is created rather than requiring embed_catalog.py to have run first.
+    """
+    path = config.CATALOG_PATH.parent / "embeddings.npy"
+    codes_path = config.CATALOG_PATH.parent / "embedding_codes.json"
+    vector = embed([text])[0]
+
+    if path.is_file() and codes_path.is_file():
+        matrix = np.load(path)
+        codes = json.loads(codes_path.read_text(encoding="utf-8"))
+    else:
+        matrix = np.empty((0, vector.shape[0]), dtype=np.float32)
+        codes = []
+
+    if code in codes:
+        matrix = matrix.copy()
+        matrix[codes.index(code)] = vector
+    else:
+        matrix = np.vstack([matrix, vector])
+        codes = [*codes, code]
+
+    np.save(path, matrix)
+    codes_path.write_text(json.dumps(codes), encoding="utf-8")
+    refresh()
+
+
 def find(query_text, top_n=TOP_N, min_score=MIN_SCORE, query_kind=None, query_shape=None,
          query_colour=None):
     """Closest catalogue products to one described decoration.
@@ -164,6 +193,8 @@ def find(query_text, top_n=TOP_N, min_score=MIN_SCORE, query_kind=None, query_sh
     Returns (matches, refused). When refused, `matches` is still filled in so the closest
     rows can be seen — but the caller must present them as "nothing close".
     """
+    from backend.services import catalog
+
     codes, matrix = _vectors()
     by_code = {row["code"]: row for row in _descriptions()}
 
@@ -204,7 +235,10 @@ def find(query_text, top_n=TOP_N, min_score=MIN_SCORE, query_kind=None, query_sh
             "colour_agrees": None if query_colour is None else (
                 _normalize(candidate_colour, COLOUR_BUCKETS) == _normalize(query_colour, COLOUR_BUCKETS)
             ),
-            "image": row.get("image"),
+            # catalog.image_for(), not row.get("image") — a description row's own "image"
+            # is a snapshot of the crop it was described from, which goes stale the moment a
+            # shop photo supersedes it (issue #12); the live picture is always the true one.
+            "image": catalog.image_for(code),
             "pdf_page": row.get("pdf_page"),
             # the code-to-photo pairing is a geometric guess, not a verified fact
             "photo_match": row.get("match"),

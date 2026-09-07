@@ -152,6 +152,9 @@ function enterEditMode(item) {
   $("cat-price").value = item.price ?? "";
   $("cat-image").value = "";
   $("cat-image-hint").hidden = false;
+  $("cat-photo-preview").src = item.image ? catalogImageUrl(item.image) : "";
+  $("cat-photo-preview").hidden = !item.image;
+  $("cat-photo-override").hidden = !item.has_shop_photo;
   $("cat-add").textContent = "บันทึกการแก้ไข";
   $("cat-edit-status").hidden = false;
   $("cat-edit-status").textContent = `กำลังแก้ไข ${item.code}`;
@@ -164,11 +167,32 @@ function exitEditMode() {
   $("cat-code").disabled = false;
   ["cat-code", "cat-size", "cat-section", "cat-book", "cat-price", "cat-image"].forEach((id) => ($(id).value = ""));
   $("cat-image-hint").hidden = true;
+  $("cat-photo-preview").hidden = true;
+  $("cat-photo-preview").src = "";
+  $("cat-photo-override").hidden = true;
   $("cat-add").textContent = "เพิ่มสินค้า";
   $("cat-edit-status").hidden = true;
   $("cat-edit-cancel").hidden = true;
   showOverrides([]);
 }
+
+$("cat-photo-clear").addEventListener("click", async (event) => {
+  event.preventDefault();
+  $("cat-error").hidden = true;
+  $("cat-photo-clear").style.pointerEvents = "none";
+  try {
+    const item = await call(`/api/catalog/products/${encodeURIComponent(editingCode)}/photo`, {
+      method: "DELETE",
+    });
+    enterEditMode(item);
+    await loadRecentCatalog();
+  } catch (err) {
+    $("cat-error").textContent = err.message;
+    $("cat-error").hidden = false;
+  } finally {
+    $("cat-photo-clear").style.pointerEvents = "";
+  }
+});
 
 $("cat-find").addEventListener("click", async () => {
   const code = $("cat-code").value.trim();
@@ -233,7 +257,7 @@ async function loadRecentCatalog() {
     const photo = document.createElement("td");
     if (item.image) {
       const img = document.createElement("img");
-      img.src = `/catalog/${item.image}`;
+      img.src = catalogImageUrl(item.image);
       img.alt = item.code;
       img.className = "checker cat-thumb";
       photo.append(img);
@@ -306,12 +330,23 @@ $("cat-add").addEventListener("click", async () => {
     body.append("section", $("cat-section").value.trim());
     body.append("book", $("cat-book").value.trim());
     body.append("price", $("cat-price").value.trim());
-    if (image) body.append("image", image);
+    // Adding a brand-new product: the image is its base photo, part of the same request.
+    // Editing one: a chosen file is a shop photo (issue #12) and goes through its own
+    // endpoint below, since it no longer shares a code path with the book-derived fields.
+    if (!editingCode && image) body.append("image", image);
 
     const url = editingCode
       ? `/api/catalog/products/${encodeURIComponent(editingCode)}`
       : "/api/catalog/products";
     const saved = await call(url, { method: "POST", body });
+
+    if (editingCode && image) {
+      const photoBody = new FormData();
+      photoBody.append("image", image);
+      await call(`/api/catalog/products/${encodeURIComponent(editingCode)}/photo`, {
+        method: "POST", body: photoBody,
+      });
+    }
 
     if (editingCode) exitEditMode();
     else ["cat-code", "cat-size", "cat-section", "cat-book", "cat-price", "cat-image"].forEach((id) => ($(id).value = ""));

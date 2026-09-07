@@ -106,8 +106,8 @@ def add_product(code, size_raw, section, book, image_bytes, price=None):
 EDITABLE_FIELDS = ("size_raw", "size", "section", "book", "price")
 
 
-def update_product(code, size_raw, section, book, image_bytes=None, price=None):
-    """Edit an existing product's fields, and optionally its photo.
+def update_product(code, size_raw, section, book, price=None):
+    """Edit an existing product's fields.
 
     The fields go to the shop overlay, never into the base — the base is book data, and a
     correction written into it is destroyed by the next re-import (ADR-0001). Only the fields
@@ -119,20 +119,14 @@ def update_product(code, size_raw, section, book, image_bytes=None, price=None):
 
     Never renames or deletes a code — the row is found by its existing code, which does not
     change; that keeps this out of the image/variant-file migration a rename would need.
-    NonGoals.md 7/8 still govern the photo: a code split into colour variants
-    (catalog.variants_of returns more than one entry) is never something a single new photo
-    can safely replace, since the picker always shows the variant list over a lone crop —
-    refused before anything is written, same as every other check here.
+
+    The photo is a separate concern now (set_shop_photo, issue #12): a photo replaces the
+    book's crop through the shop overlay, not by overwriting the file this function edits.
     """
     code = (code or "").strip().upper()
     base = next((r for r in _load(PRODUCTS_PATH, []) if r["code"] == code), None)
     if base is None:
         raise ValidationError(f"ไม่พบรหัส '{code}' ใน catalogue")
-    if image_bytes and len(catalog.variants_of(code)) > 1:
-        raise ValidationError(
-            f"'{code}' ถูกแยกเป็นหลายสีไว้แล้ว (catalog/variants.json) — "
-            "เปลี่ยนรูปเดี่ยวแบบนี้จะไม่ถูกใช้ แก้ไฟล์ variants ตรง ๆ แทน"
-        )
 
     size_raw = size_raw.strip() or None
     typed = {
@@ -146,25 +140,89 @@ def update_product(code, size_raw, section, book, image_bytes=None, price=None):
         name: value for name, value in typed.items() if value != base.get(name)
     }
     shop_overlay.set_fields(code, opinions, speaks_for=EDITABLE_FIELDS)
-
-    if image_bytes:
-        filename = f"{code.replace('/', '_')}.png"
-        IMAGES_DIR.mkdir(parents=True, exist_ok=True)
-        (IMAGES_DIR / filename).write_bytes(image_bytes)
-
-        images = _load(PRODUCT_IMAGES_PATH, [])
-        existing = next((im for im in images if im["code"] == code), None)
-        if existing:
-            existing["image"] = filename
-            existing["match"] = "manual"
-        else:
-            images.append({
-                "code": code, "pdf_page": None, "image": filename, "match": "manual", "shared_with": 0,
-            })
-        PRODUCT_IMAGES_PATH.write_text(json.dumps(images, indent=1, ensure_ascii=False), encoding="utf-8")
-
     catalog.refresh()
     return {"code": code, **_saved_state(code)}
+
+
+def set_shop_photo(code, image_bytes, fmt="PNG"):
+    """Upload a shop photo for one product (issue #12): it becomes the picture shown
+    everywhere that product appears (catalog.image_for prefers it over the book crop), and it
+    un-hides a product that was hidden for a bad book crop (catalog.crop_is_showable trusts a
+    shop photo outright — the shop took it of the real thing). It also re-runs the product's
+    search description and embedding, so "find product from a photo" keeps working against
+    the new picture instead of the discarded one, without the shop pressing sync.
+
+    `fmt` is validation.check_image()'s sniffed format ("PNG" or "JPEG"), not whatever the
+    upload's filename claimed — a phone photo is JPEG far more often than not, and saving it
+    under the wrong extension is a smaller problem than describing it to the vision model as
+    the wrong MIME type, which is a request the model is free to simply fail on.
+
+    The book photo is never touched or deleted — remove_shop_photo falls back to it. Refuses
+    a colour-split code for the same reason update_product's old photo path did:
+    catalog.variants_of() always shows the split list over a single photo, so a lone shop
+    photo here would never be seen.
+    """
+    code = (code or "").strip().upper()
+    catalog.find(code)  # raises ValidationError on an unknown code
+    if len(catalog.variants_of(code)) > 1:
+        raise ValidationError(
+            f"'{code}' ถูกแยกเป็นหลายสีไว้แล้ว (catalog/variants.json) — "
+            "อัปโหลดรูปเดี่ยวแบบนี้จะไม่ถูกใช้ แก้ไฟล์ variants ตรง ๆ แทน"
+        )
+
+    ext = config.FORMAT_EXT.get(fmt, "png")
+    filename = f"{code.replace('/', '_')}.{ext}"
+    config.SHOP_PHOTOS_DIR.mkdir(parents=True, exist_ok=True)
+    (config.SHOP_PHOTOS_DIR / filename).write_bytes(image_bytes)
+    shop_overlay.set_fields(code, {"shop_photo": filename}, speaks_for=("shop_photo",))
+    catalog.refresh()
+    _reindex_one(code, image_bytes, fmt)
+    return {"code": code, **_saved_state(code)}
+
+
+def remove_shop_photo(code):
+    """Fall back to the book photo (issue #12). The book crop was never touched by uploading
+    a shop photo, so there is nothing to restore on disk — only the overlay's pointer to the
+    shop's file, and the file itself, go away."""
+    code = (code or "").strip().upper()
+    catalog.find(code)
+    filename = shop_overlay.fields_for(code).get("shop_photo")
+    shop_overlay.set_fields(code, {}, speaks_for=("shop_photo",))
+    if filename:
+        (config.SHOP_PHOTOS_DIR / filename).unlink(missing_ok=True)
+    catalog.refresh()
+    return {"code": code}
+
+
+def _reindex_one(code, image_bytes, fmt="PNG"):
+    """Re-describe and re-embed one code from its new shop photo (issue #12) — at the
+    per-code vision seam tests fake instead of paying for, rather than the whole-catalogue
+    scripts/describe_catalog.py + embed_catalog.py pass the settings-page "sync" button runs.
+
+    A failure is recorded the same way describe_catalog.py records one, rather than raised:
+    the photo is already saved and shown by the time this runs, and a flaky vision call must
+    not undo that. NonGoals.md 8's "never invent" applies here too — nothing here retries an
+    unclear photo with a guess.
+    """
+    from backend.services import matching, vision
+
+    mime = config.FORMAT_MIME.get(fmt, "image/png")
+    path = config.CATALOG_PATH.parent / "descriptions.json"
+    descriptions = _load(path, {})
+    try:
+        parsed, usage = vision.describe_catalogue_photo(image_bytes, mime=mime)
+        decoration = parsed.decorations[0] if parsed.decorations else None
+        if decoration is None:
+            raise ValueError("the model described nothing in the photo")
+        text = vision.as_text(decoration)
+        descriptions[code] = {
+            "code": code, "pdf_page": None, "image": None, "match": "shop_photo",
+            "attributes": decoration.model_dump(), "text": text, "tokens": usage["total_tokens"],
+        }
+        matching.upsert_embedding(code, text)
+    except Exception as exc:
+        descriptions[code] = {"code": code, "image": None, "error": f"{type(exc).__name__}: {exc}"}
+    path.write_text(json.dumps(descriptions, indent=1, ensure_ascii=False), encoding="utf-8")
 
 
 def queue_set_price(code, price):

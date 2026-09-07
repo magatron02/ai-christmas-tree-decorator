@@ -198,7 +198,7 @@ function renderIdentified(result) {
       card.className = "candidate";
       if (candidate.image) {
         const photo = document.createElement("img");
-        photo.src = `/catalog/${candidate.image}`;
+        photo.src = catalogImageUrl(candidate.image);
         photo.alt = candidate.summary || candidate.code;
         card.append(photo, expandButton(photo.src, photo.alt));
       }

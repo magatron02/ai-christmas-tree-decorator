@@ -499,7 +499,7 @@ function catalogCard(item) {
   const card = document.createElement("div");
   card.className = "candidate pickable";
   const photo = document.createElement("img");
-  photo.src = `/catalog/${item.image}`;
+  photo.src = catalogImageUrl(item.image);
   photo.alt = item.code;
   photo.loading = "lazy";
   const code = document.createElement("div");
@@ -513,7 +513,7 @@ function catalogCard(item) {
     which.textContent = `สี ${item.colour} จาก ${item.colours}`;
     card.append(which);
   }
-  if (item.image) card.append(expandButton(`/catalog/${item.image}`, item.code));
+  if (item.image) card.append(expandButton(catalogImageUrl(item.image), item.code));
   card.addEventListener("click", () => catalogPickerCallback(item.code, item.image));
   return card;
 }
