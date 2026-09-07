@@ -19,6 +19,7 @@ import re
 from functools import lru_cache
 
 from backend import config
+from backend.services import shop_overlay
 from backend.validation import ValidationError
 
 __all__ = [
@@ -30,12 +31,20 @@ __all__ = [
 
 @lru_cache(maxsize=1)
 def _rows():
+    """Product records: the catalogue base merged with the shop overlay, field by field.
+
+    The merge happens here, in the one accessor every other reader in this module already
+    derives from, so no call site anywhere in the app has to know there are two layers
+    (ADR-0001). The overlay only ever holds fields the shop actually set, so `{**base,
+    **overlay}` is the whole rule — an unedited field still follows the re-imported book.
+    """
     if not config.CATALOG_PATH.is_file():
         raise ValidationError(
             f"ไม่พบไฟล์ catalogue ({config.CATALOG_PATH.name}) — "
             "รัน scripts/extract_catalog.py กับ PDF catalogue ก่อน"
         )
-    return json.loads(config.CATALOG_PATH.read_text(encoding="utf-8"))
+    base = json.loads(config.CATALOG_PATH.read_text(encoding="utf-8"))
+    return [{**row, **shop_overlay.fields_for(row["code"])} for row in base]
 
 
 @lru_cache(maxsize=1)
@@ -385,7 +394,9 @@ def shops():
 
 def refresh():
     """Drop every cached read, so a write to products.json/product_images.json (the admin
-    add-catalogue form) is visible on the next lookup without restarting the server."""
+    add-catalogue form) or to the shop overlay is visible on the next lookup without
+    restarting the server."""
+    shop_overlay.refresh()
     _rows.cache_clear()
     _by_code.cache_clear()
     _images_by_code.cache_clear()

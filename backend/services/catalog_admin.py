@@ -12,7 +12,7 @@ silently replacing a row is exactly that guess.
 import json
 
 from backend import config
-from backend.services import catalog
+from backend.services import catalog, shop_overlay
 from backend.validation import ValidationError
 
 PRODUCTS_PATH = config.CATALOG_PATH
@@ -103,8 +103,19 @@ def add_product(code, size_raw, section, book, image_bytes, price=None):
     return {"code": code, "image": filename, **_saved_state(code)}
 
 
+EDITABLE_FIELDS = ("size_raw", "size", "section", "book", "price")
+
+
 def update_product(code, size_raw, section, book, image_bytes=None, price=None):
     """Edit an existing product's fields, and optionally its photo.
+
+    The fields go to the shop overlay, never into the base — the base is book data, and a
+    correction written into it is destroyed by the next re-import (ADR-0001). Only the fields
+    that actually differ from what the book says are recorded: submitting the form unchanged
+    must not quietly claim an opinion on all five, or a re-import would stop correcting this
+    product at all. `size` travels with `size_raw` because it is derived from it — leaving the
+    book's parsed size beside a shop-typed size string is the one pairing a per-field merge
+    cannot work out for itself.
 
     Never renames or deletes a code — the row is found by its existing code, which does not
     change; that keeps this out of the image/variant-file migration a rename would need.
@@ -114,24 +125,27 @@ def update_product(code, size_raw, section, book, image_bytes=None, price=None):
     refused before anything is written, same as every other check here.
     """
     code = (code or "").strip().upper()
-    products = _load(PRODUCTS_PATH, [])
-    row = next((r for r in products if r["code"] == code), None)
-    if row is None:
+    base = next((r for r in _load(PRODUCTS_PATH, []) if r["code"] == code), None)
+    if base is None:
         raise ValidationError(f"ไม่พบรหัส '{code}' ใน catalogue")
     if image_bytes and len(catalog.variants_of(code)) > 1:
         raise ValidationError(
             f"'{code}' ถูกแยกเป็นหลายสีไว้แล้ว (catalog/variants.json) — "
             "เปลี่ยนรูปเดี่ยวแบบนี้จะไม่ถูกใช้ แก้ไฟล์ variants ตรง ๆ แทน"
         )
-    price = _parse_price(price)
 
     size_raw = size_raw.strip() or None
-    row["size_raw"] = size_raw
-    row["size"] = catalog.parse_size(size_raw) if size_raw else None
-    row["section"] = section.strip() or None
-    row["book"] = book.strip() or None
-    row["price"] = price
-    PRODUCTS_PATH.write_text(json.dumps(products, indent=1, ensure_ascii=False), encoding="utf-8")
+    typed = {
+        "size_raw": size_raw,
+        "size": catalog.parse_size(size_raw) if size_raw else None,
+        "section": section.strip() or None,
+        "book": book.strip() or None,
+        "price": _parse_price(price),
+    }
+    opinions = {
+        name: value for name, value in typed.items() if value != base.get(name)
+    }
+    shop_overlay.set_fields(code, opinions, speaks_for=EDITABLE_FIELDS)
 
     if image_bytes:
         filename = f"{code.replace('/', '_')}.png"

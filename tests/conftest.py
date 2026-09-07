@@ -31,7 +31,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 from backend import main  # noqa: E402
 from backend.models import request_log  # noqa: E402
-from backend.services import background_removal, image_gen  # noqa: E402
+from backend.services import background_removal, image_gen, shop_overlay  # noqa: E402
 
 from helpers import png_bytes, transparent_png_bytes  # noqa: E402
 
@@ -53,6 +53,8 @@ def fresh_db():
     for leftover in config.STORAGE_DIR.glob("*"):
         if leftover.is_file():
             leftover.unlink()
+    shop_overlay.overlay_path().unlink(missing_ok=True)
+    shop_overlay.refresh()
     conn = request_log.connect()
     yield conn
     conn.close()
