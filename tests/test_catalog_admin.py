@@ -106,18 +106,8 @@ def test_refresh_actually_clears_contested_codes(temp_catalog):
     assert catalog.code_is_contested("017-06") is True
 
 
-def test_refresh_actually_clears_variants(temp_catalog):
-    """Regression: _variants() had no cache_clear() call anywhere, so it was never
-    invalidated at runtime at all."""
-    assert catalog.variants_of("017-06") == []  # caches _variants() as {}
-
-    catalog_admin.add_product("017-06", "80 mm.", "", "", png_bytes())
-    (temp_catalog / "variants.json").write_text(
-        json.dumps({"017-06": ["017-06--1.png", "017-06--2.png"]}), encoding="utf-8"
-    )
-    catalog.refresh()
-
-    assert catalog.variants_of("017-06") == ["variants/017-06--1.png", "variants/017-06--2.png"]
+# The colour-split mapping variants_of() reads now lives in the shop overlay (issue #13) —
+# see tests/test_colour_variants.py for that behaviour, including its own refresh regression.
 
 
 def test_a_lowercase_typed_code_is_stored_uppercase_and_findable(temp_catalog):

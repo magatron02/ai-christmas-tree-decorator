@@ -13,7 +13,7 @@ import numpy as np
 import pytest
 
 from backend import config
-from backend.services import catalog, catalog_admin, matching, settings, shop_overlay
+from backend.services import catalog, catalog_admin, matching, settings
 from backend.validation import ValidationError
 
 from helpers import jpeg_bytes, png_bytes
@@ -204,9 +204,7 @@ def test_a_jpeg_shop_photo_is_saved_and_described_as_the_jpeg_it_actually_is(
 
 def test_a_colour_split_code_refuses_a_shop_photo(client, temp_catalog, local):
     catalog_admin.add_product("017-06", "80 mm.", "baubles", "2026", png_bytes())
-    (temp_catalog / "variants.json").write_text(
-        json.dumps({"017-06": ["017-06--1.png", "017-06--2.png"]}), encoding="utf-8"
-    )
+    catalog.set_colour_split("017-06", ["017-06--1.png", "017-06--2.png"])
     catalog.refresh()
 
     with pytest.raises(ValidationError):

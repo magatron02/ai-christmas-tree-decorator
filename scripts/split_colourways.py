@@ -18,11 +18,14 @@ this whole exercise is removing, so a crop is only split when the panels come ou
 sized, which is what a colour range looks like and what a mixed montage does not. Anything
 that does not split cleanly is left exactly as it was.
 
-Writes catalog/variants.json: code -> [image filename per colour], read by catalog.variants_of.
+Writes the split into the shop overlay (issue #13), code by code, as the "colours" field
+catalog.variants_of() reads — never catalog/variants.json, which is what this used to write
+and what the 2026-08-19 re-import wiped from 264 codes to nothing. A base file this script
+regenerates at build time is exactly the kind of thing a re-import can regenerate out from
+under the picker; the overlay is not.
 """
 
 import argparse
-import json
 import sys
 
 import numpy as np
@@ -34,7 +37,6 @@ from backend.services import catalog  # noqa: E402
 
 IMAGES = ROOT / "catalog" / "images"
 VARIANTS_DIR = IMAGES / "variants"
-OUT = ROOT / "catalog" / "variants.json"
 
 INK_THRESHOLD = 60        # channel-sum distance from the page background that counts as ink
 COVERAGE = 0.40           # fraction of a line that must be ink for it to be inside an item's core
@@ -125,7 +127,12 @@ def main():
     parser.add_argument("--limit", type=int)
     args = parser.parse_args()
 
-    codes = [row["code"] for row in catalog._rows() if catalog.crop_is_showable(row["code"])]
+    # A code with its own shop photo (issue #12) has nothing to split — that photo is already
+    # one specific picture, not a book montage of the whole colour range.
+    codes = [
+        row["code"] for row in catalog._rows()
+        if catalog.crop_is_showable(row["code"]) and not row.get("shop_photo")
+    ]
     if args.limit:
         codes = codes[: args.limit]
 
@@ -134,8 +141,8 @@ def main():
 
     variants, counts = {}, {}
     for code in codes:
-        path = IMAGES / catalog.image_for(code)
-        if not path.is_file():
+        path = catalog.resolve_image_path(catalog.image_for(code))
+        if not path or not path.is_file():
             continue
         try:
             axis, panels = split(path)
@@ -163,10 +170,22 @@ def main():
         variants[code] = names
 
     if not args.dry_run:
-        OUT.write_text(json.dumps(variants, indent=1, ensure_ascii=False), encoding="utf-8")
-        # a crop that stopped being showable since the last run leaves its colour images
-        # behind; they would still be served, and the manifest is the only thing that knows
-        # they are stale
+        # Written per code, straight into the overlay — never a wholesale file, so this run
+        # cannot clobber a shop's other opinions (price, size, a shop photo) on any code it
+        # never touched (issue #13).
+        for code, names in variants.items():
+            catalog.set_colour_split(code, names)
+        catalog.refresh()
+
+        # A crop that split last run but does not this time (no longer showable, now has its
+        # own shop photo, or simply stopped splitting cleanly) still holds a stale "colours"
+        # opinion — drop it, the same as any other override that no longer applies.
+        stale_codes = set(catalog.split_codes()) - set(variants)
+        for code in stale_codes:
+            catalog.clear_colour_split(code)
+        if stale_codes:
+            catalog.refresh()
+
         keep = {name for names in variants.values() for name in names}
         removed = 0
         for stale in VARIANTS_DIR.glob("*.png"):
@@ -174,7 +193,9 @@ def main():
                 stale.unlink()
                 removed += 1
         if removed:
-            print(f"removed {removed} colour images whose product is no longer showable")
+            print(f"removed {removed} colour images whose product is no longer split")
+        if stale_codes:
+            print(f"cleared {len(stale_codes)} stale colour-split opinions from the overlay")
 
     total = sum(len(v) if isinstance(v, list) else v for v in variants.values())
     print(f"{len(codes)} showable crops examined")
@@ -183,7 +204,7 @@ def main():
     for panels, n in sorted(counts.items()):
         print(f"    {panels:2} colours: {n}")
     if not args.dry_run:
-        print(f"\n-> {OUT}\n-> {VARIANTS_DIR}")
+        print(f"\n-> data/shop_overlay.json\n-> {VARIANTS_DIR}")
     return 0
 
 

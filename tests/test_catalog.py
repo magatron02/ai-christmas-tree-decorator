@@ -290,50 +290,24 @@ def test_the_picker_never_offers_a_code_it_cannot_illustrate():
 
 
 # ---- colourway variants ---------------------------------------------------------------------
+#
+# The split mapping lives in the shop overlay now (issue #13), which every test session
+# sandboxes into its own temp data/ directory (tests/conftest.py) — deliberately, so no test
+# run depends on or leaks into the real shop's data. That means a test in this file can never
+# see the real, restored 264-code mapping; see tests/test_colour_variants.py for the mechanism
+# itself (set, read, survive a re-import, revert to a single image), all against isolated
+# fixtures. scripts/restore_colour_variants.py's own printed report is what confirms the real
+# restoration; that is a one-time data operation, not something a permanent test asserts.
 
 
 def test_a_code_with_one_photo_still_reports_one_image():
     """variants_of is the only accessor the picker uses, so it must answer for every code,
     split or not — a caller that has to know which case it is in will get it wrong."""
-    unsplit = [c for c in catalog._by_code() if catalog.image_for(c) and c not in catalog._variants()]
+    split = catalog.split_codes()
+    unsplit = [c for c in catalog._by_code() if catalog.image_for(c) and c not in split]
     assert unsplit
     for code in unsplit[:50]:
         assert catalog.variants_of(code) == [catalog.image_for(code)]
-
-
-def test_a_split_code_reports_one_image_per_colour():
-    if not catalog._variants():
-        pytest.skip("run scripts/split_colourways.py first")
-    for code, images in catalog._variants().items():
-        assert len(images) >= 2, f"{code} was 'split' into one image"
-        assert catalog.variants_of(code) == [f"variants/{name}" for name in images]
-
-
-def test_every_variant_image_exists_on_disk():
-    if not catalog._variants():
-        pytest.skip("run scripts/split_colourways.py first")
-    images = config.CATALOG_PATH.parent / "images"
-    for code in catalog._variants():
-        for name in catalog.variants_of(code):
-            assert (images / name).is_file(), f"{code} points at a missing {name}"
-
-
-def test_a_variant_belongs_to_exactly_one_code():
-    """The picker sends the variant filename back to be cut out, and the endpoint authorises
-    it by asking whether it is one of that code's own images. Two codes sharing a variant
-    filename would make that check meaningless."""
-    owners = {}
-    for code in catalog._variants():
-        for name in catalog.variants_of(code):
-            assert name not in owners, f"{name} claimed by {owners.get(name)} and {code}"
-            owners[name] = code
-
-
-def test_only_showable_crops_were_split():
-    """Splitting a page-number badge into halves would put two page numbers in the picker
-    where the filter had already removed one."""
-    for code in catalog._variants():
-        assert catalog.crop_is_showable(code), f"{code} is hidden but was still split"
 
 
 # ---- contested codes: two different products, one code, neither picked automatically -------

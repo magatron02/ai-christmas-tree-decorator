@@ -26,7 +26,8 @@ __all__ = [
     "find", "search", "browse", "longest_side_mm", "describe", "require_size",
     "scale_sentence", "image_for", "image_path", "recent", "parse_size", "shops",
     "auto_pool", "row_matches_tone", "label_for", "orphans", "pricing_queue",
-    "overridden_fields", "product_detail", "resolve_image_path",
+    "overridden_fields", "product_detail", "resolve_image_path", "split_codes",
+    "set_colour_split", "clear_colour_split",
 ]
 
 
@@ -330,27 +331,25 @@ def crop_is_showable(code):
     )
 
 
-@lru_cache(maxsize=1)
-def _variants():
-    """code -> one image per colour, for the products photographed as a colour range.
+def variants_of(code):
+    """The images to offer for this code: one per colour where the photo was split, otherwise
+    the single crop. Always at least one entry, so callers need no special case.
 
     This catalogue shoots a product across all its colours in one frame: 4400-1 is a single
     4-inch tinsel garland and its photo shows six of them in six colours. One code, but not
-    one picture — picking it whole hands the generator all six at once. Built by
-    scripts/split_colourways.py; absent file means nothing was split, which is a valid state.
+    one picture — picking it whole hands the generator all six at once.
+
+    The split lives in the shop overlay, not a base file (issue #13): scripts/
+    split_colourways.py's own output used to be catalog/variants.json, and the 2026-08-19
+    re-import wiped that from 264 codes to nothing, orphaning 919 colour photographs that were
+    still on disk. A base file computed at build time is still exactly the kind of thing a
+    re-import can regenerate out from under the picker, so the mapping now goes through
+    shop_overlay.set_fields like everything else ADR-0001 protects, and split_colourways.py
+    writes there directly instead.
     """
-    path = config.CATALOG_PATH.parent / "variants.json"
-    if not path.is_file():
-        return {}
-    return json.loads(path.read_text(encoding="utf-8"))
-
-
-def variants_of(code):
-    """The images to offer for this code: one per colour where the photo was split, otherwise
-    the single crop. Always at least one entry, so callers need no special case."""
-    split = _variants().get(code)
-    if split:
-        return [f"variants/{name}" for name in split]
+    colours = shop_overlay.fields_for(code).get("colours")
+    if colours:
+        return [f"variants/{name}" for name in colours]
     image = image_for(code)
     return [image] if image else []
 
@@ -442,6 +441,32 @@ def product_detail(row):
     }
 
 
+def split_codes():
+    """Every code with a colour-split mapping in the overlay (issue #13): code -> its list of
+    colour image filenames. For build-time tooling that needs to enumerate every split at once
+    rather than ask one code at a time through variants_of() —
+    scripts/split_colourways.py's own stale-opinion cleanup, and
+    scripts/restore_colour_variants.py's "is this code already restored" check.
+    """
+    return {
+        code: fields["colours"]
+        for code, fields in shop_overlay.all_fields().items()
+        if fields.get("colours")
+    }
+
+
+def set_colour_split(code, names):
+    """Record one code's colour-split mapping (issue #13) — the write side of variants_of().
+    The one place scripts/split_colourways.py and scripts/restore_colour_variants.py reach
+    into shop_overlay for this, so both stay in step with what "colours" actually means."""
+    shop_overlay.set_fields(code, {"colours": names}, speaks_for=("colours",))
+
+
+def clear_colour_split(code):
+    """Drop a code's colour-split opinion, returning it to its single image."""
+    shop_overlay.set_fields(code, {}, speaks_for=("colours",))
+
+
 def orphans():
     """Shop overlays whose code no longer appears in the current base (ADR-0001, issue #9).
 
@@ -494,7 +519,6 @@ def refresh():
     _crop_verdicts.cache_clear()
     _kinds.cache_clear()
     _contested_codes.cache_clear()
-    _variants.cache_clear()
     _descriptions.cache_clear()
 
 
