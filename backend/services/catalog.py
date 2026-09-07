@@ -26,6 +26,7 @@ __all__ = [
     "find", "search", "browse", "longest_side_mm", "describe", "require_size",
     "scale_sentence", "image_for", "image_path", "recent", "parse_size", "shops",
     "auto_pool", "row_matches_tone", "label_for", "orphans", "pricing_queue",
+    "overridden_fields", "product_detail",
 ]
 
 
@@ -378,6 +379,32 @@ def auto_pool(category, tone_colours):
             continue
         pool.append(row)
     return pool
+
+
+EDITABLE_DISPLAY_FIELDS = frozenset({"price", "size_raw", "section", "book"})
+
+
+def overridden_fields(code):
+    """Which of the shop-editable fields this code's overlay actually holds an opinion on —
+    what the find-and-correct screen (issue #11) shows as "overridden by the shop" versus
+    "from the book". `size` is deliberately excluded: it travels with `size_raw` as a derived
+    pair, and the screen only ever shows/edits the raw text a person typed."""
+    return sorted(set(shop_overlay.fields_for(code)) & EDITABLE_DISPLAY_FIELDS)
+
+
+def product_detail(row):
+    """The merged record plus which of its fields are the shop's own opinion rather than the
+    book's (issue #11) — shared by the recent list, the find-by-code lookup and the clear-
+    override endpoint so all three show the same "overridden" badges from one source of
+    truth. The book-derived position fields (bbox, pdf_page) are never part of this shape, so
+    they never reach any caller of it either (ADR-0001)."""
+    return {
+        "code": row["code"], "image": image_for(row["code"]),
+        "size_raw": row.get("size_raw"), "book": row.get("book"),
+        "section": row.get("section"), "price": row.get("price"),
+        "category": category_of(row),
+        "overridden": overridden_fields(row["code"]),
+    }
 
 
 def orphans():

@@ -129,6 +129,19 @@ loadStatus();
 /* ---- catalogue admin: add, or click a row below to edit its fields/photo in place ---- */
 let editingCode = null;
 
+/* Which field name (from the API's "overridden" list) each input shows a "แก้โดยร้านแล้ว"
+ * badge for — issue #11: the shop's own opinion, distinguished from the book's value. */
+const OVERRIDE_FIELDS = {
+  size_raw: "cat-size", section: "cat-section", book: "cat-book", price: "cat-price",
+};
+
+function showOverrides(overridden) {
+  const active = new Set(overridden || []);
+  for (const [field, inputId] of Object.entries(OVERRIDE_FIELDS)) {
+    $(`${inputId}-override`).hidden = !active.has(field);
+  }
+}
+
 function enterEditMode(item) {
   editingCode = item.code;
   $("cat-code").value = item.code;
@@ -143,6 +156,7 @@ function enterEditMode(item) {
   $("cat-edit-status").hidden = false;
   $("cat-edit-status").textContent = `กำลังแก้ไข ${item.code}`;
   $("cat-edit-cancel").hidden = false;
+  showOverrides(item.overridden);
 }
 
 function exitEditMode() {
@@ -153,6 +167,55 @@ function exitEditMode() {
   $("cat-add").textContent = "เพิ่มสินค้า";
   $("cat-edit-status").hidden = true;
   $("cat-edit-cancel").hidden = true;
+  showOverrides([]);
+}
+
+$("cat-find").addEventListener("click", async () => {
+  const code = $("cat-code").value.trim();
+  $("cat-error").hidden = true;
+  if (!code) {
+    $("cat-error").textContent = "พิมพ์รหัสก่อนค้นหา";
+    $("cat-error").hidden = false;
+    return;
+  }
+  $("cat-find").disabled = true;
+  try {
+    const item = await call(`/api/catalog/products/${encodeURIComponent(code)}`);
+    enterEditMode(item);
+  } catch (err) {
+    $("cat-error").textContent = err.message;
+    $("cat-error").hidden = false;
+  } finally {
+    $("cat-find").disabled = false;
+  }
+});
+
+$("cat-code").addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && !$("cat-code").disabled) $("cat-find").click();
+});
+
+for (const [field, inputId] of Object.entries(OVERRIDE_FIELDS)) {
+  const link = $(`${inputId}-clear`);
+  link.addEventListener("click", async (event) => {
+    event.preventDefault();
+    $("cat-error").hidden = true;
+    link.style.pointerEvents = "none"; // <a> has no disabled attribute — guard against a double-click firing two clears
+    try {
+      const body = new FormData();
+      body.append("field", field);
+      const item = await call(
+        `/api/catalog/products/${encodeURIComponent(editingCode)}/clear-override`,
+        { method: "POST", body }
+      );
+      enterEditMode(item);
+      await loadRecentCatalog();
+    } catch (err) {
+      $("cat-error").textContent = err.message;
+      $("cat-error").hidden = false;
+    } finally {
+      link.style.pointerEvents = "";
+    }
+  });
 }
 
 $("cat-edit-cancel").addEventListener("click", () => {

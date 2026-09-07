@@ -575,14 +575,27 @@ def api_catalog_update(
 @app.get("/api/catalog/recent")
 def api_catalog_recent(limit: int = 20):
     """Read-only list for the settings page, newest addition first."""
-    return {
-        "results": [
-            {"code": row["code"], "image": catalog.image_for(row["code"]),
-             "size_raw": row["size_raw"], "book": row.get("book"),
-             "section": row.get("section"), "price": row.get("price")}
-            for row in catalog.recent(limit)
-        ]
-    }
+    return {"results": [catalog.product_detail(row) for row in catalog.recent(limit)]}
+
+
+@app.get("/api/catalog/products/{code}")
+def api_catalog_find(code: str):
+    """Find one product by its code and show its merged record (issue #11) — the book-derived
+    position fields (bbox, pdf_page) are never part of catalog.product_detail, so they never
+    reach this response either."""
+    return catalog.product_detail(catalog.find(code))
+
+
+@app.post("/api/catalog/products/{code}/clear-override")
+def api_catalog_clear_override(code: str, request: Request, field: str = Form(...)):
+    """Returns one field to the book's value (issue #11). Same localhost-only gate as every
+    other catalogue write — this changes what is on disk in data/shop_overlay.json."""
+    from backend.services import catalog_admin, settings
+
+    if not settings.is_local(request):
+        raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
+    catalog_admin.clear_override(code, field)
+    return catalog.product_detail(catalog.find(code))
 
 
 @app.post("/api/catalog/sync")

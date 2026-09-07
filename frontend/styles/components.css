@@ -753,6 +753,11 @@ td.shrink { width: 96px }
 .tone-name { font-family: var(--font-heading); font-size: var(--text-sm) }
 
 .chip.warn { color: var(--state-warning-text); background: var(--state-warning-bg); border-color: var(--state-warning-border) }
+/* Same reasoning as .hint a: a link inside a chip keeps the chip's own colour rather than the
+   browser's default blue, which exists nowhere else in this palette. */
+.chip a { color: inherit; text-decoration: underline }
+.chip a:hover,
+.chip a:focus-visible { color: var(--text-primary) }
 
 .auto-preview-strip {
   display: flex;

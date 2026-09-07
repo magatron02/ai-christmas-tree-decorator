@@ -86,22 +86,29 @@
 
         <section class="card stack">
           <span class="section-title">จัดการ catalogue</span>
-          <span class="hint">เพิ่มสินค้าทีละชิ้น หรือคลิกแถวด้านล่างเพื่อแก้ไข</span>
-          <input class="input" id="cat-code" placeholder="รหัสสินค้า เช่น 017-06">
+          <span class="hint">พิมพ์รหัสแล้วกดค้นหาเพื่อแก้ของเดิม หรือคลิกแถวด้านล่าง — เพิ่มสินค้าใหม่ให้เว้นรหัสว่างไว้ก่อนได้</span>
+          <div class="btn-row">
+            <input class="input" id="cat-code" placeholder="รหัสสินค้า เช่น 017-06">
+            <button class="btn" id="cat-find">ค้นหา</button>
+          </div>
 
           <input class="input" id="cat-size" placeholder="ขนาด เช่น 80 mm. หรือ H 215 x D 142 cm">
           <span class="hint">ต้องมีขนาด ภาพที่เจนถึงจะได้สัดส่วนตรงของจริง</span>
+          <span class="chip warn" id="cat-size-override" hidden>แก้โดยร้านแล้ว — <a href="#" id="cat-size-clear">ล้างกลับเป็นค่าจากเล่ม</a></span>
 
           <input class="input" id="cat-section" list="cat-section-list" autocomplete="off"
                  placeholder="หมวด เช่น ลูกบอล, ต้นคริสต์มาส, ตุ๊กตา">
           <datalist id="cat-section-list"></datalist>
           <span class="hint">ใช้จัดกลุ่มตอนเลือกของ ถ้าไม่ตรงหมวดไหนเลยจะหาไม่เจอในตัวกรอง</span>
+          <span class="chip warn" id="cat-section-override" hidden>แก้โดยร้านแล้ว — <a href="#" id="cat-section-clear">ล้างกลับเป็นค่าจากเล่ม</a></span>
 
           <input class="input" id="cat-book" list="cat-book-list" autocomplete="off"
                  placeholder="ร้าน เช่น Bangkok Christmas">
           <datalist id="cat-book-list"></datalist>
+          <span class="chip warn" id="cat-book-override" hidden>แก้โดยร้านแล้ว — <a href="#" id="cat-book-clear">ล้างกลับเป็นค่าจากเล่ม</a></span>
 
           <input class="input" id="cat-price" type="number" min="0" step="0.01" placeholder="ราคา (บาท) — ไม่ใส่ก็ได้">
+          <span class="chip warn" id="cat-price-override" hidden>แก้โดยร้านแล้ว — <a href="#" id="cat-price-clear">ล้างกลับเป็นค่าจากเล่ม</a></span>
           <input class="input" type="file" id="cat-image" accept="image/jpeg,image/png">
           <span class="hint" id="cat-image-hint" hidden>ไม่เลือกรูปใหม่ = รูปเดิมไม่เปลี่ยน</span>
           <div class="chip" id="cat-edit-status" hidden></div>

@@ -183,6 +183,33 @@ def queue_set_price(code, price):
     return {"code": code, "price": parsed}
 
 
+# A field the find-and-correct screen (issue #11) can clear -> the overlay keys that opinion
+# actually occupies. Derived from catalog.EDITABLE_DISPLAY_FIELDS rather than its own separate
+# list of names, so the two never drift apart. size_raw is the one exception: it is cleared
+# together with size, since they are one shop-typed opinion (a raw string and what parse_size
+# made of it), never two independent ones.
+CLEARABLE_FIELDS = {
+    field: (field, "size") if field == "size_raw" else (field,)
+    for field in catalog.EDITABLE_DISPLAY_FIELDS
+}
+
+
+def clear_override(code, field):
+    """Drop the shop's opinion on one field, returning it to whatever the book says (issue
+    #11, AC "clearing an override returns that field to the book's value"). Refuses a field
+    that was never a shop opinion to begin with — the code, or anything not in
+    CLEARABLE_FIELDS — the same way NEVER_OVERLAYABLE refuses writing to them.
+    """
+    code = (code or "").strip().upper()
+    catalog.find(code)  # raises ValidationError on an unknown code
+    keys = CLEARABLE_FIELDS.get(field)
+    if keys is None:
+        raise ValidationError(f"ล้างค่าฟิลด์ '{field}' ไม่ได้")
+    shop_overlay.set_fields(code, {}, speaks_for=keys)
+    catalog.refresh()
+    return {"code": code, **_saved_state(code)}
+
+
 def skip_pricing(code):
     """Mark a product as one the shop will never price (issue #10) — it leaves the queue for
     good, but stays exactly as usable everywhere else: auto_pool never looks at price
