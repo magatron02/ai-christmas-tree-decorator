@@ -28,6 +28,7 @@ __all__ = [
     "auto_pool", "row_matches_tone", "label_for", "orphans", "pricing_queue",
     "overridden_fields", "product_detail", "resolve_image_path", "split_codes",
     "set_colour_split", "clear_colour_split", "colour_name", "supporting_photos",
+    "placement_of",
 ]
 
 
@@ -136,6 +137,26 @@ CATEGORIES = [
     ("figure",   "ตุ๊กตา & ของตั้งโชว์",      ("figure", "santa", "sleigh", "fantasy", "sculpture",
                                               "foam", "display", "u u t t c c", "ตุ๊กตา")),
 ]
+
+# How a category's decorations attach to whatever backdrop they land on (CONTEXT.md, ADR-0004)
+# — a fixed, code-owned fact about the category itself, not a shop opinion, so it lives beside
+# CATEGORIES rather than in the overlay. "light" and "tree" have none: a light string was
+# already excluded from the recipe (ADR-0003), and a tree cannot decorate itself.
+PLACEMENTS = {
+    "ornament": "hung", "bell": "hung", "ribbon": "hung", "topper": "hung", "flower": "hung",
+    "garland": "wrapped",
+    "giftbox": "grounded", "figure": "grounded",
+    "wreath": "mounted", "banner": "mounted",
+}
+NO_PLACEMENT = {"light", "tree"}  # every other category must be in PLACEMENTS instead
+assert {key for key, _label, _needles in CATEGORIES} == set(PLACEMENTS) | NO_PLACEMENT, (
+    "a category was added to CATEGORIES without deciding its placement"
+)
+
+
+def placement_of(category):
+    """The category's placement, or None when it has none (light, tree) or isn't recognised."""
+    return PLACEMENTS.get(category)
 
 
 @lru_cache(maxsize=1)

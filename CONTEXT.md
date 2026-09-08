@@ -1,8 +1,8 @@
 # Tree Decorator
 
-A shop decorates a bare Christmas tree for a customer by generating a picture of it, using products
-the shop actually sells. Everything here is vocabulary for talking about that catalogue, those
-products, and the ways a tree gets decorated.
+A shop decorates a Christmas backdrop — a bare tree, or a wall or door — for a customer by
+generating a picture of it, using products the shop actually sells. Everything here is vocabulary
+for talking about that catalogue, those products, and the ways a backdrop gets decorated.
 
 ## Language
 
@@ -72,6 +72,36 @@ model.
 A book photo that shows page furniture, or is shared by so many codes that it identifies none of
 them. Hides the product from the picker until a shop photo replaces it.
 
+### Backdrops and placement
+
+**Backdrop**:
+The photo a generation decorates — a bare tree, or a wall or door. The same tone, recipe and
+density engine runs against either; only the surface changes.
+_Avoid_: scene, canvas, destination
+
+**Placement**:
+How a category's decorations attach to the chosen backdrop: hung, wrapped, grounded or mounted
+(below). Fixed per category, never chosen by the shop.
+_Avoid_: position, location
+
+**Hung**:
+The default placement — individual copies distributed across a tree's branches, one to a spot, at
+a density the shop chooses. Ornaments, bells, ribbons, toppers and flowers.
+
+**Wrapped**:
+A single continuous piece placed once around a tree's trunk — a garland. Never has a count above
+one; density does not apply to it.
+_Avoid_: coiled, spiralled
+
+**Grounded**:
+Placed in a cluster at the foot of a tree — a gift box, a figure. Counted separately from hung
+decorations: the tree's hung recipe and its grounded cluster are two different pools, not one
+shared ceiling.
+_Avoid_: base decoration, floor item
+
+**Mounted**:
+Placed flat against a wall or door backdrop — a wreath, a banner. Never appears on a tree backdrop.
+
 ### Decorating a tree
 
 **Tone**:
@@ -79,8 +109,9 @@ A named colour direction a customer asks for, such as red-gold classic. The only
 pick asks.
 
 **Recipe**:
-The fixed mix of categories and counts placed on every tree. Tone decides which products fill the
-recipe; it never changes what the mix is, and neither does the size of the tree.
+The fixed mix of hung categories and counts placed on every tree. Tone decides which products fill
+the recipe; it never changes what the mix is, and neither does the size of the tree. Grounded
+categories fill their own separate cluster, not a recipe slot.
 
 **Auto pick**:
 Choosing a tone and having the app fill the recipe. Produces a proposal in the normal panels for
