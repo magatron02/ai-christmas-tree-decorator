@@ -42,6 +42,11 @@ SHOP_PHOTOS_DIR = DATA_DIR / "shop_photos"
 THUMBS_DIR = STORAGE_DIR / "thumbs"
 DB_PATH = DATA_DIR / "app.db"
 PROMPT_PATH = BACKEND_DIR / "prompts" / "compositing_prompt.txt"
+# A wall or door is a valid backdrop alongside a tree (CONTEXT.md, ADR-0004, issue #22) — its
+# own template, tuned independently, since its preservation rules have nothing to do with a
+# tree's branch structure or fullness.
+WALL_PROMPT_PATH = BACKEND_DIR / "prompts" / "wall_compositing_prompt.txt"
+BACKDROPS = ("tree", "wall")
 FRONTEND_DIR = ROOT / "frontend"
 CATALOG_PATH = ROOT / "catalog" / "products.json"
 
@@ -102,6 +107,15 @@ DENSITY_PRESETS = {
 }
 DENSITY_LABELS = {"light": "โปร่ง", "normal": "ปกติ", "full": "แน่น"}
 DEFAULT_DENSITY = "normal"
+
+# The {density} slot for a wall/door backdrop (issue #22). Every DENSITY_PRESETS sentence
+# above is about a tree — a count for "a full-height tree", gaps "of bare branch" — and a wall
+# holds what the shop mounted on it and nothing else. There is no light/normal/full to choose
+# between here, so this is a statement rather than a preset table.
+WALL_DENSITY = (
+    "Place exactly the decorations supplied, one copy of each, and nothing else. There is no "
+    "surface to fill here: do not repeat a decoration to cover empty space."
+)
 
 # Per-item density phrasing (workstream C) — same 3 levels/labels as DENSITY_PRESETS above,
 # different vocabulary: DENSITY_PRESETS states a total count for the whole tree, which reads

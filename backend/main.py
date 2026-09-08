@@ -922,6 +922,7 @@ def api_prepare(
     element_manual_mm: list[str] = Form(default=[]),
     element_density: list[str] = Form(default=[]),
     custom_prompt: str = Form(""),
+    backdrop: str = Form(""),
 ):
     """Input A + one to MAX_ELEMENTS accepted decorations -> a `pending` request. Still free;
     still no API call.
@@ -972,6 +973,7 @@ def api_prepare(
     else:
         width, height = validation.resolve_size(size)
     validation.resolve_density(density)  # fail fast; the sentence itself is re-resolved at generate time
+    backdrop = validation.resolve_backdrop(backdrop)
     custom_prompt = validation.parse_custom_prompt(custom_prompt)
     names = validation.element_count([e.strip() for e in element if e.strip()])
     paths = [_stored_path(name) for name in names]
@@ -1064,7 +1066,7 @@ def api_prepare(
     try:
         request_id = request_log.create(
             conn, tree_name, elements, size, tree_code or None, reference_name, density,
-            tree_mm_override, custom_prompt,
+            tree_mm_override, custom_prompt, backdrop,
         )
     finally:
         conn.close()
@@ -1145,14 +1147,22 @@ def api_generate(request_id: str):
         # wins outright, verbatim, over the whole density system above — it lands in exactly
         # the same {density} slot in the template (backend/services/image_gen.py:load_prompt),
         # which sits after the template's hard preservation rules, never before them.
-        density_sentence = row["custom_prompt"] or image_gen.describe_element_density(elements_for_prompt)
-        placement_notes = image_gen.describe_placement(elements_for_prompt)
+        # rows written before issue #22 have backdrop=NULL — they all decorated a tree
+        backdrop = row["backdrop"] or "tree"
+        # Every DENSITY_PRESETS sentence counts decorations across a tree, so a wall/door gets
+        # its own statement instead (issue #22). Prompt mode still wins over both.
+        density_sentence = row["custom_prompt"] or (
+            image_gen.describe_element_density(elements_for_prompt) if backdrop == "tree"
+            else config.WALL_DENSITY
+        )
+        placement_notes = image_gen.describe_placement(elements_for_prompt, backdrop)
 
         try:
             output, usage = image_gen.generate(
                 tree_path.read_bytes(),
                 [path.read_bytes() for path in element_paths],
                 width, height, scale, reference_bytes, density_sentence, placement_notes,
+                backdrop,
             )
             name = _store(output, "output", "png")
         except Exception as exc:

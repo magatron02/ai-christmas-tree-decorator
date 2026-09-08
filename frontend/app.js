@@ -1024,6 +1024,7 @@ $("generate-btn").addEventListener("click", async () => {
   try {
     const body = new FormData();
     body.append("files", state.treeFile);
+    body.append("backdrop", $("backdrop-select").value);
     body.append("size", $("size-select").value);
     if ($("size-select").value === "auto") {
       body.append("scene_ratio", String(state.sceneRatio || state.treeRatio || ""));

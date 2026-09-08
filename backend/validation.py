@@ -96,6 +96,17 @@ def resolve_density(key):
     return config.DENSITY_PRESETS[key]
 
 
+def resolve_backdrop(value):
+    """Backdrop kind, defaulted and validated (issue #22). Empty means "tree" — every request
+    before this existed decorated a tree, so that stays the default rather than a forced
+    choice on old callers/tests."""
+    value = (value or "tree").strip()
+    if value not in config.BACKDROPS:
+        allowed = ", ".join(config.BACKDROPS)
+        raise ValidationError(f"ไม่รู้จัก backdrop '{value}' · เลือกจาก: {allowed}")
+    return value
+
+
 def check_size(nbytes, field):
     if nbytes <= 0:
         raise ValidationError(f"{field}: ไฟล์ว่างเปล่า")

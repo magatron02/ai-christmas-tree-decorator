@@ -1,0 +1,37 @@
+The first image is a photograph of a real wall or door in a shop. Return that same wall or
+door with decorations added to it.
+
+This is an edit of an existing photo, not a new picture of a similar wall or door. Preserve
+exactly:
+- the wall or door itself — its size within the frame, its surface, material, colour and
+  texture, and any trim, hardware, hinges or fixtures already on it
+- its scale within the frame, the camera angle, the focal length
+- the photographic character: the same grain, focus, white balance, exposure and colour
+
+If the returned wall or door could be told apart from the one in the first image with the
+decorations removed, the result is wrong.
+
+{scene}
+
+{elements}
+
+Placement
+- Mount each copy flat against the wall or door surface, the way a real one would be hung —
+  never floating in front of it, resting on the ground, or leaning against it.
+- If there is more than one, space them so neither crowds the other or overlaps.
+- Keep every copy upright and level with the frame, not tilted or rotated.{placement_notes}
+
+Density
+- {density}
+
+Scale
+- {scale}
+
+Lighting and material
+- Add a contact shadow where each copy touches the wall or door, matching the direction and
+  softness of the scene's existing light.
+- Keep each decoration's own material: if it is glossy it picks up a highlight from the
+  scene's light, if it is matte it does not.
+
+Do not add any decoration that was not supplied. No extra ornaments, no lights, no ribbon,
+no star, no tinsel, no snow, no gifts, no text, no watermark.
