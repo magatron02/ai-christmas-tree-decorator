@@ -13815,7 +13815,10 @@
   "code": "MSND-60930",
   "size_raw": "D 35 cm x H 60 cm",
   "size": {
-   "diameter_mm": 350,
+   "dimensions_mm": [
+    350,
+    600
+   ],
    "unit_printed": "cm"
   },
   "section": "ต้นคริสต์มาสประดิษฐ์-Warm white/green color (มีไฟประดับ)",
@@ -13848,7 +13851,10 @@
   "code": "680023",
   "size_raw": "36 cm x 60 cm",
   "size": {
-   "diameter_mm": 360,
+   "dimensions_mm": [
+    360,
+    600
+   ],
    "unit_printed": "cm"
   },
   "section": "ต้นคริสต์มาสประดิษฐ์-Imperial mini tree snowy LED BO (มีไฟประดับ)",
@@ -13863,7 +13869,10 @@
   "code": "MSND-60978",
   "size_raw": "D 42 cm x H 60 cm",
   "size": {
-   "diameter_mm": 420,
+   "dimensions_mm": [
+    420,
+    600
+   ],
    "unit_printed": "cm"
   },
   "section": "ต้นคริสต์มาสประดิษฐ์-",
@@ -13878,7 +13887,10 @@
   "code": "MSND-60976",
   "size_raw": "D 25 cm x H 35 cm",
   "size": {
-   "diameter_mm": 250,
+   "dimensions_mm": [
+    250,
+    350
+   ],
    "unit_printed": "cm"
   },
   "section": "ต้นคริสต์มาสประดิษฐ์-",
@@ -13893,7 +13905,10 @@
   "code": "MSND-60977",
   "size_raw": "D 41 cm x H 75 cm",
   "size": {
-   "diameter_mm": 410,
+   "dimensions_mm": [
+    410,
+    750
+   ],
    "unit_printed": "cm"
   },
   "section": "ต้นคริสต์มาสประดิษฐ์-",
@@ -13926,7 +13941,10 @@
   "code": "MSND-60945",
   "size_raw": "D 36 cm x H 60 cm",
   "size": {
-   "diameter_mm": 360,
+   "dimensions_mm": [
+    360,
+    600
+   ],
    "unit_printed": "cm"
   },
   "section": "ต้นคริสต์มาสประดิษฐ์-Warm white/green (มีไฟประดับ)",

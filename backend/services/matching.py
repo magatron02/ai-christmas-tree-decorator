@@ -98,9 +98,10 @@ def _vectors():
     written by describing this code's CROP, so a code whose crop turned out to be shared with
     another code, or to be page furniture rather than a product, has a description of the
     wrong thing — searching it can point a customer's photo at a code that only looks right
-    because the text describes someone else's picture. catalog.crop_is_showable() is already
-    the system's one answer to "can this code's photo be trusted", so matching defers to it
-    rather than keeping a second opinion.
+    because the text describes someone else's picture. catalog.is_offered() is already the
+    system's one answer to "does the picker show this product", so matching defers to it
+    rather than keeping a second opinion — a product the shop has stopped carrying should not
+    come back through the side door of a photo match either (issue #26).
     """
     path = config.CATALOG_PATH.parent / "embeddings.npy"
     codes_path = config.CATALOG_PATH.parent / "embedding_codes.json"
@@ -113,7 +114,7 @@ def _vectors():
 
     from backend.services import catalog
 
-    keep = [i for i, code in enumerate(codes) if catalog.crop_is_showable(code)]
+    keep = [i for i, code in enumerate(codes) if catalog.is_offered_code(code)]
     if len(keep) != len(codes):
         codes = [codes[i] for i in keep]
         matrix = matrix[keep]

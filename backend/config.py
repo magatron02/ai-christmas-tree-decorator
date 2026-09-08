@@ -63,6 +63,14 @@ MAX_ELEMENTS = 10
 # tree's foot, never on a branch, so it never competes with MAX_ELEMENTS for a hung slot. Kept
 # deliberately small: a cluster reads as a cluster only while it stays a handful of pieces.
 MAX_GROUNDED = 3
+
+# The shop offers no tree at or under this (issue #26): below it the tree category is desk
+# ornaments — it runs down to 9 inches — and a picture of one decorated is not what anybody is
+# here for. Only trees; a 9-inch bauble is an ordinary product. A rule rather than a per-product
+# flag, so it holds for trees no book has imported yet. The shop drew the line at "1.5 ft and
+# under", which parses to 457mm rather than the round 450 it reads as.
+MIN_TREE_MM = 460
+
 ALLOWED_EXT = {".jpg", ".jpeg", ".png"}
 ALLOWED_MIME = {"image/jpeg", "image/png"}
 ALLOWED_FORMATS = {"JPEG", "PNG"}  # what Pillow reports after sniffing the actual bytes

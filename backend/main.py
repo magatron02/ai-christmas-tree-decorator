@@ -404,10 +404,7 @@ def api_catalog_search(q: str = "", category: str = "", book: str = "", limit: i
     mind" and browses everything, which is what the tree picker and every older caller do.
     """
     if q.strip():
-        matched = [
-            row for row in catalog.search(q, 10_000)
-            if catalog.crop_is_showable(row["code"])
-        ]
+        matched = [row for row in catalog.search(q, 10_000) if catalog.is_offered(row)]
         if category:
             matched = [row for row in matched if catalog.category_of(row) == category]
         if book:

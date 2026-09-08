@@ -160,6 +160,15 @@ def test_an_unlabelled_series_still_parses_the_same_as_before():
     assert catalog.parse_size("18x12x51 cm.")["dimensions_mm"] == [180, 120, 510]
 
 
+def test_a_dimension_that_carries_its_own_unit_is_not_lost():
+    """Books print both "D 40 x H 60 cm" and "D 41 cm x H 75 cm". Only the first form was
+    read: the repeated unit broke the series apart, the height fell out, and six real trees
+    ended up measured by their width — four of them then cut for being "too small" (issue #26)
+    while standing 60-75 cm tall."""
+    assert catalog.parse_size("D 41 cm x H 75 cm")["dimensions_mm"] == [410, 750]
+    assert catalog.parse_size("36 cm x 60 cm")["dimensions_mm"] == [360, 600]  # no axis letters
+
+
 def test_the_catalogue_covers_what_the_ac5_run_used():
     for code in ("04031-1", "05092-1", "017-06", "90665-18", "01801-1"):
         catalog.find(code)

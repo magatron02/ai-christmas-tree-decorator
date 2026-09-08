@@ -28,7 +28,7 @@ __all__ = [
     "auto_pool", "row_matches_tone", "label_for", "orphans", "pricing_queue",
     "overridden_fields", "product_detail", "resolve_image_path", "split_codes",
     "set_colour_split", "clear_colour_split", "colour_name", "supporting_photos",
-    "placement_of", "placement_of_code", "suits_backdrop",
+    "placement_of", "placement_of_code", "suits_backdrop", "is_offered",
 ]
 
 
@@ -361,7 +361,8 @@ def conflicts():
 
 
 def crop_is_showable(code):
-    """The one question the picker asks: can this photo stand for this code on a card?
+    """Can this photo stand for this code on a card? Half of what the picker asks — is_offered()
+    is the whole of it, and adds whether the shop still carries the thing at all.
 
     A shop's own photo (issue #12) is trusted outright, bypassing every book-crop failure
     mode below — the shop took it of the real product, so a shared crop, page furniture, or a
@@ -409,9 +410,40 @@ def _qualify_colour_photo(entry):
     return entry if entry.startswith(("/", "variants/")) else f"variants/{entry}"
 
 
+def _too_small_to_decorate(row):
+    """A tree the shop has stopped offering for being too small (issue #26).
+
+    Computed from the printed size every time rather than stored per code: the rule has to
+    hold for trees no book has imported yet, and a re-import that corrects a size has to
+    change what is cut. A tree whose size cannot be parsed at all is kept — the app never
+    invents a dimension (NonGoals.md 8), and will not guess one to hide something either.
+    """
+    if category_of(row) != "tree":
+        return False
+    millimetres = longest_side_mm(row)
+    return millimetres is not None and millimetres <= config.MIN_TREE_MM
+
+
+def is_offered(row):
+    """Whether the picker shows this product at all: a photo that can stand for it, and not
+    something the shop has stopped carrying."""
+    return crop_is_showable(row["code"]) and not _too_small_to_decorate(row)
+
+
+def is_offered_code(code):
+    """is_offered() for a caller holding a code rather than a row — the photo-match index
+    keeps codes, not rows (backend/services/matching.py).
+
+    A code the catalogue no longer has is not offered, rather than an error: that index is
+    built ahead of time and outlives the rows it was built from.
+    """
+    row = _by_code().get((code or "").strip().upper())
+    return row is not None and is_offered(row)
+
+
 @lru_cache(maxsize=1)
 def _with_photos():
-    return [row for row in _rows() if crop_is_showable(row["code"])]
+    return [row for row in _rows() if is_offered(row)]
 
 
 def browse(limit=60, offset=0, category=None, book=None, backdrop=None):
@@ -635,13 +667,19 @@ def search(query, limit=20):
 # was typed into the settings-page add/edit form
 _FEET = re.compile(r"([\d.]+)\s*Ft", re.I)
 _INCHES = re.compile(r"([\d.]+)\s*in(?:c|ch|ches)?\b", re.I)
-_SERIES = re.compile(r"([\d.]+(?:\s*[x×]\s*[\d.]+)+)\s*(cm|mm|in(?:c|ch)?)", re.I)
+# The unit is optional on every dimension but the last, here and in _LABELLED_SERIES below:
+# "29 x 150 cm." and "36 cm x 60 cm" are the same measurement written two ways, and reading
+# only the first form left six real products measured by their width — four of them trees then
+# cut for being "too small" (issue #26) while standing 60-75 cm tall.
+_SERIES = re.compile(r"([\d.]+(?:\s*(?:cm|mm)?\s*[x×]\s*[\d.]+)+)\s*(cm|mm|in(?:c|ch)?)", re.I)
 # "H 215 x D 142 cm", "D80xL80xH10cm" — each number carries its own axis letter, so the plain
 # digit-x-digit _SERIES regex can't match (a letter sits between the "x" and the next number).
 # Tried before _SERIES: a labelled dimension is also a valid _SERIES-shaped string once you
 # ignore the letters, and _SERIES would silently mis-split it (no letters ever changed the
 # answer here, longest_side_mm only ever wants the largest of the numbers).
-_LABELLED_SERIES = re.compile(r"(?:[HDLW]\s*[\d.]+\s*[x×]\s*)+[HDLW]\s*[\d.]+\s*(cm|mm)", re.I)
+_LABELLED_SERIES = re.compile(
+    r"(?:[HDLW]\s*[\d.]+\s*(?:cm|mm)?\s*[x×]\s*)+[HDLW]\s*[\d.]+\s*(cm|mm)", re.I
+)
 _NUMBER = re.compile(r"[\d.]+")
 _CM = re.compile(r"([\d.]+)\s*cm", re.I)
 _MM = re.compile(r"([\d.]+)\s*mm", re.I)
@@ -665,7 +703,9 @@ def parse_size(raw):
         return {"dimensions_mm": [round(n * factor) for n in numbers], "unit_printed": unit}
 
     if match := _SERIES.search(text):
-        parts = [float(p) for p in re.split(r"[x×]", match.group(1))]
+        # findall, not a split on "x": a dimension may carry its own unit ("36 cm x 60 cm"),
+        # and float() would choke on the unit riding along with the number
+        parts = [float(p) for p in _NUMBER.findall(match.group(1))]
         unit = match.group(2).lower()
         unit = "inch" if unit.startswith("in") else unit
         factor = 10 if unit == "cm" else _MM_PER_INCH if unit == "inch" else 1
