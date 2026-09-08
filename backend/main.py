@@ -618,6 +618,20 @@ def api_catalog_find(code: str):
     return catalog.product_detail(catalog.find(code))
 
 
+@app.get("/api/catalog/products/{code}/colours")
+def api_catalog_colours(code: str):
+    """Every colour of one product, image and name (issue #15) — what an accepted
+    decoration's switcher offers. A single-colour product returns exactly one entry, which is
+    the frontend's whole "offer no switcher" rule: nothing to switch to."""
+    row = catalog.find(code)
+    return {
+        "colours": [
+            {"image": image, "name": catalog.colour_name(row["code"], image)}
+            for image in catalog.variants_of(row["code"])
+        ]
+    }
+
+
 @app.post("/api/catalog/products/{code}/clear-override")
 def api_catalog_clear_override(code: str, request: Request, field: str = Form(...)):
     """Returns one field to the book's value (issue #11). Same localhost-only gate as every

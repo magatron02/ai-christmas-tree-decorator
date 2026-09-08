@@ -33,9 +33,12 @@ const state = {
   treeCode: null, // set only by the catalogue picker — an uploaded photo has no code
   treeSizeMm: null, // the tree code's catalogue size, or null if it has none (blocking gate)
   treeManualMm: null, // person-typed override when treeSizeMm is null
-  // {name, url, code, sizeMm, manualMm, density} — one entry per accepted cut-out, up to
-  // MAX_ELEMENTS. sizeMm is the code's catalogue size (null = none, blocking gate);
-  // manualMm is a person-typed override; density is a DENSITY_PRESETS key, per item.
+  // {name, url, code, image, colours, sizeMm, manualMm, density} — one entry per accepted
+  // cut-out, up to MAX_ELEMENTS. sizeMm is the code's catalogue size (null = none, blocking
+  // gate); manualMm is a person-typed override; density is a DENSITY_PRESETS key, per item.
+  // image is the catalogue colour photo this cutout came from (null for an uploaded photo);
+  // colours is that product's other colours (issue #15), fetched once at accept time — null
+  // unless the product actually has more than one, which is also the "offer a switcher" flag.
   elements: [],
   sceneReference: null, // stored filename of the optional scene/ambience photo (used at generate time)
   requestId: null,
@@ -129,6 +132,30 @@ function buildSizeRow(sizeMm, manualMm, onInput) {
   return row;
 }
 
+/* A named colour reads by its name; one nobody has named yet (issue #14's seeding pass ran,
+ * or the shop hasn't corrected it) falls back to its position — never invented. Shared by the
+ * picker card's label and the switcher's own option text, so the two can't say it two ways. */
+function colourLabel(name, position, total) {
+  return name || `สี ${position} จาก ${total}`;
+}
+
+/* A dropdown of a decoration's other colours, by name (issue #15) — only ever built for an
+ * item whose `colours` came back with more than one entry (state.elements' own "offer a
+ * switcher" rule), so callers never have to check that here too. */
+function buildColourSelect(colours, current, onPick) {
+  const select = document.createElement("select");
+  select.className = "input";
+  colours.forEach((colour, index) => {
+    const option = document.createElement("option");
+    option.value = colour.image;
+    option.textContent = colourLabel(colour.name, index + 1, colours.length);
+    option.selected = colour.image === current;
+    select.append(option);
+  });
+  select.addEventListener("change", () => onPick(select.value));
+  return select;
+}
+
 function buildDensityPill(current, onPick) {
   const wrap = document.createElement("div");
   wrap.className = "density-pill";
@@ -158,6 +185,26 @@ function renderTreeSizeGate() {
     renderTreeSizeGate();
     refreshGenerateButton();
   }));
+}
+
+/* Swaps an accepted item's picture to another colour of the same product, in place (issue
+ * #15) — position, size override and density are all on `element` itself and untouched.
+ * Reuses /api/element/from-catalog, the same endpoint the original accept went through, so
+ * the swap is a pre-cut file read (issue #13), never a live background removal. */
+async function switchColour(element, newImage) {
+  if (newImage === element.image) return;
+  showError("");
+  try {
+    const result = await fetchElementFromCatalog(element.code, newImage);
+    element.url = result.element_url;
+    element.name = result.element;
+    element.image = newImage;
+    element.sizeMm = result.size_mm;
+  } catch (err) {
+    showError(err.message);
+  }
+  renderElements(); // also reverts the select to element.image on failure
+  resetRun();
 }
 
 /* The accepted decorations, each removable. Shown as a list rather than a count so it is
@@ -199,13 +246,21 @@ function renderElements() {
       resetRun();
     });
     top.append(thumbWrap, pill, drop);
+    item.append(top);
+    if (element.colours) {
+      const select = buildColourSelect(element.colours, element.image, (image) => {
+        switchColour(element, image);
+      });
+      item.append(select);
+      enhanceSelect(select); // needs a parent to attach its popup to — must run after append
+    }
     const sizeRow = buildSizeRow(element.sizeMm, element.manualMm, (value) => {
       const parsed = Number(value);
       element.manualMm = value && parsed > 0 ? parsed : null;
       renderElements();
       refreshGenerateButton();
     });
-    item.append(top, sizeRow);
+    item.append(sizeRow);
     list.append(item);
   });
 
@@ -383,12 +438,16 @@ function showTreeCode(code, sizeMm = null) {
   renderTreeSizeGate();
 }
 
-function showElementCode(code, sizeMm = null) {
+function showElementCode(code, sizeMm = null, image = null) {
   const badge = $("element-code-badge");
   badge.textContent = code || "";
   badge.hidden = !code;
   $("element-preview").dataset.code = code || "";
   $("element-preview").dataset.sizeMm = code && sizeMm != null ? sizeMm : "";
+  // Which colour photo this cutout came from (issue #15) — carried from here into the
+  // accepted item so its card knows what to offer a colour switcher against. Empty for an
+  // uploaded photo, which has no catalogue colours to switch between.
+  $("element-preview").dataset.image = image || "";
 }
 
 renderElements();
@@ -423,12 +482,12 @@ $("element-file").addEventListener("change", (event) => {
   resetRun();
 });
 
-function showElementPreview(result, code = null, sizeMm = null) {
+function showElementPreview(result, code = null, sizeMm = null, image = null) {
   $("element-preview").src = result.element_url;
   $("element-preview-frame").hidden = false;
   $("element-actions").hidden = false;
   $("element-preview").dataset.name = result.element;
-  showElementCode(code, sizeMm);
+  showElementCode(code, sizeMm, image);
 }
 
 $("cut-btn").addEventListener("click", async () => {
@@ -538,7 +597,7 @@ function catalogCard(item) {
     // plain position label for a colour nobody has named yet — never invented.
     const which = document.createElement("div");
     which.className = "why";
-    which.textContent = item.colour_name || `สี ${item.colour} จาก ${item.colours}`;
+    which.textContent = colourLabel(item.colour_name, item.colour, item.colours);
     card.append(which);
     card.append(renameButton(item, which));
   }
@@ -683,16 +742,23 @@ function setCatalogBusy(busy, message) {
   if (busy) $("catalog-count").textContent = message;
 }
 
+/* The one request every catalogue-element pick makes, whether it is the first pick
+ * (useFromCatalog) or a later colour switch (switchColour, issue #15) — same code+image pair,
+ * same precut-aware endpoint (issue #13: a file read, never a live background removal). */
+async function fetchElementFromCatalog(code, image) {
+  const body = new FormData();
+  body.append("code", code);
+  if (image) body.append("image", image);
+  return call("/api/element/from-catalog", { method: "POST", body });
+}
+
 async function useFromCatalog(code, image) {
   if (catalogBusy) return;
   showError("");
   setCatalogBusy(true, "กำลังตัดพื้นหลัง… ครั้งแรกหลังเปิดโปรแกรมจะนานหน่อย");
   try {
-    const body = new FormData();
-    body.append("code", code);
-    if (image) body.append("image", image);
-    const result = await call("/api/element/from-catalog", { method: "POST", body });
-    showElementPreview(result, code, result.size_mm);
+    const result = await fetchElementFromCatalog(code, image);
+    showElementPreview(result, code, result.size_mm, image || null);
     $("catalog-dialog").close();
   } catch (err) {
     $("catalog-dialog").close();
@@ -739,13 +805,29 @@ async function useTreeFromCatalog(code, image) {
   }
 }
 
-$("accept-btn").addEventListener("click", () => {
+$("accept-btn").addEventListener("click", async () => {
   const preview = $("element-preview");
   const code = preview.dataset.code || "";
+  const image = preview.dataset.image || "";
+  // Fetched once, up front, rather than per render: a card only ever needs this list to
+  // build its switcher (issue #15), and re-fetching on every renderElements() call would ask
+  // the same question dozens of times over a session. A product with only one colour comes
+  // back with exactly one entry, which is also the "offer no switcher" signal downstream.
+  let colours = null;
+  if (code) {
+    try {
+      const found = await call(`/api/catalog/products/${encodeURIComponent(code)}/colours`);
+      if (found.colours.length > 1) colours = found.colours;
+    } catch {
+      /* the switcher is a convenience; a decoration must still be accepted without it */
+    }
+  }
   state.elements.push({
     name: preview.dataset.name,
     url: preview.src,
     code,
+    image: image || null,
+    colours,
     sizeMm: code && preview.dataset.sizeMm ? Number(preview.dataset.sizeMm) : null,
     manualMm: null,
     density: "normal",
