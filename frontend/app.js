@@ -642,6 +642,12 @@ async function loadCatalogShops() {
   }
 }
 
+/* Which backdrop the picker is filling for (issue #23). Only the decoration picker filters:
+ * the tree picker is choosing the backdrop itself, so it browses the whole catalogue. */
+function pickerBackdrop() {
+  return catalogPickerMode === "element" ? $("backdrop-select").value : "";
+}
+
 /* The category list belongs to whichever shop is selected, so it is rebuilt whenever that
  * changes rather than fetched once. Counted across every shop it advertised stock the chosen
  * shop does not carry — MS Natural Design still offered ribbons (43), bells (25) and toppers
@@ -655,7 +661,8 @@ async function loadCatalogCategories() {
   try {
     const shop = $("catalog-shop").value;
     const { categories } = await call(
-      `/api/catalog/categories?book=${encodeURIComponent(shop)}`
+      `/api/catalog/categories?book=${encodeURIComponent(shop)}` +
+        `&backdrop=${encodeURIComponent(pickerBackdrop())}`
     );
     // everything after the "ทุกหมวด" option is the previous shop's list
     while (select.options.length > 1) select.remove(1);
@@ -684,6 +691,7 @@ async function loadCatalogPage(restart) {
       `/api/catalog/search?q=${encodeURIComponent(catalogQuery)}` +
         `&category=${encodeURIComponent($("catalog-category").value)}` +
         `&book=${encodeURIComponent($("catalog-shop").value)}` +
+        `&backdrop=${encodeURIComponent(pickerBackdrop())}` +
         `&limit=${CATALOG_PAGE}&offset=${catalogCodesShown}`
     );
     if (restart) host.innerHTML = "";

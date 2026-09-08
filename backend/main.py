@@ -364,7 +364,7 @@ def api_catalog_shops():
 
 
 @app.get("/api/catalog/categories")
-def api_catalog_categories(book: str = ""):
+def api_catalog_categories(book: str = "", backdrop: str = ""):
     """The browsing categories and how many showable products each holds, so the picker can
     label its filters with real counts instead of offering an empty one.
 
@@ -375,7 +375,7 @@ def api_catalog_categories(book: str = ""):
     with nothing behind it in the chosen shop is now simply not offered.
     """
     counts = {}
-    for row in catalog.browse(10_000, 0, None, book or None)[0]:
+    for row in catalog.browse(10_000, 0, None, book or None, backdrop or None)[0]:
         key = catalog.category_of(row)
         counts[key] = counts.get(key, 0) + 1
     return {
@@ -388,7 +388,8 @@ def api_catalog_categories(book: str = ""):
 
 
 @app.get("/api/catalog/search")
-def api_catalog_search(q: str = "", category: str = "", book: str = "", limit: int = 60, offset: int = 0):
+def api_catalog_search(q: str = "", category: str = "", book: str = "", limit: int = 60,
+                       offset: int = 0, backdrop: str = ""):
     """Thumbnail picker for panel 2 — the catalogue photo alongside the code, so a decoration
     can be chosen without touching the filesystem.
 
@@ -397,6 +398,10 @@ def api_catalog_search(q: str = "", category: str = "", book: str = "", limit: i
     is what lets the browser say "showing 60 of 1252" and know whether to offer another page.
     Codes whose crop is shared by too many codes to identify any of them are left out of both
     paths — see catalog.crop_is_ambiguous.
+
+    `backdrop` narrows the offer to what can actually go on it (issue #23): a wreath is not
+    offered for a tree, an ornament is not offered for a wall. Empty means "no backdrop in
+    mind" and browses everything, which is what the tree picker and every older caller do.
     """
     if q.strip():
         matched = [
@@ -407,9 +412,14 @@ def api_catalog_search(q: str = "", category: str = "", book: str = "", limit: i
             matched = [row for row in matched if catalog.category_of(row) == category]
         if book:
             matched = [row for row in matched if row.get("book") == book]
+        if backdrop:
+            matched = [
+                row for row in matched
+                if catalog.suits_backdrop(catalog.category_of(row), backdrop)
+            ]
         rows, total = matched[offset : offset + limit], len(matched)
     else:
-        rows, total = catalog.browse(limit, offset, category or None, book or None)
+        rows, total = catalog.browse(limit, offset, category or None, book or None, backdrop or None)
 
     # one card per colour, not per code: a product photographed across its colour range is one
     # code with several pictures, and picking "the whole photo" would hand the generator every
@@ -978,7 +988,9 @@ def api_prepare(
     names = validation.element_count([e.strip() for e in element if e.strip()])
     paths = [_stored_path(name) for name in names]
 
-    tree_code = tree_code.strip()
+    # A wall or door is the shop's own photo, never a catalogue product, so it has no code to
+    # carry (issue #23) — dropping one sent anyway keeps an unvalidated string out of the row.
+    tree_code = tree_code.strip() if backdrop == "tree" else ""
     codes = [c.strip() for c in element_code][: len(paths)]
     codes += [""] * (len(paths) - len(codes))
     if any(codes) and not all(codes):
@@ -1005,9 +1017,22 @@ def api_prepare(
         if d:
             validation.resolve_density(d)  # fail fast, per item
 
-    scale, missing_sizes = catalog.scale_sentence(
-        tree_code, codes, tree_mm_override, element_mm_overrides
-    )
+    # Every element has to belong on the backdrop it was picked for (issue #23) — checked
+    # before the sizing below, since a wreath on a tree is wrong whatever its measurements say.
+    chosen, other = ("ต้นคริสต์มาส", "ผนัง/ประตู") if backdrop == "tree" else ("ผนัง/ประตู", "ต้นคริสต์มาส")
+    for code in codes:
+        if code and not catalog.suits_backdrop(catalog.category_of(catalog.find(code)), backdrop):
+            raise ValidationError(f"'{code}' เป็นของสำหรับ{other} ใส่กับ{chosen}ไม่ได้")
+
+    if backdrop == "tree":
+        scale, missing_sizes = catalog.scale_sentence(
+            tree_code, codes, tree_mm_override, element_mm_overrides
+        )
+    else:
+        # A wall or door is the shop's own photo, not a catalogue product, so there is no code
+        # to measure it by — nothing here can be exact, and the tree's all-or-nothing code
+        # rule has nothing to pair an element's code with (issue #23).
+        scale, missing_sizes = catalog.scale_sentence("", [], backdrop=backdrop)
     # A garland wraps once around the trunk (issue #20) — a second one has nowhere to wrap
     # that the first doesn't already occupy, the same way a duplicate element file is refused.
     wrapped = [c for c in codes if catalog.placement_of_code(c) == "wrapped"]
@@ -1117,10 +1142,16 @@ def api_generate(request_id: str):
             float(e["manual_mm"]) if e.get("manual_mm") not in (None, "") else None
             for e in elements
         ]
-        scale, _missing_sizes = catalog.scale_sentence(
-            row["tree_code"], [e.get("code") for e in elements],
-            tree_mm_override, element_mm_overrides,
-        )
+        # rows written before issue #22 have backdrop=NULL — they all decorated a tree
+        backdrop = row["backdrop"] or "tree"
+        if backdrop == "tree":
+            scale, _missing_sizes = catalog.scale_sentence(
+                row["tree_code"], [e.get("code") for e in elements],
+                tree_mm_override, element_mm_overrides,
+            )
+        else:
+            # no catalogue code measures a wall or door, same as at prepare time (issue #23)
+            scale, _missing_sizes = catalog.scale_sentence("", [], backdrop=backdrop)
 
         # Once the request is claimed it must reach a terminal state on every path, or it is
         # stranded at calling_api and can never be retried. So this catches everything, not
@@ -1147,8 +1178,6 @@ def api_generate(request_id: str):
         # wins outright, verbatim, over the whole density system above — it lands in exactly
         # the same {density} slot in the template (backend/services/image_gen.py:load_prompt),
         # which sits after the template's hard preservation rules, never before them.
-        # rows written before issue #22 have backdrop=NULL — they all decorated a tree
-        backdrop = row["backdrop"] or "tree"
         # Every DENSITY_PRESETS sentence counts decorations across a tree, so a wall/door gets
         # its own statement instead (issue #22). Prompt mode still wins over both.
         density_sentence = row["custom_prompt"] or (

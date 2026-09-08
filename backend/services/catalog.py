@@ -28,7 +28,7 @@ __all__ = [
     "auto_pool", "row_matches_tone", "label_for", "orphans", "pricing_queue",
     "overridden_fields", "product_detail", "resolve_image_path", "split_codes",
     "set_colour_split", "clear_colour_split", "colour_name", "supporting_photos",
-    "placement_of", "placement_of_code",
+    "placement_of", "placement_of_code", "suits_backdrop",
 ]
 
 
@@ -163,6 +163,26 @@ def placement_of_code(code):
     """A product code's placement — None for an empty code, one with no category, or a
     category with no placement (light, tree)."""
     return placement_of(category_of(find(code))) if code else None
+
+
+def suits_backdrop(category, backdrop):
+    """Whether this category belongs on this backdrop (issue #23).
+
+    A mounted category attaches flat to a surface and has nowhere to go on a tree; everything
+    else hangs, wraps or stands on the tree and has nothing to attach to on a wall.
+
+    No category at all — a photo the shop uploaded itself — is judged by neither rule and goes
+    on either: refusing it would take away the manual path that has always worked. A category
+    that simply has no placement (a light string) is a different case: it keeps exactly the
+    reach it has always had on a tree, and is not offered on a wall, where the only thing that
+    makes sense is something meant to be mounted.
+    """
+    if category is None:
+        return True
+    placement = placement_of(category)
+    if backdrop == "tree":
+        return placement != "mounted"
+    return placement == "mounted"
 
 
 @lru_cache(maxsize=1)
@@ -394,19 +414,23 @@ def _with_photos():
     return [row for row in _rows() if crop_is_showable(row["code"])]
 
 
-def browse(limit=60, offset=0, category=None, book=None):
+def browse(limit=60, offset=0, category=None, book=None, backdrop=None):
     """One page of the catalogue in printed order, plus how many pages' worth there are.
 
     Only the codes that have a photo worth showing: this backs a thumbnail grid, and a card
     showing the wrong thing is worse than no card. search() answers the empty query with
     nothing on purpose (it also backs a datalist, which must not swallow 1,300 rows), so
     browsing is asked here instead of by widening that.
+
+    `backdrop`, when given, keeps only what can go on it (issue #23) — see suits_backdrop.
     """
     rows = _with_photos()
     if category:
         rows = [row for row in rows if category_of(row) == category]
     if book:
         rows = [row for row in rows if row.get("book") == book]
+    if backdrop:
+        rows = [row for row in rows if suits_backdrop(category_of(row), backdrop)]
     return rows[offset : offset + limit], len(rows)
 
 
@@ -702,9 +726,17 @@ def require_size(row):
 _GENERIC_SCALE = (
     "Keep every copy in proportion to the tree, as if it were the real object hanging there."
 )
+# The same sentence for a wall or door (issue #23). The tree wording above is the only place a
+# wall generation would otherwise be told to size against a tree — and to imagine the
+# decoration hanging off one, which is exactly what the wall template forbids.
+_GENERIC_WALL_SCALE = (
+    "Keep every copy in proportion to the wall or door, as if it were the real object mounted "
+    "there."
+)
 
 
-def scale_sentence(tree_code, element_codes, tree_mm_override=None, element_mm_overrides=None):
+def scale_sentence(tree_code, element_codes, tree_mm_override=None, element_mm_overrides=None,
+                   backdrop="tree"):
     """The paragraph that replaces 'keep it in proportion' with actual numbers, for whichever
     codes the catalogue actually prints a size for.
 
@@ -733,7 +765,7 @@ def scale_sentence(tree_code, element_codes, tree_mm_override=None, element_mm_o
     overrides = [override for _code, override in paired]
 
     if not tree_code and not element_codes:
-        return (_GENERIC_SCALE, [])
+        return (_GENERIC_SCALE if backdrop == "tree" else _GENERIC_WALL_SCALE, [])
     if not tree_code or not element_codes:
         raise ValidationError(
             "ใส่รหัสสินค้าให้ทั้งต้นไม้และของตกแต่งทุกชิ้น หรือไม่ใส่เลยก็ได้ — "
