@@ -33,9 +33,13 @@ const state = {
   treeCode: null, // set only by the catalogue picker — an uploaded photo has no code
   treeSizeMm: null, // the tree code's catalogue size, or null if it has none (blocking gate)
   treeManualMm: null, // person-typed override when treeSizeMm is null
-  // {name, url, code, image, colours, sizeMm, manualMm, density} — one entry per accepted
+  treePrice: null, // the tree code's price, null = the book never printed one (issue #27)
+  treeTypedPrice: null, // one typed into that offer and saved — shown back, never a gate
+  // {name, url, code, image, colours, sizeMm, manualMm, price, density} — one entry per accepted
   // cut-out, up to MAX_ELEMENTS. sizeMm is the code's catalogue size (null = none, blocking
-  // gate); manualMm is a person-typed override; density is a DENSITY_PRESETS key, per item.
+  // gate); manualMm is a person-typed override; price is the code's price (null = unpriced,
+  // an offer to fill it in, never a gate) and typedPrice one filled into that offer;
+  // density is a DENSITY_PRESETS key, per item.
   // image is the catalogue colour photo this cutout came from (null for an uploaded photo);
   // colours is that product's other colours (issue #15), fetched once at accept time — null
   // unless the product actually has more than one, which is also the "offer a switcher" flag.
@@ -97,39 +101,92 @@ function refreshGenerateButton() {
 const DENSITY_LEVELS = ["light", "normal", "full"];
 const DENSITY_LABEL_TH = { light: "โปร่ง", normal: "ปกติ", full: "แน่น" };
 
+/* The markup both inline rows below share: a line of explanation, then a number field with its
+ * unit. Only what they have in common lives here — each keeps its own wording, its own reason
+ * for being hidden, and its own idea of when the typed value counts. */
+function buildInlineRow({ warnText, warnClass, unit, min, placeholder, value }) {
+  const row = document.createElement("div");
+  row.className = "size-input-row";
+  const warn = document.createElement("span");
+  warn.className = warnClass;
+  warn.textContent = warnText;
+  const input = document.createElement("input");
+  input.className = "input";
+  input.type = "number";
+  input.min = min;
+  input.placeholder = placeholder;
+  if (value != null) input.value = value;
+  const unitLabel = document.createElement("span");
+  unitLabel.className = "unit";
+  unitLabel.textContent = unit;
+  const field = document.createElement("div");
+  field.className = "size-input-field";
+  field.append(input, unitLabel);
+  row.append(warn, field);
+  return { row, input };
+}
+
 /* The blocking size-input row + density pill shared by the tree slot and every accepted
  * element — one small builder so the two call sites (renderTreeSizeGate, renderElements)
  * agree on markup and behaviour instead of drifting apart. */
 function buildSizeRow(sizeMm, manualMm, onInput) {
-  const row = document.createElement("div");
-  row.className = "size-input-row";
   if (sizeMm != null) {
-    row.hidden = true;
-    return row;
+    const hidden = document.createElement("div");
+    hidden.className = "size-input-row";
+    hidden.hidden = true;
+    return hidden;
   }
-  const warn = document.createElement("span");
-  const input = document.createElement("input");
-  input.className = "input";
-  input.type = "number";
-  input.min = "1";
-  input.placeholder = "เช่น 150";
-  if (manualMm != null) {
-    warn.className = "size-ok-text";
-    warn.textContent = `✓ ใช้ ${manualMm} มม. ในการคำนวณสัดส่วน`;
-    input.value = manualMm;
-  } else {
-    warn.className = "size-warn-text";
-    warn.textContent = "ระบบจะไม่เดาขนาดให้ — ใส่ขนาดจริงก่อนสร้างภาพ";
-  }
+  const { row, input } = buildInlineRow({
+    warnText: manualMm != null
+      ? `✓ ใช้ ${manualMm} มม. ในการคำนวณสัดส่วน`
+      : "ระบบจะไม่เดาขนาดให้ — ใส่ขนาดจริงก่อนสร้างภาพ",
+    warnClass: manualMm != null ? "size-ok-text" : "size-warn-text",
+    unit: "มม.", min: "1", placeholder: "เช่น 150", value: manualMm,
+  });
   input.addEventListener("input", () => onInput(input.value));
-  const unit = document.createElement("span");
-  unit.className = "unit";
-  unit.textContent = "มม.";
-  const field = document.createElement("div");
-  field.className = "size-input-field";
-  field.append(input, unit);
-  row.append(warn, field);
   return row;
+}
+
+/* The same inline treatment as the size row above, for a picked product the book never priced
+ * (issue #27) — the shop notices the gap here, mid-pick, and can close it without leaving for
+ * the pricing queue. Deliberately NOT a gate: a price has never been needed to make a picture
+ * (CONTEXT.md), so this never disables Generate, and skipping it costs nothing but a total.
+ * `onTyped` gets the raw string on `change` — not `input`, which would fire a save per
+ * keystroke — and does the saving, the same division of labour buildSizeRow has.
+ *
+ * `price` and `typedPrice` split the same way buildSizeRow's two do: a price the product
+ * already had hides the row entirely, while one typed here keeps it, showing what was saved.
+ * Both states are muted rather than a warning — this is an offer, not the blocking gate. */
+function buildPriceRow(code, price, typedPrice, onTyped) {
+  if (!code || price != null) {
+    const hidden = document.createElement("div");
+    hidden.className = "size-input-row";
+    hidden.hidden = true;
+    return hidden;
+  }
+  const { row, input } = buildInlineRow({
+    warnText: typedPrice != null
+      ? `✓ บันทึกราคา ${typedPrice} บาทแล้ว`
+      : "ยังไม่มีราคา — ใส่ตอนนี้ก็ได้ ไม่ใส่ก็สร้างภาพได้",
+    warnClass: "size-ok-text",
+    unit: "บาท", min: "0", placeholder: "ราคา", value: typedPrice,
+  });
+  input.addEventListener("change", () => {
+    if (input.value && Number(input.value) >= 0) onTyped(input.value);
+  });
+  return row;
+}
+
+/* One write path for a price however it was typed: the pricing queue's own endpoint, which is
+ * where this has always been stored (issue #27). Returns the price the server parsed, so the
+ * panel shows what was actually saved rather than what was typed at it. */
+async function savePrice(code, value) {
+  const body = new FormData();
+  body.append("price", value);
+  const saved = await call(`/api/catalog/pricing-queue/${encodeURIComponent(code)}/price`, {
+    method: "POST", body,
+  });
+  return saved.price;
 }
 
 /* A named colour reads by its name; one nobody has named yet (issue #14's seeding pass ran,
@@ -185,6 +242,14 @@ function renderTreeSizeGate() {
     renderTreeSizeGate();
     refreshGenerateButton();
   }));
+  host.append(buildPriceRow(state.treeCode, state.treePrice, state.treeTypedPrice, async (value) => {
+    try {
+      state.treeTypedPrice = await savePrice(state.treeCode, value);
+      renderTreeSizeGate();
+    } catch (err) {
+      showError(err.message);
+    }
+  }));
 }
 
 /* Swaps an accepted item's picture to another colour of the same product, in place (issue
@@ -200,6 +265,7 @@ async function switchColour(element, newImage) {
     element.name = result.element;
     element.image = newImage;
     element.sizeMm = result.size_mm;
+    element.price = result.price ?? null;  // same code, so the same price — kept in step
   } catch (err) {
     showError(err.message);
   }
@@ -261,6 +327,16 @@ function renderElements() {
       refreshGenerateButton();
     });
     item.append(sizeRow);
+    // no refreshGenerateButton: a price never gated anything, and filling one in must not
+    // start (issue #27)
+    item.append(buildPriceRow(element.code, element.price, element.typedPrice, async (value) => {
+      try {
+        element.typedPrice = await savePrice(element.code, value);
+        renderElements();
+      } catch (err) {
+        showError(err.message);
+      }
+    }));
     list.append(item);
   });
 
@@ -428,22 +504,27 @@ function refreshAutoSize() {
  * Product.md 8.2 wanted them so the prompt could state real millimetres; a code typed from
  * memory out of ~1,300 was always a wrong order waiting to happen. Settings is where a code
  * gets entered by hand, against the catalogue row it belongs to. */
-function showTreeCode(code, sizeMm = null) {
+function showTreeCode(code, sizeMm = null, price = null) {
   state.treeCode = code || null;
   state.treeSizeMm = code ? sizeMm : null;
   state.treeManualMm = null; // a new tree slot starts its own gate over from nothing
+  state.treePrice = code ? price : null;
+  state.treeTypedPrice = null;
   const badge = $("tree-code-badge");
   badge.textContent = code || "";
   badge.hidden = !code;
   renderTreeSizeGate();
 }
 
-function showElementCode(code, sizeMm = null, image = null) {
+function showElementCode(code, sizeMm = null, image = null, price = null) {
   const badge = $("element-code-badge");
   badge.textContent = code || "";
   badge.hidden = !code;
   $("element-preview").dataset.code = code || "";
   $("element-preview").dataset.sizeMm = code && sizeMm != null ? sizeMm : "";
+  // "" covers both "no code" and "priced at nothing yet" — the accepted item turns it back
+  // into null, which is what buildPriceRow reads as "offer to fill this in" (issue #27)
+  $("element-preview").dataset.price = code && price != null ? price : "";
   // Which colour photo this cutout came from (issue #15) — carried from here into the
   // accepted item so its card knows what to offer a colour switcher against. Empty for an
   // uploaded photo, which has no catalogue colours to switch between.
@@ -487,7 +568,7 @@ function showElementPreview(result, code = null, sizeMm = null, image = null) {
   $("element-preview-frame").hidden = false;
   $("element-actions").hidden = false;
   $("element-preview").dataset.name = result.element;
-  showElementCode(code, sizeMm, image);
+  showElementCode(code, sizeMm, image, result.price ?? null);
 }
 
 $("cut-btn").addEventListener("click", async () => {
@@ -810,7 +891,7 @@ async function useTreeFromCatalog(code, image) {
     $("tree-preview").src = result.tree_url;
     $("tree-preview-frame").hidden = false;
     $("tree-file").value = "";  // the picker's tree replaces whatever was uploaded
-    showTreeCode(code, result.size_mm);
+    showTreeCode(code, result.size_mm, result.price ?? null);
     try {
       const { width, height } = await imageDimensions(state.treeFile);
       state.treeRatio = width / height;
@@ -853,6 +934,8 @@ $("accept-btn").addEventListener("click", async () => {
     colours,
     sizeMm: code && preview.dataset.sizeMm ? Number(preview.dataset.sizeMm) : null,
     manualMm: null,
+    price: code && preview.dataset.price ? Number(preview.dataset.price) : null,
+    typedPrice: null,
     density: "normal",
   });
   // clear the slot so the next decoration starts from nothing

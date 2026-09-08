@@ -522,6 +522,10 @@ def api_element_from_catalog(code: str = Form(...), image: str = Form("")):
     return {
         "element": name, "element_url": _url(name),
         "size_mm": catalog.longest_side_mm(row),
+        # None means "the book never printed one" — the panel offers to fill it in on the spot
+        # (issue #27), the way it already does for a missing size. Unlike a size, it never
+        # blocks: a product with no price has always been fully usable for a picture.
+        "price": row.get("price"),
     }
 
 
@@ -544,6 +548,7 @@ def api_tree_from_catalog(code: str = Form(...), image: str = Form("")):
     return {
         "tree": name, "tree_url": _url(name),
         "size_mm": catalog.longest_side_mm(row),
+        "price": row.get("price"),  # same as the element slot's, issue #27
     }
 
 
