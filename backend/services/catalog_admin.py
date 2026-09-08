@@ -107,6 +107,31 @@ def add_product(code, size_raw, section, book, image_bytes, price=None):
 EDITABLE_FIELDS = ("size_raw", "size", "section", "book", "price")
 
 
+def set_pack_size(code, pack_size):
+    """How many pieces come in one pack of this product (issue #25), or None for one sold by
+    the piece.
+
+    A shop fact, never a book one — the books print a pack count in the size line when they
+    print it at all — so it lives in the overlay and survives a re-import like a price does.
+    Two is the smallest meaningful pack: a "pack of one" is a piece, and recording it would put
+    "1 pack (of 1)" on every line for nothing.
+    """
+    code = (code or "").strip().upper()
+    catalog.find(code)  # raises ValidationError on an unknown code
+    if pack_size is not None:
+        try:
+            pack_size = int(pack_size)
+        except (TypeError, ValueError):
+            raise ValidationError(f"จำนวนต่อแพ็ค '{pack_size}' ไม่ใช่จำนวนเต็ม")
+        if pack_size < 2:
+            raise ValidationError("จำนวนต่อแพ็คต้องเป็น 2 ชิ้นขึ้นไป — แพ็คละ 1 คือขายเป็นชิ้น")
+    shop_overlay.set_fields(
+        code, {"pack_size": pack_size} if pack_size else {}, speaks_for=("pack_size",)
+    )
+    catalog.refresh()
+    return {"code": code, "pack_size": pack_size}
+
+
 def update_product(code, size_raw, section, book, price=None):
     """Edit an existing product's fields.
 

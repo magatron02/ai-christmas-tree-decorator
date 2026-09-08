@@ -128,6 +128,7 @@ loadStatus();
 
 /* ---- catalogue admin: add, or click a row below to edit its fields/photo in place ---- */
 let editingCode = null;
+let editingPackSize = null; // what the product's pack size was when the form opened (issue #25)
 
 /* Which field name (from the API's "overridden" list) each input shows a "แก้โดยร้านแล้ว"
  * badge for — issue #11: the shop's own opinion, distinguished from the book's value. */
@@ -150,6 +151,8 @@ function enterEditMode(item) {
   $("cat-section").value = item.section || "";
   $("cat-book").value = item.book || "";
   $("cat-price").value = item.price ?? "";
+  $("cat-pack-size").value = item.pack_size ?? "";
+  editingPackSize = item.pack_size ?? null;
   $("cat-image").value = "";
   $("cat-image-hint").hidden = false;
   $("cat-photo-preview").src = item.image ? catalogImageUrl(item.image) : "";
@@ -165,8 +168,10 @@ function enterEditMode(item) {
 
 function exitEditMode() {
   editingCode = null;
+  editingPackSize = null;
   $("cat-code").disabled = false;
-  ["cat-code", "cat-size", "cat-section", "cat-book", "cat-price", "cat-image"].forEach((id) => ($(id).value = ""));
+  ["cat-code", "cat-size", "cat-section", "cat-book", "cat-price", "cat-pack-size", "cat-image"]
+    .forEach((id) => ($(id).value = ""));
   $("cat-image-hint").hidden = true;
   $("cat-photo-preview").hidden = true;
   $("cat-photo-preview").src = "";
@@ -478,8 +483,22 @@ $("cat-add").addEventListener("click", async () => {
       });
     }
 
+    // Its own endpoint, like the photo above: a pack size has no book value to be diffed
+    // against, so it does not travel with the fields that do (issue #25). Only sent when it
+    // actually says something — a blank field on a product that never had one is not an edit,
+    // and posting it anyway would write an empty overlay record for every product saved.
+    const packSize = $("cat-pack-size").value.trim();
+    if (packSize || editingPackSize) {
+      const packBody = new FormData();
+      packBody.append("pack_size", packSize);
+      await call(`/api/catalog/products/${encodeURIComponent(editingCode || saved.code)}/pack-size`, {
+        method: "POST", body: packBody,
+      });
+    }
+
     if (editingCode) exitEditMode();
-    else ["cat-code", "cat-size", "cat-section", "cat-book", "cat-price", "cat-image"].forEach((id) => ($(id).value = ""));
+    else ["cat-code", "cat-size", "cat-section", "cat-book", "cat-price", "cat-pack-size", "cat-image"]
+    .forEach((id) => ($(id).value = ""));
     showSavedState(saved);
     await loadRecentCatalog();
     await loadCatalogLists();

@@ -355,6 +355,8 @@ function resetRun() {
   $("out-result").hidden = true;
   $("result-actions").hidden = true;
   $("result-quantities").hidden = true;
+  $("result-stock").hidden = true;
+  $("stock-note").hidden = true;
   $("count-actions").hidden = true;
   $("count-note").hidden = true;
   $("result-empty").hidden = false;
@@ -383,6 +385,29 @@ function renderQuantities(target, quantities) {
     });
   }
   target.hidden = !shown;
+}
+
+/* How many packs to pull off the shelf for a finished run (issue #25) — the number a shop can
+ * actually order against, which a piece count is not when the product comes in boxes of ten.
+ *
+ * Only products sold by the pack appear here. A loose one has nothing to convert, and its
+ * piece estimate stays off this panel for the reason given where the count button is set up:
+ * it answers "how many fit on a tree this size", and the finished picture routinely does not
+ * honour that scale. The pack figure is not a reading of the picture either, which is what
+ * #stock-note says out loud. */
+function renderStock(elements) {
+  const list = $("result-stock");
+  list.innerHTML = "";
+  for (const element of elements || []) {
+    if (!element.quantity || !element.packs) continue;
+    const pieces = rangeText(element.quantity.low, element.quantity.high);
+    const li = document.createElement("li");
+    li.textContent = `${element.code}: ${packPhrase(element.packs)} — ประมาณ ${pieces} ชิ้น`;
+    list.append(li);
+  }
+  const shown = list.children.length > 0;
+  list.hidden = !shown;
+  $("stock-note").hidden = !shown;
 }
 
 function showTotals(totals) {
@@ -1199,6 +1224,9 @@ $("confirm-btn").addEventListener("click", async () => {
     // many fit on a tree this size" from the catalogue millimetres, and the picture routinely
     // does not honour that scale. Counting the picture itself is the button below.
     $("count-actions").hidden = false;
+    // What to pull off the shelf, which is a different question from what the picture shows —
+    // labelled as such, right where the shop finishes a job (issue #25).
+    renderStock(result.elements);
     $("download-btn").href = result.output_url;
     $("result-meta").textContent =
       `${result.request_id} · ${result.size} · ${result.usage ? result.usage.total_tokens.toLocaleString() + " โทเคน" : "ไม่ทราบต้นทุน"}`;

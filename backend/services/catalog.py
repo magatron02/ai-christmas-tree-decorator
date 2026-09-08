@@ -15,6 +15,7 @@ silently guessing — NonGoals.md 8 forbids inventing a dimension, not generatin
 """
 
 import json
+import math
 import re
 from functools import lru_cache
 
@@ -28,7 +29,8 @@ __all__ = [
     "auto_pool", "row_matches_tone", "label_for", "orphans", "pricing_queue",
     "overridden_fields", "product_detail", "resolve_image_path", "split_codes",
     "set_colour_split", "clear_colour_split", "colour_name", "supporting_photos",
-    "placement_of", "placement_of_code", "suits_backdrop", "is_offered",
+    "placement_of", "placement_of_code", "suits_backdrop", "is_offered", "packs_for",
+    "all_products",
 ]
 
 
@@ -100,6 +102,15 @@ def resolve_image_path(image):
 def image_path(code):
     """Absolute path to the picture on disk, or None."""
     return resolve_image_path(image_for(code))
+
+
+def all_products():
+    """Every product record, merged (ADR-0001) and in printed order — for a caller that wants
+    the whole catalogue rather than a page or a filtered view. The staff worksheet is the one
+    that needs this: it lists everything precisely because it is the fill-in-the-gaps sheet,
+    problem crops included, and reading the base file directly would show the book's blanks
+    over the shop's own answers."""
+    return list(_rows())
 
 
 def recent(n=20):
@@ -500,7 +511,24 @@ def auto_pool(category, tone_colours):
     return pool
 
 
-EDITABLE_DISPLAY_FIELDS = frozenset({"price", "size_raw", "section", "book"})
+EDITABLE_DISPLAY_FIELDS = frozenset({"price", "size_raw", "section", "book", "pack_size"})
+
+
+def packs_for(code, pieces):
+    """How many packs cover `pieces` of this product, or None if it is sold by the piece
+    (issue #25).
+
+    Rounded up, because nobody sells two thirds of a box: ten pieces out of a pack of six is
+    two packs. A product with no pack size returns None rather than a pack of one, so every
+    caller can tell "sold loose" from "sold in ones" without a special case. A code the
+    catalogue no longer has is sold loose as far as this is concerned, rather than an error —
+    a finished run outlives the rows it was made from.
+    """
+    row = _by_code().get((code or "").strip().upper())
+    pack_size = (row or {}).get("pack_size")
+    if not pack_size:
+        return None
+    return {"packs": math.ceil(pieces / pack_size), "pack_size": pack_size}
 
 
 def overridden_fields(code):
@@ -526,6 +554,7 @@ def product_detail(row):
         "code": row["code"], "image": image_for(row["code"]),
         "size_raw": row.get("size_raw"), "book": row.get("book"),
         "section": row.get("section"), "price": row.get("price"),
+        "pack_size": row.get("pack_size"),
         "category": category_of(row),
         "overridden": overridden_fields(row["code"]),
         "has_shop_photo": bool(shop_overlay.fields_for(row["code"]).get("shop_photo")),

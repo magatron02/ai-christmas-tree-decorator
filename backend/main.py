@@ -171,14 +171,41 @@ def _db():
     return request_log.connect()
 
 
+def _stock_for(tree_code, code):
+    """What to pull off the shelf for one item of a finished run (issue #25): how many pieces
+    that tree takes, and how many packs that is for a product sold by the pack.
+
+    Recomputed from the row's own codes rather than stored with the request: both numbers are
+    derived from catalogue facts the shop keeps correcting, and a pack size typed in today
+    should show on a run generated last week rather than the blank it was made with.
+    """
+    if not tree_code or not code:
+        return None, None
+    from backend.services import matching
+
+    try:
+        quantity = matching.suggest_quantity(tree_code, code)
+    except ValidationError:
+        return None, None  # no catalogue size for one of them; nothing is invented (NonGoals 8)
+    packs = catalog.packs_for(code, quantity["high"])
+    if packs:
+        packs = {"low": catalog.packs_for(code, quantity["low"])["packs"],
+                 "high": packs["packs"], "pack_size": packs["pack_size"]}
+    return quantity, packs
+
+
 def _row_json(row):
     elements = request_log.elements_of(row)
+    stock = [_stock_for(row["tree_code"], e.get("code")) for e in elements]
     return {
         "request_id": row["request_id"],
         "status": row["status"],
         "elements": [
-            {"url": _url(e["path"]), "code": e.get("code"), "colour": e.get("colour")}
-            for e in elements
+            {
+                "url": _url(e["path"]), "code": e.get("code"), "colour": e.get("colour"),
+                "quantity": quantity, "packs": packs,
+            }
+            for e, (quantity, packs) in zip(elements, stock)
         ],
         "reference_url": _url(row["reference_path"]),
         # billed is derived, not stored: a row that carries usage is a row that cost money,
@@ -593,6 +620,23 @@ def api_catalog_update(
         raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
 
     return catalog_admin.update_product(code, size_raw, section, book, price)
+
+
+@app.post("/api/catalog/products/{code}/pack-size")
+def api_catalog_set_pack_size(code: str, request: Request, pack_size: str = Form("")):
+    """How many pieces come in one pack of this product (issue #25). Its own endpoint rather
+    than a field on update_product: that one diffs every field against the book and would read
+    a form carrying only a pack size as "clear the size, section and book too", and a pack size
+    has no book counterpart to diff against in the first place. Blank clears it."""
+    from backend.services import catalog_admin, settings
+
+    if not settings.is_local(request):
+        raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
+
+    raw = (pack_size or "").strip()
+    if raw and not raw.isdigit():
+        raise ValidationError(f"จำนวนต่อแพ็ค '{raw}' ไม่ใช่จำนวนเต็ม")
+    return catalog_admin.set_pack_size(code, int(raw) if raw else None)
 
 
 @app.post("/api/catalog/products/{code}/photo")

@@ -77,15 +77,20 @@ function fileNameFrom(url) {
   return url ? url.split("/").pop() : null;
 }
 
-/* Code and colour, side by side (issue #16) — "4400-1, red" is what someone pulls stock
- * against, "4400-1" alone is not when the product was shot in six colours. A run recorded
- * before colours existed (or an item with no code at all) just shows the code, or nothing. */
+/* What to pull off the shelf for one item: the code, the colour it was shot in (issue #16 —
+ * "4400-1" alone is not enough when the product comes in six), and for a product sold by the
+ * pack, how many packs that is rather than a piece count nobody can order against (issue #25).
+ * A run recorded before colours existed, or an item with no code at all, shows what it has. */
+function stockLine(element) {
+  const name = element.colour ? `${element.code} (${element.colour})` : element.code;
+  const packs = packPhrase(element.packs);
+  return packs ? `${name} — ${packs}` : name;
+}
+
 function itemsCell(row, elements) {
   const td = document.createElement("td");
   const named = elements.filter((e) => e.code);
-  td.textContent = named.length
-    ? named.map((e) => (e.colour ? `${e.code} (${e.colour})` : e.code)).join(", ")
-    : "—";
+  td.textContent = named.length ? named.map(stockLine).join(", ") : "—";
   row.append(td);
 }
 

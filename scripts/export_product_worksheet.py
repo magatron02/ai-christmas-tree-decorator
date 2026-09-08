@@ -31,7 +31,7 @@ HEADER_FILL = PatternFill("solid", fgColor="2E4A3B")
 HEADER_FONT = Font(bold=True, color="FFFFFF")
 
 COLUMNS = ["#", "รหัสสินค้า", "รูปสินค้า", "หมวด", "ขนาด (ตามแคตตาล็อก)", "ขนาด (มม.)",
-           "ทรง", "สี", "ราคา (บาท)", "หมายเหตุ — พนักงานกรอกเพิ่ม"]
+           "ทรง", "สี", "ราคา (บาท)", "จำนวนต่อแพ็ค", "หมายเหตุ — พนักงานกรอกเพิ่ม"]
 
 
 def load_descriptions():
@@ -107,7 +107,10 @@ def thumbnail_bytes(path):
 
 
 def build():
-    rows = json.loads(catalog.config.CATALOG_PATH.read_text(encoding="utf-8"))
+    # merged records, not the base file: this sheet exists to be filled in, so showing the
+    # book's blank over a price or pack size the shop has already typed would ask for the same
+    # work twice (ADR-0001)
+    rows = catalog.all_products()
     descriptions = load_descriptions()
     groups = siblings_by_image(rows)
     split_codes = catalog.split_codes()
@@ -123,7 +126,7 @@ def build():
     ws.freeze_panes = "A2"
     ws.auto_filter.ref = f"A1:{get_column_letter(len(COLUMNS))}1"
 
-    widths = [4, 12, 26, 16, 16, 11, 12, 12, 12, 40]
+    widths = [4, 12, 26, 16, 16, 11, 12, 12, 12, 13, 40]
     for i, w in enumerate(widths, start=1):
         ws.column_dimensions[get_column_letter(i)].width = w
 
@@ -166,7 +169,7 @@ def build():
 
         note = ambiguous_note(code, groups)
         if note:
-            ws.cell(r, 10, note).fill = AMBER
+            ws.cell(r, 11, note).fill = AMBER
             ambiguous_count += 1
 
         ws.cell(r, 4, category or "")
@@ -194,6 +197,10 @@ def build():
         if price is None:
             price_cell.fill = RED
             missing_price += 1
+
+        # Blank means "sold by the piece", which is the normal case — so no red fill here:
+        # unlike a missing price this is an answer, not a gap (issue #25).
+        ws.cell(r, 10, row.get("pack_size"))
 
     wb.save(OUT_PATH)
     print(f"wrote {OUT_PATH} — {len(rows)} products")

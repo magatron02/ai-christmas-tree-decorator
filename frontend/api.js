@@ -25,3 +25,17 @@ async function call(url, options) {
 function catalogImageUrl(image) {
   return image.startsWith("/") ? image : `/catalog/${image}`;
 }
+
+/* "16–26" for a range, "16" when both ends agree — every count in this app comes from an
+ * estimate with two ends, and a range reading "16–16" looks like a bug rather than a
+ * certainty. */
+function rangeText(low, high) {
+  return low === high ? `${low}` : `${low}–${high}`;
+}
+
+/* "2–3 แพ็ค (แพ็คละ 10)" for a product sold by the box, or "" for one sold by the piece
+ * (issue #25). One phrasing shared by the result panel and the history table, so the two
+ * cannot drift into saying the same thing two ways. */
+function packPhrase(packs) {
+  return packs ? `${rangeText(packs.low, packs.high)} แพ็ค (แพ็คละ ${packs.pack_size})` : "";
+}
