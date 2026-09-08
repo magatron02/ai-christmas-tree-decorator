@@ -45,9 +45,9 @@ def test_a_split_products_colours_are_listed_with_their_names(client, temp_catal
     assert response.status_code == 200
     assert response.json() == {
         "colours": [
-            {"image": "variants/4400-1--1.png", "name": "แดง"},
-            {"image": "variants/4400-1--2.png", "name": "ทอง"},
-            {"image": "variants/4400-1--3.png", "name": None},
+            {"image": "variants/4400-1--1.png", "name": "แดง", "supporting": []},
+            {"image": "variants/4400-1--2.png", "name": "ทอง", "supporting": []},
+            {"image": "variants/4400-1--3.png", "name": None, "supporting": []},
         ]
     }
 

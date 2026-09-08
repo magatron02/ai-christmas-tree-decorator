@@ -562,6 +562,20 @@ function expandButton(src, alt) {
   return button;
 }
 
+// Visible when browsing, never pickable (issue #17) — only a peek at the first supporting
+// photo; the full set is managed from the settings page's find-and-correct screen.
+function moreButton(item) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "candidate-more";
+  button.textContent = `+${item.supporting.length} รูปเพิ่มเติม`;
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    openLightbox(catalogImageUrl(item.supporting[0]), item.code);
+  });
+  return button;
+}
+
 /* ---- catalogue picker: an alternate source for the same "element" slot ----
  * Skips the browser file upload entirely — the photo already lives on the server, so it
  * goes straight through the same rembg pipeline and lands in the same preview/accept flow.
@@ -602,6 +616,7 @@ function catalogCard(item) {
     card.append(renameButton(item, which));
   }
   if (item.image) card.append(expandButton(catalogImageUrl(item.image), item.code));
+  if (item.supporting && item.supporting.length) card.append(moreButton(item));
   card.addEventListener("click", () => catalogPickerCallback(item.code, item.image));
   return card;
 }

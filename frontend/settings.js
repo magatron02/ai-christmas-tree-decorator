@@ -160,6 +160,7 @@ function enterEditMode(item) {
   $("cat-edit-status").textContent = `กำลังแก้ไข ${item.code}`;
   $("cat-edit-cancel").hidden = false;
   showOverrides(item.overridden);
+  renderColourGallery(item.code); // async, fire-and-forget — the rest of the form doesn't wait on it
 }
 
 function exitEditMode() {
@@ -174,6 +175,135 @@ function exitEditMode() {
   $("cat-edit-status").hidden = true;
   $("cat-edit-cancel").hidden = true;
   showOverrides([]);
+  $("cat-colours").hidden = true;
+  $("cat-colours").innerHTML = "";
+}
+
+/* One colour's thumbnails: the main photo first (issue #17), then every supporting one —
+ * "browsing and editing" per AC5, never wired into anything the generator reads. Reuses the
+ * accepted-list's own thumb-wrap/thumb-code look rather than inventing a gallery style. */
+function colourPhotoThumb(code, image, isMain, onChanged) {
+  const wrap = document.createElement("div");
+  wrap.className = "thumb-wrap";
+  const img = document.createElement("img");
+  img.src = catalogImageUrl(image);
+  img.className = "checker";
+  img.alt = image;
+  wrap.append(img);
+  if (isMain) {
+    const badge = document.createElement("span");
+    badge.className = "thumb-code";
+    badge.textContent = "หลัก";
+    wrap.append(badge);
+  }
+
+  const actions = document.createElement("div");
+  actions.className = "btn-row";
+  if (!isMain) {
+    const makeMain = document.createElement("button");
+    makeMain.className = "btn";
+    makeMain.textContent = "ตั้งเป็นรูปหลัก";
+    makeMain.addEventListener("click", async () => {
+      $("cat-error").hidden = true;
+      try {
+        const body = new FormData();
+        body.append("image", image);
+        await call(`/api/catalog/products/${encodeURIComponent(code)}/main-photo`, {
+          method: "POST", body,
+        });
+        onChanged();
+      } catch (err) {
+        $("cat-error").textContent = err.message;
+        $("cat-error").hidden = false;
+      }
+    });
+    actions.append(makeMain);
+  }
+  const remove = document.createElement("button");
+  remove.className = "btn danger";
+  remove.textContent = "ลบ";
+  remove.addEventListener("click", async () => {
+    $("cat-error").hidden = true;
+    try {
+      await call(
+        `/api/catalog/products/${encodeURIComponent(code)}/photos?image=${encodeURIComponent(image)}`,
+        { method: "DELETE" },
+      );
+      onChanged();
+    } catch (err) {
+      $("cat-error").textContent = err.message;
+      $("cat-error").hidden = false;
+    }
+  });
+  actions.append(remove);
+
+  const cell = document.createElement("div");
+  cell.className = "stack";
+  cell.append(wrap, actions);
+  return cell;
+}
+
+async function renderColourGallery(code) {
+  const host = $("cat-colours");
+  host.innerHTML = "";
+  host.hidden = true;
+  if (!code) return;
+
+  let colours;
+  try {
+    ({ colours } = await call(`/api/catalog/products/${encodeURIComponent(code)}/colours`));
+  } catch {
+    return; // a lookup failure here shouldn't block the rest of the edit form
+  }
+  if (colours.length <= 1 || code !== editingCode) return; // stale response from a code the shop already navigated away from
+
+  host.hidden = false;
+  const title = document.createElement("span");
+  title.className = "section-title";
+  title.textContent = "รูปแต่ละสี";
+  host.append(title);
+
+  for (const colour of colours) {
+    const row = document.createElement("div");
+    row.className = "stack";
+    const label = document.createElement("span");
+    label.className = "hint";
+    label.textContent = colour.name || colour.image;
+    row.append(label);
+
+    const gallery = document.createElement("div");
+    gallery.className = "btn-row";
+    gallery.append(colourPhotoThumb(code, colour.image, true, () => renderColourGallery(code)));
+    for (const supporting of colour.supporting) {
+      gallery.append(colourPhotoThumb(code, supporting, false, () => renderColourGallery(code)));
+    }
+    row.append(gallery);
+
+    const addPhoto = document.createElement("input");
+    addPhoto.type = "file";
+    addPhoto.className = "input";
+    addPhoto.accept = "image/jpeg,image/png";
+    addPhoto.addEventListener("change", async () => {
+      const file = addPhoto.files[0];
+      if (!file) return;
+      $("cat-error").hidden = true;
+      try {
+        const body = new FormData();
+        body.append("main_image", colour.image);
+        body.append("image", file);
+        await call(`/api/catalog/products/${encodeURIComponent(code)}/photos`, {
+          method: "POST", body,
+        });
+        renderColourGallery(code);
+      } catch (err) {
+        $("cat-error").textContent = err.message;
+        $("cat-error").hidden = false;
+      }
+    });
+    row.append(addPhoto);
+
+    host.append(row);
+  }
 }
 
 $("cat-photo-clear").addEventListener("click", async (event) => {

@@ -426,6 +426,10 @@ def api_catalog_search(q: str = "", category: str = "", book: str = "", limit: i
                 # None until seeded/corrected (issue #14) — the picker falls back to
                 # "colour"/"colours" above (a position label) rather than inventing a name
                 "colour_name": catalog.colour_name(row["code"], image) if len(images) > 1 else None,
+                # Visible when browsing, never pickable (issue #17) — the picker sends only
+                # `image` (the main) through catalogPickerCallback; a supporting photo never
+                # reaches /api/element/from-catalog from here.
+                "supporting": catalog.supporting_photos(row["code"], image),
                 "size_raw": row["size_raw"],
                 "section": row["section"],
                 "category": catalog.category_of(row),
@@ -625,14 +629,61 @@ def api_catalog_find(code: str):
 def api_catalog_colours(code: str):
     """Every colour of one product, image and name (issue #15) — what an accepted
     decoration's switcher offers. A single-colour product returns exactly one entry, which is
-    the frontend's whole "offer no switcher" rule: nothing to switch to."""
+    the frontend's whole "offer no switcher" rule: nothing to switch to.
+
+    `supporting` (issue #17) is every other photo kept for that same colour — for browsing and
+    editing only. The switcher (issue #15) ignores the field entirely, since choosing a colour
+    still only ever picks its main; nothing here changes what /api/element/from-catalog will
+    accept.
+    """
     row = catalog.find(code)
     return {
         "colours": [
-            {"image": image, "name": catalog.colour_name(row["code"], image)}
+            {
+                "image": image, "name": catalog.colour_name(row["code"], image),
+                "supporting": catalog.supporting_photos(row["code"], image),
+            }
             for image in catalog.variants_of(row["code"])
         ]
     }
+
+
+@app.post("/api/catalog/products/{code}/photos")
+def api_add_supporting_photo(
+    code: str, request: Request, main_image: str = Form(...), image: UploadFile = File(...)
+):
+    """Add another photo for one of a product's colours (issue #17) — the back, a detail
+    shot, one that shows scale. Localhost only, same reasoning as every other catalogue
+    write."""
+    from backend.services import catalog_admin, settings
+
+    if not settings.is_local(request):
+        raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
+    data = _read(image, "Product photo")
+    fmt, _dimensions = validation.check_image(data, image.filename, image.content_type, "Product photo")
+    return catalog_admin.add_supporting_photo(code, main_image, data, fmt)
+
+
+@app.delete("/api/catalog/products/{code}/photos")
+def api_remove_photo(code: str, request: Request, image: str):
+    """Remove one photo, main or supporting (issue #17) — removing a main promotes a
+    supporting photo of the same colour to take its place. Localhost only."""
+    from backend.services import catalog_admin, settings
+
+    if not settings.is_local(request):
+        raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
+    return catalog_admin.remove_photo(code, image)
+
+
+@app.post("/api/catalog/products/{code}/main-photo")
+def api_set_main_photo(code: str, request: Request, image: str = Form(...)):
+    """Choose which of a colour's photos the generator gets, without removing anything (issue
+    #17) — the old main becomes a supporting photo of the same colour. Localhost only."""
+    from backend.services import catalog_admin, settings
+
+    if not settings.is_local(request):
+        raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
+    return catalog_admin.set_main_photo(code, image)
 
 
 @app.post("/api/catalog/products/{code}/clear-override")

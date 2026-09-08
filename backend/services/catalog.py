@@ -27,7 +27,7 @@ __all__ = [
     "scale_sentence", "image_for", "image_path", "recent", "parse_size", "shops",
     "auto_pool", "row_matches_tone", "label_for", "orphans", "pricing_queue",
     "overridden_fields", "product_detail", "resolve_image_path", "split_codes",
-    "set_colour_split", "clear_colour_split", "colour_name",
+    "set_colour_split", "clear_colour_split", "colour_name", "supporting_photos",
 ]
 
 
@@ -349,9 +349,17 @@ def variants_of(code):
     """
     colours = shop_overlay.fields_for(code).get("colours")
     if colours:
-        return [f"variants/{name}" for name in colours]
+        return [_qualify_colour_photo(name) for name in colours]
     image = image_for(code)
     return [image] if image else []
+
+
+def _qualify_colour_photo(entry):
+    """A `colours[]` entry is either a bare book-crop filename (the split's own output,
+    lives under catalog/images/variants/) or, once a main photo has been promoted from a
+    shop upload (issue #17), an already-absolute "/shop-photos/..." URL the same way
+    catalog.image_for() returns a shop photo. Only the bare case needs the prefix added."""
+    return entry if entry.startswith(("/", "variants/")) else f"variants/{entry}"
 
 
 @lru_cache(maxsize=1)
@@ -474,6 +482,17 @@ def colour_name(code, image):
     <file>"), so a caller can pass either straight through without stripping the prefix."""
     names = shop_overlay.fields_for(code).get("colour_names", {})
     return names.get(image.removeprefix("variants/"))
+
+
+def supporting_photos(code, main_image):
+    """Every extra photo kept for one colour (issue #17) — the back, a detail shot, one that
+    shows scale — for staff to browse and edit, never for the generator: catalog.variants_of()
+    is the only list /api/element/from-catalog will accept a pick from, and this is not it.
+    `main_image` is keyed the same way colour_name() is; empty when this colour has only its
+    one main photo."""
+    photos = shop_overlay.fields_for(code).get("supporting_photos", {})
+    stored = photos.get(main_image.removeprefix("variants/"), [])
+    return [_qualify_colour_photo(name) for name in stored]
 
 
 def orphans():

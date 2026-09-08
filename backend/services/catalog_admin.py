@@ -10,6 +10,7 @@ silently replacing a row is exactly that guess.
 """
 
 import json
+import uuid
 
 from backend import config
 from backend.services import catalog, shop_overlay
@@ -299,6 +300,135 @@ def set_colour_name(code, image, name_th):
     shop_overlay.set_fields(code, {"colour_names": names}, speaks_for=("colour_names",))
     catalog.refresh()
     return {"code": code, "image": f"variants/{filename}", "name_th": name_th}
+
+
+def _shop_photo_filename(fmt):
+    ext = config.FORMAT_EXT.get(fmt, "png")
+    return f"/shop-photos/{uuid.uuid4().hex}.{ext}"
+
+
+def _delete_shop_photo(image):
+    if image.startswith("/shop-photos/"):
+        (config.SHOP_PHOTOS_DIR / image.removeprefix("/shop-photos/")).unlink(missing_ok=True)
+
+
+def add_supporting_photo(code, main_image, image_bytes, fmt="PNG"):
+    """Add another photo for a colour that already has a main one (issue #17) — the back, a
+    detail shot, one that shows scale. Never becomes what the generator sees: catalog.
+    variants_of() (what /api/element/from-catalog validates a pick against) is built from
+    `colours` alone, and this only ever touches `supporting_photos`.
+
+    Stored under data/shop_photos/ like a shop photo (issue #12), for the same reason — a
+    re-import or reinstall must never be able to lose it.
+    """
+    code = (code or "").strip().upper()
+    catalog.find(code)  # raises ValidationError on an unknown code
+    main_key = main_image.removeprefix("variants/")
+    colours = shop_overlay.fields_for(code).get("colours") or []
+    if main_key not in colours:
+        raise ValidationError(f"'{main_image}' ไม่ใช่รูปหลักของสีไหนใน {code}")
+
+    filename = _shop_photo_filename(fmt)
+    config.SHOP_PHOTOS_DIR.mkdir(parents=True, exist_ok=True)
+    (config.SHOP_PHOTOS_DIR / filename.removeprefix("/shop-photos/")).write_bytes(image_bytes)
+
+    supporting = {
+        key: list(files)
+        for key, files in (shop_overlay.fields_for(code).get("supporting_photos") or {}).items()
+    }
+    supporting.setdefault(main_key, []).append(filename)
+    shop_overlay.set_fields(code, {"supporting_photos": supporting}, speaks_for=("supporting_photos",))
+    catalog.refresh()
+    return {"code": code, "image": filename}
+
+
+def _promote(colours, names, old_main, new_main):
+    """Swaps new_main into old_main's slot in `colours`, carrying the Thai name across — a
+    name belongs to whichever photo is currently main, not to a specific file. The shared
+    core of remove_photo's forced promotion and set_main_photo's deliberate one; both mutate
+    and return the same two structures they were given."""
+    colours[colours.index(old_main)] = new_main
+    if old_main in names:
+        names[new_main] = names.pop(old_main)
+    return colours, names
+
+
+def set_main_photo(code, image):
+    """Choose which of a colour's photos is main, without removing anything (issue #17, AC
+    "chosen by the shop") — the old main becomes a supporting photo of the same colour rather
+    than disappearing. A no-op if `image` is already the main."""
+    code = (code or "").strip().upper()
+    catalog.find(code)
+    key = image.removeprefix("variants/")
+    colours = list(shop_overlay.fields_for(code).get("colours") or [])
+    if key in colours:
+        return {"code": code}
+
+    supporting = {
+        k: list(v)
+        for k, v in (shop_overlay.fields_for(code).get("supporting_photos") or {}).items()
+    }
+    owner = next((main for main, files in supporting.items() if key in files), None)
+    if owner is None:
+        raise ValidationError(f"'{image}' ไม่ใช่รูปของ {code}")
+
+    remaining = [f for f in supporting.pop(owner) if f != key]
+    remaining.append(owner)  # the demoted main stays with its colour, as a supporting photo
+    names = dict(shop_overlay.fields_for(code).get("colour_names", {}))
+    colours, names = _promote(colours, names, owner, key)
+    supporting[key] = remaining
+
+    shop_overlay.set_fields(
+        code, {"colours": colours, "supporting_photos": supporting, "colour_names": names},
+        speaks_for=("colours", "supporting_photos", "colour_names"),
+    )
+    catalog.refresh()
+    return {"code": code}
+
+
+def remove_photo(code, image):
+    """Remove one photo of a colour, main or supporting (issue #17).
+
+    Removing the main promotes that colour's first supporting photo to take its place (see
+    _promote). Refuses to remove a colour's only photo rather than leaving it with none; add
+    another first if that colour genuinely needs replacing.
+    """
+    code = (code or "").strip().upper()
+    catalog.find(code)
+    key = image.removeprefix("variants/")
+    colours = list(shop_overlay.fields_for(code).get("colours") or [])
+    supporting = {
+        k: list(v)
+        for k, v in (shop_overlay.fields_for(code).get("supporting_photos") or {}).items()
+    }
+    names = dict(shop_overlay.fields_for(code).get("colour_names", {}))
+
+    if key in colours:
+        siblings = supporting.pop(key, [])
+        if not siblings:
+            raise ValidationError(
+                f"'{image}' เป็นรูปเดียวที่เหลือของสีนี้ใน {code} — เพิ่มรูปอื่นก่อนถึงจะลบรูปนี้ได้"
+            )
+        new_main, *rest = siblings
+        colours, names = _promote(colours, names, key, new_main)
+        if rest:
+            supporting[new_main] = rest
+        shop_overlay.set_fields(
+            code, {"colours": colours, "supporting_photos": supporting, "colour_names": names},
+            speaks_for=("colours", "supporting_photos", "colour_names"),
+        )
+    else:
+        owner = next((main for main, files in supporting.items() if key in files), None)
+        if owner is None:
+            raise ValidationError(f"'{image}' ไม่ใช่รูปของ {code}")
+        supporting[owner] = [f for f in supporting[owner] if f != key]
+        if not supporting[owner]:
+            del supporting[owner]
+        shop_overlay.set_fields(code, {"supporting_photos": supporting}, speaks_for=("supporting_photos",))
+
+    _delete_shop_photo(key)
+    catalog.refresh()
+    return {"code": code}
 
 
 def skip_pricing(code):
