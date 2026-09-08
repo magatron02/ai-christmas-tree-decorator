@@ -53,6 +53,11 @@ MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 # scripts/check_scale_and_ratio.py confirmed the real API accepts a 12-image request
 # (tree + 10 elements + reference) at full quality.
 MAX_ELEMENTS = 10
+
+# A grounded element (gift box, figure — CONTEXT.md, issue #21) sits in its own cluster at the
+# tree's foot, never on a branch, so it never competes with MAX_ELEMENTS for a hung slot. Kept
+# deliberately small: a cluster reads as a cluster only while it stays a handful of pieces.
+MAX_GROUNDED = 3
 ALLOWED_EXT = {".jpg", ".jpeg", ".png"}
 ALLOWED_MIME = {"image/jpeg", "image/png"}
 ALLOWED_FORMATS = {"JPEG", "PNG"}  # what Pillow reports after sniffing the actual bytes
@@ -129,26 +134,35 @@ ELEMENT_DENSITY_PHRASES = {
     ),
 }
 
-# What auto pick places on every tree: the same mix of categories and counts for every tone
-# and every tree size (ADR-0003). The tone decides which products fill these slots, never what
-# the slots are, and the tree's size does not enter into it — density already governs how
+# What auto pick hangs on every tree: the same mix of hung categories and counts for every
+# tone and every tree size (ADR-0003). The tone decides which products fill these slots, never
+# what the slots are, and the tree's size does not enter into it — density already governs how
 # thickly the result reads, and an uploaded tree photo has no known size to reason from.
 #
 # Lights and figures are deliberately absent. A light string is not a single hangable object
 # the compositor places well, and a figure is prominent enough to deserve being chosen on
-# purpose rather than arriving in a mix.
+# purpose rather than arriving in a mix. Grounded categories (gift boxes) are a separate pool,
+# AUTO_GROUNDED below — not hung, so not part of this recipe (issue #21).
 #
-# Ordered, and kept under MAX_ELEMENTS: this is the whole proposal, and the order is the order
-# the shop sees it in.
+# Ordered, and kept under MAX_ELEMENTS: this is the whole hung proposal, and the order is the
+# order the shop sees it in.
 AUTO_RECIPE = (
     ("ornament", 3),
     ("ribbon", 1),
     ("topper", 1),
     ("flower", 1),
     ("bell", 1),
-    ("giftbox", 1),
 )
 AUTO_RECIPE_TOTAL = sum(count for _category, count in AUTO_RECIPE)
+
+# The grounded half of auto pick's proposal (CONTEXT.md, issue #21) — its own pool, filled the
+# same way as AUTO_RECIPE but counted against MAX_GROUNDED, never MAX_ELEMENTS. A gift box was
+# in AUTO_RECIPE from the start; moving it here is a bug fix, not a change to what auto pick
+# proposes by default.
+AUTO_GROUNDED = (
+    ("giftbox", 1),
+)
+AUTO_GROUNDED_TOTAL = sum(count for _category, count in AUTO_GROUNDED)
 
 # Auto pick's colour-tone presets, reviewed as the 5-tone mockup. Colours are
 # free strings matched through matching._normalize()/COLOUR_BUCKETS, so no separate bucket

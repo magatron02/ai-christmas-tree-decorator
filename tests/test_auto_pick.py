@@ -53,7 +53,9 @@ def pick(client, **data):
 def test_config_offers_tones_and_the_recipe(client):
     body = client.get("/api/auto/config").json()
     assert {t["key"] for t in body["tones"]} == set(config.TONE_PRESETS)
-    assert [(r["category"], r["count"]) for r in body["recipe"]] == list(config.AUTO_RECIPE)
+    assert [(r["category"], r["count"]) for r in body["recipe"]] == (
+        list(config.AUTO_RECIPE) + list(config.AUTO_GROUNDED)
+    )
 
 
 def test_config_no_longer_asks_about_size_budget_or_category(client):
@@ -65,6 +67,14 @@ def test_config_no_longer_asks_about_size_budget_or_category(client):
 def test_the_recipe_fits_inside_the_element_ceiling():
     assert config.AUTO_RECIPE_TOTAL <= config.MAX_ELEMENTS
     assert config.AUTO_RECIPE_TOTAL == sum(count for _category, count in config.AUTO_RECIPE)
+
+
+def test_giftbox_is_grounded_not_hung():
+    """A gift box sits at the tree's foot, never on a branch (issue #21) — it belongs in the
+    grounded pool, not the hung recipe, and its own pool stays inside its own ceiling."""
+    assert "giftbox" not in dict(config.AUTO_RECIPE)
+    assert dict(config.AUTO_GROUNDED)["giftbox"] == 1
+    assert config.AUTO_GROUNDED_TOTAL <= config.MAX_GROUNDED
 
 
 # ---------------------------------------------------------------- pick

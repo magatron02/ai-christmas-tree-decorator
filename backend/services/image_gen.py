@@ -104,11 +104,15 @@ def describe_element_density(elements):
     items actually disagree does it build one line per item from ELEMENT_DENSITY_PHRASES,
     which is worded per-kind rather than as a whole-tree total.
 
-    A wrapped element (a garland, issue #20) has no density — it is not "how many", it is one
-    piece wrapped once — so it never enters this decision, even to break a tie between the
-    hung items around it.
+    A wrapped element (a garland, issue #20) or a grounded one (a gift box, a figure, issue
+    #21) has no density — the first is one piece wrapped once, the second is a cluster at the
+    tree's foot with its own count. Neither enters this decision, even to break a tie between
+    the hung items around them.
     """
-    hung = [element for element in elements if element.get("placement") != "wrapped"]
+    hung = [
+        element for element in elements
+        if element.get("placement") not in ("wrapped", "grounded")
+    ]
     keys = [element.get("density") or config.DEFAULT_DENSITY for element in hung]
     if len(set(keys)) <= 1:
         return config.DENSITY_PRESETS[keys[0] if keys else config.DEFAULT_DENSITY]
@@ -133,10 +137,29 @@ def describe_element_density(elements):
     return "\n".join(lines)
 
 
+# One override sentence per non-hung placement, keyed the same way catalog.PLACEMENTS is —
+# the extension point for each new placement the backdrops-and-placement epic adds (issue
+# #20's wrapped garland, #21's grounded gift box/figure; mounted joins once a wall/door
+# backdrop exists to mount it on).
+_PLACEMENT_OVERRIDES = {
+    "wrapped": (
+        "is a garland: ignore the rules above for it. Wrap it once around the tree's visible "
+        "trunk, following the trunk's own taper, rather than hanging it from a branch or "
+        "scattering several copies."
+    ),
+    "grounded": (
+        "does not hang from a branch: ignore the rules above for it. Place it on the ground "
+        "at the foot of the tree, in a small cluster with any other grounded copies, never "
+        "resting on or hanging from foliage."
+    ),
+}
+
+
 def describe_placement(elements):
     """The `{placement_notes}` addendum, exempting any element that does not hang from a
-    branch from the template's default Placement rules (issue #20's wrapped garland; more
-    placements join this as later sub-issues of the backdrops-and-placement epic land).
+    branch from the template's default Placement rules (issue #20's wrapped garland, issue
+    #21's grounded gift box/figure; more placements join this as later sub-issues of the
+    backdrops-and-placement epic land).
 
     `elements` carries an optional "placement" key per item, the same shape
     describe_element_density() reads "density" from. Empty for an all-hung generation, so the
@@ -145,11 +168,9 @@ def describe_placement(elements):
     # Image 1 is always the tree (describe_elements() calls the first decoration "the second
     # image"), so decoration n in this list is image n + 1 — start the count there, not at 1.
     lines = [
-        f"- The copy from image {n} is a garland: ignore the rules above for it. Wrap it "
-        "once around the tree's visible trunk, following the trunk's own taper, rather than "
-        "hanging it from a branch or scattering several copies."
+        f"- The copy from image {n} {_PLACEMENT_OVERRIDES[element['placement']]}"
         for n, element in enumerate(elements, 2)
-        if element.get("placement") == "wrapped"
+        if element.get("placement") in _PLACEMENT_OVERRIDES
     ]
     return "\n\n" + "\n".join(lines) if lines else ""
 

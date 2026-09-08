@@ -848,7 +848,7 @@ def api_auto_config():
         ],
         "recipe": [
             {"category": key, "label": catalog.label_for(key), "count": count}
-            for key, count in config.AUTO_RECIPE
+            for key, count in config.AUTO_RECIPE + config.AUTO_GROUNDED
         ],
     }
 
@@ -879,7 +879,7 @@ def api_auto_pick(tone: str = Form(...), exclude: list[str] = Form(default=[])):
     excluded = set(exclude)
     decorations, missing, short = [], [], {}
 
-    for category, wanted in config.AUTO_RECIPE:
+    for category, wanted in config.AUTO_RECIPE + config.AUTO_GROUNDED:
         pool = catalog.auto_pool(category, tone_colours)
         if not pool:
             missing.append(category)
@@ -901,7 +901,7 @@ def api_auto_pick(tone: str = Form(...), exclude: list[str] = Form(default=[])):
 
     return {
         "decorations": decorations,
-        "requested": config.AUTO_RECIPE_TOTAL,
+        "requested": config.AUTO_RECIPE_TOTAL + config.AUTO_GROUNDED_TOTAL,
         "missing": missing,
         "short": short,
     }
@@ -1012,6 +1012,22 @@ def api_prepare(
     if len(wrapped) > 1:
         raise ValidationError(
             f"เลือกการ์แลนด์ได้ครั้งละ 1 เส้นเท่านั้น — ตอนนี้เลือกมา {len(wrapped)} เส้น"
+        )
+    # A grounded item (gift box, figure — issue #21) sits in its own cluster at the tree's
+    # foot and never occupies a hung slot, so it is counted against its own ceiling here
+    # rather than against MAX_ELEMENTS. `codes` already has one entry per element, empty
+    # string for one with no code — those count as hung, same as before this ceiling split.
+    grounded_count = sum(1 for c in codes if catalog.placement_of_code(c) == "grounded")
+    hung_count = len(codes) - grounded_count
+    if hung_count > config.MAX_ELEMENTS:
+        raise ValidationError(
+            f"ใส่ของแขวนต้นได้มากสุด {config.MAX_ELEMENTS} ชิ้น — ตอนนี้ใส่มา {hung_count} ชิ้น "
+            "(ของตั้งพื้นอย่างกล่องของขวัญไม่นับรวมในนี้)"
+        )
+    if grounded_count > config.MAX_GROUNDED:
+        raise ValidationError(
+            f"ใส่ของตั้งพื้น (กล่องของขวัญ/ตุ๊กตา) ได้มากสุด {config.MAX_GROUNDED} ชิ้น — "
+            f"ตอนนี้ใส่มา {grounded_count} ชิ้น"
         )
     quantities = None
     if tree_code and all(codes):

@@ -37,13 +37,18 @@ def exactly_one(files, field):
 
 
 def element_count(elements):
-    """1 to MAX_ELEMENTS decorations per picture (Product.md 8.2)."""
+    """1 to MAX_ELEMENTS + MAX_GROUNDED decorations per picture (Product.md 8.2).
+
+    This is a structural ceiling only, checked before any code is known — a hung item and a
+    grounded item (issue #21) draw from separate pools with their own, tighter limits, checked
+    once their codes (and therefore placements) are known (backend/main.py's api_prepare).
+    """
     if not elements:
         raise ValidationError("ใส่ของตกแต่งอย่างน้อย 1 ชิ้นก่อนสร้างภาพ")
-    if len(elements) > config.MAX_ELEMENTS:
+    ceiling = config.MAX_ELEMENTS + config.MAX_GROUNDED
+    if len(elements) > ceiling:
         raise ValidationError(
-            f"เลือกของตกแต่งมา {len(elements)} ชิ้น แต่ใส่ในภาพเดียวได้มากสุด "
-            f"{config.MAX_ELEMENTS} ชิ้น"
+            f"เลือกของตกแต่งมา {len(elements)} ชิ้น แต่ใส่ในภาพเดียวได้มากสุด {ceiling} ชิ้น"
         )
     if len(set(elements)) != len(elements):
         raise ValidationError("ใส่ของตกแต่งชิ้นเดิมซ้ำ แต่ละชิ้นใส่ได้ครั้งเดียว")
