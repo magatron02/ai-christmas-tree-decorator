@@ -28,7 +28,7 @@ __all__ = [
     "auto_pool", "row_matches_tone", "label_for", "orphans", "pricing_queue",
     "overridden_fields", "product_detail", "resolve_image_path", "split_codes",
     "set_colour_split", "clear_colour_split", "colour_name", "supporting_photos",
-    "placement_of",
+    "placement_of", "placement_of_code",
 ]
 
 
@@ -157,6 +157,12 @@ assert {key for key, _label, _needles in CATEGORIES} == set(PLACEMENTS) | NO_PLA
 def placement_of(category):
     """The category's placement, or None when it has none (light, tree) or isn't recognised."""
     return PLACEMENTS.get(category)
+
+
+def placement_of_code(code):
+    """A product code's placement — None for an empty code, one with no category, or a
+    category with no placement (light, tree)."""
+    return placement_of(category_of(find(code))) if code else None
 
 
 @lru_cache(maxsize=1)

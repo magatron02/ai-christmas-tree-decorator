@@ -21,7 +21,7 @@ Placement
   branch, slightly tucked into the foliage, never floating in front of the tree or in mid-air.
 - Vary the depth. Some copies sit closer to the trunk and are partly hidden by branches.
 - Work around the tree that is there. Do not add, move or thicken branches to make a copy sit
-  better.
+  better.{placement_notes}
 
 Density
 - {density}

@@ -1006,6 +1006,13 @@ def api_prepare(
     scale, missing_sizes = catalog.scale_sentence(
         tree_code, codes, tree_mm_override, element_mm_overrides
     )
+    # A garland wraps once around the trunk (issue #20) — a second one has nowhere to wrap
+    # that the first doesn't already occupy, the same way a duplicate element file is refused.
+    wrapped = [c for c in codes if catalog.placement_of_code(c) == "wrapped"]
+    if len(wrapped) > 1:
+        raise ValidationError(
+            f"เลือกการ์แลนด์ได้ครั้งละ 1 เส้นเท่านั้น — ตอนนี้เลือกมา {len(wrapped)} เส้น"
+        )
     quantities = None
     if tree_code and all(codes):
         from backend.services import matching
@@ -1110,20 +1117,26 @@ def api_generate(request_id: str):
         # otherwise an old row that explicitly chose "full" would silently regenerate as
         # "normal" the next time it was reused.
         fallback_density = row["density"] or config.DEFAULT_DENSITY
-        elements_for_density = [
-            {**e, "density": e.get("density") or fallback_density} for e in elements
+        elements_for_prompt = [
+            {
+                **e,
+                "density": e.get("density") or fallback_density,
+                "placement": catalog.placement_of_code(e.get("code")),
+            }
+            for e in elements
         ]
         # Prompt mode: a free-text description the shop typed instead of picking a density
         # wins outright, verbatim, over the whole density system above — it lands in exactly
         # the same {density} slot in the template (backend/services/image_gen.py:load_prompt),
         # which sits after the template's hard preservation rules, never before them.
-        density_sentence = row["custom_prompt"] or image_gen.describe_element_density(elements_for_density)
+        density_sentence = row["custom_prompt"] or image_gen.describe_element_density(elements_for_prompt)
+        placement_notes = image_gen.describe_placement(elements_for_prompt)
 
         try:
             output, usage = image_gen.generate(
                 tree_path.read_bytes(),
                 [path.read_bytes() for path in element_paths],
-                width, height, scale, reference_bytes, density_sentence,
+                width, height, scale, reference_bytes, density_sentence, placement_notes,
             )
             name = _store(output, "output", "png")
         except Exception as exc:
