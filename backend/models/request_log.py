@@ -95,10 +95,12 @@ def create(conn, tree_path, elements, size, tree_code=None, reference_path=None,
            tree_manual_mm=None, custom_prompt=None):
     """`elements` is a list of {"path": ..., "code": ...}, one to MAX_ELEMENTS of them —
     each entry may also carry "manual_mm" (a person-supplied real size, when the code's
-    catalogue row has none) and "density" (a per-item DENSITY_PRESETS key); both optional,
-    read back by elements_of() callers via plain dict access so old rows without them still
-    work. `tree_manual_mm` is the same idea for the tree slot. `custom_prompt` is Prompt
-    mode's free-text description, or None/"" for every other mode."""
+    catalogue row has none), "density" (a per-item DENSITY_PRESETS key), and "colour" (the
+    Thai name of the colour photo this item is, issue #16); all optional, read back by
+    elements_of() callers via plain dict access so old rows written before any of them existed
+    still work — a row with no "colour" key just has none to show. `tree_manual_mm` is the
+    same idea for the tree slot. `custom_prompt` is Prompt mode's free-text description, or
+    None/"" for every other mode."""
     request_id = uuid.uuid4().hex
     stamp = now()
     first = elements[0]

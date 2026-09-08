@@ -176,7 +176,10 @@ def _row_json(row):
     return {
         "request_id": row["request_id"],
         "status": row["status"],
-        "elements": [{"url": _url(e["path"]), "code": e.get("code")} for e in elements],
+        "elements": [
+            {"url": _url(e["path"]), "code": e.get("code"), "colour": e.get("colour")}
+            for e in elements
+        ],
         "reference_url": _url(row["reference_path"]),
         # billed is derived, not stored: a row that carries usage is a row that cost money,
         # so there is no flag that can disagree with the record of what happened
@@ -862,6 +865,7 @@ def api_prepare(
     density: str = Form(config.DEFAULT_DENSITY),
     tree_code: str = Form(""),
     element_code: list[str] = Form(default=[]),
+    element_image: list[str] = Form(default=[]),
     reference: str = Form(""),
     tree_manual_mm: str = Form(""),
     element_manual_mm: list[str] = Form(default=[]),
@@ -889,6 +893,14 @@ def api_prepare(
 
     `custom_prompt` (Prompt mode) wins outright over both `density` and `element_density` at
     generate time when non-empty — see /api/generate's own comment on this.
+
+    `element_image` (issue #16) names which colour photo an item is, positional the same way,
+    resolved here into a Thai colour name (catalog.colour_name) rather than storing the
+    picker's raw filename — the history and the staff worksheet want the same word a shop
+    assistant would say, not "4400-1--5.png". A code with no colour, or one that resolves to
+    nothing, simply records no colour rather than guessing (NonGoals.md 8) — the
+    count-what-is-in-the-picture feature (image_gen.count_decorations) reads a finished photo
+    and has no catalogue element to attach this to either way, so it is untouched by this.
 
     `size == "auto"` means "match the scene reference photo's own ratio" — resolved here into
     a concrete WxH via fit_custom_size(scene_ratio) and stored as that literal string, so
@@ -921,6 +933,11 @@ def api_prepare(
             "ของตกแต่งบางชิ้นใส่รหัส บางชิ้นไม่ใส่ — ใส่รหัสให้ครบทุกชิ้น หรือไม่ใส่เลยก็ได้ "
             "ใส่บางส่วนคำนวณขนาดจริงไม่ได้"
         )
+    # Resolved from the catalogue, never trusted as freeform text (issue #16): a stale or
+    # tampered image value just fails to name a colour rather than recording an invented one.
+    images = [i.strip() for i in element_image][: len(paths)]
+    images += [""] * (len(paths) - len(images))
+    colours = [catalog.colour_name(c, i) if c and i else None for c, i in zip(codes, images)]
 
     tree_mm_override = validation.parse_manual_mm(tree_manual_mm, "ขนาดต้นไม้ (กรอกเอง)")
     manual_mm = [m.strip() for m in element_manual_mm][: len(paths)]
@@ -962,10 +979,11 @@ def api_prepare(
         {
             "path": p.name,
             "code": c or None,
+            "colour": colour,
             "manual_mm": mm,
             "density": d or density,
         }
-        for p, c, mm, d in zip(paths, codes, element_mm_overrides, densities)
+        for p, c, colour, mm, d in zip(paths, codes, colours, element_mm_overrides, densities)
     ]
 
     conn = _db()

@@ -110,6 +110,7 @@ def build():
     rows = json.loads(catalog.config.CATALOG_PATH.read_text(encoding="utf-8"))
     descriptions = load_descriptions()
     groups = siblings_by_image(rows)
+    split_codes = catalog.split_codes()
 
     wb = Workbook()
     ws = wb.active
@@ -137,7 +138,17 @@ def build():
         mm = catalog.longest_side_mm(row)
         category = catalog.category_of(row)
         shape = attrs.get("shape") or ""
-        colour = attrs.get("primary_colour") or ""
+        # A colour-split code's own colour names (issue #16, ADR-0002) — this is what staff
+        # order against, not the single AI-guessed colour a whole colour strip describes as
+        # one thing. Only a split code has more than one photo to name in the first place.
+        split = catalog.variants_of(code) if code in split_codes else []
+        if split:
+            colour = ", ".join(
+                catalog.colour_name(code, image) or f"สี {position + 1}"
+                for position, image in enumerate(split)
+            )
+        else:
+            colour = attrs.get("primary_colour") or ""
         price = row.get("price")
 
         ws.cell(r, 1, i)

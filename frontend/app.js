@@ -1020,6 +1020,10 @@ $("generate-btn").addEventListener("click", async () => {
     for (const element of state.elements) {
       body.append("element", element.name);
       body.append("element_code", exact ? element.code : "");
+      // Travels with the code, never without it (issue #16) — a colour is only meaningful
+      // paired with the product it names one photo of (ADR-0002), same "all codes or none"
+      // gate `exact` already applies to element_code above.
+      body.append("element_image", exact ? (element.image || "") : "");
       body.append("element_manual_mm", element.manualMm != null ? String(element.manualMm) : "");
       body.append("element_density", element.density || "");
     }

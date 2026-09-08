@@ -77,6 +77,18 @@ function fileNameFrom(url) {
   return url ? url.split("/").pop() : null;
 }
 
+/* Code and colour, side by side (issue #16) — "4400-1, red" is what someone pulls stock
+ * against, "4400-1" alone is not when the product was shot in six colours. A run recorded
+ * before colours existed (or an item with no code at all) just shows the code, or nothing. */
+function itemsCell(row, elements) {
+  const td = document.createElement("td");
+  const named = elements.filter((e) => e.code);
+  td.textContent = named.length
+    ? named.map((e) => (e.colour ? `${e.code} (${e.colour})` : e.code)).join(", ")
+    : "—";
+  row.append(td);
+}
+
 async function load() {
   let data;
   try {
@@ -99,6 +111,7 @@ async function load() {
     cell(row, request.created_at, "mono");
     cell(row, request.request_id.slice(0, 8), "mono");
     cell(row, request.size, "mono");
+    itemsCell(row, request.elements);
 
     const state = document.createElement("td");
     const chip = document.createElement("span");
