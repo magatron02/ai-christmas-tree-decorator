@@ -268,6 +268,39 @@ def clear_override(code, field):
     return {"code": code, **_saved_state(code)}
 
 
+def set_colour_name(code, image, name_th):
+    """Seed or correct one colour photo's Thai name (issue #14, ADR-0002) — a colour is a
+    named photo, not a code of its own, so the name lives per photo, not per product.
+
+    Read-modify-write, not a plain overwrite: shop_overlay.set_fields replaces a field's whole
+    value, and a code's `colour_names` holds every one of its photos' names in one dict, so
+    correcting a single photo must not erase the others.
+
+    Never gates on catalog.find(code) the way a pricing write does — a colour split, and now
+    its names, are kept for an orphaned code exactly like every other overlay opinion (issue
+    #9), so a code the current book has dropped can still be named ahead of a future re-import
+    that brings it back. The membership check that matters is narrower and free: a photo must
+    actually be one of this code's own `colours`, which also catches a code that was never
+    split (or never existed) at all — a typo in the filename must not silently create a
+    dangling name nothing ever shows.
+    """
+    code = (code or "").strip().upper()
+    name_th = (name_th or "").strip()
+    if not name_th:
+        raise ValidationError("ใส่ชื่อสีด้วย")
+
+    filename = image.removeprefix("variants/")
+    colours = shop_overlay.fields_for(code).get("colours") or []
+    if filename not in colours:
+        raise ValidationError(f"'{image}' ไม่ใช่รูปสีของ {code}")
+
+    names = dict(shop_overlay.fields_for(code).get("colour_names", {}))
+    names[filename] = name_th
+    shop_overlay.set_fields(code, {"colour_names": names}, speaks_for=("colour_names",))
+    catalog.refresh()
+    return {"code": code, "image": f"variants/{filename}", "name_th": name_th}
+
+
 def skip_pricing(code):
     """Mark a product as one the shop will never price (issue #10) — it leaves the queue for
     good, but stays exactly as usable everywhere else: auto_pool never looks at price

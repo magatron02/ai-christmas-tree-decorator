@@ -464,6 +464,32 @@ function openLightbox(src, alt) {
 
 $("lightbox-close").addEventListener("click", () => $("lightbox-dialog").close());
 
+function renameButton(item, label) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "candidate-rename";
+  button.setAttribute("aria-label", "แก้ชื่อสี");
+  button.textContent = "✎";
+  button.addEventListener("click", async (event) => {
+    event.stopPropagation();
+    const typed = prompt("ชื่อสีนี้ (ภาษาไทย)", item.colour_name || "");
+    if (!typed || !typed.trim()) return;
+    try {
+      const body = new FormData();
+      body.append("image", item.image);
+      body.append("name_th", typed.trim());
+      await call(`/api/catalog/products/${encodeURIComponent(item.code)}/colour-name`, {
+        method: "POST", body,
+      });
+      item.colour_name = typed.trim();
+      label.textContent = item.colour_name;
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+  return button;
+}
+
 function expandButton(src, alt) {
   const button = document.createElement("button");
   button.type = "button";
@@ -508,10 +534,13 @@ function catalogCard(item) {
   card.append(photo, code);
   // the same code appears once per colour, so the card has to say which one it is
   if (item.colours > 1) {
+    // Named once a shop has run/corrected the seeding pass (issue #14); falls back to a
+    // plain position label for a colour nobody has named yet — never invented.
     const which = document.createElement("div");
     which.className = "why";
-    which.textContent = `สี ${item.colour} จาก ${item.colours}`;
+    which.textContent = item.colour_name || `สี ${item.colour} จาก ${item.colours}`;
     card.append(which);
+    card.append(renameButton(item, which));
   }
   if (item.image) card.append(expandButton(catalogImageUrl(item.image), item.code));
   card.addEventListener("click", () => catalogPickerCallback(item.code, item.image));

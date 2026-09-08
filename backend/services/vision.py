@@ -68,6 +68,25 @@ CATALOGUE_PROMPT = (
     "packaging accordingly. Describe only what is visible; do not guess a size."
 )
 
+
+class ColourName(BaseModel):
+    name_th: str = Field(
+        description="the colour of this item, in Thai, the way a shop assistant would say it "
+        "out loud to a customer — one word or a short phrase, e.g. แดง, เขียวเข้ม, ทองแชมเปญ"
+    )
+
+
+# One product code photographed across its whole colour range, split into one photo per
+# colour (ADR-0002) — this names the colour in THIS one photo, never the product itself, and
+# never in English: the name is for a shop assistant to say and a customer to hear, not a
+# database key.
+COLOUR_NAME_PROMPT = (
+    "This is one photo of a single Christmas decoration, cropped from a strip that shows the "
+    "same product across several colours. Name only the colour of the item in THIS photo, in "
+    "Thai — the way a shop assistant would say it when a customer points at this exact one. "
+    "One word or a short phrase, not a sentence, and not the product's name or kind."
+)
+
 REFERENCE_PROMPT = (
     "This is a customer's photo of a decorated Christmas tree or display. List the distinct "
     "kinds of decoration hanging on or placed around it — one entry per kind, not per copy. "
@@ -179,6 +198,24 @@ def describe(image_bytes, prompt, mime="image/png"):
 
 def describe_catalogue_photo(image_bytes, mime="image/png"):
     return describe(image_bytes, CATALOGUE_PROMPT, mime)
+
+
+def name_colour(image_bytes, mime="image/png"):
+    """Returns (ColourName, usage) — issue #14's seeding pass, one call per colour photo. A
+    separate call from describe_catalogue_photo: that one describes a whole colour strip in
+    one go (one primary colour plus a list of others) and cannot say which photo is which."""
+    response = _client().responses.parse(
+        model=config.VISION_MODEL,
+        input=[{"role": "user", "content": [{"type": "input_text", "text": COLOUR_NAME_PROMPT},
+                                            _image_part(image_bytes, mime)]}],
+        text_format=ColourName,
+    )
+    usage = response.usage
+    return response.output_parsed, {
+        "input_tokens": usage.input_tokens,
+        "output_tokens": usage.output_tokens,
+        "total_tokens": usage.total_tokens,
+    }
 
 
 def describe_reference(image_bytes, mime="image/png"):

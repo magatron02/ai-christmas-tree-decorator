@@ -420,6 +420,9 @@ def api_catalog_search(q: str = "", category: str = "", book: str = "", limit: i
                 "image": image,
                 "colour": index + 1 if len(images) > 1 else None,
                 "colours": len(images),
+                # None until seeded/corrected (issue #14) — the picker falls back to
+                # "colour"/"colours" above (a position label) rather than inventing a name
+                "colour_name": catalog.colour_name(row["code"], image) if len(images) > 1 else None,
                 "size_raw": row["size_raw"],
                 "section": row["section"],
                 "category": catalog.category_of(row),
@@ -625,6 +628,19 @@ def api_catalog_clear_override(code: str, request: Request, field: str = Form(..
         raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
     catalog_admin.clear_override(code, field)
     return catalog.product_detail(catalog.find(code))
+
+
+@app.post("/api/catalog/products/{code}/colour-name")
+def api_catalog_set_colour_name(
+    code: str, request: Request, image: str = Form(...), name_th: str = Form(...)
+):
+    """Seed or correct one colour photo's Thai name (issue #14). Localhost only, same
+    reasoning as every other catalogue write."""
+    from backend.services import catalog_admin, settings
+
+    if not settings.is_local(request):
+        raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
+    return catalog_admin.set_colour_name(code, image, name_th)
 
 
 @app.post("/api/catalog/sync")

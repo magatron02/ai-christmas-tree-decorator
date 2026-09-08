@@ -137,3 +137,12 @@ def fake_vision(monkeypatch):
     spy = Spy(result=(vision.DecorationList(decorations=[FAKE_DECORATION]), FAKE_VISION_USAGE))
     monkeypatch.setattr(vision, "describe_catalogue_photo", spy)
     return spy
+
+
+@pytest.fixture
+def fake_colour_name(monkeypatch):
+    """Same seam, for issue #14's colour-naming pass — one call per colour photo, never a
+    real one in a test."""
+    spy = Spy(result=(vision.ColourName(name_th="แดง"), FAKE_VISION_USAGE))
+    monkeypatch.setattr(vision, "name_colour", spy)
+    return spy

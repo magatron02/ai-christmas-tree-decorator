@@ -587,10 +587,10 @@ select.select-native {
 .candidate .chip { padding: var(--space-1) var(--space-2); font-size: var(--text-xs); margin-top: var(--space-2) }
 /* a full-size look at one photo before deciding — a corner button rather than the whole card,
    since the card's own click already means "use this one" (or is inert on a match result) */
-.candidate-expand {
+.candidate-expand,
+.candidate-rename {
   position: absolute;
   top: var(--space-1);
-  right: var(--space-1);
   background: var(--thumb-code-bg);
   color: var(--thumb-code-text);
   border: none;
@@ -601,8 +601,14 @@ select.select-native {
   transition: opacity var(--transition-gentle);
   cursor: pointer;
 }
+.candidate-expand { right: var(--space-1) }
+/* Opposite corner from .candidate-expand — a colour card's "correct this name" action
+   (issue #14), never shown on a card with only one colour. */
+.candidate-rename { left: var(--space-1) }
 .candidate:hover .candidate-expand,
-.candidate-expand:focus-visible {
+.candidate-expand:focus-visible,
+.candidate:hover .candidate-rename,
+.candidate-rename:focus-visible {
   opacity: 1;
 }
 /* loading placeholder for the picker grid — same footprint as a real card, so the grid

@@ -27,7 +27,7 @@ __all__ = [
     "scale_sentence", "image_for", "image_path", "recent", "parse_size", "shops",
     "auto_pool", "row_matches_tone", "label_for", "orphans", "pricing_queue",
     "overridden_fields", "product_detail", "resolve_image_path", "split_codes",
-    "set_colour_split", "clear_colour_split",
+    "set_colour_split", "clear_colour_split", "colour_name",
 ]
 
 
@@ -465,6 +465,15 @@ def set_colour_split(code, names):
 def clear_colour_split(code):
     """Drop a code's colour-split opinion, returning it to its single image."""
     shop_overlay.set_fields(code, {}, speaks_for=("colours",))
+
+
+def colour_name(code, image):
+    """The Thai name of one colour photo (issue #14, ADR-0002), or None if it has not been
+    named yet — the picker falls back to a position label ("สี 2 จาก 6") in that case, never
+    inventing a name. `image` is keyed the same way variants_of() returns it ("variants/
+    <file>"), so a caller can pass either straight through without stripping the prefix."""
+    names = shop_overlay.fields_for(code).get("colour_names", {})
+    return names.get(image.removeprefix("variants/"))
 
 
 def orphans():
