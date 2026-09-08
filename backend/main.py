@@ -846,26 +846,46 @@ def api_analyse_reference(name: str, tree_code: str = ""):
 
 
 @app.get("/api/auto/config")
-def api_auto_config():
+def api_auto_config(backdrop: str = ""):
     """What auto pick offers: the tone presets, and the recipe it will fill (ADR-0003).
 
     No tree heights, no category picker, no budget: the shop is asked for a tone and nothing
-    else, and the recipe is the same for every tone and every tree.
+    else, and the recipe is the same for every tone and every backdrop of a kind.
+
+    `backdrop` (issue #24) chooses which recipe that is — the hung-and-grounded mix for a
+    tree, the mounted one for a wall or door.
+
+    On a wall or door, a tone with nothing behind it is not offered at all: that recipe is two
+    categories wide and coming back empty is a routine outcome, so asking the shop to choose a
+    tone that can only disappoint is worse than one fewer button. The tree's six-category
+    recipe is not filtered — every tone it offers today it goes on offering, and a tone that
+    fills some slots but not all is offered on either backdrop, the same as a tree tone with
+    an unfillable bell slot always has been.
     """
+    backdrop = validation.resolve_backdrop(backdrop)
+    recipe = config.AUTO_RECIPES[backdrop]
     return {
         "tones": [
-            {"key": key, "label": preset["label"]} for key, preset in config.TONE_PRESETS.items()
+            {"key": key, "label": preset["label"]}
+            for key, preset in config.TONE_PRESETS.items()
+            if backdrop == "tree"
+            or any(catalog.auto_pool(category, preset["colours"]) for category, _n in recipe)
         ],
         "recipe": [
             {"category": key, "label": catalog.label_for(key), "count": count}
-            for key, count in config.AUTO_RECIPE + config.AUTO_GROUNDED
+            for key, count in recipe
         ],
     }
 
 
 @app.post("/api/auto/pick")
-def api_auto_pick(tone: str = Form(...), exclude: list[str] = Form(default=[])):
+def api_auto_pick(tone: str = Form(...), exclude: list[str] = Form(default=[]),
+                  backdrop: str = Form("")):
     """Fill the recipe with products in one tone — the whole of auto pick.
+
+    `backdrop` (issue #24) decides which recipe is filled: the hung-and-grounded mix for a
+    tree, the mounted one for a wall or door. Everything below is the same machinery either
+    way, which is the whole point of ADR-0004.
 
     Each recipe slot draws from its own category's pool. A category with nothing in this tone
     contributes nothing and is reported in `missing`; a category with less stock than the
@@ -884,12 +904,14 @@ def api_auto_pick(tone: str = Form(...), exclude: list[str] = Form(default=[])):
     """
     if tone not in config.TONE_PRESETS:
         raise ValidationError(f"ไม่รู้จักโทน '{tone}'")
+    backdrop = validation.resolve_backdrop(backdrop)
+    recipe = config.AUTO_RECIPES[backdrop]
 
     tone_colours = config.TONE_PRESETS[tone]["colours"]
     excluded = set(exclude)
     decorations, missing, short = [], [], {}
 
-    for category, wanted in config.AUTO_RECIPE + config.AUTO_GROUNDED:
+    for category, wanted in recipe:
         pool = catalog.auto_pool(category, tone_colours)
         if not pool:
             missing.append(category)
@@ -911,7 +933,7 @@ def api_auto_pick(tone: str = Form(...), exclude: list[str] = Form(default=[])):
 
     return {
         "decorations": decorations,
-        "requested": config.AUTO_RECIPE_TOTAL + config.AUTO_GROUNDED_TOTAL,
+        "requested": sum(count for _category, count in recipe),
         "missing": missing,
         "short": short,
     }

@@ -65,8 +65,7 @@ def test_config_no_longer_asks_about_size_budget_or_category(client):
 
 
 def test_the_recipe_fits_inside_the_element_ceiling():
-    assert config.AUTO_RECIPE_TOTAL <= config.MAX_ELEMENTS
-    assert config.AUTO_RECIPE_TOTAL == sum(count for _category, count in config.AUTO_RECIPE)
+    assert sum(count for _category, count in config.AUTO_RECIPE) <= config.MAX_ELEMENTS
 
 
 def test_giftbox_is_grounded_not_hung():
@@ -74,7 +73,7 @@ def test_giftbox_is_grounded_not_hung():
     grounded pool, not the hung recipe, and its own pool stays inside its own ceiling."""
     assert "giftbox" not in dict(config.AUTO_RECIPE)
     assert dict(config.AUTO_GROUNDED)["giftbox"] == 1
-    assert config.AUTO_GROUNDED_TOTAL <= config.MAX_GROUNDED
+    assert sum(count for _category, count in config.AUTO_GROUNDED) <= config.MAX_GROUNDED
 
 
 # ---------------------------------------------------------------- pick

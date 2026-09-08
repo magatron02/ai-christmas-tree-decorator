@@ -167,7 +167,6 @@ AUTO_RECIPE = (
     ("flower", 1),
     ("bell", 1),
 )
-AUTO_RECIPE_TOTAL = sum(count for _category, count in AUTO_RECIPE)
 
 # The grounded half of auto pick's proposal (CONTEXT.md, issue #21) — its own pool, filled the
 # same way as AUTO_RECIPE but counted against MAX_GROUNDED, never MAX_ELEMENTS. A gift box was
@@ -176,7 +175,22 @@ AUTO_RECIPE_TOTAL = sum(count for _category, count in AUTO_RECIPE)
 AUTO_GROUNDED = (
     ("giftbox", 1),
 )
-AUTO_GROUNDED_TOTAL = sum(count for _category, count in AUTO_GROUNDED)
+
+# What auto pick mounts on a wall or door (issue #24) — the mounted categories, the only ones
+# that can go there at all (catalog.suits_backdrop). A door usually takes one wreath, and a
+# banner beside it is the pairing the domain modelling had in mind; a slot the shop cannot
+# stock in the chosen tone simply places nothing, the same as an empty tree slot.
+AUTO_WALL_RECIPE = (
+    ("wreath", 1),
+    ("banner", 1),
+)
+
+# The whole proposal per backdrop, which is all either auto pick endpoint needs to know about
+# the difference between them — one engine, not one per backdrop (ADR-0004).
+AUTO_RECIPES = {
+    "tree": AUTO_RECIPE + AUTO_GROUNDED,
+    "wall": AUTO_WALL_RECIPE,
+}
 
 # Auto pick's colour-tone presets, reviewed as the 5-tone mockup. Colours are
 # free strings matched through matching._normalize()/COLOUR_BUCKETS, so no separate bucket

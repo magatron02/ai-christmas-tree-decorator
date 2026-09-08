@@ -1,9 +1,10 @@
 /* "Auto ตามโทน" — the pick-for-me mode, for a customer who doesn't know what they want.
  *
- * One question: the tone. Auto pick fills a fixed recipe of categories and counts (the same
- * one for every tone and every tree) and drops the result into app.js's own `state`, then
- * hands off to the normal panels so the shop reviews it before the existing Generate button.
- * Nothing here talks to /api/generate.
+ * One question: the tone. Auto pick fills a fixed recipe of categories and counts — one per
+ * backdrop (issue #24: the hung-and-grounded mix for a tree, wreath+banner for a wall or
+ * door), the same for every tone and every backdrop of that kind — and drops the result into
+ * app.js's own `state`, then hands off to the normal panels so the shop reviews it before the
+ * existing Generate button. Nothing here talks to /api/generate.
  *
  * The size/budget/category wizard that used to gate this is gone (ADR-0003): only 191 of 829
  * products carry a price, so the budget question was choosing from a quarter of the catalogue
@@ -11,7 +12,7 @@
  */
 
 const auto = {
-  loaded: false,
+  loaded: null,    // which backdrop `config` was fetched for, null before the first fetch
   config: null,
   tone: null,
   pick: null,      // last /api/auto/pick response
@@ -19,15 +20,21 @@ const auto = {
   exclude: [],     // codes already shown, so "สุ่มใหม่" avoids repeats where stock allows
 };
 
+/* Cached per backdrop rather than once (issue #24): a wall or door fills a different recipe
+ * and offers a different set of tones, so switching backdrop has to fetch again. */
 async function loadAutoConfig() {
-  if (auto.loaded) return;
-  auto.config = await call("/api/auto/config");
-  auto.loaded = true;
+  const backdrop = $("backdrop-select").value;
+  if (auto.loaded === backdrop) return;
+  auto.config = await call(`/api/auto/config?backdrop=${encodeURIComponent(backdrop)}`);
+  auto.loaded = backdrop;
+  // a tone the previous backdrop offered may be gone from this one
+  if (!auto.config.tones.some((t) => t.key === auto.tone)) auto.tone = null;
 }
 
 async function runAutoPick(reshuffle) {
   const body = new FormData();
   body.append("tone", auto.tone);
+  body.append("backdrop", $("backdrop-select").value);
   if (reshuffle) for (const code of auto.exclude) body.append("exclude", code);
 
   try {
