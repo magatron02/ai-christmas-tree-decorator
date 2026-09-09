@@ -736,7 +736,15 @@ function catalogCard(item) {
   }
   if (item.image) card.append(expandButton(catalogImageUrl(item.image), item.code));
   if (item.supporting && item.supporting.length) card.append(moreButton(item));
-  card.addEventListener("click", () => catalogPickerCallback(item.code, item.image));
+  // A tree pick closes the dialog itself and returns nothing worth reporting here. A
+  // decoration pick (issue #28) does not — the dialog stays open for the next pick, so this
+  // is the only place left to say what just happened: a string is an error or a "you're full"
+  // refusal to show verbatim, `true` is a plain success, anything else is quietly ignored.
+  card.addEventListener("click", async () => {
+    const result = await catalogPickerCallback(item.code, item.image);
+    if (typeof result === "string") $("catalog-count").textContent = result;
+    else if (result === true) $("catalog-count").textContent = `เพิ่ม ${item.code} แล้ว ✓`;
+  });
   return card;
 }
 
@@ -849,7 +857,7 @@ async function openCatalogPicker(mode, onPick) {
   loadCatalogPage(true);
 }
 
-$("catalog-toggle").addEventListener("click", () => openCatalogPicker("element", useFromCatalog));
+$("catalog-toggle").addEventListener("click", () => openCatalogPicker("element", addElementFromCatalog));
 $("tree-catalog-toggle").addEventListener("click", () => openCatalogPicker("tree", useTreeFromCatalog));
 
 $("catalog-shop").addEventListener("change", async () => {
@@ -885,7 +893,7 @@ function setCatalogBusy(busy, message) {
 }
 
 /* The one request every catalogue-element pick makes, whether it is the first pick
- * (useFromCatalog) or a later colour switch (switchColour, issue #15) — same code+image pair,
+ * (addElementFromCatalog) or a later colour switch (switchColour, issue #15) — same code+image pair,
  * same precut-aware endpoint (issue #13: a file read, never a live background removal). */
 async function fetchElementFromCatalog(code, image) {
   const body = new FormData();
@@ -894,25 +902,60 @@ async function fetchElementFromCatalog(code, image) {
   return call("/api/element/from-catalog", { method: "POST", body });
 }
 
-async function useFromCatalog(code, image) {
-  if (catalogBusy) return;
-  showError("");
+/* A code's other colours (issue #15), for the accepted-item switcher — fetched once at
+ * accept/add time rather than on every render, which would ask the same question dozens of
+ * times over a session. A product with only one colour comes back with exactly one entry,
+ * which is also the "offer no switcher" signal downstream, so `null` (not `[]`) is what
+ * means "nothing to switch between". Shared by the upload path's accept-btn and the
+ * catalogue path's addElementFromCatalog — same question, asked the same way either time. */
+async function lookupColours(code) {
+  if (!code) return null;
+  try {
+    const found = await call(`/api/catalog/products/${encodeURIComponent(code)}/colours`);
+    return found.colours.length > 1 ? found.colours : null;
+  } catch {
+    return null; // the switcher is a convenience; a decoration must still work without it
+  }
+}
+
+/* A catalogue pick is a known-good pre-cut product photo, never a live rembg cut that might
+ * come out wrong — so unlike an uploaded photo (showElementPreview + accept-btn/reject-btn,
+ * a real "back out of a bad cut" step) it goes straight into the accepted list with no
+ * preview to confirm first. The dialog stays open afterwards (issue #28), so picking five
+ * decorations is five clicks in the one dialog, not five open/pick/close/reopen cycles.
+ *
+ * Returns what catalogCard() should tell the shop: a string to show verbatim (the cap was
+ * already full, or the pick failed), or `true` for a plain success. */
+async function addElementFromCatalog(code, image) {
+  if (catalogBusy) return undefined;
+  if (state.elements.length >= MAX_ELEMENTS) {
+    return `ใส่ได้ถึง ${MAX_ELEMENTS} ชิ้น — เอาออกสักชิ้นถ้าจะเพิ่ม`;
+  }
   setCatalogBusy(true, "กำลังตัดพื้นหลัง… ครั้งแรกหลังเปิดโปรแกรมจะนานหน่อย");
   try {
     const result = await fetchElementFromCatalog(code, image);
-    showElementPreview(result, code, result.size_mm, image || null);
-    $("catalog-dialog").close();
+    state.elements.push({
+      name: result.element, url: result.element_url, code, image: image || null,
+      colours: await lookupColours(code),
+      sizeMm: result.size_mm, manualMm: null, price: result.price ?? null, typedPrice: null,
+      density: "normal",
+    });
+    renderElements();
+    resetRun();
+    return true;
   } catch (err) {
-    $("catalog-dialog").close();
+    // the dialog is still open (that's the whole point of this function), so the usual
+    // showError() would land in a box the open <dialog> covers — #catalog-count is what is
+    // actually visible right now. Still calls showError too: closing the dialog without
+    // having noticed the last pick failed should not read as a quiet, working app.
     showError(err.message);
+    return err.message;
   } finally {
-    // the count line is rewritten by the next loadCatalogPage, so it only has to stop saying
-    // "working" — reopening the picker reloads it anyway
     setCatalogBusy(false);
   }
 }
 
-/* Same idea as useFromCatalog, but for the tree slot — no background removal (a tree keeps
+/* Same idea as addElementFromCatalog, but for the tree slot — no background removal (a tree keeps
  * its own photographed background), so state.treeFile needs a real File the same way
  * #tree-file's own change handler produces one, not just a stored server filename. */
 async function useTreeFromCatalog(code, image) {
@@ -951,25 +994,12 @@ $("accept-btn").addEventListener("click", async () => {
   const preview = $("element-preview");
   const code = preview.dataset.code || "";
   const image = preview.dataset.image || "";
-  // Fetched once, up front, rather than per render: a card only ever needs this list to
-  // build its switcher (issue #15), and re-fetching on every renderElements() call would ask
-  // the same question dozens of times over a session. A product with only one colour comes
-  // back with exactly one entry, which is also the "offer no switcher" signal downstream.
-  let colours = null;
-  if (code) {
-    try {
-      const found = await call(`/api/catalog/products/${encodeURIComponent(code)}/colours`);
-      if (found.colours.length > 1) colours = found.colours;
-    } catch {
-      /* the switcher is a convenience; a decoration must still be accepted without it */
-    }
-  }
   state.elements.push({
     name: preview.dataset.name,
     url: preview.src,
     code,
     image: image || null,
-    colours,
+    colours: await lookupColours(code),
     sizeMm: code && preview.dataset.sizeMm ? Number(preview.dataset.sizeMm) : null,
     manualMm: null,
     price: code && preview.dataset.price ? Number(preview.dataset.price) : null,
