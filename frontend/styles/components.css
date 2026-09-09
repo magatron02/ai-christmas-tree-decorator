@@ -46,6 +46,12 @@
   margin-top: var(--space-2);
 }
 
+/* The button that stands in for a native file input (api.js upgradeFilePickers), with the
+   chosen filename beside it — long names truncate rather than push the button off the card. */
+.file-picker { display: flex; align-items: center; gap: var(--space-2); min-width: 0 }
+.file-picker .btn { flex: none }
+.file-picker-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+
 .hint { font-size: var(--text-sm); color: var(--text-muted) }
 /* A link inside body copy keeps the copy's own colour and marks itself with an underline —
    the browser default is a blue that exists nowhere else in the palette. */

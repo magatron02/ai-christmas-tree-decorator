@@ -124,6 +124,7 @@ $("key-save").addEventListener("click", async () => {
   }
 });
 
+upgradeFilePickers(); // native file inputs say "Choose File" in English; this swaps in a Thai button
 loadStatus();
 
 /* ---- catalogue admin: add, or click a row below to edit its fields/photo in place ---- */
@@ -153,7 +154,7 @@ function enterEditMode(item) {
   $("cat-price").value = item.price ?? "";
   $("cat-pack-size").value = item.pack_size ?? "";
   editingPackSize = item.pack_size ?? null;
-  $("cat-image").value = "";
+  clearFilePicker($("cat-image"));
   $("cat-image-hint").hidden = false;
   $("cat-photo-preview").src = item.image ? catalogImageUrl(item.image) : "";
   $("cat-photo-preview").hidden = !item.image;
@@ -170,8 +171,9 @@ function exitEditMode() {
   editingCode = null;
   editingPackSize = null;
   $("cat-code").disabled = false;
-  ["cat-code", "cat-size", "cat-section", "cat-book", "cat-price", "cat-pack-size", "cat-image"]
+  ["cat-code", "cat-size", "cat-section", "cat-book", "cat-price", "cat-pack-size"]
     .forEach((id) => ($(id).value = ""));
+  clearFilePicker($("cat-image")); // its filename label has to be reset too, not just the value
   $("cat-image-hint").hidden = true;
   $("cat-photo-preview").hidden = true;
   $("cat-photo-preview").src = "";
@@ -497,8 +499,11 @@ $("cat-add").addEventListener("click", async () => {
     }
 
     if (editingCode) exitEditMode();
-    else ["cat-code", "cat-size", "cat-section", "cat-book", "cat-price", "cat-pack-size", "cat-image"]
-    .forEach((id) => ($(id).value = ""));
+    else {
+      ["cat-code", "cat-size", "cat-section", "cat-book", "cat-price", "cat-pack-size"]
+        .forEach((id) => ($(id).value = ""));
+      clearFilePicker($("cat-image"));
+    }
     showSavedState(saved);
     await loadRecentCatalog();
     await loadCatalogLists();

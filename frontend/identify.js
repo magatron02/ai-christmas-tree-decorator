@@ -101,13 +101,13 @@ $("identify-reference-file").addEventListener("change", async (event) => {
     $("identify-reference-actions").hidden = false;
   } catch (err) {
     showError(err.message);
-    $("identify-reference-file").value = "";
+    clearFilePicker($("identify-reference-file"));
   }
 });
 
 $("identify-reference-clear").addEventListener("click", () => {
   identifyReference = null;
-  $("identify-reference-file").value = "";
+  clearFilePicker($("identify-reference-file"));
   $("identify-reference-preview").hidden = true;
   $("identify-reference-actions").hidden = true;
   $("identify-results").innerHTML = "";
@@ -235,3 +235,5 @@ function renderIdentified(result) {
 }
 
 refreshTotals();
+
+upgradeFilePickers(); // native file inputs say "Choose File" in English; this swaps in a Thai button

@@ -556,6 +556,7 @@ function showElementCode(code, sizeMm = null, image = null, price = null) {
   $("element-preview").dataset.image = image || "";
 }
 
+upgradeFilePickers(); // native file inputs say "Choose File" in English; this swaps in a Thai button
 renderElements();
 
 /* ---- step 1: bare tree ---- */
@@ -915,7 +916,7 @@ async function useTreeFromCatalog(code, image) {
     state.treeFile = new File([blob], result.tree, { type: "image/png" });
     $("tree-preview").src = result.tree_url;
     $("tree-preview-frame").hidden = false;
-    $("tree-file").value = "";  // the picker's tree replaces whatever was uploaded
+    clearFilePicker($("tree-file"));  // the picker's tree replaces whatever was uploaded
     showTreeCode(code, result.size_mm, result.price ?? null);
     try {
       const { width, height } = await imageDimensions(state.treeFile);
@@ -964,7 +965,7 @@ $("accept-btn").addEventListener("click", async () => {
     density: "normal",
   });
   // clear the slot so the next decoration starts from nothing
-  $("element-file").value = "";
+  clearFilePicker($("element-file"));
   $("element-preview-frame").hidden = true;
   $("element-actions").hidden = true;
   $("cut-btn").disabled = true;
@@ -976,7 +977,7 @@ $("accept-btn").addEventListener("click", async () => {
 /* AC-2: a bad cut-out is a dead end the user can back out of, not something they have to
  * ride to the end of the pipeline. */
 $("reject-btn").addEventListener("click", () => {
-  $("element-file").value = "";
+  clearFilePicker($("element-file"));
   $("element-preview-frame").hidden = true;
   $("element-actions").hidden = true;
   $("cut-btn").disabled = true;
@@ -1010,7 +1011,7 @@ $("scene-reference-file").addEventListener("change", async (event) => {
     }
   } catch (err) {
     showError(err.message);
-    $("scene-reference-file").value = "";
+    clearFilePicker($("scene-reference-file"));
   }
   resetRun();
 });
@@ -1018,7 +1019,7 @@ $("scene-reference-file").addEventListener("change", async (event) => {
 $("scene-reference-clear").addEventListener("click", () => {
   state.sceneReference = null;
   state.sceneRatio = null;
-  $("scene-reference-file").value = "";
+  clearFilePicker($("scene-reference-file"));
   $("scene-reference-preview").hidden = true;
   $("scene-reference-actions").hidden = true;
   refreshAutoSize(); // falls back to the tree photo's own ratio, if any
@@ -1085,7 +1086,7 @@ $("tree-sample-toggle").addEventListener("click", () => {
       state.treeFile = await fetchSampleFile(url);
       $("tree-preview").src = url;
       $("tree-preview-frame").hidden = false;
-      $("tree-file").value = "";
+      clearFilePicker($("tree-file"));
       showTreeCode(null);
       const { width, height } = await imageDimensions(state.treeFile);
       state.treeRatio = width / height;
@@ -1112,7 +1113,7 @@ $("scene-sample-toggle").addEventListener("click", () => {
       $("scene-reference-preview").src = result.reference_url;
       $("scene-reference-preview").hidden = false;
       $("scene-reference-actions").hidden = false;
-      $("scene-reference-file").value = "";
+      clearFilePicker($("scene-reference-file"));
       const { width, height } = await imageDimensions(sceneFile);
       state.sceneRatio = width / height;
       refreshAutoSize();
