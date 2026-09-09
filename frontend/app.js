@@ -103,8 +103,12 @@ const DENSITY_LABEL_TH = { light: "โปร่ง", normal: "ปกติ", ful
 
 /* The markup both inline rows below share: a line of explanation, then a number field with its
  * unit. Only what they have in common lives here — each keeps its own wording, its own reason
- * for being hidden, and its own idea of when the typed value counts. */
-function buildInlineRow({ warnText, warnClass, unit, min, placeholder, value }) {
+ * for being hidden, and its own idea of when the typed value counts.
+ *
+ * The unit is a fixed label (a price is always บาท) unless the caller passes `unitOptions`
+ * (issue #29) — a size can be measured several ways, so that one gets a real `<select>`
+ * instead, and the caller reads back whichever unit is currently chosen via `unitEl.value`. */
+function buildInlineRow({ warnText, warnClass, unit, unitOptions, min, placeholder, value }) {
   const row = document.createElement("div");
   row.className = "size-input-row";
   const warn = document.createElement("span");
@@ -116,19 +120,52 @@ function buildInlineRow({ warnText, warnClass, unit, min, placeholder, value }) 
   input.min = min;
   input.placeholder = placeholder;
   if (value != null) input.value = value;
-  const unitLabel = document.createElement("span");
-  unitLabel.className = "unit";
-  unitLabel.textContent = unit;
+  let unitEl;
+  if (unitOptions) {
+    unitEl = document.createElement("select");
+    unitEl.className = "unit";
+    // built dynamically, so it never got the fix that gave every static <select> in this app
+    // a real name (issue #26's audit) unless it asks for one itself
+    unitEl.setAttribute("aria-label", "หน่วยขนาด");
+    for (const option of unitOptions) {
+      const el = document.createElement("option");
+      el.value = option.value;
+      el.textContent = option.label;
+      unitEl.append(el);
+    }
+  } else {
+    unitEl = document.createElement("span");
+    unitEl.className = "unit";
+    unitEl.textContent = unit;
+  }
   const field = document.createElement("div");
   field.className = "size-input-field";
-  field.append(input, unitLabel);
+  field.append(input, unitEl);
   row.append(warn, field);
-  return { row, input, warn };
+  return { row, input, warn, unitEl };
 }
+
+/* Same mm-per-unit factors catalog.parse_size already uses server-side (backend/services/
+ * catalog.py's _MM_PER_INCH / _MM_PER_FOOT) — a shop typing "6 นิ้ว" here and a book printing
+ * "6 inc." must land on the same millimetre number either way (issue #29). */
+const SIZE_UNITS = [
+  { key: "mm", label: "มม.", perMm: 1 },
+  { key: "cm", label: "ซม.", perMm: 10 },
+  { key: "inch", label: "นิ้ว", perMm: 25.4 },
+  { key: "ft", label: "ฟุต", perMm: 304.8 },
+];
 
 /* The blocking size-input row + density pill shared by the tree slot and every accepted
  * element — one small builder so the two call sites (renderTreeSizeGate, renderElements)
- * agree on markup and behaviour instead of drifting apart. */
+ * agree on markup and behaviour instead of drifting apart.
+ *
+ * A tape measure at the counter reads in cm as often as mm, and a shop reaching for a ruler
+ * might have inches on it instead — so the unit is a choice (issue #29), not a fixed "มม."
+ * label, while the number this row ultimately reports is still always a plain millimetre
+ * value: everything downstream (Generate's disabled state, the scale prompt, `manualMm`
+ * itself) is unchanged and still only ever sees mm, exactly as before this issue. Rounded to
+ * the nearest whole millimetre on conversion — the same precision parse_size itself keeps,
+ * not a long decimal that claims more accuracy than a tape measure gives. */
 function buildSizeRow(sizeMm, manualMm, onInput) {
   if (sizeMm != null) {
     const hidden = document.createElement("div");
@@ -136,28 +173,49 @@ function buildSizeRow(sizeMm, manualMm, onInput) {
     hidden.hidden = true;
     return hidden;
   }
-  const { row, input, warn } = buildInlineRow({
+  const { row, input, warn, unitEl } = buildInlineRow({
     warnText: manualMm != null
       ? `✓ ใช้ ${manualMm} มม. ในการคำนวณสัดส่วน`
       : "ระบบจะไม่เดาขนาดให้ — ใส่ขนาดจริงก่อนสร้างภาพ",
     warnClass: manualMm != null ? "size-ok-text" : "size-warn-text",
-    unit: "มม.", min: "1", placeholder: "เช่น 150", value: manualMm,
+    unitOptions: SIZE_UNITS.map((unit) => ({ value: unit.key, label: unit.label })),
+    min: "1", placeholder: "เช่น 150", value: manualMm,
   });
-  // `onInput` only updates state + Generate's disabled flag, both of which read state
-  // directly and need no DOM of their own — never a re-render of the list this row lives in,
-  // which would tear out and rebuild this very input mid-keystroke. Reported live: typing
-  // "100" only ever registered the "1", because every keystroke's re-render handed focus to a
-  // brand-new node the browser had never actually focused. The confirmation text below still
-  // catches up, just on `change` (blur/Enter) rather than every keystroke, updated in place.
-  input.addEventListener("input", () => onInput(input.value));
-  input.addEventListener("change", () => {
-    const parsed = Number(input.value);
-    const value = input.value && parsed > 0 ? parsed : null;
-    warn.className = value != null ? "size-ok-text" : "size-warn-text";
-    warn.textContent = value != null
-      ? `✓ ใช้ ${value} มม. ในการคำนวณสัดส่วน`
-      : "ระบบจะไม่เดาขนาดให้ — ใส่ขนาดจริงก่อนสร้างภาพ";
-  });
+
+  function mmValue() {
+    const unit = SIZE_UNITS.find((u) => u.key === unitEl.value) || SIZE_UNITS[0];
+    const typed = Number(input.value);
+    return input.value && typed > 0 ? Math.round(typed * unit.perMm) : null;
+  }
+  // Reports the current mm value (or "") to the caller — called on every keystroke AND as
+  // part of committing, so both paths agree on exactly one place that turns a null mm into
+  // the empty string `onInput` expects.
+  function report() {
+    const mm = mmValue();
+    onInput(mm != null ? String(mm) : "");
+    return mm;
+  }
+
+  // `report` only updates state + Generate's disabled flag, both of which read state directly
+  // and need no DOM of their own — never a re-render of the list this row lives in, which
+  // would tear out and rebuild this very input mid-keystroke. Reported live: typing "100" only
+  // ever registered the "1", because every keystroke's re-render handed focus to a brand-new
+  // node the browser had never actually focused. The confirmation text below still catches up,
+  // just on `change` (blur/Enter, or switching the unit) rather than every keystroke, updated
+  // in place by `commit`.
+  input.addEventListener("input", report);
+  function commit() {
+    const mm = report();
+    const unit = SIZE_UNITS.find((u) => u.key === unitEl.value);
+    warn.className = mm != null ? "size-ok-text" : "size-warn-text";
+    warn.textContent = mm == null
+      ? "ระบบจะไม่เดาขนาดให้ — ใส่ขนาดจริงก่อนสร้างภาพ"
+      : unit.key === "mm"
+        ? `✓ ใช้ ${mm} มม. ในการคำนวณสัดส่วน`
+        : `✓ ใช้ ${input.value} ${unit.label} (${mm} มม.) ในการคำนวณสัดส่วน`;
+  }
+  input.addEventListener("change", commit);
+  unitEl.addEventListener("change", commit);
   return row;
 }
 

@@ -543,6 +543,15 @@ select.select-native {
 .size-input-field { display: flex; align-items: center; gap: var(--space-2) }
 .size-input-row .input { width: 90px; padding: 4px 8px; font-size: var(--text-xs) }
 .size-input-row .unit { font-size: var(--text-xs); color: var(--text-muted) }
+/* The unit choice (issue #29) is a real <select>, not the plain text label the price row's
+ * "บาท" still is — .unit alone left it unstyled OS chrome crammed into an 11px row, so it
+ * gets the same border/radius the number field beside it already has, just compact. */
+.size-input-row select.unit {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 3px 4px;
+}
 .size-warn-text { font-size: var(--text-xs); color: var(--state-warning-text) }
 /* --text-success is the result panel's own role accent (DESIGN.md section 2, "one accent per
    role") — this affirmation shows up outside that panel too, so it stays neutral and lets the
