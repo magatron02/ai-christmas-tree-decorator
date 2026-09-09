@@ -69,7 +69,7 @@
 
       <section class="card stack">
         <span class="panel-title">1 — ต้นเปล่า / ผนัง</span>
-        <select class="input" id="backdrop-select">
+        <select class="input" id="backdrop-select" aria-label="พื้นหลัง: ต้นคริสต์มาส หรือ ผนัง">
           <option value="tree">ต้นคริสต์มาส</option>
           <option value="wall">ผนัง หรือ ประตู</option>
         </select>
@@ -157,8 +157,8 @@
 
       <section class="card stack role-result">
         <span class="panel-title">3 — ผลลัพธ์</span>
-        <select class="input option-name" id="size-select" disabled></select>
-        <select class="input" id="density-select" disabled></select>
+        <select class="input option-name" id="size-select" disabled aria-label="ขนาดภาพผลลัพธ์"></select>
+        <select class="input" id="density-select" disabled aria-label="ความหนาแน่นของตกแต่ง"></select>
         <div class="chip" id="status-chip">รอต้นเปล่ากับของตกแต่งอย่างน้อย 1 ชิ้น</div>
         <div class="btn-row">
           <button class="btn primary" id="generate-btn" disabled>สร้างภาพ</button>
@@ -219,7 +219,7 @@
             placeholder="อยากได้แบบไหน เช่น “แต่งโทนแดง-ทอง หรูหรา เว้นระยะห่างพอสมควร”"></textarea>
           <div class="composer-footer">
             <div class="composer-footer-left">
-              <select class="input size-select-mini" id="prompt-size-select" disabled></select>
+              <select class="input size-select-mini" id="prompt-size-select" disabled aria-label="ขนาดภาพผลลัพธ์"></select>
               <span class="char-count" id="prompt-char-count">0 / 500</span>
             </div>
             <button type="button" class="btn send-btn" id="prompt-send" disabled aria-label="ส่ง" title="ส่ง">
@@ -265,10 +265,10 @@
     <button class="btn danger" id="catalog-close">ปิด</button>
   </div>
   <div class="picker-filters">
-    <select class="input" id="catalog-shop">
+    <select class="input" id="catalog-shop" aria-label="กรองตามร้าน">
       <option value="">ทุกร้าน</option>
     </select>
-    <select class="input" id="catalog-category">
+    <select class="input" id="catalog-category" aria-label="กรองตามหมวด">
       <option value="">ทุกหมวด</option>
     </select>
     <input class="input" id="catalog-search" placeholder="ค้นรหัสหรือหมวด เช่น 017 หรือ bauble">

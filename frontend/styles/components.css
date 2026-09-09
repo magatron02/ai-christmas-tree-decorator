@@ -79,6 +79,17 @@
 .btn:active   { transform: scale(0.97); transition: transform var(--transition-press) }
 .btn:disabled { opacity: .5; cursor: default; transform: none; box-shadow: none }
 
+/* `pointer: coarse` is touch, not "narrow screen" — a touchscreen laptop at desktop width
+   still needs this, and a mouse in a narrow window doesn't. Every button measured 35px tall
+   at --space-2/--space-4 padding (impeccable audit, 2026-09): 44px is the WCAG 2.5.5 floor,
+   met here with min-height rather than more padding so the visible size (and the box-shadow
+   it casts) doesn't change on desktop. */
+@media (pointer: coarse) {
+  .btn, .row, .attach-btn { min-height: 44px }
+  .send-btn { width: 44px; height: 44px }
+  .input, select.input { min-height: 44px }
+}
+
 /* primary — Generate. One per view (Rule carried over from the previous system: colour
    carries emphasis, so only one control may claim it). */
 .btn.primary {
