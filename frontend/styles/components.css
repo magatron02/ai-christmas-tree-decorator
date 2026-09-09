@@ -657,6 +657,13 @@ select.select-native {
 .candidate-rename:focus-visible {
   opacity: 1;
 }
+/* `hover: none` is touch, not "narrow screen": these two are opacity-0-until-hover on a mouse,
+   which makes them undiscoverable on any device with no hover at all — a shop worker on a
+   tablet or phone would never see the icon exists to tap it. Always visible there instead, at
+   the same 44px floor coarse pointers get everywhere else (impeccable audit, 2026-09). */
+@media (hover: none) {
+  .candidate-expand, .candidate-rename { opacity: 1; min-width: 44px; min-height: 44px }
+}
 /* loading placeholder for the picker grid — same footprint as a real card, so the grid
    doesn't reflow once results replace them */
 .candidate-skeleton {
