@@ -123,7 +123,7 @@ function buildInlineRow({ warnText, warnClass, unit, min, placeholder, value }) 
   field.className = "size-input-field";
   field.append(input, unitLabel);
   row.append(warn, field);
-  return { row, input };
+  return { row, input, warn };
 }
 
 /* The blocking size-input row + density pill shared by the tree slot and every accepted
@@ -136,14 +136,28 @@ function buildSizeRow(sizeMm, manualMm, onInput) {
     hidden.hidden = true;
     return hidden;
   }
-  const { row, input } = buildInlineRow({
+  const { row, input, warn } = buildInlineRow({
     warnText: manualMm != null
       ? `✓ ใช้ ${manualMm} มม. ในการคำนวณสัดส่วน`
       : "ระบบจะไม่เดาขนาดให้ — ใส่ขนาดจริงก่อนสร้างภาพ",
     warnClass: manualMm != null ? "size-ok-text" : "size-warn-text",
     unit: "มม.", min: "1", placeholder: "เช่น 150", value: manualMm,
   });
+  // `onInput` only updates state + Generate's disabled flag, both of which read state
+  // directly and need no DOM of their own — never a re-render of the list this row lives in,
+  // which would tear out and rebuild this very input mid-keystroke. Reported live: typing
+  // "100" only ever registered the "1", because every keystroke's re-render handed focus to a
+  // brand-new node the browser had never actually focused. The confirmation text below still
+  // catches up, just on `change` (blur/Enter) rather than every keystroke, updated in place.
   input.addEventListener("input", () => onInput(input.value));
+  input.addEventListener("change", () => {
+    const parsed = Number(input.value);
+    const value = input.value && parsed > 0 ? parsed : null;
+    warn.className = value != null ? "size-ok-text" : "size-warn-text";
+    warn.textContent = value != null
+      ? `✓ ใช้ ${value} มม. ในการคำนวณสัดส่วน`
+      : "ระบบจะไม่เดาขนาดให้ — ใส่ขนาดจริงก่อนสร้างภาพ";
+  });
   return row;
 }
 
@@ -239,7 +253,6 @@ function renderTreeSizeGate() {
   host.append(buildSizeRow(state.treeSizeMm, state.treeManualMm, (value) => {
     const parsed = Number(value);
     state.treeManualMm = value && parsed > 0 ? parsed : null;
-    renderTreeSizeGate();
     refreshGenerateButton();
   }));
   host.append(buildPriceRow(state.treeCode, state.treePrice, state.treeTypedPrice, async (value) => {
@@ -323,7 +336,6 @@ function renderElements() {
     const sizeRow = buildSizeRow(element.sizeMm, element.manualMm, (value) => {
       const parsed = Number(value);
       element.manualMm = value && parsed > 0 ? parsed : null;
-      renderElements();
       refreshGenerateButton();
     });
     item.append(sizeRow);

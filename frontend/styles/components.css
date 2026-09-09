@@ -405,7 +405,12 @@ select.select-native {
   flex: 1;
   min-height: 0;
 }
-.decoration-list-col { min-height: 0 }
+/* min-width: 0, not just min-height: a grid item's default min-width is auto — "never shrink
+   below your content's own width" — so without this the item-top row below (thumb + density
+   pill + remove button, none of it wrapping) forced this whole column past the 140px floor
+   the grid track was given, and the overflow showed up as the entire decoration card scrolling
+   sideways rather than this one column's row wrapping onto a second line. */
+.decoration-list-col { min-height: 0; min-width: 0 }
 .decoration-list-col .accepted { flex: 1; min-height: 0; overflow-y: auto }
 /* the three controls (scene ref, upload, catalogue) are left at their natural size — trying
    to make one of them flex to fill the leftover space either collapsed it to zero (button
@@ -441,9 +446,15 @@ select.select-native {
 .accepted li.has-warning { border-color: var(--state-warning-border); background: var(--state-warning-bg) }
 .accepted-item-top {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
 }
+/* thumb, density pill and remove button together don't fit on one line at the column's
+   140px floor — wrapping keeps every one of them fully visible and tappable instead of
+   clipping or forcing the whole card to scroll sideways (see .decoration-list-col above). */
+.accepted-item-top .thumb-wrap { flex-shrink: 0 }
+.accepted-item-top .density-pill { flex-shrink: 0 }
 /* A preview with its catalogue code burned onto it, same treatment the accepted list uses —
    the code is never typed any more, so the picture is the only place it can be read back.
    Two variants because the tree preview fills its panel (.thumb, width 100%) while the
