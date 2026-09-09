@@ -5,7 +5,7 @@ This is an edit of an existing photo, not a new picture of a similar tree. Prese
 - the tree itself — its height, width, silhouette, branch structure, species, how full or
   sparse it is, how it leans, where its gaps are
 - its scale within the frame, the camera angle, the focal length
-- the photographic character: the same grain, focus, white balance, exposure and colour
+- the photographic character of the tree itself — the same grain, focus and colour
 
 If the returned tree could be told apart from the tree in the first image with the
 decorations removed, the result is wrong.
@@ -35,7 +35,7 @@ Lighting and material
 - Add contact shadows where a copy touches a branch, and a soft cast shadow on the foliage
   behind it.
 - Keep each decoration's own material: if it is glossy it picks up a highlight from the
-  scene's light, if it is matte it does not.
+  light already on the tree, if it is matte it does not.
 
 Do not add any decoration that was not supplied. No extra ornaments, no lights, no ribbon,
 no star, no tinsel, no snow, no gifts, no text, no watermark.

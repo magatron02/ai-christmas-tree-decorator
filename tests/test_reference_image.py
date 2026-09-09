@@ -1,10 +1,12 @@
 """Reference images — Product.md 8.3a, the setting half.
 
-A reference photo changes what the prompt asks for, not just what it is given: without one
-the background must survive untouched, with one replacing it is the point. Both instructions
-cannot be in the prompt at once, and a stale "keep the setting exactly" line sitting under a
-"put it somewhere new" line is the kind of contradiction that produces a plausible image of
-the wrong thing at full price.
+A reference photo changes what the prompt asks for, not just what it is given: with one,
+replacing the background with that photo's own pixels is the point. Without one the
+background is handled by whichever no-reference rule applies (a tree goes on white since
+issue #30 — see tests/test_white_background.py). Whatever the two rules say, only one of them
+may be in a prompt at a time: a stale "keep the setting exactly" line sitting under a "put it
+somewhere new" line is the kind of contradiction that produces a plausible image of the wrong
+thing at full price.
 """
 
 import pytest
@@ -68,10 +70,13 @@ def test_the_reference_goes_last_so_the_prompt_can_point_at_it(
     assert args[5] is not None, "the reference never reached the generator"
 
 
-def test_without_a_reference_the_prompt_protects_the_background():
+def test_without_a_reference_the_prompt_never_mentions_one():
+    """What this file is really about: the two paths' instructions must never bleed into each
+    other. A tree with no reference now gets a white backdrop rather than its own shop kept
+    exactly (issue #30, tests/test_white_background.py) — but either way, nothing about a
+    reference photo may appear in a prompt that was never given one."""
     prompt = image_gen.load_prompt("scale", 1, has_reference=False)
 
-    assert "Keep the setting exactly as it is" in prompt
     assert "reference" not in prompt.lower()
 
 

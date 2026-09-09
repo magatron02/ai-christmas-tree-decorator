@@ -131,4 +131,6 @@ How thickly decorations of one kind are placed on the tree — sparse, normal or
 
 **Custom prompt**:
 A free-text description of the wanted result, typed instead of choosing a density. Replaces the
-density wording for that one generation, never the rules that keep the tree and background intact.
+density wording for that one generation, never the rules that keep the tree itself intact. What
+happens to the background is its own decision, made separately: a reference photo's own pixels,
+or a plain white backdrop when a tree has no reference.

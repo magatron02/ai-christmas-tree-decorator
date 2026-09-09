@@ -44,9 +44,29 @@ NO_REFERENCE_SCENE = """\
 Keep the setting exactly as it is: the background, the floor, the framing, the crop, and
 anything else in the shot. Only the decorations are new."""
 
+# A tree with no reference photo used to get NO_REFERENCE_SCENE too — the shop's own shop,
+# kept exactly. Issue #30 reverses that: the picture's job is to show a customer a product,
+# and a clean product shot does that better than the shop floor behind it. Only the background
+# is addressed here; every rule about preserving the tree itself lives above the {scene} slot
+# in the template and is untouched, so this must never ask for the subject to be remade.
+# The contact shadow is what keeps the result from reading as a cut-out pasted onto white.
+NO_REFERENCE_WHITE_SCENE = """\
+Replace the setting with a plain, seamless white studio backdrop. The room, the floor line,
+the furniture, any props, and everything else from wherever this photo was actually taken are
+gone — including in the gaps between the branches, which show white too. Only the tree and
+the decorations on it remain. Keep the light that is already on the tree; do not relight it
+for the new backdrop. Render a soft contact shadow directly under the tree so it stands on a
+surface instead of floating. The tree keeps the same size and position in the frame."""
+
 # Line breaks are placed so the rendered tree version stays byte-identical to what every
 # generation sent before the wall/door backdrop existed — the source lines run long here for
 # that reason, since "{subject}" is wider than the word it stands in for.
+#
+# Its opening clause ("the way the {subject}'s own background would be treated with no
+# reference photo at all") was written when that meant "kept exactly" — for a tree it now
+# means the opposite, white (issue #30). Left alone deliberately: only one scene rule is ever
+# in a prompt, so the model never sees the two together, and the clause spells out what it
+# means in the words right after it. Do not read it as still describing the no-reference path.
 REFERENCE_SCENE = """\
 The last image is the exact setting the {subject} goes into — treat it exactly the way the {subject}'s
 own background would be treated with no reference photo at all: keep it exactly as it is, the
@@ -60,15 +80,17 @@ that room. Do not relight, move, add to, or remove anything else in the referenc
 
 
 def describe_scene(has_reference, backdrop="tree"):
-    """What to do with the background, which is the opposite instruction in the two cases.
+    """What to do with the background — a different instruction in each of the three cases,
+    and only ever one of them, since two of these in the same prompt contradict each other.
 
-    Without a reference the background is sacred — the shop wants its own tree in its own
-    shop. With one, replacing it is the entire point (Product.md 8.3), so the "keep the
-    setting" line has to actually leave rather than sit there contradicting the new one.
+    With a reference, replacing the background with that photo's own pixels is the entire
+    point (Product.md 8.3). Without one, a tree goes on plain white (issue #30): the shot is
+    there to show a customer a product. A wall or a door is its own background, though —
+    there is nothing to cut it out of — so that one still keeps the setting it was shot in.
     """
-    if not has_reference:
-        return NO_REFERENCE_SCENE
-    return REFERENCE_SCENE.format(subject=SUBJECT[backdrop])
+    if has_reference:
+        return REFERENCE_SCENE.format(subject=SUBJECT[backdrop])
+    return NO_REFERENCE_WHITE_SCENE if backdrop == "tree" else NO_REFERENCE_SCENE
 
 
 def load_prompt(scale, element_count=1, has_reference=False, density=None, placement=None,
