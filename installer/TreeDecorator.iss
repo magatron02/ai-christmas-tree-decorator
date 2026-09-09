@@ -6,7 +6,7 @@
 ; the API key — and a Program Files install would have made every one of those read-only.
 
 #define AppName "Tree Decorator"
-#define AppVersion "1.0.3"
+#define AppVersion "1.0.4"
 #define AppPublisher "VR Twin"
 #define AppExe "TreeDecorator.exe"
 
