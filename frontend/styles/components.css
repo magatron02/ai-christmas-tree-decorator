@@ -78,6 +78,12 @@
 .btn:hover    { transform: translateY(-1px); box-shadow: var(--shadow-hover) }
 .btn:active   { transform: scale(0.97); transition: transform var(--transition-press) }
 .btn:disabled { opacity: .5; cursor: default; transform: none; box-shadow: none }
+/* tokens.css's global `:focus-visible` ring and this rule's own box-shadow are the same
+   specificity (one class, one pseudo-class); components.css loads second, so .btn's plain
+   shadow silently won every tab-focus on every button in the app with no ring at all —
+   verified with a real Tab press, not just :focus (impeccable polish, 2026-09). Restated here,
+   at higher specificity than either loser, so a keyboard user can see where focus is. */
+.btn:focus-visible { box-shadow: var(--focus-ring) }
 
 /* `pointer: coarse` is touch, not "narrow screen" — a touchscreen laptop at desktop width
    still needs this, and a mouse in a narrow window doesn't. Every button measured 35px tall
@@ -408,6 +414,12 @@ select.select-native {
    Neither is acceptable. The column scrolls as a whole instead: predictable at every content
    length, and everything stays reachable inside the card, never past it. */
 .decoration-controls-col { gap: var(--space-4); min-height: 0; overflow-y: auto }
+
+/* The tree panel's three "ways to fill this slot" (catalogue / upload / samples) are the same
+   pattern as the decoration panel's own alternatives, so they get the same --space-4 rhythm
+   between them, not .card's plainer --space-3 — the two read as one choice made twice rather
+   than the second one being a slightly denser afterthought (impeccable polish, 2026-09). */
+.alt-group { gap: var(--space-4) }
 @media (max-width: 720px) {
   .decoration-columns { grid-template-columns: minmax(0, 1fr) }
 }

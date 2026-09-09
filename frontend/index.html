@@ -78,22 +78,24 @@
              since a shop most often decorates its own stock, then an own photo, then the
              samples for someone with neither to hand. Each is labelled as an alternative so
              the stack does not read as a checklist. -->
-        <div class="stack">
-          <span class="section-title">เลือกจาก catalogue</span>
-          <div class="btn-row">
-            <button class="btn" id="tree-catalog-toggle">เปิด catalogue</button>
+        <div class="stack alt-group">
+          <div class="stack">
+            <span class="section-title">เลือกจาก catalogue</span>
+            <div class="btn-row">
+              <button class="btn" id="tree-catalog-toggle">เปิด catalogue</button>
+            </div>
           </div>
-        </div>
-        <div class="stack">
-          <span class="section-title">หรืออัปโหลดรูปเอง</span>
-          <input class="input" type="file" id="tree-file" accept="image/jpeg,image/png">
-        </div>
-        <div class="stack">
-          <span class="section-title">หรือใช้รูปตัวอย่าง</span>
-          <div class="btn-row">
-            <button class="btn" id="tree-sample-toggle">ดูรูปตัวอย่าง</button>
+          <div class="stack">
+            <span class="section-title">หรืออัปโหลดรูปเอง</span>
+            <input class="input" type="file" id="tree-file" accept="image/jpeg,image/png">
           </div>
-          <div class="sample-strip" id="tree-samples" hidden></div>
+          <div class="stack">
+            <span class="section-title">หรือใช้รูปตัวอย่าง</span>
+            <div class="btn-row">
+              <button class="btn" id="tree-sample-toggle">ดูรูปตัวอย่าง</button>
+            </div>
+            <div class="sample-strip" id="tree-samples" hidden></div>
+          </div>
         </div>
         <div class="thumb-frame" id="tree-preview-frame" hidden>
           <img class="thumb" id="tree-preview" alt="ต้นเปล่า">
