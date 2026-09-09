@@ -38,6 +38,14 @@
   font-weight: 600;
   color: var(--text-muted);
 }
+/* Set off from the two ways of adding a decoration above it: a rule and some air say "this
+   one is not part of that job" better than a number in front of it, which read as a step. */
+.section-optional {
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-4);
+  margin-top: var(--space-2);
+}
+
 .hint { font-size: var(--text-sm); color: var(--text-muted) }
 /* A link inside body copy keeps the copy's own colour and marks itself with an underline —
    the browser default is a blue that exists nowhere else in the palette. */
@@ -349,8 +357,15 @@ select.select-native {
     width: auto; min-height: 0; display: flex; gap: var(--space-2);
     padding: var(--space-2) var(--space-3); border-right: none;
     border-bottom: 1px solid var(--border);
+    /* five destinations do not fit across a phone: let the strip scroll sideways rather than
+       squeeze each label into a three-line stack of single words */
+    overflow-x: auto;
   }
-  .sidebar .row { width: auto }
+  .sidebar .row { width: auto; flex: none; white-space: nowrap }
+  /* the counters keep their own width here too — stretched to fill, "สร้างไปแล้ว" wraps */
+  .topbar { gap: var(--space-3); padding: 0 var(--space-3) }
+  .topbar .tile { flex: none; padding: 0 var(--space-3) }
+  .topbar .tile .k { white-space: nowrap }
 }
 
 /* ---- decoration panel: picked items on the left, controls to add more on the right —

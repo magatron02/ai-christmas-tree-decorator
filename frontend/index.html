@@ -98,21 +98,12 @@
           <div class="stack decoration-controls-col">
 
             <div class="stack">
-              <span class="section-title">1. บรรยากาศอ้างอิง (ไม่ใส่ก็ได้)</span>
-              <span class="hint">รูปสถานที่ที่อยากให้ต้นไปอยู่</span>
-              <input class="input" type="file" id="scene-reference-file" accept="image/jpeg,image/png">
-              <div class="btn-row">
-                <button class="btn" id="scene-sample-toggle">รูปตัวอย่าง</button>
-              </div>
-              <div class="sample-strip" id="scene-samples" hidden></div>
-              <div class="btn-row" id="scene-reference-actions" hidden>
-                <button class="btn danger" id="scene-reference-clear">เอารูปออก</button>
-              </div>
-              <img class="thumb-sm" id="scene-reference-preview" alt="รูปบรรยากาศอ้างอิง" hidden>
+              <span class="section-title">เพิ่มของตกแต่ง</span>
+              <button class="btn" id="catalog-toggle">เลือกจาก catalogue</button>
             </div>
 
             <div class="stack">
-              <span class="section-title">2. อัปโหลดของตกแต่ง</span>
+              <span class="section-title">หรืออัปโหลดรูปเอง</span>
               <span class="hint">รูปของตกแต่งชิ้นเดียว ตัดพื้นหลังก่อนใช้</span>
               <input class="input" type="file" id="element-file" accept="image/jpeg,image/png">
               <div class="btn-row">
@@ -129,9 +120,18 @@
               </div>
             </div>
 
-            <div class="stack">
-              <span class="section-title">3. หรือเลือกจาก catalogue</span>
-              <button class="btn" id="catalog-toggle">เลือกจาก catalogue</button>
+            <div class="stack section-optional">
+              <span class="section-title">บรรยากาศอ้างอิง <span class="hint">— ไม่ใส่ก็ได้</span></span>
+              <span class="hint">รูปสถานที่ที่อยากให้ต้นไปอยู่</span>
+              <input class="input" type="file" id="scene-reference-file" accept="image/jpeg,image/png">
+              <div class="btn-row">
+                <button class="btn" id="scene-sample-toggle">รูปตัวอย่าง</button>
+              </div>
+              <div class="sample-strip" id="scene-samples" hidden></div>
+              <div class="btn-row" id="scene-reference-actions" hidden>
+                <button class="btn danger" id="scene-reference-clear">เอารูปออก</button>
+              </div>
+              <img class="thumb-sm" id="scene-reference-preview" alt="รูปบรรยากาศอ้างอิง" hidden>
             </div>
 
           </div>
