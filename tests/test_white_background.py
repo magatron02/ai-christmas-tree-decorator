@@ -45,8 +45,19 @@ def test_the_shadow_is_rendered_not_kept():
     that shape, and its colour, onto the white."""
     scene = image_gen.describe_scene(has_reference=False, backdrop="tree")
 
-    assert "Render a soft contact shadow" in scene
+    assert "Render a clearly visible soft grey shadow" in scene
     assert "Keep a soft contact shadow" not in scene
+
+
+def test_the_shadow_is_asked_for_strongly_enough_to_show_up():
+    """First run of this prompt came back with a shadow so faint the tree read as floating on
+    the white. "Soft contact shadow" was too easy to satisfy with nothing — the instruction
+    now says where the shadow sits, which way it falls off, and that it has to be visible."""
+    scene = image_gen.describe_scene(has_reference=False, backdrop="tree")
+
+    assert "clearly visible" in scene
+    assert "darkest" in scene, "the instruction never says where the shadow is strongest"
+    assert "fading outward" in scene, "nothing tells it how the shadow falls off"
 
 
 def test_the_gaps_between_the_branches_go_white_too():

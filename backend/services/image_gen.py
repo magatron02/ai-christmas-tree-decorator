@@ -55,8 +55,10 @@ Replace the setting with a plain, seamless white studio backdrop. The room, the 
 the furniture, any props, and everything else from wherever this photo was actually taken are
 gone — including in the gaps between the branches, which show white too. Only the tree and
 the decorations on it remain. Keep the light that is already on the tree; do not relight it
-for the new backdrop. Render a soft contact shadow directly under the tree so it stands on a
-surface instead of floating. The tree keeps the same size and position in the frame."""
+for the new backdrop. Render a clearly visible soft grey shadow on the white directly beneath
+the tree: a pool spreading out from where the stand meets the ground, darkest right under the
+base and fading outward, so the tree plainly stands on a surface instead of floating. The tree
+keeps the same size and position in the frame."""
 
 # Line breaks are placed so the rendered tree version stays byte-identical to what every
 # generation sent before the wall/door backdrop existed — the source lines run long here for
