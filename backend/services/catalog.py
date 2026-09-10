@@ -522,6 +522,35 @@ def pricing_queue():
     ]
 
 
+def decoration_price_total(element_codes):
+    """Sum of catalogue price across a request's decorations, and which ones had none.
+
+    A decoration with no resolvable price — no code at all, or a code with no price set — is
+    not counted as free; it is missing, the same stance scale_sentence takes on an unresolved
+    size (NonGoals forbids inventing a number, not reporting one is absent). Returns
+    `(total, missing)`, `missing` holding a describe()-string (or a plain label for a
+    code-less element) for each one, empty when every decoration priced. Looked up live
+    against the current catalogue rather than snapshotted, so a later price edit is reflected
+    in old history rows too.
+    """
+    total = 0.0
+    missing = []
+    for code in element_codes:
+        if not code:
+            missing.append("ไม่ได้เลือกจาก catalogue")
+            continue
+        try:
+            row = find(code)
+        except ValidationError:
+            missing.append(code)
+            continue
+        if row.get("price") is None:
+            missing.append(describe(row))
+            continue
+        total += row["price"]
+    return total, missing
+
+
 def shops():
     """Every brand/shop the catalogue actually holds a showable product for, with counts —
     same shape as CATEGORIES' counts, so the picker can offer "pick the shop first" as a real
@@ -662,8 +691,12 @@ def describe(row):
     return row["code"]
 
 
-def require_size(row):
-    millimetres = longest_side_mm(row)
+def require_size(row, size_lookup=longest_side_mm):
+    """size_lookup defaults to the catalogue's own longest_side_mm; a caller wanting a size
+    authority that also consults something else (matching.suggest_quantity's own caller, main
+    .py, passes one backed by vendor_lookup as a fallback for a code the catalogue has no
+    size for — 2026-09-10) passes its own, same pattern as scale_sentence's own parameter."""
+    millimetres = size_lookup(row)
     if millimetres is None:
         raise ValidationError(
             f"catalogue ไม่มีขนาดของ {describe(row)} เลยคำนวณสัดส่วนจริงไม่ได้ — "
@@ -677,23 +710,33 @@ _GENERIC_SCALE = (
 )
 
 
-def scale_sentence(tree_code, element_codes, tree_mm_override=None, element_mm_overrides=None):
+def scale_sentence(
+    tree_code, element_codes, tree_mm_override=None, element_mm_overrides=None,
+    size_lookup=longest_side_mm,
+):
     """The paragraph that replaces 'keep it in proportion' with actual numbers, for whichever
     codes the catalogue actually prints a size for.
 
     `element_codes` is a list, one per decoration. Returns `(sentence, missing)` — `missing`
-    lists describe()-strings for the tree and/or any decoration whose catalogue row has no
-    size, empty when every code resolved. A missing size never blocks the request and never
-    gets a guessed number either: NonGoals.md 8 forbids inventing a dimension, not generating
-    without one, so that one item falls back to "believable, not exact" instead — same as
-    when no code was given at all. The caller surfaces `missing` as a warning before the paid
-    call, since a mixed-exact result still needs the user to know which item is the guess.
+    lists describe()-strings for the tree and/or any decoration whose size (from `size_lookup`)
+    is unresolved, empty when every code resolved. A missing size never blocks the request and
+    never gets a guessed number either: NonGoals.md 8 forbids inventing a dimension, not
+    generating without one, so that one item falls back to "believable, not exact" instead —
+    same as when no code was given at all. The caller surfaces `missing` as a warning before
+    the paid call, since a mixed-exact result still needs the user to know which item is the
+    guess.
 
     `tree_mm_override`/`element_mm_overrides` (a list aligned with `element_codes`, `None`
     entries meaning "no override") let a caller supply a real millimetre figure for a code
-    whose catalogue row has none — the frontend's blocking manual-size gate — without this
+    `size_lookup` has none for — the frontend's blocking manual-size gate — without this
     function ever inventing one itself. An overridden item is not "missing": the number came
     from a person, not a guess.
+
+    `size_lookup(row)` defaults to the catalogue's own `longest_side_mm`, and stays that for
+    every existing caller. A caller wanting a different size authority altogether (2026-09-10:
+    main.py passes one backed by vendor_lookup.size_mm_for, replacing the catalogue as the
+    size source everywhere including this actual generation math) passes its own — this
+    function only ever asks "what size is this row", never which source that answer came from.
     """
     if isinstance(element_codes, str) or element_codes is None:
         element_codes = [element_codes] if element_codes else []
@@ -714,9 +757,9 @@ def scale_sentence(tree_code, element_codes, tree_mm_override=None, element_mm_o
         )
 
     tree = find(tree_code)
-    tree_mm = tree_mm_override if tree_mm_override is not None else longest_side_mm(tree)
+    tree_mm = tree_mm_override if tree_mm_override is not None else size_lookup(tree)
     elements = [
-        (find(code), overrides[i] if overrides[i] is not None else longest_side_mm(find(code)))
+        (find(code), overrides[i] if overrides[i] is not None else size_lookup(find(code)))
         for i, code in enumerate(element_codes)
     ]
     element_missing = [describe(row) for row, mm in elements if mm is None]

@@ -58,6 +58,14 @@ CREATE TABLE IF NOT EXISTS requests (
     custom_prompt TEXT,
     error        TEXT,
     usage_json   TEXT,
+    -- The last "นับของในรูปนี้" result — {"items": [{"code", "count"}, ...], "usage": {...}} —
+    -- so a later view (history, "จัดการต่อ") shows it without paying for the same vision call
+    -- again. Overwritten by the next count, never appended: only the latest counted state of
+    -- the picture matters, same reasoning price/size are looked up live rather than
+    -- snapshotted elsewhere. Deliberately separate from usage_json, which stays the
+    -- generation's own billing record and the basis of usage_totals' generation count — a
+    -- count's own token cost is real spend but not that spend, so it is not folded in here.
+    counted_json TEXT,
     created_at   TEXT NOT NULL,
     updated_at   TEXT NOT NULL
 );
@@ -83,7 +91,7 @@ def connect(path=None):
     existing = {row["name"] for row in conn.execute("PRAGMA table_info(requests)")}
     for column in (
         "usage_json", "tree_code", "element_code", "elements_json", "reference_path", "density",
-        "tree_manual_mm", "custom_prompt",
+        "tree_manual_mm", "custom_prompt", "counted_json",
     ):
         if column not in existing:
             conn.execute(f"ALTER TABLE requests ADD COLUMN {column} TEXT")
@@ -167,6 +175,18 @@ def mark_delivered(conn, request_id):
     """api_success -> delivered, set by the browser once it has actually rendered the result.
     A request stuck at api_success is exactly the reconciliation case Spec.md 7 describes."""
     return _transition(conn, request_id, API_SUCCESS, DELIVERED)
+
+
+def set_counted(conn, request_id, items, usage):
+    """Persists the last "นับของในรูปนี้" result. Not a state transition — counting never
+    changes status, so this is a plain update rather than going through _transition's
+    from-status guard; two counts racing just have the later write win, same as any other
+    live-looked-up field in this app."""
+    with conn:
+        conn.execute(
+            "UPDATE requests SET counted_json = ?, updated_at = ? WHERE request_id = ?",
+            (json.dumps({"items": items, "usage": usage}), now(), request_id),
+        )
 
 
 def get(conn, request_id):

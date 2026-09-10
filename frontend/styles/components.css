@@ -296,6 +296,16 @@ select.select-native {
   background: var(--surface-1);
   min-height: calc(100vh - 64px);
   box-sizing: border-box;
+  transition: width var(--transition-gentle);
+}
+/* ---- collapsed sidebar (icon-only), toggled by sidebar.js -----------------------------
+   The state lives as a data attribute on <html>, applied before paint the same way
+   data-theme is, so there is no flash of the wide sidebar on load. font-size:0 hides each
+   row's bare label text without touching markup in the five pages that each spell the nav
+   out by hand — .row-icon svg is sized in px, not em, so the icon itself is unaffected. */
+:root[data-sidebar="collapsed"] .sidebar { width: 64px }
+:root[data-sidebar="collapsed"] .sidebar .row {
+  gap: 0; justify-content: center; font-size: 0;
 }
 
 .page { padding: var(--space-6); flex: 1; min-width: 0 }
@@ -311,7 +321,7 @@ select.select-native {
    inside that height rather than the page growing underneath it. */
 .panels {
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
+  grid-template-columns: 1fr 2fr 1fr 1fr;
   gap: var(--space-6);
   align-items: stretch;
   /* an auto grid row sizes to whatever its tallest cell WANTS to be — max-height alone does not
@@ -337,11 +347,11 @@ select.select-native {
 @media (max-width: 1100px) {
   .panels { grid-template-columns: repeat(2, minmax(0, 1fr)); height: auto }
   .panels > .card { overflow-y: visible }
-  .panels .role-decoration { grid-column: 1 / -1 }
+  .panels .role-decoration, .panels #panel-pricing { grid-column: 1 / -1 }
 }
 @media (max-width: 720px) {
   .panels { grid-template-columns: minmax(0, 1fr) }
-  .panels .role-decoration { grid-column: auto }
+  .panels .role-decoration, .panels #panel-pricing { grid-column: auto }
 }
 @media (max-width: 720px) {
   .frame { display: block }
@@ -351,6 +361,10 @@ select.select-native {
     border-bottom: 1px solid var(--border);
   }
   .sidebar .row { width: auto }
+  /* the collapse toggle is a desktop convenience for panel width the phone layout does not
+     have — same specificity as the collapsed rule above, later in the file, so this wins */
+  :root[data-sidebar="collapsed"] .sidebar { width: auto }
+  :root[data-sidebar="collapsed"] .sidebar .row { gap: var(--space-2); font-size: var(--text-base) }
 }
 
 /* ---- decoration panel: picked items on the left, controls to add more on the right —

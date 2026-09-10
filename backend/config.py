@@ -44,6 +44,12 @@ DB_PATH = DATA_DIR / "app.db"
 PROMPT_PATH = BACKEND_DIR / "prompts" / "compositing_prompt.txt"
 FRONTEND_DIR = ROOT / "frontend"
 CATALOG_PATH = ROOT / "catalog" / "products.json"
+# The supplier's own wholesale price and printed size — the exclusive source for both
+# (2026-09-10 decision), committed separately from the catalogue on purpose. See
+# backend/services/vendor_lookup.py and vendor-pricelists/bangkok-christmas/README.md.
+# Missing on a machine that never had this vendor's price list is not an error (vendor_lookup.py
+# fails soft): price/size lookups just have nothing to offer there.
+VENDOR_LOOKUP_PATH = ROOT / "vendor-pricelists" / "bangkok-christmas" / "cleaned" / "lookup.json"
 
 # Spec.md 3. gpt-image-2's own per-file ceiling is higher; this is ours.
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
@@ -128,6 +134,12 @@ ELEMENT_DENSITY_PHRASES = {
         "amount. Place them closely together, filling most of the space this kind would cover."
     ),
 }
+
+# Numeric (min, max) companion to ELEMENT_DENSITY_PHRASES above, for the price-estimate panel
+# only — never read by image_gen or fed to the model, so it carries none of that text's
+# re-measurement obligation. Kept in sync by hand with the prose; a phrase reworded after a
+# future billed check must have its numbers copied here too.
+ELEMENT_DENSITY_QTY_RANGE = {"light": (1, 6), "normal": (8, 12), "full": (18, 24)}
 
 # What auto pick places on every tree: the same mix of categories and counts for every tone
 # and every tree size (ADR-0003). The tone decides which products fill these slots, never what

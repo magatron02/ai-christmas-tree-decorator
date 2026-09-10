@@ -33,12 +33,19 @@ const state = {
   treeCode: null, // set only by the catalogue picker — an uploaded photo has no code
   treeSizeMm: null, // the tree code's catalogue size, or null if it has none (blocking gate)
   treeManualMm: null, // person-typed override when treeSizeMm is null
-  // {name, url, code, image, colours, sizeMm, manualMm, density} — one entry per accepted
-  // cut-out, up to MAX_ELEMENTS. sizeMm is the code's catalogue size (null = none, blocking
-  // gate); manualMm is a person-typed override; density is a DENSITY_PRESETS key, per item.
-  // image is the catalogue colour photo this cutout came from (null for an uploaded photo);
-  // colours is that product's other colours (issue #15), fetched once at accept time — null
-  // unless the product actually has more than one, which is also the "offer a switcher" flag.
+  treePrice: null, // the tree code's catalogue price, or the vendor fallback — see priceSource
+  treeLabel: null, // "code (size_raw)", from catalog.describe() — for the pricing panel
+  treePriceSource: null, // "catalog" | "vendor" | null — which kind of number treePrice is
+  // {name, url, code, image, colours, sizeMm, manualMm, density, price, label, priceSource} —
+  // one entry per accepted cut-out, up to MAX_ELEMENTS. sizeMm is the code's catalogue size
+  // (null = none, blocking gate); manualMm is a person-typed override; density is a
+  // DENSITY_PRESETS key, per item. image is the catalogue colour photo this cutout came from
+  // (null for an uploaded photo); colours is that product's other colours (issue #15), fetched
+  // once at accept time — null unless the product actually has more than one, which is also
+  // the "offer a switcher" flag. price/label/priceSource are the catalogue's own price, falling
+  // back to the vendor wholesale price list when the catalogue has none (backend/services/
+  // vendor_prices.py) — priceSource says which one price actually is, null for neither. See
+  // renderPricing().
   elements: [],
   sceneReference: null, // stored filename of the optional scene/ambience photo (used at generate time)
   requestId: null,
@@ -46,7 +53,16 @@ const state = {
   quantities: null, // prepared.quantities from the last /api/prepare, indexed like state.elements
   treeRatio: null, // width/height of whatever photo is in the tree slot right now
   sceneRatio: null, // width/height of the scene reference, when one is set
+  // code -> exact count from the last "นับของในรูปนี้" click, or null before that button is
+  // pressed (or after anything about the tree/decorations changes and invalidates it — see
+  // resetRun). renderPricing() prefers this over the density-range estimate whenever present.
+  counted: null,
+  priceMultiplier: 2, // both sides of the tree are decorated but only the front is in frame
 };
+
+// Filled in by loadConfig() from config.ELEMENT_DENSITY_QTY_RANGE — the per-item quantity
+// estimate renderPricing() falls back to before anything has been counted from the picture.
+let elementDensityQty = { light: [1, 6], normal: [8, 12], full: [18, 24] };
 
 // A code-bearing item (tree or element) whose catalogue row has no size, and that has not
 // been given a manual one yet — the thing the blocking gate exists to stop. NonGoals.md 8:
@@ -200,10 +216,14 @@ async function switchColour(element, newImage) {
     element.name = result.element;
     element.image = newImage;
     element.sizeMm = result.size_mm;
+    element.price = result.price;
+    element.label = result.label;
+    element.priceSource = result.price_source;
   } catch (err) {
     showError(err.message);
   }
   renderElements(); // also reverts the select to element.image on failure
+  renderPricing();
   resetRun();
 }
 
@@ -236,6 +256,7 @@ function renderElements() {
     const pill = buildDensityPill(element.density || "normal", (level) => {
       element.density = level;
       renderElements();
+      renderPricing();
     });
     const drop = document.createElement("button");
     drop.className = "btn danger";
@@ -243,6 +264,7 @@ function renderElements() {
     drop.addEventListener("click", () => {
       state.elements.splice(index, 1);
       renderElements();
+      renderPricing();
       resetRun();
     });
     top.append(thumbWrap, pill, drop);
@@ -271,11 +293,160 @@ function renderElements() {
   $("element-file").disabled = room === 0;
 }
 
+function money(amount) {
+  return `฿${Math.round(amount).toLocaleString("th-TH")}`;
+}
+
+/* Panel 4 — a running estimate of what the shop pulls off the shelf to match the picture,
+ * priced from the catalogue's own `price` field (never OpenAI cost, that's the token tile),
+ * falling back to the vendor's own wholesale price (backend/services/vendor_prices.py) when
+ * the catalogue has none — marked with "†" wherever that fallback is the number shown, since
+ * it is a different kind of figure (cost, not a price the shop set) and this app currently
+ * being partner-facing is the only reason mixing it in here needs no markup step first.
+ *
+ * Quantity per decoration comes from one of two sources, and the exact one always wins once
+ * it exists:
+ *  - state.counted[code] — an exact per-code count of the finished picture, from clicking
+ *    "นับของในรูปนี้" (panel 3). Only exists after a successful generate + count.
+ *  - otherwise, config.ELEMENT_DENSITY_QTY_RANGE for that item's chosen density: a [min, max]
+ *    guess at how many copies the prompt asked for, shown as a range and flagged as an
+ *    estimate rather than a real count (NonGoals.md 8 — a range that says it is a range is
+ *    not the same claim as a single invented number).
+ *
+ * Either source is multiplied by state.priceMultiplier — the picture only ever shows the
+ * front of the tree, so a plain visible-side count understates what a shop actually needs to
+ * decorate a real, free-standing tree on both sides. Applied uniformly to both sources since
+ * the same front-only limitation applies whether the number came from a count or a guess.
+ */
+function renderPricing() {
+  const rows = $("pricing-rows");
+  rows.innerHTML = "";
+  const missing = []; // has a catalogue code, but that code carries no price
+  const noCatalog = []; // no catalogue code at all — an own upload, never priceable here
+  const multiplier = state.priceMultiplier > 0 ? state.priceMultiplier : 1;
+
+  const hasAnything = state.treeFile || state.elements.length;
+  $("pricing-empty").hidden = Boolean(hasAnything);
+  $("pricing-table-wrap").hidden = !hasAnything;
+  $("pricing-summary").hidden = !hasAnything;
+  if (!hasAnything) {
+    $("pricing-note").hidden = true;
+    return;
+  }
+
+  let decorMin = 0;
+  let decorMax = 0;
+  let anyEstimated = false;
+  let anyVendor = false;
+
+  for (const element of state.elements) {
+    const tr = document.createElement("tr");
+    const label = element.label || element.code || "ของตกแต่ง";
+
+    if (!element.code) {
+      noCatalog.push(label);
+      tr.innerHTML = `<td>${label}</td><td class="mono">—</td>` +
+        `<td class="mono">—</td><td class="mono">ไม่มีในแคตตาล็อก</td>`;
+      rows.append(tr);
+      continue;
+    }
+
+    const exact = state.counted ? state.counted[element.code] : null;
+    const [rangeMin, rangeMax] = elementDensityQty[element.density || "normal"] || [null, null];
+    const qtyMin = (exact != null ? exact : rangeMin) * multiplier;
+    const qtyMax = (exact != null ? exact : rangeMax) * multiplier;
+    if (exact == null) anyEstimated = true;
+
+    const qtyText = exact != null
+      ? `${qtyMin.toLocaleString("th-TH")} ชิ้น`
+      : `${qtyMin.toLocaleString("th-TH")}–${qtyMax.toLocaleString("th-TH")} ชิ้น (ประมาณ)`;
+
+    if (element.price == null) {
+      missing.push(label);
+      tr.innerHTML =
+        `<td>${label}</td><td class="mono">${qtyText}</td>` +
+        `<td class="mono">—</td><td class="mono">ไม่มีราคา</td>`;
+    } else {
+      const isVendor = element.priceSource === "vendor";
+      if (isVendor) anyVendor = true;
+      const mark = isVendor ? " †" : "";
+      decorMin += qtyMin * element.price;
+      decorMax += qtyMax * element.price;
+      const lineText = exact != null
+        ? money(qtyMin * element.price)
+        : `${money(qtyMin * element.price)}–${money(qtyMax * element.price)}`;
+      tr.innerHTML =
+        `<td>${label}</td><td class="mono">${qtyText}</td>` +
+        `<td class="mono">${money(element.price)}${mark}</td><td class="mono">${lineText}${mark}</td>`;
+    }
+    rows.append(tr);
+  }
+
+  // Always its own row whenever there is a tree at all — not gated on treeCode. An own-photo
+  // tree used to contribute nothing here silently, which read as "the tree wasn't counted"
+  // rather than "the tree is ฿0 because it isn't a catalogue product" (the actual reason the
+  // grand total looked unchanged after adding a tree — nothing was wrong, nothing was shown).
+  if (state.treeFile) {
+    const tr = document.createElement("tr");
+    if (!state.treeCode) {
+      tr.innerHTML =
+        `<td>ต้นไม้ (ไม่ได้มาจากแคตตาล็อก)</td><td class="mono">1 ต้น</td>` +
+        `<td class="mono">—</td><td class="mono">${money(0)}</td>`;
+    } else if (state.treePrice == null) {
+      missing.push(state.treeLabel || state.treeCode);
+      tr.innerHTML =
+        `<td>${state.treeLabel || state.treeCode} (ต้น)</td><td class="mono">1 ต้น</td>` +
+        `<td class="mono">—</td><td class="mono">ไม่มีราคา</td>`;
+    } else {
+      const isVendor = state.treePriceSource === "vendor";
+      if (isVendor) anyVendor = true;
+      const mark = isVendor ? " †" : "";
+      tr.innerHTML =
+        `<td>${state.treeLabel || state.treeCode} (ต้น)</td><td class="mono">1 ต้น</td>` +
+        `<td class="mono">${money(state.treePrice)}${mark}</td><td class="mono">${money(state.treePrice)}${mark}</td>`;
+    }
+    rows.append(tr);
+  }
+
+  const incomplete = missing.length || noCatalog.length;
+  const decorText = decorMin === decorMax ? money(decorMin) : `${money(decorMin)}–${money(decorMax)}`;
+  $("pricing-decor-total").textContent = incomplete ? `${decorText} *` : decorText;
+
+  const treeAmount = state.treeCode && state.treePrice != null ? state.treePrice : 0;
+  const grandMin = decorMin + treeAmount;
+  const grandMax = decorMax + treeAmount;
+  const grandText = grandMin === grandMax ? money(grandMin) : `${money(grandMin)}–${money(grandMax)}`;
+  $("pricing-grand-total").textContent = incomplete ? `${grandText} *` : grandText;
+
+  const notes = [];
+  if (anyEstimated) {
+    notes.push(
+      state.requestId
+        ? "* จำนวนบางชิ้นยังเป็นการประมาณจาก density ยังไม่ได้กดปุ่ม \"นับของในรูปนี้\" (แผง 3) เพื่อความแม่นยำ"
+        : "* จำนวนเป็นการประมาณจาก density — กดสร้างภาพแล้วกด \"นับของในรูปนี้\" เพื่อจำนวนจริงจากรูป"
+    );
+  }
+  if (anyVendor) {
+    notes.push("† ราคาทุนจาก vendor (ร้านยังไม่ได้ตั้งราคาของชิ้นนี้เอง) ไม่ใช่ราคาที่ร้านตั้งเอง");
+  }
+  if (missing.length) notes.push(`ไม่มีราคาเลย ทั้งแคตตาล็อกและ vendor: ${missing.join(", ")}`);
+  if (noCatalog.length) notes.push(`ไม่ได้มาจากแคตตาล็อกเลย (ไม่รวมในราคา): ${noCatalog.join(", ")}`);
+  $("pricing-note").textContent = notes.join(" — ");
+  $("pricing-note").hidden = !notes.length;
+}
+
+$("price-multiplier").addEventListener("input", (event) => {
+  const value = Number(event.target.value);
+  state.priceMultiplier = value > 0 ? value : 1;
+  renderPricing();
+});
+
 /* The chip shows the pipeline state of the current run, so it is only reset when the user
  * changes an input — that is the moment the previous run stops being the current one. */
 function resetRun() {
   state.requestId = null;
   state.quantities = null;
+  state.counted = null; // a new tree/decoration set invalidates any earlier count
   $("out-result").hidden = true;
   $("result-actions").hidden = true;
   $("result-quantities").hidden = true;
@@ -286,6 +457,7 @@ function resetRun() {
   if (state.treeFile && state.elements.length) setStatus("pending");
   else setStatus("waiting", "รอต้นเปล่ากับของตกแต่งอย่างน้อย 1 ชิ้น");
   refreshGenerateButton();
+  renderPricing();
 }
 
 /* The pre-generate estimate, in the confirm dialog: how many of this product fit on a tree
@@ -330,7 +502,11 @@ async function loadConfig() {
   const config = await call("/api/config");
   sizePresets = config.sizes;
   MAX_ELEMENTS = config.max_elements;
+  elementDensityQty = Object.fromEntries(
+    config.element_density_qty.map((d) => [d.key, [d.min, d.max]])
+  );
   renderElements(); // the "ใส่ได้ถึง N ชิ้น" hint was built against the pre-fetch fallback
+  renderPricing();
 
   const select = $("size-select");
   select.innerHTML = "";
@@ -428,22 +604,29 @@ function refreshAutoSize() {
  * Product.md 8.2 wanted them so the prompt could state real millimetres; a code typed from
  * memory out of ~1,300 was always a wrong order waiting to happen. Settings is where a code
  * gets entered by hand, against the catalogue row it belongs to. */
-function showTreeCode(code, sizeMm = null) {
+function showTreeCode(code, sizeMm = null, price = null, label = null, priceSource = null) {
   state.treeCode = code || null;
   state.treeSizeMm = code ? sizeMm : null;
   state.treeManualMm = null; // a new tree slot starts its own gate over from nothing
+  state.treePrice = code ? price : null;
+  state.treeLabel = code ? label : null;
+  state.treePriceSource = code ? priceSource : null;
   const badge = $("tree-code-badge");
   badge.textContent = code || "";
   badge.hidden = !code;
   renderTreeSizeGate();
+  renderPricing();
 }
 
-function showElementCode(code, sizeMm = null, image = null) {
+function showElementCode(code, sizeMm = null, image = null, price = null, label = null, priceSource = null) {
   const badge = $("element-code-badge");
   badge.textContent = code || "";
   badge.hidden = !code;
   $("element-preview").dataset.code = code || "";
   $("element-preview").dataset.sizeMm = code && sizeMm != null ? sizeMm : "";
+  $("element-preview").dataset.price = code && price != null ? price : "";
+  $("element-preview").dataset.label = code && label ? label : "";
+  $("element-preview").dataset.priceSource = code && priceSource ? priceSource : "";
   // Which colour photo this cutout came from (issue #15) — carried from here into the
   // accepted item so its card knows what to offer a colour switcher against. Empty for an
   // uploaded photo, which has no catalogue colours to switch between.
@@ -451,6 +634,7 @@ function showElementCode(code, sizeMm = null, image = null) {
 }
 
 renderElements();
+renderPricing();
 
 /* ---- step 1: bare tree ---- */
 $("tree-file").addEventListener("change", async (event) => {
@@ -487,7 +671,7 @@ function showElementPreview(result, code = null, sizeMm = null, image = null) {
   $("element-preview-frame").hidden = false;
   $("element-actions").hidden = false;
   $("element-preview").dataset.name = result.element;
-  showElementCode(code, sizeMm, image);
+  showElementCode(code, sizeMm, image, result.price, result.label, result.price_source);
 }
 
 $("cut-btn").addEventListener("click", async () => {
@@ -802,7 +986,7 @@ async function useTreeFromCatalog(code, image) {
     $("tree-preview").src = result.tree_url;
     $("tree-preview-frame").hidden = false;
     $("tree-file").value = "";  // the picker's tree replaces whatever was uploaded
-    showTreeCode(code, result.size_mm);
+    showTreeCode(code, result.size_mm, result.price, result.label, result.price_source);
     try {
       const { width, height } = await imageDimensions(state.treeFile);
       state.treeRatio = width / height;
@@ -846,6 +1030,9 @@ $("accept-btn").addEventListener("click", async () => {
     sizeMm: code && preview.dataset.sizeMm ? Number(preview.dataset.sizeMm) : null,
     manualMm: null,
     density: "normal",
+    price: code && preview.dataset.price ? Number(preview.dataset.price) : null,
+    label: code && preview.dataset.label ? preview.dataset.label : null,
+    priceSource: code && preview.dataset.priceSource ? preview.dataset.priceSource : null,
   });
   // clear the slot so the next decoration starts from nothing
   $("element-file").value = "";
@@ -854,6 +1041,7 @@ $("accept-btn").addEventListener("click", async () => {
   $("cut-btn").disabled = true;
   showElementCode(null);
   renderElements();
+  renderPricing();
   resetRun();
 });
 
@@ -1108,8 +1296,14 @@ $("confirm-btn").addEventListener("click", async () => {
     // does not honour that scale. Counting the picture itself is the button below.
     $("count-actions").hidden = false;
     $("download-btn").href = result.output_url;
+    const priceText = result.price_total || result.price_missing.length
+      ? ` · ฿${result.price_total.toLocaleString("th-TH")}` +
+        (result.price_missing.length ? " (ราคาไม่ครบ)" : "")
+      : "";
     $("result-meta").textContent =
-      `${result.request_id} · ${result.size} · ${result.usage ? result.usage.total_tokens.toLocaleString() + " โทเคน" : "ไม่ทราบต้นทุน"}`;
+      `${result.request_id} · ${result.size} · ` +
+      (result.usage ? result.usage.total_tokens.toLocaleString() + " โทเคน" : "ไม่ทราบต้นทุน") +
+      priceText;
     $("result-actions").hidden = false;
     setStatus("api_success");
 
@@ -1133,6 +1327,31 @@ $("confirm-btn").addEventListener("click", async () => {
  * question the shop quotes from: the size-based suggestion says how many would fit on a tree
  * that size, the picture regularly shows a different number, and the customer is looking at
  * the picture. */
+/* Shared by a fresh count-btn click and by resumeFromHistory's replay of a persisted count
+ * (request_log.set_counted, backend/main.py) — same list, same state.counted update, so a
+ * result read back from history looks identical to one just counted live. `note` is omitted
+ * on replay (nothing new was just billed, so the "billed a little more" hint would be wrong). */
+function applyCountedItems(items, note) {
+  const list = $("result-quantities");
+  list.innerHTML = "";
+  for (const item of items) {
+    const match = state.elements.find((e) => e.code === item.code);
+    const li = document.createElement("li");
+    li.textContent = `${match ? match.label || item.code : item.code}: ${item.count} ชิ้น`;
+    list.append(li);
+  }
+  if (!items.length) {
+    const li = document.createElement("li");
+    li.textContent = "ไม่เจอของตกแต่งในรูปนี้";
+    list.append(li);
+  }
+  list.hidden = false;
+  $("count-note").textContent = note || "";
+  $("count-note").hidden = !note;
+  state.counted = Object.fromEntries(items.map((item) => [item.code, item.count]));
+  renderPricing();
+}
+
 $("count-btn").addEventListener("click", async () => {
   if (!state.requestId) return;
   const button = $("count-btn");
@@ -1142,21 +1361,7 @@ $("count-btn").addEventListener("click", async () => {
 
   try {
     const counted = await call(`/api/count/${state.requestId}`, { method: "POST" });
-    const list = $("result-quantities");
-    list.innerHTML = "";
-    for (const kind of counted.kinds) {
-      const li = document.createElement("li");
-      li.textContent = `${kind.summary}: ${kind.count} ชิ้น`;
-      list.append(li);
-    }
-    if (!counted.kinds.length) {
-      const li = document.createElement("li");
-      li.textContent = "ไม่เจอของตกแต่งในรูปนี้";
-      list.append(li);
-    }
-    list.hidden = false;
-    $("count-note").textContent = counted.note;
-    $("count-note").hidden = false;
+    applyCountedItems(counted.items, counted.note);
   } catch (err) {
     showError(err.message);
   } finally {
@@ -1300,3 +1505,96 @@ function showMode(name) {
   }
 }
 $("mode-btn-custom").addEventListener("click", () => showMode("custom"));
+
+/* ---- "จัดการต่อ" from the history page (history.js's own link) ----
+ * /?request_id=<id> pre-fills panels 1-4 from a past request so it can be counted (again, or
+ * for the first time) or re-checked for price without redoing the pick from scratch. Read-only
+ * against the server (GET /api/request/{id}) — nothing here is a new request until Generate
+ * is pressed again, which needs a real tree File the same as any other run, hence re-fetching
+ * it as a blob rather than only pointing an <img> at the stored URL. */
+function fileNameFrom(url) {
+  return url ? url.split("/").pop() : null;
+}
+
+async function resumeFromHistory(requestId) {
+  let row;
+  try {
+    row = await call(`/api/request/${requestId}`);
+  } catch (err) {
+    showError(err.message);
+    return;
+  }
+  if (!row.output_url) {
+    showError("request นี้ยังไม่มีภาพผลลัพธ์ให้จัดการต่อ");
+    return;
+  }
+
+  showMode("custom");
+
+  state.treeCode = row.tree_code || null;
+  state.treeSizeMm = row.tree_size_mm;
+  state.treeManualMm = row.tree_manual_mm;
+  state.treePrice = row.tree_price;
+  state.treeLabel = row.tree_label;
+  state.treePriceSource = row.tree_price_source;
+  $("tree-preview").src = row.tree_url;
+  $("tree-preview-frame").hidden = false;
+  $("tree-code-badge").textContent = state.treeCode || "";
+  $("tree-code-badge").hidden = !state.treeCode;
+  try {
+    const blob = await (await fetch(row.tree_url)).blob();
+    state.treeFile = new File([blob], fileNameFrom(row.tree_url), { type: "image/png" });
+    const { width, height } = await imageDimensions(state.treeFile);
+    state.treeRatio = width / height;
+    refreshAutoSize();
+  } catch {
+    // Generate needs a real tree file; viewing/counting/pricing this request does not, so a
+    // failed re-fetch here still leaves the rest of the resume usable.
+  }
+
+  state.elements = row.elements.map((e) => ({
+    name: fileNameFrom(e.url),
+    url: e.url,
+    code: e.code,
+    image: null,
+    colours: null, // the colour switcher is a bonus of picking fresh; skip it on resume
+    sizeMm: e.size_mm,
+    manualMm: e.manual_mm,
+    density: e.density || row.density || "normal",
+    price: e.price,
+    label: e.label,
+    priceSource: e.price_source,
+  }));
+
+  state.requestId = row.request_id;
+  $("out-result").src = row.output_url;
+  $("out-result").hidden = false;
+  $("result-empty").hidden = true;
+  $("result-actions").hidden = false;
+  $("download-btn").href = row.output_url;
+  $("count-actions").hidden = false;
+  $("result-quantities").hidden = true;
+  $("count-note").hidden = true;
+  $("result-meta").textContent =
+    `${row.request_id} · ${row.size} · ` +
+    (row.usage ? row.usage.total_tokens.toLocaleString() + " โทเคน" : "ไม่ทราบต้นทุน");
+  setStatus(row.status);
+
+  renderTreeSizeGate();
+  renderElements();
+  // request_log.set_counted persisted the last count for this request (backend/main.py) — a
+  // resume replays it here for free instead of state.counted staying empty until someone
+  // pays to count the same picture again.
+  state.counted = null;
+  if (row.counted_items) applyCountedItems(row.counted_items);
+  else renderPricing();
+  refreshGenerateButton();
+}
+
+const resumeId = new URLSearchParams(location.search).get("request_id");
+if (resumeId) {
+  resumeFromHistory(resumeId);
+  // drop the query param so a later refresh replays the current on-screen state, not a
+  // second fetch of the same request
+  history.replaceState(null, "", location.pathname);
+}

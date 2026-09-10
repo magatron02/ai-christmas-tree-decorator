@@ -251,17 +251,21 @@ def find(query_text, top_n=TOP_N, min_score=MIN_SCORE, query_kind=None, query_sh
     return matches, refused
 
 
-def suggest_quantity(tree_code, element_code):
+def suggest_quantity(tree_code, element_code, size_lookup=None):
     """How many of a decoration a tree of that size takes.
 
     Derived from the two real sizes and the density the prompt already asks for — 12 to 20
     decorations on a full-height tree — scaled by how large this one is against a reference
-    80 mm bauble. Sizes come from the catalogue only; NonGoals.md 8 forbids inventing one.
+    80 mm bauble. Sizes come from the catalogue by default; NonGoals.md 8 forbids inventing
+    one either way. `size_lookup`, passed through to catalog.require_size(), lets a caller
+    widen where a size may come from (main.py passes one that falls back to vendor_lookup for
+    a code the catalogue itself has none for — 2026-09-10) without this function caring which.
     """
     from backend.services import catalog
 
-    tree_mm = catalog.require_size(catalog.find(tree_code))
-    element_mm = catalog.require_size(catalog.find(element_code))
+    size_lookup = size_lookup or catalog.longest_side_mm
+    tree_mm = catalog.require_size(catalog.find(tree_code), size_lookup)
+    element_mm = catalog.require_size(catalog.find(element_code), size_lookup)
 
     # a 5 ft tree with 80 mm baubles is the case the density guidance was written for
     reference_tree, reference_element = 1524.0, 80.0

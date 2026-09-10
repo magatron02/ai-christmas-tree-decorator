@@ -52,7 +52,7 @@ $("lightbox-close").addEventListener("click", () => $("lightbox-dialog").close()
 
 function previewCell(row, request) {
   const td = document.createElement("td");
-  td.className = "shrink";
+  td.className = "shrink stack";
   const name = fileNameFrom(request.output_url);
   if (name) {
     const button = document.createElement("button");
@@ -66,6 +66,14 @@ function previewCell(row, request) {
     button.append(img);
     button.addEventListener("click", () => openLightbox(request.output_url, img.alt));
     td.append(button);
+    // under the thumbnail rather than in the result column — the two used to sit side by
+    // side with "จัดการต่อ" there and read as one crowded, overlapping row of buttons.
+    const link = document.createElement("a");
+    link.href = request.output_url;
+    link.download = "";
+    link.className = "btn";
+    link.textContent = "ดาวน์โหลด";
+    td.append(link);
   } else {
     td.textContent = "—";
   }
@@ -86,6 +94,30 @@ function itemsCell(row, elements) {
   td.textContent = named.length
     ? named.map((e) => (e.colour ? `${e.code} (${e.colour})` : e.code)).join(", ")
     : "—";
+  row.append(td);
+}
+
+/* Retail value of the decorations, not the OpenAI cost (that's the token column). Live-looked
+ * up against the catalogue on every /api/history read, so a later price edit shows up on old
+ * rows too — same reasoning as `price` never being snapshotted anywhere else in the app. A
+ * "*" plus the title tooltip marks a total that skipped at least one unpriced decoration,
+ * so it never reads as a complete price when it isn't (mirrors missing_sizes elsewhere). */
+function priceCell(row, request) {
+  const td = document.createElement("td");
+  td.className = "mono";
+  // "†" if any of the total came from the vendor's own wholesale price rather than a price
+  // the shop set itself (backend/services/vendor_prices.py) — same idea as the "*" for a
+  // skipped decoration, so the number never reads as one plain thing when it is not.
+  const anyVendor = request.elements.some((e) => e.price_source === "vendor")
+    || request.tree_price_source === "vendor";
+  td.textContent = request.price_total
+    ? `฿${request.price_total.toLocaleString("th-TH")}` +
+      `${request.price_missing.length ? " *" : ""}${anyVendor ? " †" : ""}`
+    : "—";
+  const titles = [];
+  if (request.price_missing.length) titles.push(`ไม่มีราคา: ${request.price_missing.join(", ")}`);
+  if (anyVendor) titles.push("† มีบางส่วนเป็นราคาทุนจาก vendor ไม่ใช่ราคาที่ร้านตั้งเอง");
+  td.title = titles.join(" — ");
   row.append(td);
 }
 
@@ -112,6 +144,7 @@ async function load() {
     cell(row, request.request_id.slice(0, 8), "mono");
     cell(row, request.size, "mono");
     itemsCell(row, request.elements);
+    priceCell(row, request);
 
     const state = document.createElement("td");
     const chip = document.createElement("span");
@@ -126,12 +159,16 @@ async function load() {
     const result = document.createElement("td");
     result.className = "shrink";
     if (request.output_url) {
-      const link = document.createElement("a");
-      link.href = request.output_url;
-      link.download = "";
-      link.className = "btn";
-      link.textContent = "ดาวน์โหลด";
-      result.append(link);
+      // Back to the main page's panels with this request's tree, decorations and result
+      // pre-filled — for counting the picture again or re-checking the price breakdown
+      // without redoing the whole pick (index.html/app.js's resumeFromHistory()). Download
+      // lives under the thumbnail instead (previewCell) — the two used to crowd this one
+      // column and overlap.
+      const resume = document.createElement("a");
+      resume.href = `/?request_id=${encodeURIComponent(request.request_id)}`;
+      resume.className = "btn";
+      resume.textContent = "จัดการต่อ";
+      result.append(resume);
     } else {
       result.textContent = "—";
     }

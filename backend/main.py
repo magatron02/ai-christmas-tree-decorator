@@ -35,7 +35,7 @@ from fastapi.staticfiles import StaticFiles
 
 from backend import config, validation
 from backend.models import request_log
-from backend.services import background_removal, catalog, image_gen
+from backend.services import background_removal, catalog, image_gen, vendor_lookup
 from backend.services.background_removal import BackgroundRemovalError
 from backend.services.image_gen import ImageGenError
 from backend.validation import ValidationError
@@ -55,7 +55,7 @@ app.mount("/static", StaticFiles(directory=config.FRONTEND_DIR), name="static")
 app.mount("/shop-photos", StaticFiles(directory=config.SHOP_PHOTOS_DIR), name="shop-photos")
 
 
-PAGE_PATHS = {"/", "/history", "/settings"}
+PAGE_PATHS = {"/", "/history", "/settings", "/identify", "/pricing"}
 
 
 @app.middleware("http")
@@ -171,15 +171,103 @@ def _db():
     return request_log.connect()
 
 
+def _resolved_size_mm(code):
+    """The catalogue's own size first, the vendor's parsed size only when the catalogue has
+    none for this code (2026-09-10 decision) — the opposite precedence from price, on purpose:
+    measured the same day, the vendor list only carries a parseable size for 275 of its 2875
+    rows, so treating it as the exclusive source would have thrown away good numbers the
+    catalogue already had for 586 of the 829 products (a "vendor everywhere" first pass got
+    reverted specifically because of this). This one only ever widens coverage — a code that
+    already had a catalogue size keeps exactly that number.
+    """
+    if not code:
+        return None
+    try:
+        row = catalog.find(code)
+    except ValidationError:
+        row = None
+    catalog_mm = catalog.longest_side_mm(row) if row else None
+    return catalog_mm if catalog_mm is not None else vendor_lookup.size_mm_for(code)
+
+
+def _size_lookup_for_scale(row):
+    """Adapts _resolved_size_mm (works off a bare code) to the `size_lookup(row)` shape
+    catalog.scale_sentence()/require_size() call — passed to both so the actual generation
+    math and the pre-generate quantity suggestion see the same widened size, not just the
+    picker's displayed size_mm."""
+    return _resolved_size_mm(row["code"])
+
+
+def _priced_extra(code):
+    """price + size + a display label for a code, or all-None for a code-less element.
+
+    Price and size are blended from two sources with *opposite* precedence, each decided and
+    measured separately on 2026-09-10 — see vendor_lookup.py's own docstring for why a single
+    "vendor everywhere" rule was tried first and rejected:
+      - price: the vendor's own wholesale figure wins whenever it has one for this code, even
+        over a price the shop already set itself in the catalogue overlay — this deployment is
+        partner-facing, so the vendor's cost figure is the number that actually matters here.
+      - size: the catalogue's own printed size wins when it has one; the vendor's parsed size
+        only fills the gap for the ~234 codes the catalogue has none for (and only has an
+        answer for 18 of those — see _resolved_size_mm).
+
+    `price_source` says which kind of number `price` actually is ("catalog" is the shop's own,
+    "vendor" is the supplier's raw wholesale cost passing through unchanged, None is neither)
+    so a caller can be honest about it rather than presenting both the same way. Live-looked
+    up rather than snapshotted, same reasoning catalog.decoration_price_total's own comment
+    gives: a later price/size/lookup edit should show up on old history rows too.
+    """
+    if not code:
+        return {"size_mm": None, "price": None, "label": None, "price_source": None}
+    try:
+        row = catalog.find(code)
+    except ValidationError:
+        row = None
+
+    vendor_price = vendor_lookup.price_for(code)
+    catalog_price = row.get("price") if row else None
+    if vendor_price is not None:
+        price, price_source = vendor_price, "vendor"
+    elif catalog_price is not None:
+        price, price_source = catalog_price, "catalog"
+    else:
+        price, price_source = None, None
+
+    return {
+        "size_mm": _resolved_size_mm(code),
+        "price": price,
+        "label": catalog.describe(row) if row else None,
+        "price_source": price_source,
+    }
+
+
 def _row_json(row):
     elements = request_log.elements_of(row)
+    element_extras = [_priced_extra(e.get("code")) for e in elements]
+    # Recomputed here rather than via catalog.decoration_price_total: that function is the
+    # shop's own catalogue and nothing else (still true, still tested that way) — this total
+    # is what panel 4 and the history table actually show, so it has to agree with the same
+    # per-element vendor fallback those use, not a catalogue-only figure they'd disagree with.
+    price_total = sum(x["price"] for x in element_extras if x["price"] is not None)
+    price_missing = [
+        extra["label"] or e.get("code") or "ไม่ได้เลือกจาก catalogue"
+        for e, extra in zip(elements, element_extras)
+        if extra["price"] is None
+    ]
+    tree_extra = _priced_extra(row["tree_code"])
     return {
         "request_id": row["request_id"],
         "status": row["status"],
         "elements": [
-            {"url": _url(e["path"]), "code": e.get("code"), "colour": e.get("colour")}
-            for e in elements
+            {
+                "url": _url(e["path"]), "code": e.get("code"), "colour": e.get("colour"),
+                "density": e.get("density"), "manual_mm": e.get("manual_mm"),
+                **extra,
+            }
+            for e, extra in zip(elements, element_extras)
         ],
+        "price_total": price_total,
+        "price_missing": price_missing,
         "reference_url": _url(row["reference_path"]),
         # billed is derived, not stored: a row that carries usage is a row that cost money,
         # so there is no flag that can disagree with the record of what happened
@@ -187,6 +275,11 @@ def _row_json(row):
         "size": row["size"],
         "density": row["density"],
         "tree_code": row["tree_code"],
+        "tree_manual_mm": row["tree_manual_mm"],
+        "tree_size_mm": tree_extra["size_mm"],
+        "tree_price": tree_extra["price"],
+        "tree_label": tree_extra["label"],
+        "tree_price_source": tree_extra["price_source"],
         "element_code": row["element_code"],
         "error": row["error"],
         "usage": json.loads(row["usage_json"]) if row["usage_json"] else None,
@@ -195,6 +288,10 @@ def _row_json(row):
         "tree_url": _url(row["tree_path"]),
         "element_url": _url(row["element_path"]),
         "output_url": _url(row["output_path"]),
+        # the last "นับของในรูปนี้" result (request_log.set_counted), or None if it has never
+        # been counted — a caller resuming this request uses this instead of an exact count
+        # existing only because the button happened to be pressed earlier in the same session
+        "counted_items": json.loads(row["counted_json"])["items"] if row["counted_json"] else None,
     }
 
 
@@ -328,6 +425,12 @@ def api_config():
             {"key": key, "label": config.DENSITY_LABELS[key]} for key in config.DENSITY_PRESETS
         ],
         "default_density": config.DEFAULT_DENSITY,
+        # per-item quantity estimate for the pricing panel when nothing has been counted from
+        # the finished picture yet — see config.ELEMENT_DENSITY_QTY_RANGE.
+        "element_density_qty": [
+            {"key": key, "min": lo, "max": hi}
+            for key, (lo, hi) in config.ELEMENT_DENSITY_QTY_RANGE.items()
+        ],
         "max_upload_mb": config.MAX_UPLOAD_BYTES // (1024 * 1024),
         "max_elements": config.MAX_ELEMENTS,
         "prompt_mode_max_chars": config.PROMPT_MODE_MAX_CHARS,
@@ -344,7 +447,7 @@ def api_products(q: str = "", limit: int = 20):
             {
                 "code": row["code"],
                 "size_raw": row["size_raw"],
-                "size_mm": catalog.longest_side_mm(row),
+                "size_mm": _resolved_size_mm(row["code"]),
                 "section": row["section"],
                 "page": row["pdf_page"],
             }
@@ -511,10 +614,11 @@ def api_element_from_catalog(code: str = Form(...), image: str = Form("")):
         cut = background_removal.remove_background(path.read_bytes())
         _keep_cutout(path, cut)
     name = _store(cut, "element", "png")
-    row = catalog.find(code)
+    extra = _priced_extra(code)
     return {
         "element": name, "element_url": _url(name),
-        "size_mm": catalog.longest_side_mm(row),
+        "size_mm": extra["size_mm"], "price": extra["price"], "label": extra["label"],
+        "price_source": extra["price_source"],
     }
 
 
@@ -533,10 +637,11 @@ def api_tree_from_catalog(code: str = Form(...), image: str = Form("")):
         raise HTTPException(404, f"ไม่มีรูป catalogue ของ '{code}'")
 
     name = _store(path.read_bytes(), "tree", "png")
-    row = catalog.find(code)
+    extra = _priced_extra(code)
     return {
         "tree": name, "tree_url": _url(name),
-        "size_mm": catalog.longest_side_mm(row),
+        "size_mm": extra["size_mm"], "price": extra["price"], "label": extra["label"],
+        "price_source": extra["price_source"],
     }
 
 
@@ -816,7 +921,7 @@ def api_analyse_reference(name: str, tree_code: str = ""):
         if tree_code.strip() and not refused:
             try:
                 entry["quantity"] = matching.suggest_quantity(
-                    tree_code.strip(), matches[0]["code"]
+                    tree_code.strip(), matches[0]["code"], size_lookup=_size_lookup_for_scale
                 )
             except ValidationError as exc:
                 entry["quantity_note"] = str(exc)
@@ -950,8 +1055,8 @@ def api_prepare(
     picker's raw filename — the history and the staff worksheet want the same word a shop
     assistant would say, not "4400-1--5.png". A code with no colour, or one that resolves to
     nothing, simply records no colour rather than guessing (NonGoals.md 8) — the
-    count-what-is-in-the-picture feature (image_gen.count_decorations) reads a finished photo
-    and has no catalogue element to attach this to either way, so it is untouched by this.
+    count-what-is-in-the-picture feature (vision.count_decorations, /api/count/{id}) matches
+    against a code, not a colour, so it is untouched by this.
 
     `size == "auto"` means "match the scene reference photo's own ratio" — resolved here into
     a concrete WxH via fit_custom_size(scene_ratio) and stored as that literal string, so
@@ -1004,7 +1109,8 @@ def api_prepare(
             validation.resolve_density(d)  # fail fast, per item
 
     scale, missing_sizes = catalog.scale_sentence(
-        tree_code, codes, tree_mm_override, element_mm_overrides
+        tree_code, codes, tree_mm_override, element_mm_overrides,
+        size_lookup=_size_lookup_for_scale,
     )
     quantities = None
     if tree_code and all(codes):
@@ -1017,7 +1123,9 @@ def api_prepare(
         quantities = []
         for code in codes:
             try:
-                quantities.append(matching.suggest_quantity(tree_code, code))
+                quantities.append(
+                    matching.suggest_quantity(tree_code, code, size_lookup=_size_lookup_for_scale)
+                )
             except ValidationError:
                 quantities.append(None)
     reference = reference.strip()
@@ -1095,6 +1203,7 @@ def api_generate(request_id: str):
         scale, _missing_sizes = catalog.scale_sentence(
             row["tree_code"], [e.get("code") for e in elements],
             tree_mm_override, element_mm_overrides,
+            size_lookup=_size_lookup_for_scale,
         )
 
         # Once the request is claimed it must reach a terminal state on every path, or it is
@@ -1168,6 +1277,14 @@ def api_count_result(request_id: str):
     /api/reference/{name}/analyse: nothing bills without being asked (AC-4). The token cost is
     reported back but deliberately not written to the request's usage_json, which is the
     generation's own billing record and the basis of usage_totals' generation count.
+
+    The result itself (not the token cost) is persisted via request_log.set_counted(), so a
+    later view (history, "จัดการต่อ") shows this count without paying for it again — pressing
+    the button is still required once, but never twice for the same picture unless a person
+    chooses to recount it. Overwrites whatever was counted before, if anything.
+
+    Counts come back keyed by catalogue code, not a free-text guess — see vision.py's own
+    comment on why each accepted element's cut-out is sent back in as a labelled reference.
     """
     from backend.services import vision
 
@@ -1182,15 +1299,35 @@ def api_count_result(request_id: str):
     if not row["output_path"]:
         raise ValidationError("request นี้ยังไม่มีภาพผลลัพธ์ให้นับ")
 
+    # every accepted element is stored as an "element"-kind PNG cut-out (_store(..., "png") in
+    # /api/remove-bg and /api/element/from-catalog) — the same photo the compositor saw, fed
+    # back in as a labelled reference so the count is attributed to a code (vision.py). A
+    # code-less element (a custom upload never matched to the catalogue) has no price to
+    # attach a count to either, so it is left out rather than counted with nothing to show for it.
+    elements = request_log.elements_of(row)
+    references = [
+        (e["code"], _stored_path(e["path"]).read_bytes(), "image/png")
+        for e in elements if e.get("code")
+    ]
+    if not references:
+        raise ValidationError("request นี้ไม่มีของตกแต่งจากแคตตาล็อกให้นับ")
+
     path = _stored_path(row["output_path"])
     try:
-        counted, usage = vision.count_decorations(path.read_bytes())
+        counted, usage = vision.count_decorations(path.read_bytes(), references)
     except Exception as exc:
         raise HTTPException(502, f"นับของในรูปไม่สำเร็จ ({type(exc).__name__}: {exc})")
 
+    items = [item.model_dump() for item in counted.items]
+    conn = _db()
+    try:
+        request_log.set_counted(conn, request_id, items, usage)
+    finally:
+        conn.close()
+
     return {
         "request_id": request_id,
-        "kinds": [kind.model_dump() for kind in counted.kinds],
+        "items": items,
         "usage": usage,
         "note": "นับเฉพาะชิ้นที่เห็นในรูป ด้านหลังต้นกับที่บังกิ่งอยู่ไม่ได้นับ",
     }
@@ -1219,3 +1356,22 @@ def api_history(limit: int = 100):
         }
     finally:
         conn.close()
+
+
+@app.get("/api/request/{request_id}")
+def api_request(request_id: str):
+    """One request, by id — the same shape /api/history's rows come in.
+
+    For "จัดการต่อ" on the history page: the front end resumes a past request into the main
+    panels (tree, decorations, result) to count or re-check pricing, and needs one row's data
+    rather than fetching the whole history to find it. Read-only — unlike /api/delivered/{id},
+    nothing here changes status, so opening a row to look at it twice is harmless.
+    """
+    conn = _db()
+    try:
+        row = request_log.get(conn, request_id)
+    finally:
+        conn.close()
+    if row is None:
+        raise HTTPException(404, "ไม่รู้จัก request นี้")
+    return _row_json(row)
