@@ -801,7 +801,10 @@ function catalogCard(item) {
   card.addEventListener("click", async () => {
     const result = await catalogPickerCallback(item.code, item.image);
     if (typeof result === "string") $("catalog-count").textContent = result;
-    else if (result === true) $("catalog-count").textContent = `เพิ่ม ${item.code} แล้ว ✓`;
+    else if (result === true) {
+      $("catalog-count").textContent = `เพิ่ม ${item.code} แล้ว ✓`;
+      renderCatalogPicked();
+    }
   });
   return card;
 }
@@ -899,9 +902,57 @@ async function loadCatalogPage(restart) {
  * from one panel's picker to the other's would show the wrong (stale-mode) results. The shop
  * filter is never locked by mode — both shops sell trees, so panel 1 still needs to choose
  * between them, just within the tree category. */
-async function openCatalogPicker(mode, onPick) {
+/* The strip of what has been picked so far, drawn inside the dialog (issue #31): the accepted
+ * list itself sits on the page behind the modal, so without this the only sign a pick landed
+ * is one line of text that the next pick overwrites.
+ *
+ * Reads the caller's own list every time rather than counting picks as they happen — the two
+ * decoration pickers keep separate lists (state.elements, promptState.attachments), and a
+ * tally kept here would be a third copy free to disagree with both. `catalogPickerPicked` is
+ * whichever provider the current caller handed openCatalogPicker; the tree picker hands none,
+ * which is also how the strip knows to stay hidden for a slot that holds one tree. */
+let catalogPickerPicked = null;   // () => [{code, url}] | null
+
+function renderCatalogPicked() {
+  const host = $("catalog-picked");
+  host.innerHTML = "";
+  const picked = catalogPickerPicked ? catalogPickerPicked() : [];
+  host.hidden = !picked.length;
+  if (!picked.length) return;
+
+  const label = document.createElement("span");
+  label.className = "hint";
+  label.textContent = `เลือกแล้ว ${picked.length} จาก ${MAX_ELEMENTS} ชิ้น`;
+  host.append(label);
+
+  const strip = document.createElement("div");
+  strip.className = "picker-picked-strip";
+  for (const item of picked) {
+    // same thumbnail vocabulary the accepted list uses — these are the same transparent
+    // cut-outs, so they need the same checker backing to read against a light dialog
+    const wrap = document.createElement("div");
+    wrap.className = "thumb-wrap";
+    const img = document.createElement("img");
+    img.className = "thumb-sm checker";
+    img.src = item.url;
+    img.alt = item.code || "ของตกแต่งที่เลือกไว้";
+    wrap.append(img);
+    if (item.code) {
+      const badge = document.createElement("span");
+      badge.className = "thumb-code";
+      badge.textContent = item.code;
+      wrap.append(badge);
+    }
+    strip.append(wrap);
+  }
+  host.append(strip);
+}
+
+async function openCatalogPicker(mode, onPick, listPicked = null) {
   catalogPickerMode = mode;
   catalogPickerCallback = onPick;
+  catalogPickerPicked = listPicked;
+  renderCatalogPicked();
   const categorySelect = $("catalog-category");
   const shopSelect = $("catalog-shop");
   // shops first: the category list is scoped to the selected shop, so it cannot be built
@@ -915,7 +966,10 @@ async function openCatalogPicker(mode, onPick) {
   loadCatalogPage(true);
 }
 
-$("catalog-toggle").addEventListener("click", () => openCatalogPicker("element", addElementFromCatalog));
+$("catalog-toggle").addEventListener("click", () => openCatalogPicker(
+  "element", addElementFromCatalog,
+  () => state.elements.map((e) => ({ code: e.code, url: e.url })),
+));
 $("tree-catalog-toggle").addEventListener("click", () => openCatalogPicker("tree", useTreeFromCatalog));
 
 $("catalog-shop").addEventListener("change", async () => {

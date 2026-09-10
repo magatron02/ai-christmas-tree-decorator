@@ -164,7 +164,10 @@ $("prompt-tree-file").addEventListener("change", async (event) => {
 
 $("prompt-attach-element").addEventListener("click", () => {
   if (promptElements().length >= MAX_ELEMENTS) return;
-  openCatalogPicker("element", attachElementFromCatalog);
+  openCatalogPicker(
+    "element", attachElementFromCatalog,
+    () => promptElements().map((a) => ({ code: a.code, url: a.url })),
+  );
 });
 $("prompt-element-file").addEventListener("change", async (event) => {
   const file = event.target.files[0];

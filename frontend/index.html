@@ -276,6 +276,10 @@
     <input class="input" id="catalog-search" placeholder="ค้นรหัสหรือหมวด เช่น 017 หรือ bauble">
   </div>
   <span class="hint" id="catalog-count">กำลังโหลด…</span>
+  <!-- What has been picked so far, without closing the dialog to go and look (issue #31).
+       Only the decoration pickers fill this; the tree slot holds one tree, so it stays
+       hidden there. -->
+  <div class="picker-picked" id="catalog-picked" hidden></div>
   <div class="picker-grid" id="catalog-results"></div>
   <div class="btn-row">
     <button class="btn" id="catalog-more" hidden>โหลดเพิ่ม</button>
