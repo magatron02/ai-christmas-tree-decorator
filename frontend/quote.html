@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tree Decorator — หาสินค้าจากรูป</title>
+<title>Tree Decorator — สรุปราคา</title>
 <link rel="icon" href="/static/icon.ico">
 <link rel="stylesheet" href="/static/styles/tokens.css?v=8.41">
 <link rel="stylesheet" href="/static/styles/components.css?v=8.41">
@@ -35,7 +35,7 @@
       <span class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg></span>
       หน้าแรก
     </a>
-    <a class="row active" href="/identify" title="หาสินค้าจากรูป">
+    <a class="row" href="/identify" title="หาสินค้าจากรูป">
       <span class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-4 4-3-3-6 6"/></svg></span>
       หาสินค้าจากรูป
     </a>
@@ -53,52 +53,58 @@
     </a>
   </nav>
 
-  <main class="page">
-    <div class="settings-columns">
+  <main class="page stack">
+    <div class="notice" id="error-box" hidden></div>
 
-      <div class="stack">
-        <section class="card stack">
-          <span class="section-title">หาสินค้าจากรูป</span>
-          <span class="hint">อัปโหลดรูปที่มีของตกแต่งอยู่แล้ว เพื่อค้นแคตตาล็อกว่ามีอะไรใกล้เคียง</span>
-          <div class="notice" id="error-box" hidden></div>
-          <input class="input" id="identify-tree-code" list="identify-tree-code-list" autocomplete="off"
-                 placeholder="รหัสต้น — ไม่ใส่ก็ได้ ใส่แล้วจะบอกจำนวนของที่ควรใช้บนต้นนี้ด้วย">
-          <datalist id="identify-tree-code-list"></datalist>
-          <span class="hint" id="identify-tree-code-hint"></span>
-          <div class="identify-columns">
-            <div class="stack">
-              <input class="input" type="file" id="identify-reference-file" accept="image/jpeg,image/png">
-              <div class="btn-row" id="identify-reference-actions" hidden>
-                <button class="btn" id="identify-btn">หาว่าในรูปมีของอะไรที่เราขาย</button>
-                <button class="btn danger" id="identify-reference-clear">เอารูปออก</button>
-              </div>
-            </div>
-            <div class="stack">
-              <img class="thumb-sm" id="identify-reference-preview" alt="รูปอ้างอิงหาสินค้า" hidden>
-            </div>
+    <div class="quote-columns" id="quote-body" hidden>
+
+      <section class="card stack">
+        <div class="btn-row" style="justify-content: space-between">
+          <button type="button" class="btn btn-compact" id="back-btn" style="background: var(--surface-1)">← ย้อนกลับ</button>
+          <span class="panel-title">ภาพผลลัพธ์</span>
+        </div>
+        <img class="thumb" id="quote-result-image" alt="ต้นที่แต่งแล้ว">
+        <span class="hint mono" id="quote-meta"></span>
+        <div class="btn-row">
+          <a class="btn" id="quote-download" download>ดาวน์โหลด</a>
+          <button class="btn" id="quote-count-btn">นับของในรูปนี้</button>
+        </div>
+        <span class="hint" id="quote-count-hint">เสียเงินเพิ่มเล็กน้อย — ถ้าเคยนับไว้แล้วจะโชว์ผลเก่าให้ก่อน</span>
+        <span class="hint" id="quote-count-note" hidden></span>
+      </section>
+
+      <section class="card stack">
+        <div class="btn-row" style="justify-content: space-between">
+          <span class="panel-title">สรุปราคา</span>
+          <div class="btn-row">
+            <label class="hint" for="quote-multiplier">ตัวคูณ (ด้านที่มองไม่เห็น)</label>
+            <input class="input mono" type="number" id="quote-multiplier" min="1" step="1" value="2" style="width:4rem">
           </div>
-        </section>
-      </div>
-
-      <div class="stack">
-        <section class="card stack" id="identify-panel" hidden>
-          <span class="section-title">ของในรูปที่เราขาย</span>
-          <div class="notice" id="identify-note" hidden></div>
-          <div class="stack" id="identify-results"></div>
-        </section>
-      </div>
+        </div>
+        <div class="scroll-x quote-table-wrap">
+          <table>
+            <thead><tr><th>สินค้า</th><th>จำนวน</th><th>เพิ่มเติม</th><th>ราคา/หน่วย</th><th>รวม</th><th>หมายเหตุ</th></tr></thead>
+            <tbody id="quote-rows"></tbody>
+          </table>
+        </div>
+        <div class="notice warning" id="quote-note" hidden></div>
+        <div class="stack">
+          <div class="btn-row" style="justify-content: space-between">
+            <span id="quote-decor-label">รวมของตกแต่ง</span>
+            <b class="mono" id="quote-decor-total" style="font-size: 1.15em">–</b>
+          </div>
+          <div class="btn-row" style="justify-content: space-between">
+            <span>รวมทั้งหมด (รวมต้นไม้)</span>
+            <b class="mono" id="quote-grand-total" style="font-size: 1.4em">–</b>
+          </div>
+        </div>
+      </section>
 
     </div>
   </main>
 </div>
 
-<!-- Full-size look at one photo, opened from the small corner button on a .candidate card. -->
-<dialog id="lightbox-dialog" class="lightbox-dialog">
-  <button class="btn danger" id="lightbox-close">ปิด</button>
-  <img id="lightbox-image" alt="">
-</dialog>
-
 <script src="/static/api.js?v=8.41"></script>
-<script src="/static/identify.js?v=8.41"></script>
+<script src="/static/quote.js?v=8.41"></script>
 </body>
 </html>

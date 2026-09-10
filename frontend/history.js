@@ -34,6 +34,41 @@ function cell(row, text, className) {
   return td;
 }
 
+/* created_at is stored in UTC (request_log.now()) — shown here as Thai calendar date
+ * (พ.ศ., th-TH's own default), 24-hour time, explicitly converted to Thailand's own timezone
+ * so it never reads as whatever timezone the viewer's OS happens to be set to (the "(เวลาไทย)"
+ * column header says so). Date and time as two separate strings, not one — the caller puts
+ * them on their own line each, which is what actually keeps this column narrow: one line
+ * of "10 ก.ย. 2569 10:31:58 น." is wider than the column needs to be. */
+function formatCreatedAt(iso) {
+  try {
+    const date = new Date(iso);
+    const dateText = date.toLocaleDateString("th-TH", {
+      timeZone: "Asia/Bangkok", day: "numeric", month: "short", year: "numeric",
+    });
+    const timeText = date.toLocaleTimeString("th-TH", {
+      timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit", second: "2-digit",
+      hour12: false,
+    });
+    return { dateText, timeText: `${timeText} น.` };
+  } catch {
+    return { dateText: iso, timeText: "" }; // malformed timestamp still shows something
+  }
+}
+
+function whenCell(row, request) {
+  const td = document.createElement("td");
+  td.className = "mono";
+  td.style.textAlign = "center";
+  const { dateText, timeText } = formatCreatedAt(request.created_at);
+  const dateLine = document.createElement("div");
+  dateLine.textContent = dateText;
+  const timeLine = document.createElement("div");
+  timeLine.textContent = timeText;
+  td.append(dateLine, timeLine);
+  row.append(td);
+}
+
 /* ---- the picture each row produced ----
  * A row used to be six columns of text with a download button, so the only way to see what a
  * run actually made was to fetch the file again — several megabytes to answer "was this the
@@ -52,7 +87,7 @@ $("lightbox-close").addEventListener("click", () => $("lightbox-dialog").close()
 
 function previewCell(row, request) {
   const td = document.createElement("td");
-  td.className = "shrink stack";
+  td.className = "shrink";
   const name = fileNameFrom(request.output_url);
   if (name) {
     const button = document.createElement("button");
@@ -66,14 +101,6 @@ function previewCell(row, request) {
     button.append(img);
     button.addEventListener("click", () => openLightbox(request.output_url, img.alt));
     td.append(button);
-    // under the thumbnail rather than in the result column — the two used to sit side by
-    // side with "จัดการต่อ" there and read as one crowded, overlapping row of buttons.
-    const link = document.createElement("a");
-    link.href = request.output_url;
-    link.download = "";
-    link.className = "btn";
-    link.textContent = "ดาวน์โหลด";
-    td.append(link);
   } else {
     td.textContent = "—";
   }
@@ -97,27 +124,128 @@ function itemsCell(row, elements) {
   row.append(td);
 }
 
-/* Retail value of the decorations, not the OpenAI cost (that's the token column). Live-looked
- * up against the catalogue on every /api/history read, so a later price edit shows up on old
- * rows too — same reasoning as `price` never being snapshotted anywhere else in the app. A
- * "*" plus the title tooltip marks a total that skipped at least one unpriced decoration,
- * so it never reads as a complete price when it isn't (mirrors missing_sizes elsewhere). */
+function money(amount) {
+  return `฿${Math.round(amount).toLocaleString("th-TH")}`;
+}
+
+// Mirrors quote.js's own copy of backend/config.py's ELEMENT_DENSITY_QTY_RANGE, and the same
+// default multiplier quote.js starts every request at — there is no per-request stored
+// multiplier to read back (it is a client-side-only control, never persisted), so this is the
+// same estimate a fresh visit to /quote for this request would show before anyone touches it.
+const ELEMENT_DENSITY_QTY = { light: [1, 6], normal: [8, 12], full: [18, 24] };
+const DEFAULT_MULTIPLIER = 2;
+
+/* Mirrors quote.js's packCost() (2026-09-10): a pack price (element.pack = {qty, unit}) is the
+ * price of the whole pack, not one piece of it, so buying rounds *up* to whole packs rather than
+ * dividing the price down to an invented per-piece figure. No pack, or a pack whose unit is
+ * merely ambiguous ({ambiguous: true}), both cost qty x price directly — this column has no
+ * per-row notes to explain the ambiguous case in, but the total itself is the same either way. */
+function packCost(qtyMin, qtyMax, price, pack) {
+  if (pack && pack.qty) {
+    const packsMin = Math.ceil(qtyMin / pack.qty);
+    const packsMax = Math.ceil(qtyMax / pack.qty);
+    return { costMin: packsMin * price, costMax: packsMax * price };
+  }
+  return { costMin: qtyMin * price, costMax: qtyMax * price };
+}
+
+/* The actual decorate-the-tree estimate — same arithmetic as quote.js's render(), duplicated
+ * rather than imported (this app has no build step/shared modules; every page script is
+ * standalone by convention). Used to disagree with quote.js on purpose once, when this column
+ * only summed one-of-each-code's unit price; that read as two different numbers for the same
+ * request with no explanation, so now it is the same question quote.js answers, asked here
+ * with quote.js's own default multiplier (and no "เพิ่มเติม" extra, since that control is
+ * client-side-only on /quote and never persisted) since this table has no control to change it. */
+function decorationTotal(request) {
+  const counted = request.counted_items
+    ? Object.fromEntries(request.counted_items.map((item) => [item.code, item.count]))
+    : null;
+  const m = DEFAULT_MULTIPLIER;
+  let min = 0;
+  let max = 0;
+  let anyEstimated = false;
+  let anyVendor = false;
+  const missing = [];
+  const noCatalog = [];
+
+  for (const element of request.elements) {
+    const label = element.label || element.code || "ของตกแต่ง";
+    if (!element.code) {
+      noCatalog.push(label);
+      continue;
+    }
+    if (element.price == null) {
+      missing.push(label);
+      continue;
+    }
+    const exact = counted ? counted[element.code] : null;
+    const [rangeMin, rangeMax] = ELEMENT_DENSITY_QTY[element.density || "normal"] || [null, null];
+    if (exact == null) anyEstimated = true;
+    if (element.price_source === "vendor") anyVendor = true;
+    const qtyMin = (exact != null ? exact : rangeMin) * m;
+    const qtyMax = (exact != null ? exact : rangeMax) * m;
+    const { costMin, costMax } = packCost(qtyMin, qtyMax, element.price, element.pack);
+    min += costMin;
+    max += costMax;
+  }
+
+  if (request.tree_code) {
+    if (request.tree_price == null) missing.push(request.tree_label || request.tree_code);
+    else {
+      if (request.tree_price_source === "vendor") anyVendor = true;
+      min += request.tree_price;
+      max += request.tree_price;
+    }
+  }
+
+  return { min, max, anyEstimated, anyVendor, incomplete: missing.length > 0 || noCatalog.length > 0, missing, noCatalog };
+}
+
+/* What it costs to actually decorate a tree to match the picture — /quote's own total,
+ * recomputed here rather than read back from anywhere (nothing about it is stored server-side
+ * except the count it may draw on). Live-looked up prices mean a later catalogue/vendor edit
+ * shows up on old rows too, same reasoning catalog.decoration_price_total's own comment gives.
+ * A "*" plus the title tooltip marks a total missing at least one price; a "†" marks at least
+ * one vendor-sourced price; neither ever reads as a complete, all-catalogue figure when it
+ * is not. */
 function priceCell(row, request) {
   const td = document.createElement("td");
   td.className = "mono";
-  // "†" if any of the total came from the vendor's own wholesale price rather than a price
-  // the shop set itself (backend/services/vendor_prices.py) — same idea as the "*" for a
-  // skipped decoration, so the number never reads as one plain thing when it is not.
-  const anyVendor = request.elements.some((e) => e.price_source === "vendor")
-    || request.tree_price_source === "vendor";
-  td.textContent = request.price_total
-    ? `฿${request.price_total.toLocaleString("th-TH")}` +
-      `${request.price_missing.length ? " *" : ""}${anyVendor ? " †" : ""}`
+  // display:flex (.stack) on a <td> itself overrides its table-cell box, which is what made
+  // an earlier height:100%/justify-content attempt a no-op — a table cell only reliably
+  // matches the row's own height (set by the tallest cell, the thumbnail) while it stays a
+  // genuine table-cell. vertical-align is the table-cell-native way to centre content inside
+  // that height, so the flex column goes on a plain wrapper div instead of the <td> itself.
+  td.style.verticalAlign = "middle";
+  td.style.textAlign = "center";
+  const wrap = document.createElement("div");
+  wrap.className = "stack";
+
+  const totals = decorationTotal(request);
+  const price = document.createElement("span");
+  const hasTotal = totals.min > 0 || totals.max > 0;
+  const text = totals.min === totals.max ? money(totals.min) : `${money(totals.min)}–${money(totals.max)}`;
+  price.textContent = hasTotal
+    ? `${text}${totals.incomplete ? " *" : ""}${totals.anyVendor ? " †" : ""}`
     : "—";
   const titles = [];
-  if (request.price_missing.length) titles.push(`ไม่มีราคา: ${request.price_missing.join(", ")}`);
-  if (anyVendor) titles.push("† มีบางส่วนเป็นราคาทุนจาก vendor ไม่ใช่ราคาที่ร้านตั้งเอง");
+  if (totals.anyEstimated) titles.push("จำนวนบางชิ้นเป็นการประมาณจาก density ยังไม่เคยกดนับของในรูป");
+  if (totals.missing.length) titles.push(`ไม่มีราคา: ${totals.missing.join(", ")}`);
+  if (totals.noCatalog.length) titles.push(`ไม่ได้มาจากแคตตาล็อก (ไม่รวมในราคา): ${totals.noCatalog.join(", ")}`);
+  if (totals.anyVendor) titles.push("† มีบางส่วนเป็นราคาทุนจาก vendor ไม่ใช่ราคาที่ร้านตั้งเอง");
   td.title = titles.join(" — ");
+  wrap.append(price);
+
+  // Straight to this request's full price breakdown (quote.html/quote.js) — right under the
+  // total it belongs to, rather than sharing the download button's column.
+  if (request.output_url) {
+    const info = document.createElement("a");
+    info.href = `/quote?request_id=${encodeURIComponent(request.request_id)}`;
+    info.className = "btn btn-compact";
+    info.textContent = "ข้อมูล";
+    wrap.append(info);
+  }
+  td.append(wrap);
   row.append(td);
 }
 
@@ -140,7 +268,7 @@ async function load() {
   for (const request of data.requests) {
     const row = document.createElement("tr");
     previewCell(row, request);
-    cell(row, request.created_at, "mono");
+    whenCell(row, request);
     cell(row, request.request_id.slice(0, 8), "mono");
     cell(row, request.size, "mono");
     itemsCell(row, request.elements);
@@ -159,16 +287,12 @@ async function load() {
     const result = document.createElement("td");
     result.className = "shrink";
     if (request.output_url) {
-      // Back to the main page's panels with this request's tree, decorations and result
-      // pre-filled — for counting the picture again or re-checking the price breakdown
-      // without redoing the whole pick (index.html/app.js's resumeFromHistory()). Download
-      // lives under the thumbnail instead (previewCell) — the two used to crowd this one
-      // column and overlap.
-      const resume = document.createElement("a");
-      resume.href = `/?request_id=${encodeURIComponent(request.request_id)}`;
-      resume.className = "btn";
-      resume.textContent = "จัดการต่อ";
-      result.append(resume);
+      const link = document.createElement("a");
+      link.href = request.output_url;
+      link.download = "";
+      link.className = "btn btn-compact";
+      link.textContent = "ดาวน์โหลด";
+      result.append(link);
     } else {
       result.textContent = "—";
     }

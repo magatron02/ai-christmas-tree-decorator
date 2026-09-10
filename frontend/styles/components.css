@@ -49,6 +49,7 @@
 
 /* ---- buttons (section 4 + 8) ---- */
 .btn {
+  display: inline-block;
   background: transparent;
   border: none;
   border-radius: var(--radius-sm);
@@ -56,11 +57,15 @@
   padding: var(--space-2) var(--space-4);
   font: inherit;
   font-size: var(--text-base);
+  text-align: center;
   cursor: pointer;
   box-shadow: var(--shadow);
   transition: background var(--transition-gentle), transform var(--transition-gentle),
               box-shadow var(--transition-gentle);
 }
+/* smaller footprint for a table cell's own buttons (history.js) — the same look, just less
+   padding than a page-level action deserves */
+.btn-compact { padding: var(--space-1) var(--space-2) }
 .btn:hover    { transform: translateY(-1px); box-shadow: var(--shadow-hover) }
 .btn:active   { transform: scale(0.97); transition: transform var(--transition-press) }
 .btn:disabled { opacity: .5; cursor: default; transform: none; box-shadow: none }
@@ -264,6 +269,9 @@ select.select-native {
   font-family: var(--font-heading); font-size: var(--text-base);
   padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); cursor: pointer;
   text-decoration: none;
+  /* the label must not wrap mid-transition while .sidebar's width animates down to collapsed
+     — a wrapped second line for one frame reads as a jump, not a smooth shrink */
+  white-space: nowrap; overflow: hidden;
 }
 .row:hover,
 .row.active { background: var(--modal-item-selected-bg); color: var(--modal-item-selected-text) }
@@ -321,7 +329,7 @@ select.select-native {
    inside that height rather than the page growing underneath it. */
 .panels {
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr 1fr;
+  grid-template-columns: 1fr 2fr 1fr;
   gap: var(--space-6);
   align-items: stretch;
   /* an auto grid row sizes to whatever its tallest cell WANTS to be — max-height alone does not
@@ -347,11 +355,11 @@ select.select-native {
 @media (max-width: 1100px) {
   .panels { grid-template-columns: repeat(2, minmax(0, 1fr)); height: auto }
   .panels > .card { overflow-y: visible }
-  .panels .role-decoration, .panels #panel-pricing { grid-column: 1 / -1 }
+  .panels .role-decoration { grid-column: 1 / -1 }
 }
 @media (max-width: 720px) {
   .panels { grid-template-columns: minmax(0, 1fr) }
-  .panels .role-decoration, .panels #panel-pricing { grid-column: auto }
+  .panels .role-decoration { grid-column: auto }
 }
 @media (max-width: 720px) {
   .frame { display: block }
@@ -519,6 +527,17 @@ select.select-native {
   border: 1px solid var(--border);
 }
 
+/* quote.html's price table — one row per product, small enough not to dominate a table cell */
+.quote-thumb {
+  display: block;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  flex: none;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
 /* ---- preview surfaces ---- */
 .checker {
   background-color: var(--surface-0);
@@ -567,6 +586,37 @@ select.select-native {
 @media (max-width: 720px) {
   .identify-columns { grid-template-columns: minmax(0, 1fr) }
 }
+
+/* ---- quote.html: the finished picture on the left, the price breakdown gets the wider
+   share on the right — it is the reason this page exists apart from the main panels, so it
+   should never be the one squeezed for room the way it was as panel 4 there. */
+.quote-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  gap: var(--space-4);
+  align-items: stretch;
+  /* align-items:stretch only stretches a grid row to whatever height it would otherwise be —
+     with both cards' own tall content living in flex:1 children (flex-basis 0), that natural
+     height rounds to ~0, so nothing had anything real to stretch into and the table and image
+     both collapsed to nothing. An explicit height (.topbar's 64px + .page's 24px top/bottom
+     padding, same reasoning /'s own .panels height is computed) gives them one. */
+  height: calc(100vh - 112px);
+}
+@media (max-width: 900px) {
+  .quote-columns { grid-template-columns: minmax(0, 1fr); height: auto }
+}
+/* a long decoration list scrolls inside its own box instead of growing the whole page — flex
+   (not a fixed max-height) so it fills whatever room .quote-columns' stretch leaves after the
+   title row and the notice/totals below it, which is also what pins those two to the card's
+   bottom edge rather than trailing right under a short table. min-height:0 overrides a flex
+   item's default min-height:auto, which otherwise refuses to shrink below the table's own
+   full height and defeats the scroll. */
+.quote-table-wrap { flex: 1 1 0; min-height: 0; overflow-y: auto }
+/* .quote-columns' stretch (above) matches this card's height to its taller neighbour — without
+   this the picture stayed its own aspect-ratio height and the leftover room just sat empty
+   below the download/count controls. Growing the image absorbs it instead; object-fit:contain
+   still letterboxes rather than distorting the picture itself. */
+#quote-result-image { flex: 1 1 0; min-height: 0; width: 100%; aspect-ratio: auto }
 
 /* ---- catalogue matches (8.3c) ----
    Each decoration keeps its existing grouped block (header, quantity, candidate row) — only

@@ -55,7 +55,7 @@ app.mount("/static", StaticFiles(directory=config.FRONTEND_DIR), name="static")
 app.mount("/shop-photos", StaticFiles(directory=config.SHOP_PHOTOS_DIR), name="shop-photos")
 
 
-PAGE_PATHS = {"/", "/history", "/settings", "/identify", "/pricing"}
+PAGE_PATHS = {"/", "/history", "/settings", "/identify", "/pricing", "/quote"}
 
 
 @app.middleware("http")
@@ -199,7 +199,7 @@ def _size_lookup_for_scale(row):
 
 
 def _priced_extra(code):
-    """price + size + a display label for a code, or all-None for a code-less element.
+    """price + size + a display label/name for a code, or all-None for a code-less element.
 
     Price and size are blended from two sources with *opposite* precedence, each decided and
     measured separately on 2026-09-10 — see vendor_lookup.py's own docstring for why a single
@@ -218,7 +218,10 @@ def _priced_extra(code):
     gives: a later price/size/lookup edit should show up on old history rows too.
     """
     if not code:
-        return {"size_mm": None, "price": None, "label": None, "price_source": None}
+        return {
+            "size_mm": None, "price": None, "label": None, "price_source": None,
+            "name": None, "pack": None,
+        }
     try:
         row = catalog.find(code)
     except ValidationError:
@@ -238,6 +241,13 @@ def _priced_extra(code):
         "price": price,
         "label": catalog.describe(row) if row else None,
         "price_source": price_source,
+        # a Thai display name — the catalogue has no name field of its own at all, so this is
+        # vendor-exclusive by necessity, not by the same price/size precedence choice above
+        "name": vendor_lookup.name_for(code),
+        # pack info only means anything about a vendor price — the shop's own catalogue price
+        # (price_source "catalog") is whatever single-unit figure the shop typed in, never a
+        # pack the app would need to round a purchase up to
+        "pack": vendor_lookup.pack_for(code) if price_source == "vendor" else None,
     }
 
 
@@ -280,6 +290,7 @@ def _row_json(row):
         "tree_price": tree_extra["price"],
         "tree_label": tree_extra["label"],
         "tree_price_source": tree_extra["price_source"],
+        "tree_name": tree_extra["name"],
         "element_code": row["element_code"],
         "error": row["error"],
         "usage": json.loads(row["usage_json"]) if row["usage_json"] else None,
@@ -316,6 +327,14 @@ def page_identify():
 @app.get("/pricing", include_in_schema=False)
 def page_pricing():
     return FileResponse(config.FRONTEND_DIR / "pricing.html")
+
+
+@app.get("/quote", include_in_schema=False)
+def page_quote():
+    """The full decoration-price breakdown for one already-generated request
+    (?request_id=...) — its own page because panels 1-3 on / left it too little room to work
+    with. Reads /api/request/{id} itself; nothing here needs the id at page-serve time."""
+    return FileResponse(config.FRONTEND_DIR / "quote.html")
 
 
 # ---------------------------------------------------------------- api

@@ -55,6 +55,41 @@ def size_mm_for(code):
     return _entries().get(code, {}).get("size_mm")
 
 
+def name_for(code):
+    """A Thai display name for this exact code, or None — the catalogue itself has no name
+    field at all (code/size_raw/section/book only), so this is the only source there is
+    (2026-09-10). Verbatim from the supplier's own product_name column, size/pack text
+    already folded out by parse_pricelist.py."""
+    if not code:
+        return None
+    return _entries().get(code, {}).get("name")
+
+
+def pack_for(code):
+    """How `price` for this code is actually sold, or None for an ordinary single-piece price.
+
+    `price` is always the figure exactly as printed — for a product sold by the bag or box
+    that is the price of the whole pack, not one piece of it (2026-09-10: code 017-06 is
+    48 baht per bag of 2, not 48 baht each — a shop cannot buy half a bag, so nothing here
+    ever divides that out into a per-piece figure; backend/main.py rounds the quantity needed
+    up to whole packs instead and reports the leftover).
+
+    Returns `{"qty": int, "unit": str}` when build_lookup.py found a definite pack size
+    (the CSV's own qty_per_pack + pack_unit columns), `{"ambiguous": True}` when the price's
+    own unit column mentions packaging (ถุง/กล่อง/ชุด/แผง/ช่อ/โหล/แพค) with no size given for
+    it — genuinely unknown whether `price` is per piece or per an unstated pack — or None when
+    the price is plainly per piece (or per tree) with nothing to reconsider.
+    """
+    if not code:
+        return None
+    entry = _entries().get(code, {})
+    if "pack_qty" in entry:
+        return {"qty": entry["pack_qty"], "unit": entry["pack_unit"]}
+    if entry.get("pack_ambiguous"):
+        return {"ambiguous": True}
+    return None
+
+
 def refresh():
     """Drop the cached read, so a regenerated lookup.json is visible on the next lookup
     without restarting the server — same reasoning as catalog.refresh()."""

@@ -155,13 +155,9 @@ async function confirmAutoPick() {
         sizeMm: result.size_mm,
         manualMm: null,
         density: "normal",
-        price: result.price,
-        label: result.label,
-        priceSource: result.price_source,
       });
     }
     renderElements();
-    renderPricing();
     resetRun();
 
     // back to the normal panels — pre-filled, reviewable, same Generate button as always
