@@ -75,7 +75,8 @@ never run them speculatively; see README.md for what each one costs and why it's
 frontend/          static HTML + vanilla JS, DESIGN.md tokens, no build step
 backend/main.py    the generation pipeline plus catalogue search/admin endpoints (~1200 lines, all routes)
 backend/services/  image_gen · background_removal · storage · catalog · catalog_admin ·
-                    matching · vision · settings · shop_overlay
+                    matching · vision · settings · shop_overlay · vendor_lookup · vendor_overlay ·
+                    vendor_admin
 backend/models/    request_log — the SQLite state machine and the spend record
 backend/prompts/   compositing_prompt.txt, read fresh on every generation (no restart needed to edit)
 catalog/           product data (committed) + images/embeddings (not committed — see README)
@@ -125,6 +126,20 @@ kept and flagged, never silently dropped. See `backend/services/catalog.py`,
 A **colour** (ADR-0002) is a named photo of a code, not a separate identifier — these catalogues
 photograph a whole colour range in one frame, and the app splits that into one card per colour.
 Never mint per-colour sub-codes.
+
+### Vendor price list: a second, independent base + overlay
+
+`vendor-pricelists/bangkok-christmas/cleaned/lookup.json` is price/size/name/pack data for the
+Bangkok Christmas book, extracted from the supplier's own PDF (`parse_pricelist.py` →
+`build_lookup.py`) and read exclusively by `backend/services/vendor_lookup.py` — never
+`catalog.py`. It gets the exact same base+overlay treatment ADR-0001 gives the catalogue,
+applied to a second, unrelated pair of files: `data/vendor_overlay.json`
+(`vendor_overlay.py`) holds a shop's corrections and survives a `build_lookup.py` re-run the
+way `shop_overlay.json` survives a book re-import. `vendor_admin.py` is the settings-page
+surface for browsing this data, listing what's wrong with it (no vendor entry, no price, no
+size, an unresolved pack), fixing one field at a time, and importing a refreshed PDF end to
+end. Vendor data and catalogue data are never mixed at the file level — two bases, two
+overlays, the same merge pattern, never one writer touching both.
 
 **Auto pick** (ADR-0003) asks only for a **tone** and fills a fixed **recipe** of category
 counts (`AUTO_RECIPE` in `backend/config.py`) — tree size and budget are deliberately not

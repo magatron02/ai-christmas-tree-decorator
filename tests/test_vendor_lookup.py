@@ -36,9 +36,14 @@ def temp_catalog(tmp_path, monkeypatch):
 
 @pytest.fixture
 def temp_vendor_lookup(tmp_path, monkeypatch):
-    path = tmp_path / "lookup.json"
+    monkeypatch.setattr(config, "VENDOR_PRICELISTS_DIR", tmp_path)
+    monkeypatch.setattr(
+        config, "VENDOR_SUPPLIERS",
+        {"bangkok-christmas": {"label": "Bangkok Christmas", "book": "Bangkok Christmas"}},
+    )
+    path = tmp_path / "bangkok-christmas" / "cleaned" / "lookup.json"
+    path.parent.mkdir(parents=True)
     path.write_text("{}", encoding="utf-8")
-    monkeypatch.setattr(config, "VENDOR_LOOKUP_PATH", path)
     vendor_lookup.refresh()
     yield path
     vendor_lookup.refresh()
@@ -73,8 +78,25 @@ def test_codeless_lookups_are_none(temp_vendor_lookup):
     assert vendor_lookup.size_mm_for("") is None
 
 
+def test_base_field_ignores_the_overlay(temp_vendor_lookup):
+    from backend.services import vendor_overlay
+
+    set_vendor_lookup(temp_vendor_lookup, {"071-11": {"price": 89.0}})
+    vendor_overlay.set_fields("071-11", {"price": 120.0}, speaks_for=("price",))
+    vendor_lookup.refresh()
+
+    assert vendor_lookup.base_field("071-11", "price") == 89.0
+    assert vendor_lookup.price_for("071-11") == 120.0  # merged view still overridden
+    assert vendor_lookup.base_field("NOPE", "price") is None
+    assert vendor_lookup.base_field(None, "price") is None
+
+
 def test_no_file_at_all_is_none(tmp_path, monkeypatch):
-    monkeypatch.setattr(config, "VENDOR_LOOKUP_PATH", tmp_path / "does-not-exist.json")
+    monkeypatch.setattr(config, "VENDOR_PRICELISTS_DIR", tmp_path)
+    monkeypatch.setattr(
+        config, "VENDOR_SUPPLIERS",
+        {"bangkok-christmas": {"label": "Bangkok Christmas", "book": "Bangkok Christmas"}},
+    )  # tmp_path/bangkok-christmas/cleaned/lookup.json is never created — fails soft
     vendor_lookup.refresh()
     try:
         assert vendor_lookup.price_for("071-11") is None
@@ -210,3 +232,52 @@ def test_no_size_anywhere_still_falls_back_honestly(
 
     assert prepared.status_code == 200, prepared.text
     assert len(prepared.json()["missing_sizes"]) == 1
+
+
+# ---------------------------------------------------------------- multiple suppliers
+
+
+def add_supplier(temp_vendor_lookup, slug, label, book, entries):
+    """Configures a second supplier alongside the one temp_vendor_lookup already set up,
+    writing its own lookup.json under the same temp root (tmp_path/<slug>/cleaned/lookup.json,
+    the shape config.VENDOR_PRICELISTS_DIR expects)."""
+    tmp_path = temp_vendor_lookup.parents[2]  # .../<slug>/cleaned/lookup.json -> tmp_path
+    path = tmp_path / slug / "cleaned" / "lookup.json"
+    path.parent.mkdir(parents=True)
+    path.write_text(json.dumps(entries), encoding="utf-8")
+    config.VENDOR_SUPPLIERS[slug] = {"label": label, "book": book}
+    vendor_lookup.refresh()
+    return path
+
+
+def test_two_suppliers_merge_into_one_entries_table(temp_vendor_lookup):
+    set_vendor_lookup(temp_vendor_lookup, {"071-11": {"price": 89.0}})
+    add_supplier(
+        temp_vendor_lookup, "other-supplier", "Other Supplier", "Other Book",
+        {"900-01": {"price": 10.0}},
+    )
+
+    entries = vendor_lookup.entries()
+    assert entries["071-11"]["supplier"] == "bangkok-christmas"
+    assert entries["900-01"]["supplier"] == "other-supplier"
+
+
+def test_a_code_claimed_by_two_suppliers_keeps_the_first_and_is_flagged(temp_vendor_lookup):
+    set_vendor_lookup(temp_vendor_lookup, {"071-11": {"price": 89.0}})
+    add_supplier(
+        temp_vendor_lookup, "other-supplier", "Other Supplier", "Other Book",
+        {"071-11": {"price": 999.0}},
+    )
+
+    assert vendor_lookup.price_for("071-11") == 89.0  # first-configured supplier wins
+    assert vendor_lookup.entries()["071-11"]["supplier"] == "bangkok-christmas"
+    assert vendor_lookup.conflicting_codes() == ["071-11"]
+
+
+def test_no_conflicts_when_nothing_collides(temp_vendor_lookup):
+    set_vendor_lookup(temp_vendor_lookup, {"071-11": {"price": 89.0}})
+    add_supplier(
+        temp_vendor_lookup, "other-supplier", "Other Supplier", "Other Book",
+        {"900-01": {"price": 10.0}},
+    )
+    assert vendor_lookup.conflicting_codes() == []

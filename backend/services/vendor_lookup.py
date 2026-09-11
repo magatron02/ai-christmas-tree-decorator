@@ -14,19 +14,69 @@ lookups — catalog.find() and catalog.longest_side_mm() stay exactly what they 
 catalogue's own printed numbers), so anything that still wants the catalogue's own reading of
 a code (there is no such caller left, by design, but nothing stops one existing later) is not
 quietly rewired just because this file exists.
+
+`lookup.json` is itself a base, same shape as the catalogue's: regenerated wholesale by
+build_lookup.py, never hand-edited. `vendor_overlay.py` is its overlay, and `_entries()` below
+merges the two field by field (ADR-0001's pattern, applied a second time to a second pair of
+files) — a shop's corrected price or size survives the next `build_lookup.py` run exactly the
+way an overlaid catalogue field survives a book re-import.
+
+More than one supplier can be configured (`config.VENDOR_SUPPLIERS`) — each with its own
+`lookup.json` under `vendor-pricelists/<slug>/cleaned/`. `_bases()` merges all of them into one
+base layer, tagging each entry with the supplier it came from. A code claimed by two suppliers
+keeps whichever was seen first (`VENDOR_SUPPLIERS`' own order) and is never silently
+overwritten by the second — see `conflicting_codes()`. There is deliberately no UI for
+resolving such a collision yet; it cannot happen with only one supplier configured, and building
+one ahead of a real second supplier would be designing against a case nothing can test.
 """
 
 import json
 from functools import lru_cache
 
 from backend import config
+from backend.services import vendor_overlay
+
+
+def _lookup_path(supplier):
+    return config.VENDOR_PRICELISTS_DIR / supplier / "cleaned" / "lookup.json"
 
 
 @lru_cache(maxsize=1)
+def _bases():
+    """{code: {**fields, "supplier": slug}} merged across every configured supplier, plus the
+    set of codes more than one supplier claimed (kept as whichever supplier came first)."""
+    merged, conflicts = {}, set()
+    for slug in config.VENDOR_SUPPLIERS:
+        path = _lookup_path(slug)
+        if not path.is_file():
+            continue
+        for code, fields in json.loads(path.read_text(encoding="utf-8")).items():
+            if code in merged:
+                conflicts.add(code)
+                continue
+            merged[code] = {**fields, "supplier": slug}
+    return merged, conflicts
+
+
+def _base():
+    return _bases()[0]
+
+
+def conflicting_codes():
+    """Codes more than one configured supplier's own lookup.json claims — the first supplier
+    (VENDOR_SUPPLIERS' own order) is what every other function here reports; this is only
+    visibility that a second, discarded claim exists, not a resolution UI (see module
+    docstring)."""
+    return sorted(_bases()[1])
+
+
 def _entries():
-    if not config.VENDOR_LOOKUP_PATH.is_file():
-        return {}
-    return json.loads(config.VENDOR_LOOKUP_PATH.read_text(encoding="utf-8"))
+    base = _base()
+    overlay = vendor_overlay.all_fields()
+    return {
+        code: {**base.get(code, {}), **overlay.get(code, {})}
+        for code in base.keys() | overlay.keys()
+    }
 
 
 def price_for(code):
@@ -84,13 +134,36 @@ def pack_for(code):
         return None
     entry = _entries().get(code, {})
     if "pack_qty" in entry:
-        return {"qty": entry["pack_qty"], "unit": entry["pack_unit"]}
+        # .get(), not entry["pack_unit"]: build_lookup.py always sets the pair together, but a
+        # shop overlay can now correct pack_qty and pack_unit independently (vendor_admin.py) —
+        # a code caught mid-correction with only one of the two set must not crash a lookup.
+        return {"qty": entry["pack_qty"], "unit": entry.get("pack_unit")}
     if entry.get("pack_ambiguous"):
         return {"ambiguous": True}
     return None
 
 
+def entries():
+    """Every vendor code, merged base+overlay — for the vendor admin screen's browse and
+    check-for-errors views (backend/services/vendor_admin.py). Nothing else needs the whole
+    table at once; every other reader here asks for one code at a time."""
+    return _entries()
+
+
+def base_field(code, field):
+    """One field's value straight from the supplier's own sheet, overlay ignored entirely —
+    for vendor_admin.set_override() to detect "typed back to exactly what the vendor already
+    says" (in which case the right move is to clear the overlay opinion, not store a redundant
+    copy of it). Comparing against `entries()` instead would compare against the overlay's own
+    last write, which is never what's being asked here."""
+    if not code:
+        return None
+    return _base().get(code, {}).get(field)
+
+
 def refresh():
     """Drop the cached read, so a regenerated lookup.json is visible on the next lookup
-    without restarting the server — same reasoning as catalog.refresh()."""
-    _entries.cache_clear()
+    without restarting the server — same reasoning as catalog.refresh(). Clears the overlay's
+    own cache too, since a vendor-admin write has to be visible the same way."""
+    _bases.cache_clear()
+    vendor_overlay.refresh()

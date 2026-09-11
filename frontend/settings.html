@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tree Decorator — ตั้งค่า</title>
 <link rel="icon" href="/static/icon.ico">
-<link rel="stylesheet" href="/static/styles/tokens.css?v=8.41">
-<link rel="stylesheet" href="/static/styles/components.css?v=8.41">
-<script src="/static/theme.js?v=8.41"></script>
-<script src="/static/sidebar.js?v=8.41"></script>
+<link rel="stylesheet" href="/static/styles/tokens.css?v=8.72">
+<link rel="stylesheet" href="/static/styles/components.css?v=8.72">
+<script src="/static/theme.js?v=8.72"></script>
+<script src="/static/sidebar.js?v=8.72"></script>
 </head>
 <body>
 
@@ -40,129 +40,251 @@
       ตั้งราคา
     </a>
     <a class="row active" href="/settings" title="ตั้งค่า">
-      <span class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></span>
+      <span class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
       ตั้งค่า
     </a>
   </nav>
 
-  <main class="page">
-    <div class="settings-columns">
+  <main class="page stack">
+    <div class="tab-row">
+      <div class="mode-switch" role="tablist" aria-label="หมวดตั้งค่า">
+        <button type="button" class="row active" id="settings-tab-general" aria-pressed="true">ทั่วไป</button>
+        <button type="button" class="row" id="settings-tab-catalog" aria-pressed="false">Catalog</button>
+        <button type="button" class="row" id="settings-tab-vendor" aria-pressed="false">ข้อมูลราคาจากซัพพลายเออร์</button>
+      </div>
+      <button type="button" class="btn" id="vendor-import-open" hidden>นำเข้าราคา</button>
+    </div>
 
-      <div class="stack">
+    <div class="stack" id="settings-panel-general">
+
+      <section class="card stack">
+        <span class="section-title">หน้าตา</span>
+        <span class="hint">เก็บไว้ในเครื่องนี้เท่านั้น</span>
+        <div class="btn-row">
+          <button class="btn" id="theme-light">สว่าง</button>
+          <button class="btn" id="theme-dark">มืด</button>
+          <span class="hint" id="theme-now"></span>
+        </div>
+      </section>
+
+      <section class="card stack">
+        <span class="section-title">OpenAI API key</span>
+        <div class="chip" id="key-state">กำลังตรวจ…</div>
+        <span class="hint" id="key-where"></span>
+        <input class="input" type="password" id="key-input" autocomplete="off"
+               placeholder="sk-…">
+        <div class="btn-row">
+          <button class="btn primary" id="key-save">บันทึก key</button>
+          <span class="hint">เก็บไว้ในเครื่องนี้ · บันทึกแล้วจะไม่แสดงค่ากลับมาอีก</span>
+        </div>
+        <div class="notice" id="key-error" hidden></div>
+        <span class="hint">ขอ key ได้ที่
+          <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">platform.openai.com/api-keys</a>
+          · บัญชีต้องผูก billing ไว้</span>
+      </section>
+
+      <section class="card stack">
+        <span class="section-title">เครื่องนี้มีอะไรพร้อมบ้าง</span>
+        <div class="scroll-x">
+          <table>
+            <tbody id="status-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="stack" id="settings-panel-catalog" hidden>
+
+      <section class="card stack">
+        <span class="section-title">จัดการ catalogue</span>
+        <span class="hint">พิมพ์รหัสแล้วกดค้นหาเพื่อแก้ของเดิม หรือคลิกแถวด้านล่าง — เพิ่มสินค้าใหม่ให้เว้นรหัสว่างไว้ก่อนได้</span>
+        <div class="btn-row">
+          <input class="input" id="cat-code" placeholder="รหัสสินค้า เช่น 017-06">
+          <button class="btn" id="cat-find">ค้นหา</button>
+        </div>
+
+        <input class="input" id="cat-size" placeholder="ขนาด เช่น 80 mm. หรือ H 215 x D 142 cm">
+        <span class="hint">ต้องมีขนาด ภาพที่เจนถึงจะได้สัดส่วนตรงของจริง</span>
+        <span class="chip warn" id="cat-size-override" hidden>แก้โดยร้านแล้ว — <a href="#" id="cat-size-clear">ล้างกลับเป็นค่าจากเล่ม</a></span>
+
+        <input class="input" id="cat-section" list="cat-section-list" autocomplete="off"
+               placeholder="หมวด เช่น ลูกบอล, ต้นคริสต์มาส, ตุ๊กตา">
+        <datalist id="cat-section-list"></datalist>
+        <span class="hint">ใช้จัดกลุ่มตอนเลือกของ ถ้าไม่ตรงหมวดไหนเลยจะหาไม่เจอในตัวกรอง</span>
+        <span class="chip warn" id="cat-section-override" hidden>แก้โดยร้านแล้ว — <a href="#" id="cat-section-clear">ล้างกลับเป็นค่าจากเล่ม</a></span>
+
+        <input class="input" id="cat-book" list="cat-book-list" autocomplete="off"
+               placeholder="ร้าน เช่น Bangkok Christmas">
+        <datalist id="cat-book-list"></datalist>
+        <span class="chip warn" id="cat-book-override" hidden>แก้โดยร้านแล้ว — <a href="#" id="cat-book-clear">ล้างกลับเป็นค่าจากเล่ม</a></span>
+
+        <input class="input" id="cat-price" type="number" min="0" step="0.01" placeholder="ราคา (บาท) — ไม่ใส่ก็ได้">
+        <span class="chip warn" id="cat-price-override" hidden>แก้โดยร้านแล้ว — <a href="#" id="cat-price-clear">ล้างกลับเป็นค่าจากเล่ม</a></span>
+        <img class="checker thumb-sm" id="cat-photo-preview" hidden alt="รูปปัจจุบัน">
+        <span class="chip warn" id="cat-photo-override" hidden>ถ่ายเองแล้ว — <a href="#" id="cat-photo-clear">ลบรูปนี้ กลับไปใช้รูปจากเล่ม</a></span>
+        <div class="stack" id="cat-colours" hidden></div>
+        <input class="input" type="file" id="cat-image" accept="image/jpeg,image/png">
+        <span class="hint" id="cat-image-hint" hidden>เลือกรูปใหม่ = ถ่ายรูปร้านเอง แทนที่รูปจากเล่มทุกที่ที่สินค้านี้ปรากฏ · ไม่เลือก = รูปเดิมไม่เปลี่ยน</span>
+        <div class="chip" id="cat-edit-status" hidden></div>
+        <div class="btn-row">
+          <button class="btn" id="cat-add">เพิ่มสินค้า</button>
+          <button class="btn danger" id="cat-edit-cancel" hidden>ยกเลิกแก้ไข</button>
+          <button class="btn" id="cat-sync">sync ดัชนีค้นหา</button>
+        </div>
+        <div class="notice" id="cat-error" hidden></div>
+        <div class="chip" id="cat-status" hidden></div>
+        <div class="scroll-x">
+          <table>
+            <tbody id="cat-recent"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card stack" id="conflicts-panel" hidden>
+        <span class="section-title">รหัสชนกัน — ต้องดูด้วยตา</span>
+        <span class="hint">รหัสพวกนี้ซ้ำกันสองที่ ยังไม่รู้ว่าอันไหนถูก จึงไม่แสดงในระบบจนกว่าจะแก้</span>
+        <div class="scroll-x wide">
+          <table>
+            <thead><tr><th>รหัส</th><th>เก็บไว้ (ใช้อยู่)</th><th>ตัวที่ชน</th></tr></thead>
+            <tbody id="conflicts-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card stack" id="orphans-panel" hidden>
+        <span class="section-title">สินค้ากำพร้า — เล่มใหม่ไม่มีรหัสนี้แล้ว</span>
+        <span class="hint">ข้อมูลที่เคยแก้ไว้ยังอยู่ครบ ไม่หายไปไหน ถ้าเล่มถัดไปพิมพ์รหัสนี้อีก จะกลับมาใช้เองอัตโนมัติ</span>
+        <div class="scroll-x">
+          <table>
+            <thead><tr><th>รหัส</th><th>ข้อมูลที่เก็บไว้</th></tr></thead>
+            <tbody id="orphans-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="stack" id="settings-panel-vendor" hidden>
+      <div class="vendor-columns">
 
         <section class="card stack">
-          <span class="section-title">หน้าตา</span>
-          <span class="hint">เก็บไว้ในเครื่องนี้เท่านั้น</span>
+          <span class="section-title">ข้อมูลราคาจากซัพพลายเออร์</span>
+          <span class="hint">พิมพ์รหัสหรือชื่อสินค้าแล้วกดค้นหา หรือคลิกแถวเพื่อแก้ไขทางขวา</span>
           <div class="btn-row">
-            <button class="btn" id="theme-light">สว่าง</button>
-            <button class="btn" id="theme-dark">มืด</button>
-            <span class="hint" id="theme-now"></span>
+            <input class="input" id="vendor-search" placeholder="รหัสหรือชื่อสินค้า">
+            <select class="input" id="vendor-search-supplier">
+              <option value="">ทุกซัพพลายเออร์</option>
+            </select>
+            <select class="input" id="vendor-search-catalog">
+              <option value="">ทั้งหมด</option>
+              <option value="true">มีใน catalog</option>
+              <option value="false">ไม่มีใน catalog</option>
+            </select>
+            <select class="input" id="vendor-search-size">
+              <option value="">ทั้งหมด</option>
+              <option value="missing">ไม่มีขนาด</option>
+            </select>
+            <select class="input" id="vendor-search-name">
+              <option value="">ทั้งหมด</option>
+              <option value="unmapped">ชื่อมีตัวอักษรแปลก</option>
+            </select>
+            <button class="btn" id="vendor-search-btn">ค้นหา</button>
           </div>
-        </section>
-
-        <section class="card stack">
-          <span class="section-title">OpenAI API key</span>
-          <div class="chip" id="key-state">กำลังตรวจ…</div>
-          <span class="hint" id="key-where"></span>
-          <input class="input" type="password" id="key-input" autocomplete="off"
-                 placeholder="sk-…">
-          <div class="btn-row">
-            <button class="btn primary" id="key-save">บันทึก key</button>
-            <span class="hint">เก็บไว้ในเครื่องนี้ · บันทึกแล้วจะไม่แสดงค่ากลับมาอีก</span>
-          </div>
-          <div class="notice" id="key-error" hidden></div>
-          <span class="hint">ขอ key ได้ที่
-            <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">platform.openai.com/api-keys</a>
-            · บัญชีต้องผูก billing ไว้</span>
-        </section>
-
-        <section class="card stack">
-          <span class="section-title">เครื่องนี้มีอะไรพร้อมบ้าง</span>
-          <div class="scroll-x">
+          <span class="panel-title">รายการราคาสินค้า <span class="hint" id="vendor-results-count"></span></span>
+          <div class="scroll-x vendor-list-wrap">
             <table>
-              <tbody id="status-rows"></tbody>
+              <thead><tr><th>ลำดับ</th><th>รหัส</th><th>ชื่อ</th><th>จำนวน</th><th class="text-right">ราคา</th><th class="text-right">ขนาด</th><th>Catalog</th><th>หมายเหตุ</th></tr></thead>
+              <tbody id="vendor-results"></tbody>
             </table>
+          </div>
+          <div class="btn-row">
+            <button class="btn" id="vendor-page-prev" disabled>← ก่อนหน้า</button>
+            <span class="hint" id="vendor-page-info"></span>
+            <button class="btn" id="vendor-page-next" disabled>ถัดไป →</button>
+            <span class="hint" id="vendor-page-range"></span>
+            <span class="hint" style="margin-left:auto">ไปยังหน้า</span>
+            <input class="input" id="vendor-page-goto" type="number" min="1" step="1" style="width:5rem" disabled>
+            <button class="btn" id="vendor-page-goto-btn" disabled>ไป</button>
+          </div>
+        </section>
+
+        <section class="card stack">
+          <span class="section-title">แก้ไขข้อมูล</span>
+
+          <div class="stack vendor-edit-wrap">
+            <span class="hint" id="vendor-edit-empty">คลิกรายการทางซ้ายเพื่อแก้ไข</span>
+
+            <div class="stack" id="vendor-edit" hidden>
+              <div class="chip" id="vendor-edit-status"></div>
+              <span class="hint" id="vendor-edit-note" hidden></span>
+
+              <div class="field-row">
+                <span class="hint">ราคา (บาท) :</span>
+                <input class="input" id="vendor-price" type="number" min="0" step="0.01" placeholder="ราคา (บาท)">
+              </div>
+              <span class="chip warn" id="vendor-price-override" hidden>แก้โดยร้านแล้ว — <a href="#" id="vendor-price-clear">ล้างกลับเป็นค่าจากซัพพลายเออร์</a></span>
+
+              <div class="field-row">
+                <span class="hint">ขนาด (ด้านยาวสุด มม.) :</span>
+                <input class="input" id="vendor-size_mm" type="number" min="0" step="0.1" placeholder="ขนาด (มม.)">
+              </div>
+              <span class="chip warn" id="vendor-size_mm-override" hidden>แก้โดยร้านแล้ว — <a href="#" id="vendor-size_mm-clear">ล้างกลับเป็นค่าจากซัพพลายเออร์</a></span>
+
+              <div class="field-row">
+                <span class="hint">ชื่อ :</span>
+                <input class="input" id="vendor-name" placeholder="ชื่อสินค้า (ไทย)">
+              </div>
+              <span class="chip warn" id="vendor-name-override" hidden>แก้โดยร้านแล้ว — <a href="#" id="vendor-name-clear">ล้างกลับเป็นค่าจากซัพพลายเออร์</a></span>
+
+              <span class="hint">แพ็ค — กรอกเมื่อราคาข้างบนเป็นราคาต่อแพ็ค ไม่ใช่ต่อชิ้น</span>
+              <div class="btn-row">
+                <div class="field-row">
+                  <span class="hint">จำนวน (ชิ้น) :</span>
+                  <input class="input" id="vendor-pack_qty" type="number" min="1" step="1" placeholder="จำนวนต่อแพ็ค">
+                </div>
+                <div class="field-row">
+                  <span class="hint">ต่อหน่วย :</span>
+                  <input class="input" id="vendor-pack_unit" placeholder="หน่วย เช่น ถุง, โหล">
+                </div>
+              </div>
+              <span class="chip warn" id="vendor-pack_qty-override" hidden>แก้โดยร้านแล้ว — <a href="#" id="vendor-pack_qty-clear">ล้างกลับเป็นค่าจากซัพพลายเออร์</a></span>
+
+              <label class="hint"><input type="checkbox" id="vendor-pack_ambiguous"> ตรวจสอบแล้ว — ราคานี้เป็นราคาต่อชิ้นแน่นอน ไม่ใช่แพ็คที่ไม่ชัดเจน</label>
+              <span class="chip warn" id="vendor-pack_ambiguous-override" hidden>แก้โดยร้านแล้ว — <a href="#" id="vendor-pack_ambiguous-clear">ล้างกลับเป็นค่าจากซัพพลายเออร์</a></span>
+
+              <div class="btn-row">
+                <button class="btn" id="vendor-save">บันทึก</button>
+                <button class="btn danger" id="vendor-edit-cancel">ปิด</button>
+              </div>
+              <div class="notice" id="vendor-error" hidden></div>
+            </div>
           </div>
         </section>
 
       </div>
-
-      <div class="stack">
-
-        <section class="card stack">
-          <span class="section-title">จัดการ catalogue</span>
-          <span class="hint">พิมพ์รหัสแล้วกดค้นหาเพื่อแก้ของเดิม หรือคลิกแถวด้านล่าง — เพิ่มสินค้าใหม่ให้เว้นรหัสว่างไว้ก่อนได้</span>
-          <div class="btn-row">
-            <input class="input" id="cat-code" placeholder="รหัสสินค้า เช่น 017-06">
-            <button class="btn" id="cat-find">ค้นหา</button>
-          </div>
-
-          <input class="input" id="cat-size" placeholder="ขนาด เช่น 80 mm. หรือ H 215 x D 142 cm">
-          <span class="hint">ต้องมีขนาด ภาพที่เจนถึงจะได้สัดส่วนตรงของจริง</span>
-          <span class="chip warn" id="cat-size-override" hidden>แก้โดยร้านแล้ว — <a href="#" id="cat-size-clear">ล้างกลับเป็นค่าจากเล่ม</a></span>
-
-          <input class="input" id="cat-section" list="cat-section-list" autocomplete="off"
-                 placeholder="หมวด เช่น ลูกบอล, ต้นคริสต์มาส, ตุ๊กตา">
-          <datalist id="cat-section-list"></datalist>
-          <span class="hint">ใช้จัดกลุ่มตอนเลือกของ ถ้าไม่ตรงหมวดไหนเลยจะหาไม่เจอในตัวกรอง</span>
-          <span class="chip warn" id="cat-section-override" hidden>แก้โดยร้านแล้ว — <a href="#" id="cat-section-clear">ล้างกลับเป็นค่าจากเล่ม</a></span>
-
-          <input class="input" id="cat-book" list="cat-book-list" autocomplete="off"
-                 placeholder="ร้าน เช่น Bangkok Christmas">
-          <datalist id="cat-book-list"></datalist>
-          <span class="chip warn" id="cat-book-override" hidden>แก้โดยร้านแล้ว — <a href="#" id="cat-book-clear">ล้างกลับเป็นค่าจากเล่ม</a></span>
-
-          <input class="input" id="cat-price" type="number" min="0" step="0.01" placeholder="ราคา (บาท) — ไม่ใส่ก็ได้">
-          <span class="chip warn" id="cat-price-override" hidden>แก้โดยร้านแล้ว — <a href="#" id="cat-price-clear">ล้างกลับเป็นค่าจากเล่ม</a></span>
-          <img class="checker thumb-sm" id="cat-photo-preview" hidden alt="รูปปัจจุบัน">
-          <span class="chip warn" id="cat-photo-override" hidden>ถ่ายเองแล้ว — <a href="#" id="cat-photo-clear">ลบรูปนี้ กลับไปใช้รูปจากเล่ม</a></span>
-          <div class="stack" id="cat-colours" hidden></div>
-          <input class="input" type="file" id="cat-image" accept="image/jpeg,image/png">
-          <span class="hint" id="cat-image-hint" hidden>เลือกรูปใหม่ = ถ่ายรูปร้านเอง แทนที่รูปจากเล่มทุกที่ที่สินค้านี้ปรากฏ · ไม่เลือก = รูปเดิมไม่เปลี่ยน</span>
-          <div class="chip" id="cat-edit-status" hidden></div>
-          <div class="btn-row">
-            <button class="btn" id="cat-add">เพิ่มสินค้า</button>
-            <button class="btn danger" id="cat-edit-cancel" hidden>ยกเลิกแก้ไข</button>
-            <button class="btn" id="cat-sync">sync ดัชนีค้นหา</button>
-          </div>
-          <div class="notice" id="cat-error" hidden></div>
-          <div class="chip" id="cat-status" hidden></div>
-          <div class="scroll-x">
-            <table>
-              <tbody id="cat-recent"></tbody>
-            </table>
-          </div>
-        </section>
-
-        <section class="card stack" id="conflicts-panel" hidden>
-          <span class="section-title">รหัสชนกัน — ต้องดูด้วยตา</span>
-          <span class="hint">รหัสพวกนี้ซ้ำกันสองที่ ยังไม่รู้ว่าอันไหนถูก จึงไม่แสดงในระบบจนกว่าจะแก้</span>
-          <div class="scroll-x wide">
-            <table>
-              <thead><tr><th>รหัส</th><th>เก็บไว้ (ใช้อยู่)</th><th>ตัวที่ชน</th></tr></thead>
-              <tbody id="conflicts-rows"></tbody>
-            </table>
-          </div>
-        </section>
-
-        <section class="card stack" id="orphans-panel" hidden>
-          <span class="section-title">สินค้ากำพร้า — เล่มใหม่ไม่มีรหัสนี้แล้ว</span>
-          <span class="hint">ข้อมูลที่เคยแก้ไว้ยังอยู่ครบ ไม่หายไปไหน ถ้าเล่มถัดไปพิมพ์รหัสนี้อีก จะกลับมาใช้เองอัตโนมัติ</span>
-          <div class="scroll-x">
-            <table>
-              <thead><tr><th>รหัส</th><th>ข้อมูลที่เก็บไว้</th></tr></thead>
-              <tbody id="orphans-rows"></tbody>
-            </table>
-          </div>
-        </section>
-
-      </div>
-
     </div>
   </main>
 </div>
 
-<script src="/static/api.js?v=8.41"></script>
-<script src="/static/settings.js?v=8.41"></script>
+<dialog id="vendor-import-dialog" class="import-dialog">
+  <button type="button" class="dialog-close" id="vendor-import-close" aria-label="ปิด">✕</button>
+  <h2>นำเข้าราคาใหม่จากซัพพลายเออร์</h2>
+  <p class="hint">อัปโหลดไฟล์ PDF ราคาที่ได้รับใหม่ — ระบบจะแปลงและสร้างไฟล์ราคาให้อัตโนมัติ ใช้เวลาสักครู่</p>
+  <div class="field-row">
+    <span class="hint">ซัพพลายเออร์ :</span>
+    <select class="input" id="vendor-import-supplier"></select>
+  </div>
+  <div class="btn-row">
+    <input class="input" type="file" id="vendor-import-file" accept="application/pdf">
+    <button class="btn" id="vendor-import-btn">นำเข้า</button>
+  </div>
+  <span class="chip" id="vendor-import-status" hidden></span>
+  <div class="notice" id="vendor-import-error" hidden></div>
+</dialog>
+
+<script src="/static/api.js?v=8.72"></script>
+<script src="/static/settings.js?v=8.72"></script>
+<script src="/static/vendor.js?v=8.72"></script>
 </body>
 </html>

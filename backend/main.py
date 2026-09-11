@@ -862,6 +862,98 @@ def api_catalog_sync(request: Request):
     return {"synced": True}
 
 
+@app.get("/api/vendor/products")
+def api_vendor_search(
+    q: str = "", limit: int = 50, offset: int = 0, supplier: str = "",
+    in_catalog: str = "", missing_size: bool = False, unmapped_char: bool = False,
+):
+    """Browse table for the settings page's vendor card — same q/limit/offset shape as
+    /api/catalog/search's picker, for real page-by-page browsing rather than one "load more"
+    accumulation. `supplier` narrows to one configured supplier; `in_catalog` ("true"/"false"/
+    empty-for-any), `missing_size` and `unmapped_char` (a name with one of the PDF's rare
+    unremapped glyphs — see parse_pricelist.py) are the browse table's status-filter dropdowns.
+    `total` is the full match count before `limit`/`offset` sliced it, same reasoning as
+    /api/catalog/search's own."""
+    from backend.services import vendor_admin
+
+    supplier = supplier or None
+    catalog_filter = {"true": True, "false": False}.get(in_catalog.lower())
+    return {
+        "results": vendor_admin.search(
+            q, limit, supplier, offset, catalog_filter, missing_size, unmapped_char
+        ),
+        "total": vendor_admin.count(q, supplier, catalog_filter, missing_size, unmapped_char),
+    }
+
+
+@app.get("/api/vendor/suppliers")
+def api_vendor_suppliers():
+    """Every configured supplier, for the browse filter and the import dialog's picker."""
+    from backend.services import vendor_admin
+
+    return {"suppliers": vendor_admin.suppliers()}
+
+
+@app.get("/api/vendor/products/{code:path}")
+def api_vendor_find(code: str):
+    """Find one vendor code and show its merged (base + overlay) record. `:path` (not the
+    default single-segment match) because a vendor code can itself contain "/" — e.g.
+    "018-03/6/THEME" — same as catalog.py's own variant-suffix codes."""
+    from backend.services import vendor_admin
+
+    return vendor_admin.find(code)
+
+
+@app.get("/api/vendor/issues")
+def api_vendor_issues():
+    """Categorised problem lists for the settings page's "check for errors" tab."""
+    from backend.services import vendor_admin
+
+    return vendor_admin.issues()
+
+
+@app.post("/api/vendor/products/{code:path}/clear-override")
+def api_vendor_clear_override(code: str, request: Request, field: str = Form(...)):
+    """Returns one field to the vendor's own printed value. Localhost only. Registered before
+    the plainer POST /api/vendor/products/{code:path} below on purpose — Starlette tries
+    routes in definition order and `:path` is greedy, so a set_override route registered
+    first would swallow ".../clear-override" as part of the code instead of ever reaching
+    this handler."""
+    from backend.services import settings, vendor_admin
+
+    if not settings.is_local(request):
+        raise HTTPException(403, "Vendor data can only be edited from the machine running this.")
+    return vendor_admin.clear_override(code, field)
+
+
+@app.post("/api/vendor/products/{code:path}")
+def api_vendor_set_override(
+    code: str, request: Request, field: str = Form(...), value: str = Form("")
+):
+    """Correct one field of one vendor code (settings page). Localhost only, same reasoning as
+    the catalogue writes — this writes to data/vendor_overlay.json."""
+    from backend.services import settings, vendor_admin
+
+    if not settings.is_local(request):
+        raise HTTPException(403, "Vendor data can only be edited from the machine running this.")
+    return vendor_admin.set_override(code, field, value)
+
+
+@app.post("/api/vendor/import")
+def api_vendor_import(request: Request, supplier: str = Form(...), pdf: UploadFile = File(...)):
+    """Upload a refreshed price-list PDF for one configured supplier and rebuild that
+    supplier's own lookup.json from it (settings page). Localhost only — this runs
+    subprocesses and writes files under vendor-pricelists/<supplier>/, same reasoning as
+    /api/catalog/sync."""
+    from backend.services import settings, vendor_admin
+
+    if not settings.is_local(request):
+        raise HTTPException(403, "Vendor data can only be edited from the machine running this.")
+
+    data = _read(pdf, "ไฟล์ราคาซัพพลายเออร์ (PDF)")
+    return vendor_admin.import_pricelist(supplier, data, pdf.filename)
+
+
 @app.get("/api/usage")
 def api_usage():
     """What has been spent so far, summed from the log.
