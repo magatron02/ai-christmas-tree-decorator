@@ -195,11 +195,18 @@ def describe_element_density(elements):
 # the extension point for each new placement the backdrops-and-placement epic adds (issue
 # #20's wrapped garland, #21's grounded gift box/figure; mounted joins once a wall/door
 # backdrop exists to mount it on).
+#
+# "wrapped"'s cutout is a shelf photo — the garland coiled up the way it's sold, not laid out
+# straight — so telling the model only where to put it (issue #20) still let it paste that
+# coiled shape onto the trunk. Issue #33 adds the "do not paste it coiled" clause once, rather
+# than restating the negative a second time at the end, to say it without saying it twice.
 _PLACEMENT_OVERRIDES = {
     "wrapped": (
-        "is a garland: ignore the rules above for it. Wrap it once around the tree's visible "
-        "trunk, following the trunk's own taper, rather than hanging it from a branch or "
-        "scattering several copies."
+        "is a garland: ignore the rules above for it. The cutout shows it coiled or piled up "
+        "the way it sits on a shelf — do not paste it in that coiled shape. Draw it uncoiled "
+        "into a single continuous strand, wrapped once around the tree's visible trunk and "
+        "following the trunk's own taper, rather than hanging it from a branch or scattering "
+        "several copies."
     ),
     "grounded": (
         "does not hang from a branch: ignore the rules above for it. Place it on the ground "

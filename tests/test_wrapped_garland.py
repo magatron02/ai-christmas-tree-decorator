@@ -53,6 +53,16 @@ def test_a_garland_gets_a_wrap_instruction_naming_its_image_number():
     note = image_gen.describe_placement(elements)
     assert "image 3" in note
     assert "trunk" in note
+
+
+def test_the_wrap_instruction_says_not_to_keep_the_cutouts_coiled_shape():
+    # The reference cutout is a shelf photo of the garland coiled/piled for sale, not laid out
+    # straight — without an explicit line against it, "wrap it" alone still leaves the model
+    # free to just paste that coiled shape onto the trunk instead of drawing an unrolled strand.
+    elements = [{"code": "GARLAND-1", "placement": "wrapped"}]
+    note = image_gen.describe_placement(elements)
+    assert "do not paste it in that coiled shape" in note
+    assert "uncoiled into a single continuous strand" in note
     assert "garland" in note.lower()
 
 
