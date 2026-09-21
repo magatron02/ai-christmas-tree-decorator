@@ -223,12 +223,40 @@ def label_for(category):
     return next((label for key, label, _needles in CATEGORIES if key == category), category)
 
 
+def _needle_in(needle, haystack):
+    r"""Whether `needle` appears in `haystack` without being embedded inside a larger English
+    word — not a plain substring check. A bare `in` check let the "ribbon" category's "bow"
+    needle match inside "Rainbow", miscategorising 9 real "Rainbow Christmas Tree" products
+    as ribbon (issue #34).
+
+    Only an *ASCII letter* immediately before the needle disqualifies a match — not "any word
+    character" — because Thai section text has no spaces between words at all ("พวงดอกไม้..."
+    is one run of characters), so a Thai needle like "ดอกไม้" is legitimately preceded by
+    another Thai character in real catalogue text. English needles are the only ones ever
+    concatenated onto a preceding English word by accident; Thai text is concatenated by
+    normal spelling, and must still match.
+
+    Known gap: this only blocks an English needle glued onto a preceding *English* word — an
+    English needle glued onto a preceding *Thai* character with no separator (e.g. a section
+    reading "...สีwhite...") is not caught, since the character immediately before it is not
+    an ASCII letter. Not observed in the current catalogue (checked: no needle collides this
+    way today), but a future import could hit it — closing it fully would need to also
+    disqualify a non-ASCII-but-still-a-letter character before the needle, which was left out
+    here to avoid another silent breakage the way a full \w boundary did.
+
+    Only the leading edge is checked, deliberately: several needles here ("wflake", "tree",
+    "garland"...) are themselves prefixes of the plural PDF text they are meant to match ("Sno
+    wflakes", "trees", "garlands"), so requiring a trailing boundary too would silently
+    un-match those."""
+    return re.search(rf"(?<![A-Za-z]){re.escape(needle)}", haystack) is not None
+
+
 def category_of(row):
-    """The first category whose substrings appear in this product's section or photo kind,
-    or None when nothing matches."""
+    """The first category whose needles appear, as whole words, in this product's section or
+    photo kind, or None when nothing matches."""
     haystack = f"{row.get('section') or ''} {_kinds().get(row['code'], '')}".lower()
     for key, _label, needles in CATEGORIES:
-        if any(needle in haystack for needle in needles):
+        if any(_needle_in(needle, haystack) for needle in needles):
             return key
     return None
 

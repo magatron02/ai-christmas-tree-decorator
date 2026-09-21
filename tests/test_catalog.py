@@ -181,12 +181,27 @@ def test_every_product_lands_in_exactly_one_category():
     """The picker's category filter is a partition, not a tag cloud — a product appearing in
     two categories would be found twice and counted twice."""
     for row in catalog._rows():
+        haystack = f"{row.get('section') or ''} {catalog._kinds().get(row['code'], '')}".lower()
         matches = [
             key for key, _label, needles in catalog.CATEGORIES
-            if any(n in f"{row.get('section') or ''} {catalog._kinds().get(row['code'], '')}".lower()
-                   for n in needles)
+            if any(catalog._needle_in(n, haystack) for n in needles)
         ]
         assert catalog.category_of(row) == (matches[0] if matches else None)
+
+
+def test_a_rainbow_named_tree_is_not_miscategorised_as_ribbon():
+    # "bow" (the ribbon category's needle) is a substring of "Rainbow" — these 9 real trees
+    # were miscategorised as ribbon because of it before issue #34's fix.
+    codes = [
+        "35072-1", "37072-1", "36092-4", "38092-5", "35031-2",
+        "36031-2", "34072-1", "36072-1", "38072-1",
+    ]
+    for code in codes:
+        assert catalog.category_of(catalog.find(code)) == "tree", code
+
+
+def test_a_genuine_bow_still_categorises_as_ribbon():
+    assert catalog.category_of(catalog.find("5930-02")) == "ribbon"
 
 
 def test_no_product_is_left_without_a_category():
