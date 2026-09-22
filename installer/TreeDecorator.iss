@@ -54,6 +54,10 @@ Source: "..\catalog\*.json"; DestDir: "{app}\catalog"; Flags: onlyifdoesntexist
 Source: "..\catalog\embeddings.npy"; DestDir: "{app}\catalog"; Flags: onlyifdoesntexist
 Source: "..\catalog\images\*"; DestDir: "{app}\catalog\images"; Flags: ignoreversion recursesubdirs createallsubdirs
 
+; Style-reference photos for Prompt mode's gallery picker (Product.md 8.3) — content, same as
+; catalog\images, refreshed on every install rather than onlyifdoesntexist like the JSON.
+Source: "..\catalog\gallery\*"; DestDir: "{app}\catalog\gallery"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+
 ; Cut-outs made ahead of time by scripts/precut_catalog.py, so picking a decoration is a file
 ; read instead of a run of rembg. skipifsourcedoesntexist because they are an optimisation:
 ; a build without them still produces a working installer, just one that cuts on the fly.
