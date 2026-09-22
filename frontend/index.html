@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tree Decorator</title>
 <link rel="icon" href="/static/icon.ico">
-<link rel="stylesheet" href="/static/styles/tokens.css?v=8.41">
-<link rel="stylesheet" href="/static/styles/components.css?v=8.41">
-<script src="/static/theme.js?v=8.41"></script>
+<link rel="stylesheet" href="/static/styles/tokens.css?v=8.42">
+<link rel="stylesheet" href="/static/styles/components.css?v=8.42">
+<script src="/static/theme.js?v=8.42"></script>
 </head>
 <body>
 
@@ -213,6 +213,10 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8" cy="10" r="1.5"/><path d="M3 16l5-4 4 3 5-5 4 4"/></svg>
               แนบสถานที่จริง (บรรยากาศ)
             </button>
+            <button type="button" class="attach-btn" id="prompt-attach-gallery">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+              เลือกจากตัวอย่าง
+            </button>
             <input type="file" id="prompt-tree-file" accept="image/jpeg,image/png" hidden>
             <input type="file" id="prompt-element-file" accept="image/jpeg,image/png" hidden>
             <input type="file" id="prompt-scene-file" accept="image/jpeg,image/png" hidden>
@@ -286,15 +290,26 @@
   </div>
 </dialog>
 
+<!-- Photos from the 2026 book's own display gallery — a finished-look style reference to pick
+     for Prompt mode instead of uploading one. Reuses the catalogue picker's own dialog/grid
+     classes since the "browse then pick one" shape is identical. -->
+<dialog id="gallery-dialog" class="picker-dialog">
+  <div class="picker-head">
+    <h2>เลือกรูปตัวอย่างสไตล์การจัด</h2>
+    <button class="btn danger" id="gallery-close">ปิด</button>
+  </div>
+  <div class="picker-grid" id="gallery-results"></div>
+</dialog>
+
 <!-- Full-size look at one photo, opened from the small corner button on a .candidate card. -->
 <dialog id="lightbox-dialog" class="lightbox-dialog">
   <button class="btn danger" id="lightbox-close">ปิด</button>
   <img id="lightbox-image" alt="">
 </dialog>
 
-<script src="/static/api.js?v=8.41"></script>
-<script src="/static/app.js?v=8.41"></script>
-<script src="/static/auto.js?v=8.41"></script>
-<script src="/static/prompt.js?v=8.41"></script>
+<script src="/static/api.js?v=8.42"></script>
+<script src="/static/app.js?v=8.42"></script>
+<script src="/static/auto.js?v=8.42"></script>
+<script src="/static/prompt.js?v=8.42"></script>
 </body>
 </html>

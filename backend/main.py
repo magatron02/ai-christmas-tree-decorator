@@ -81,6 +81,13 @@ CATALOG_CUTOUTS = config.CATALOG_PATH.parent / "cutouts"
 if CATALOG_IMAGES.is_dir():
     app.mount("/catalog", StaticFiles(directory=CATALOG_IMAGES), name="catalog")
 
+# Finished-look photos from the 2026 book's own display gallery pages (real installations,
+# not a product) — a style reference the shop can hand a customer's request straight into
+# Prompt mode without hunting down or uploading one of their own (Product.md 8.3).
+GALLERY_DIR = config.CATALOG_PATH.parent / "gallery"
+if GALLERY_DIR.is_dir():
+    app.mount("/gallery", StaticFiles(directory=GALLERY_DIR), name="gallery")
+
 STORED_NAME = re.compile(r"^[0-9a-f]{32}_(tree|element|output|reference)\.(png|jpg)$")
 EXT_FOR_FORMAT = {"PNG": "png", "JPEG": "jpg"}
 
@@ -819,6 +826,17 @@ def api_remove_bg(files: list[UploadFile] = File(...)):
     cut = background_removal.remove_background(data)
     name = _store(cut, "element", "png")
     return {"element": name, "element_url": _url(name)}
+
+
+@app.get("/api/gallery")
+def api_gallery():
+    """The style-reference gallery's contents, for Prompt mode's picker — plain filenames off
+    disk rather than a JSON manifest, since these are static photos with nothing per-item to
+    say beyond their picture."""
+    if not GALLERY_DIR.is_dir():
+        return {"images": []}
+    names = sorted(p.name for p in GALLERY_DIR.glob("*.jpg"))
+    return {"images": [{"name": name, "url": f"/gallery/{name}"} for name in names]}
 
 
 @app.post("/api/reference")

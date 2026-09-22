@@ -189,6 +189,18 @@ $("prompt-element-file").addEventListener("change", async (event) => {
   }
 });
 
+async function useAsScene(file) {
+  const body = new FormData();
+  body.append("files", file);
+  const result = await call("/api/reference", { method: "POST", body });
+  promptState.attachments = promptState.attachments.filter((a) => a.role !== "scene");
+  promptState.attachments.push({
+    role: "scene", code: null, name: result.reference, url: result.reference_url,
+  });
+  renderPromptAttachments();
+  refreshPromptSend();
+}
+
 $("prompt-attach-scene").addEventListener("click", () => {
   $("prompt-scene-file").click();
 });
@@ -198,19 +210,51 @@ $("prompt-scene-file").addEventListener("change", async (event) => {
   if (!file) return;
   showError("");
   try {
-    const body = new FormData();
-    body.append("files", file);
-    const result = await call("/api/reference", { method: "POST", body });
-    promptState.attachments = promptState.attachments.filter((a) => a.role !== "scene");
-    promptState.attachments.push({
-      role: "scene", code: null, name: result.reference, url: result.reference_url,
-    });
-    renderPromptAttachments();
-    refreshPromptSend();
+    await useAsScene(file);
   } catch (err) {
     showError(err.message);
   }
 });
+
+/* ---- style-reference gallery: the 2026 book's own display-gallery photos, pickable in
+ * place of an uploaded scene photo (same /api/reference underneath — see useAsScene above). */
+
+let galleryLoaded = false;
+
+async function renderGallery() {
+  const grid = $("gallery-results");
+  if (galleryLoaded) return;
+  const { images } = await call("/api/gallery");
+  galleryLoaded = true;
+  if (!images.length) {
+    grid.innerHTML = '<span class="hint">ยังไม่มีรูปตัวอย่าง</span>';
+    return;
+  }
+  grid.innerHTML = "";
+  for (const image of images) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "gallery-item";
+    button.innerHTML = `<img src="${image.url}" alt="รูปตัวอย่างสไตล์การจัด" loading="lazy">`;
+    button.addEventListener("click", async () => {
+      showError("");
+      try {
+        const blob = await fetch(image.url).then((r) => r.blob());
+        await useAsScene(new File([blob], image.name, { type: blob.type }));
+        $("gallery-dialog").close();
+      } catch (err) {
+        showError(err.message);
+      }
+    });
+    grid.appendChild(button);
+  }
+}
+
+$("prompt-attach-gallery").addEventListener("click", () => {
+  $("gallery-dialog").showModal();
+  renderGallery().catch((err) => showError(err.message));
+});
+$("gallery-close").addEventListener("click", () => $("gallery-dialog").close());
 
 /* ---- composer text + size ---- */
 const promptTextarea = $("prompt-textarea");

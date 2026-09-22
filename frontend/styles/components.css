@@ -793,6 +793,30 @@ dialog h2 {
   pointer-events: none;
 }
 
+/* Style-reference gallery cards: a plain photo button, no code/price overlay like a
+   .candidate carries, so it only needs its own image rule inside the shared .picker-grid. */
+.gallery-item {
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  cursor: pointer;
+  background: none;
+}
+.gallery-item img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+}
+.gallery-item:hover {
+  border-color: var(--text-muted);
+}
+.gallery-item:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
 /* ---- lightbox: one photo, full size ---- */
 .lightbox-dialog[open] {
   display: flex;
