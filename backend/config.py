@@ -200,15 +200,22 @@ AUTO_RECIPES = {
     "wall": AUTO_WALL_RECIPE,
 }
 
-# Auto pick's colour-tone presets, reviewed as the 5-tone mockup. Colours are
-# free strings matched through matching._normalize()/COLOUR_BUCKETS, so no separate bucket
-# table lives here — catalog.auto_pool() does the matching.
+# Auto pick's colour-tone presets. Colours are free strings matched through
+# matching._normalize()/COLOUR_BUCKETS, so no separate bucket table lives here —
+# catalog.auto_pool() does the matching.
+#
+# 2026 book: these 6 replace the old 5 made-up tones wholesale, named and ordered exactly as
+# the book's own "Theme Collection" page prints them (page 12 of the 2026 PDF) — a real,
+# shop-chosen naming rather than ones invented for the mockup. "Jingle Jingle" maps to the
+# "multicolour" bucket rather than picking two literal colours: its own photo mixes red, gold
+# and green together, which no single pair of the other five tones already covers.
 TONE_PRESETS = {
-    "redgold": {"label": "แดง-ทอง คลาสสิก", "colours": ["red", "gold"]},
-    "whitesilver": {"label": "ขาว-เงิน มินิมอล", "colours": ["white", "silver"]},
-    "natural": {"label": "ธรรมชาติ ใบไม้", "colours": ["green", "brown"]},
-    "pastel": {"label": "พาสเทลหวาน", "colours": ["pink", "blue"]},
-    "luxe": {"label": "น้ำเงิน-เงิน หรู", "colours": ["blue", "silver"]},
+    "goldisglow": {"label": "Gold is Glow", "colours": ["gold"]},
+    "peppermint": {"label": "Peppermint", "colours": ["red", "white"]},
+    "greenforest": {"label": "Green Forest", "colours": ["green", "brown"]},
+    "christmasclassic": {"label": "Christmas Classic", "colours": ["red", "gold"]},
+    "winterwonderland": {"label": "Winter Wonderland", "colours": ["white", "silver"]},
+    "jinglejingle": {"label": "Jingle Jingle", "colours": ["multicolour"]},
 }
 
 # Prompt mode: a free-text description the shop types instead of picking a density — see

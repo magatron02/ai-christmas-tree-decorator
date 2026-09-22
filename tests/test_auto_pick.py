@@ -44,7 +44,7 @@ def fake_catalog(monkeypatch):
 
 
 def pick(client, **data):
-    return client.post("/api/auto/pick", data={"tone": "redgold", **data})
+    return client.post("/api/auto/pick", data={"tone": "christmasclassic", **data})
 
 
 # ---------------------------------------------------------------- config
@@ -104,7 +104,7 @@ def test_unpriced_products_are_eligible(client):
 
 def test_every_item_matches_the_requested_tone(client):
     codes = {d["code"] for d in pick(client).json()["decorations"]}
-    assert "O-GREEN" not in codes  # green is in neither redgold colour
+    assert "O-GREEN" not in codes  # green is in neither christmasclassic colour
 
 
 def test_a_category_with_nothing_in_this_tone_is_skipped_not_substituted(client):

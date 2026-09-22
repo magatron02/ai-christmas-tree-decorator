@@ -36,7 +36,7 @@ def fake_catalog(monkeypatch):
 
 
 def pick(client, **data):
-    return client.post("/api/auto/pick", data={"tone": "redgold", **data})
+    return client.post("/api/auto/pick", data={"tone": "christmasclassic", **data})
 
 
 # ---- the recipe that applies ----
@@ -73,16 +73,16 @@ def test_a_tone_with_nothing_for_this_backdrop_is_not_offered(client):
     wall = client.get("/api/auto/config?backdrop=wall").json()
 
     offered = {t["key"] for t in wall["tones"]}
-    assert "redgold" in offered  # W-RED fills the wreath slot
-    assert "whitesilver" not in offered  # nothing white or silver is stocked at all
+    assert "christmasclassic" in offered  # W-RED fills the wreath slot
+    assert "winterwonderland" not in offered  # nothing white or silver is stocked at all
 
 
 def test_a_tone_is_offered_when_any_one_slot_can_be_filled(client):
-    """natural has a green wreath and no banner — one slot of two is enough to be worth
+    """greenforest has a green wreath and no banner — one slot of two is enough to be worth
     offering, the same way a tree tone with an unfillable bell is still offered."""
     offered = {t["key"] for t in client.get("/api/auto/config?backdrop=wall").json()["tones"]}
 
-    assert "natural" in offered
+    assert "greenforest" in offered
 
 
 def test_the_tree_offers_every_tone_exactly_as_before(client):
@@ -111,10 +111,10 @@ def test_a_wall_pick_never_proposes_something_for_a_tree(client):
 
 
 def test_an_unfillable_wall_slot_is_skipped_not_substituted(client):
-    """The only banner stocked is gold — asking for the natural tone places the green wreath
-    and nothing else, rather than reaching for an off-tone banner, exactly as a tree recipe's
-    empty slot does."""
-    body = pick(client, tone="natural", backdrop="wall").json()
+    """The only banner stocked is gold — asking for the greenforest tone places the green
+    wreath and nothing else, rather than reaching for an off-tone banner, exactly as a tree
+    recipe's empty slot does."""
+    body = pick(client, tone="greenforest", backdrop="wall").json()
 
     assert "banner" in body["missing"]
     assert body["requested"] == 2
