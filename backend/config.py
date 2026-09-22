@@ -206,16 +206,23 @@ AUTO_RECIPES = {
 #
 # 2026 book: these 6 replace the old 5 made-up tones wholesale, named and ordered exactly as
 # the book's own "Theme Collection" page prints them (page 12 of the 2026 PDF) — a real,
-# shop-chosen naming rather than ones invented for the mockup. "Jingle Jingle" maps to the
-# "multicolour" bucket rather than picking two literal colours: its own photo mixes red, gold
-# and green together, which no single pair of the other five tones already covers.
+# shop-chosen naming rather than ones invented for the mockup.
+#
+# "Jingle Jingle" was first tried against the "multicolour" bucket alone (only a product
+# whose own vision description says "multicolour"/"rainbow" outright) — measured against the
+# real 2026 catalogue that matched just 12 products, against 142-427 for every other tone,
+# because row_matches_tone() checks a product's single primary_colour, and nothing in this
+# catalogue is described as multicolour even when it visibly mixes red/gold/green. Listing
+# all three colours instead works the same way every other tone already does — any one of a
+# product's own colour counts, an OR not an AND — and measured at 593, comfortably within the same range
+# as the rest.
 TONE_PRESETS = {
     "goldisglow": {"label": "Gold is Glow", "colours": ["gold"]},
     "peppermint": {"label": "Peppermint", "colours": ["red", "white"]},
     "greenforest": {"label": "Green Forest", "colours": ["green", "brown"]},
     "christmasclassic": {"label": "Christmas Classic", "colours": ["red", "gold"]},
     "winterwonderland": {"label": "Winter Wonderland", "colours": ["white", "silver"]},
-    "jinglejingle": {"label": "Jingle Jingle", "colours": ["multicolour"]},
+    "jinglejingle": {"label": "Jingle Jingle", "colours": ["red", "gold", "green"]},
 }
 
 # Prompt mode: a free-text description the shop types instead of picking a density — see
