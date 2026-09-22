@@ -21,7 +21,7 @@ def test_a_known_tree_resolves_to_its_real_height():
 
 
 def test_a_known_bauble_resolves_to_its_diameter():
-    assert catalog.longest_side_mm(catalog.find("017-06")) == 80
+    assert catalog.longest_side_mm(catalog.find("053-07")) == 80
 
 
 def test_lookup_is_case_insensitive_and_trims():
@@ -36,7 +36,7 @@ def test_an_unknown_code_is_refused():
 
 def test_the_scale_sentence_states_the_real_ratio():
     """1524 mm tree, 80 mm bauble — the model should be told 19, not 'in proportion'."""
-    sentence, missing = catalog.scale_sentence("05021-1", "017-06")
+    sentence, missing = catalog.scale_sentence("05021-1", "053-07")
 
     assert "1524 mm" in sentence
     assert "80 mm" in sentence
@@ -48,7 +48,7 @@ def test_the_stated_ratio_is_the_true_one_not_a_corrected_one():
     """Asking for a larger fraction to compensate for the model drawing small was tried and
     measured worse than not correcting at all (0.55x against 0.70x). The sentence states the
     real ratio, and this test stops a compensation factor creeping back in unmeasured."""
-    sentence, _missing = catalog.scale_sentence("05021-1", "017-06")
+    sentence, _missing = catalog.scale_sentence("05021-1", "053-07")
 
     assert "one 19th" in sentence          # 1524 / 80, the truth
     assert "one 11th" not in sentence      # the correction that made it worse
@@ -74,7 +74,7 @@ def test_one_code_alone_is_refused():
 def test_several_decorations_each_get_their_own_ratio():
     """A 40 mm bauble and a 300 mm one must not come out the same size, which is the whole
     reason multi-element needs the catalogue rather than one shared instruction."""
-    sentence, missing = catalog.scale_sentence("05021-1", ["017-06", "018-02"])
+    sentence, missing = catalog.scale_sentence("05021-1", ["053-07", "015-04"])
 
     assert "80 mm across, one 19th" in sentence
     assert "40 mm across, one 38th" in sentence
@@ -88,7 +88,7 @@ def test_a_decoration_without_a_size_falls_back_for_that_one_item():
     for one item beats refusing a request that is mostly exact."""
     sizeless = next(row for row in catalog._rows() if row["size"] is None)
 
-    sentence, missing = catalog.scale_sentence("05021-1", ["017-06", sizeless["code"]])
+    sentence, missing = catalog.scale_sentence("05021-1", ["053-07", sizeless["code"]])
 
     assert "80 mm across, one 19th" in sentence   # the known one is still exact
     assert "no catalogue size" in sentence        # the sizeless one is flagged, not guessed
@@ -101,7 +101,7 @@ def test_a_treeless_tree_code_falls_back_for_everything():
     generic fallback rather than only omitting the tree's own line."""
     sizeless = next(row for row in catalog._rows() if row["size"] is None)
 
-    sentence, missing = catalog.scale_sentence(sizeless["code"], ["017-06"])
+    sentence, missing = catalog.scale_sentence(sizeless["code"], ["053-07"])
 
     assert sentence == catalog._GENERIC_SCALE
     assert missing == [catalog.describe(sizeless)]
@@ -117,8 +117,8 @@ def test_a_product_with_no_printed_size_is_refused_not_estimated():
 
 def test_search_finds_by_code_and_by_page_heading():
     assert any(row["code"] == "05021-1" for row in catalog.search("05021"))
-    # the word appears in the headings of the page those trees are printed on
-    assert any(row["code"] == "05021-1" for row in catalog.search("norwood"))
+    # the phrase appears in the heading of the page this tree is printed on
+    assert any(row["code"] == "87033-1" for row in catalog.search("flocked"))
 
 
 def test_no_row_claims_a_product_name():
@@ -201,7 +201,7 @@ def test_a_rainbow_named_tree_is_not_miscategorised_as_ribbon():
 
 
 def test_a_genuine_bow_still_categorises_as_ribbon():
-    assert catalog.category_of(catalog.find("5930-02")) == "ribbon"
+    assert catalog.category_of(catalog.find("78034-1")) == "ribbon"
 
 
 def test_no_product_is_left_without_a_category():
@@ -371,7 +371,7 @@ def test_an_uncontested_code_is_unaffected():
 
 def test_a_manual_tree_override_replaces_the_catalogue_lookup():
     sentence, missing = catalog.scale_sentence(
-        "05021-1", "017-06", tree_mm_override=2000,
+        "05021-1", "053-07", tree_mm_override=2000,
     )
     assert "2000 mm" in sentence
     assert "1524 mm" not in sentence  # the real catalogue height must not leak in too
@@ -379,11 +379,11 @@ def test_a_manual_tree_override_replaces_the_catalogue_lookup():
 
 
 def test_a_manual_element_override_replaces_the_catalogue_lookup():
-    """describe()'s own '017-06 (80 mm.)' label still shows the catalogue's printed size —
+    """describe()'s own '053-07 (80 mm.)' label still shows the catalogue's printed size —
     that's just what the code is called, independent of the override. What must change is the
     *measurement* used for the ratio, which is what "150 mm across" checks."""
     sentence, missing = catalog.scale_sentence(
-        "05021-1", "017-06", element_mm_overrides=[150],
+        "05021-1", "053-07", element_mm_overrides=[150],
     )
     assert "150 mm across" in sentence
     assert "one 10th" in sentence  # 1524 / 150, not 1524 / 80 ("one 19th")
@@ -410,6 +410,6 @@ def test_an_override_stops_the_item_counting_as_missing():
 def test_overrides_default_to_none_and_change_nothing_when_omitted():
     """Zero behaviour change for every existing caller: omitting the new params must produce
     the exact same sentence as before they existed."""
-    with_overrides = catalog.scale_sentence("05021-1", "017-06", None, [None])
-    without = catalog.scale_sentence("05021-1", "017-06")
+    with_overrides = catalog.scale_sentence("05021-1", "053-07", None, [None])
+    without = catalog.scale_sentence("05021-1", "053-07")
     assert with_overrides == without

@@ -145,8 +145,12 @@ CATEGORIES = [
     ("banner",   "ป้ายอวยพร & แบนเนอร์",      ("banner", "blessing")),
     # "u u t t c c" is the Nutcracker heading as the PDF actually renders it, every letter
     # doubled: "N N u u t t c c r r a a c c". There is no un-mangled spelling to match on.
+    # "reindeer" (new in the 2026 catalogue): a standing floor/tabletop figure the same way a
+    # santa or a sleigh is — not a hung decoration, so it joins "figure" rather than getting
+    # its own category and placement.
     ("figure",   "ตุ๊กตา & ของตั้งโชว์",      ("figure", "santa", "sleigh", "fantasy", "sculpture",
-                                              "foam", "display", "u u t t c c", "ตุ๊กตา")),
+                                              "foam", "display", "u u t t c c", "ตุ๊กตา",
+                                              "reindeer")),
 ]
 
 # How a category's decorations attach to whatever backdrop they land on (CONTEXT.md, ADR-0004)

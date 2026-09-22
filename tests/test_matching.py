@@ -99,8 +99,8 @@ def test_scores_are_ordered(fake_embed):
 
 def test_quantity_scales_with_the_tree():
     """A 7 ft tree takes more of the same bauble than a 5 ft one."""
-    small = matching.suggest_quantity("05021-1", "017-06")
-    large = matching.suggest_quantity("07021-1", "017-06")
+    small = matching.suggest_quantity("05021-1", "053-07")
+    large = matching.suggest_quantity("07021-1", "053-07")
 
     assert large["low"] > small["low"]
     assert large["high"] > small["high"]
@@ -108,14 +108,14 @@ def test_quantity_scales_with_the_tree():
 
 def test_quantity_scales_inversely_with_the_decoration():
     """The same tree takes more small baubles than large ones."""
-    large_bauble = matching.suggest_quantity("05021-1", "017-06")   # 80 mm
-    small_bauble = matching.suggest_quantity("05021-1", "018-02")   # 40 mm
+    large_bauble = matching.suggest_quantity("05021-1", "053-07")   # 80 mm
+    small_bauble = matching.suggest_quantity("05021-1", "015-04")   # 40 mm
 
     assert small_bauble["low"] > large_bauble["low"]
 
 
 def test_quantity_reports_the_sizes_it_used():
-    quantity = matching.suggest_quantity("05021-1", "017-06")
+    quantity = matching.suggest_quantity("05021-1", "053-07")
     assert quantity["tree_mm"] == 1524
     assert quantity["element_mm"] == 80
 

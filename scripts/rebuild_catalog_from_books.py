@@ -1,4 +1,4 @@
-"""Rebuild catalog/ from scratch, using ONLY the current pair of catalogue PDFs as the source.
+"""Rebuild catalog/ from scratch, using ONLY the current catalogue PDF(s) as the source.
 
     python scripts/rebuild_catalog_from_books.py
 
@@ -8,6 +8,15 @@ new pair already existed in the catalogue the old pair built; the shop chose a f
 over a partial refresh, so the ~740 old codes absent from the new pair are dropped rather
 than kept alongside them. The old pair's extraction is not deleted from ac5-source/, only no
 longer read here — swap the SOURCES paths back to reverse this.
+
+2026-09-22: repointed again, this time at a single unified 2026 catalogue PDF ("Bangkok
+Christmas Decoration Export — Product Catalogue 2026", 66 pages, each page a two-page spread —
+extract_catalog.py works on raw PDF geometry per fitz page, not a fixed page width, so a
+spread needs no special handling). Only 512 of the previous 829 codes survive into this book;
+317 are dropped (full replace again, same choice as 2026-08-19) and 885 are brand new. Every
+code in this book has a printed size (0 unreadable, vs. roughly a third unreadable before).
+NewBook1/NewBook2 are no longer read here for the same reason the original pair stopped being
+read in 2026-08-19 — not deleted from ac5-source/, just superseded.
 
 Replaces scripts/ingest_new_book.py's merge-into-the-old-catalogue approach: the shop
 decided the old catalogue (built from a different, larger PDF) should be discarded, and the
@@ -43,8 +52,7 @@ import extract_catalog  # noqa: E402
 # this kind of "whose product is this" label to tell the two apart.
 BRAND = "Bangkok Christmas"
 SOURCES = [
-    (ROOT / "ac5-source" / "NewBook1.pdf", ROOT / "ac5-source" / "NewBook1", (1, 56), BRAND),
-    (ROOT / "ac5-source" / "NewBook2.pdf", ROOT / "ac5-source" / "NewBook2", (1, 7), BRAND),
+    (ROOT / "ac5-source" / "NewBook3.pdf", ROOT / "ac5-source" / "NewBook3", (1, 66), BRAND),
 ]
 
 CATALOG_DIR = ROOT / "catalog"

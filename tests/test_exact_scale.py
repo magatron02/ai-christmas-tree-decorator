@@ -21,17 +21,17 @@ def prepare(client, **extra):
 
 
 def test_codes_are_recorded_on_the_request(client, conn, fake_gen, fake_rembg):
-    response = prepare(client, tree_code="05021-1", element_code="017-06")
+    response = prepare(client, tree_code="05021-1", element_code="053-07")
 
     assert response.status_code == 200, response.text
     assert response.json()["exact_scale"] is True
     row = request_log.get(conn, response.json()["request_id"])
     assert row["tree_code"] == "05021-1"
-    assert row["element_code"] == "017-06"
+    assert row["element_code"] == "053-07"
 
 
 def test_the_generator_is_handed_the_real_measurements(client, conn, fake_gen, fake_rembg):
-    request_id = prepare(client, tree_code="05021-1", element_code="017-06").json()["request_id"]
+    request_id = prepare(client, tree_code="05021-1", element_code="053-07").json()["request_id"]
 
     client.post(f"/api/generate/{request_id}")
 
@@ -53,7 +53,7 @@ def test_without_codes_the_generator_gets_words_not_invented_numbers(
 
 
 def test_an_unknown_code_is_rejected_before_anything_is_billed(client, fake_gen, fake_rembg):
-    response = prepare(client, tree_code="99999-9", element_code="017-06")
+    response = prepare(client, tree_code="99999-9", element_code="053-07")
 
     assert response.status_code == 422
     assert "ไม่มีใน catalogue" in response.json()["error"]
