@@ -9,12 +9,12 @@
   },
   "section": "Christmas Trees Big Trees : 10 Ft.-30 Ft.",
   "page_headings": [],
-  "pdf_page": 12,
+  "pdf_page": 22,
   "bbox": [
-   118.1,
-   427.2,
-   204.8,
-   446.7
+   97.1,
+   406.2,
+   183.8,
+   425.7
   ],
   "duplicate": true,
   "book": "Bangkok Christmas"
@@ -29,12 +29,12 @@
   },
   "section": "Christmas Trees Big Trees : 10 Ft.-30 Ft.",
   "page_headings": [],
-  "pdf_page": 12,
+  "pdf_page": 22,
   "bbox": [
-   118.1,
-   442.2,
-   204.8,
-   461.7
+   97.1,
+   421.2,
+   183.8,
+   440.7
   ],
   "duplicate": true,
   "book": "Bangkok Christmas"
@@ -49,12 +49,12 @@
   },
   "section": "Christmas Trees Big Trees : 10 Ft.-30 Ft.",
   "page_headings": [],
-  "pdf_page": 12,
+  "pdf_page": 22,
   "bbox": [
-   118.1,
-   457.2,
-   204.8,
-   476.7
+   97.1,
+   436.2,
+   183.8,
+   455.7
   ],
   "duplicate": true,
   "book": "Bangkok Christmas"
@@ -69,12 +69,12 @@
   },
   "section": "Christmas Trees Big Trees : 10 Ft.-30 Ft.",
   "page_headings": [],
-  "pdf_page": 12,
+  "pdf_page": 22,
   "bbox": [
-   118.1,
-   472.2,
-   204.8,
-   491.7
+   97.1,
+   451.2,
+   183.8,
+   470.7
   ],
   "duplicate": true,
   "book": "Bangkok Christmas"
@@ -87,16 +87,14 @@
    "size_mm": 610,
    "unit_printed": "inch"
   },
-  "section": "Giant Wreath",
-  "page_headings": [
-   "Giant Wreath"
-  ],
-  "pdf_page": 14,
+  "section": "Christmas Wreaths",
+  "page_headings": [],
+  "pdf_page": 26,
   "bbox": [
-   452.6,
-   198.7,
-   545.1,
-   218.2
+   431.6,
+   177.7,
+   524.1,
+   197.2
   ],
   "duplicate": true,
   "book": "Bangkok Christmas"
@@ -105,18 +103,17 @@
   "code": "52816-2",
   "size_raw": null,
   "size": null,
-  "section": "Christmas Ball Ornaments M agic?",
+  "section": "M agic?",
   "page_headings": [
-   "Christmas Ball Ornaments",
    "M",
    "agic?"
   ],
-  "pdf_page": 33,
+  "pdf_page": 64,
   "bbox": [
-   276.2,
-   369.9,
-   320.6,
-   385.6
+   255.2,
+   348.9,
+   299.6,
+   364.6
   ],
   "duplicate": true,
   "book": "Bangkok Christmas"
@@ -125,37 +122,17 @@
   "code": "07012-3",
   "size_raw": null,
   "size": null,
-  "section": "Christmas Ball Ornaments M agic?",
+  "section": "M agic?",
   "page_headings": [
-   "Christmas Ball Ornaments",
    "M",
    "agic?"
   ],
-  "pdf_page": 33,
+  "pdf_page": 64,
   "bbox": [
-   389.0,
-   718.4,
-   420.1,
-   729.3
-  ],
-  "duplicate": true,
-  "book": "Bangkok Christmas"
- },
- {
-  "code": "125-01",
-  "size_raw": "150 mm.",
-  "size": {
-   "diameter_mm": 150.0,
-   "unit_printed": "mm"
-  },
-  "section": "Christmas Ball Ornaments M agic?",
-  "page_headings": [],
-  "pdf_page": 35,
-  "bbox": [
-   1063.4,
-   176.0,
-   1160.5,
-   195.4
+   368.0,
+   697.4,
+   399.1,
+   708.3
   ],
   "duplicate": true,
   "book": "Bangkok Christmas"
@@ -167,14 +144,14 @@
    "diameter_mm": 80.0,
    "unit_printed": "mm"
   },
-  "section": "Christmas Ball Ornaments M agic?",
+  "section": "Christmas Ball Ornaments",
   "page_headings": [],
-  "pdf_page": 35,
+  "pdf_page": 68,
   "bbox": [
-   73.1,
-   175.7,
-   170.2,
-   195.2
+   52.1,
+   154.7,
+   149.2,
+   174.2
   ],
   "duplicate": true,
   "book": "Bangkok Christmas"
@@ -186,14 +163,33 @@
    "diameter_mm": 80.0,
    "unit_printed": "mm"
   },
-  "section": "Christmas Ball Ornaments M agic?",
+  "section": "Christmas Ball Ornaments",
   "page_headings": [],
-  "pdf_page": 35,
+  "pdf_page": 68,
   "bbox": [
-   417.0,
-   595.4,
-   507.4,
-   614.9
+   396.0,
+   574.4,
+   486.4,
+   593.9
+  ],
+  "duplicate": true,
+  "book": "Bangkok Christmas"
+ },
+ {
+  "code": "125-01",
+  "size_raw": "150 mm.",
+  "size": {
+   "diameter_mm": 150.0,
+   "unit_printed": "mm"
+  },
+  "section": "Christmas Ball Ornaments",
+  "page_headings": [],
+  "pdf_page": 69,
+  "bbox": [
+   447.2,
+   155.0,
+   544.3,
+   174.4
   ],
   "duplicate": true,
   "book": "Bangkok Christmas"
@@ -204,12 +200,12 @@
   "size": null,
   "section": "Ornaments Glittered Christmas Ball",
   "page_headings": [],
-  "pdf_page": 37,
+  "pdf_page": 73,
   "bbox": [
-   1097.2,
-   451.3,
-   1148.8,
-   470.8
+   480.9,
+   430.3,
+   532.5,
+   449.8
   ],
   "duplicate": true,
   "book": "Bangkok Christmas"
@@ -224,12 +220,12 @@
   },
   "section": "Ornaments Glittered Christmas Ball",
   "page_headings": [],
-  "pdf_page": 38,
+  "pdf_page": 75,
   "bbox": [
-   710.9,
-   451.6,
-   791.0,
-   471.0
+   94.7,
+   430.6,
+   174.7,
+   450.0
   ],
   "duplicate": true,
   "book": "Bangkok Christmas"
@@ -246,12 +242,12 @@
   },
   "section": "Ornaments Glittered Christmas Ball",
   "page_headings": [],
-  "pdf_page": 40,
+  "pdf_page": 79,
   "bbox": [
-   699.1,
-   186.3,
-   812.0,
-   205.7
+   82.8,
+   165.3,
+   195.7,
+   184.7
   ],
   "duplicate": true,
   "book": "Bangkok Christmas"
@@ -266,12 +262,12 @@
   },
   "section": "Ornaments Glittered Christmas Ball",
   "page_headings": [],
-  "pdf_page": 40,
+  "pdf_page": 79,
   "bbox": [
-   869.6,
-   474.9,
-   955.4,
-   494.4
+   253.3,
+   453.9,
+   339.1,
+   473.4
   ],
   "duplicate": true,
   "book": "Bangkok Christmas"
@@ -286,12 +282,12 @@
   },
   "section": "Ornaments Glittered Christmas Ball",
   "page_headings": [],
-  "pdf_page": 41,
+  "pdf_page": 80,
   "bbox": [
-   338.6,
-   368.2,
-   424.4,
-   387.7
+   317.6,
+   347.2,
+   403.4,
+   366.7
   ],
   "duplicate": true,
   "book": "Bangkok Christmas"
@@ -305,64 +301,13 @@
    "unit_printed": "ft"
   },
   "section": "Ornaments Gift boxes",
-  "page_headings": [
-   "Ornaments Gift boxes"
-  ],
-  "pdf_page": 43,
+  "page_headings": [],
+  "pdf_page": 85,
   "bbox": [
-   1004.1,
-   438.7,
-   1090.9,
-   458.2
-  ],
-  "duplicate": true,
-  "book": "Bangkok Christmas"
- },
- {
-  "code": "74033-3",
-  "size_raw": "40x40x40 cm.",
-  "size": {
-   "dimensions_mm": [
-    400,
-    400,
-    400
-   ],
-   "unit_printed": "cm"
-  },
-  "section": "Ornaments Gift boxes",
-  "page_headings": [
-   "Ornaments Gift boxes"
-  ],
-  "pdf_page": 43,
-  "bbox": [
-   727.1,
-   407.5,
-   859.8,
-   427.0
-  ],
-  "duplicate": true,
-  "book": "Bangkok Christmas"
- },
- {
-  "code": "78034-5",
-  "size_raw": "20x70 inc.",
-  "size": {
-   "dimensions_mm": [
-    508,
-    1778
-   ],
-   "unit_printed": "inch"
-  },
-  "section": "Ribbons",
-  "page_headings": [
-   "Ribbons"
-  ],
-  "pdf_page": 45,
-  "bbox": [
-   864.7,
-   416.1,
-   977.0,
-   435.6
+   387.9,
+   417.7,
+   474.6,
+   437.2
   ],
   "duplicate": true,
   "book": "Bangkok Christmas"
@@ -377,12 +322,12 @@
   },
   "section": "Christmas Fantasy",
   "page_headings": [],
-  "pdf_page": 47,
+  "pdf_page": 92,
   "bbox": [
-   266.1,
-   643.3,
-   358.6,
-   662.8
+   245.1,
+   622.3,
+   337.6,
+   641.8
   ],
   "duplicate": true,
   "book": "Bangkok Christmas"
@@ -397,33 +342,12 @@
   },
   "section": "Flower Sprays Branches and Picks",
   "page_headings": [],
-  "pdf_page": 49,
+  "pdf_page": 96,
   "bbox": [
-   403.5,
-   643.3,
-   496.0,
-   662.7
-  ],
-  "duplicate": true,
-  "book": "Bangkok Christmas"
- },
- {
-  "code": "71015-7",
-  "size_raw": "1 m.",
-  "size": {
-   "size_mm": 1000,
-   "unit_printed": "m"
-  },
-  "section": "Star Topper",
-  "page_headings": [
-   "Star Topper"
-  ],
-  "pdf_page": 51,
-  "bbox": [
-   881.2,
-   787.7,
-   960.8,
-   807.1
+   382.5,
+   622.3,
+   475.0,
+   641.7
   ],
   "duplicate": true,
   "book": "Bangkok Christmas"
@@ -437,12 +361,12 @@
   },
   "section": "Display Foam sculpture",
   "page_headings": [],
-  "pdf_page": 54,
+  "pdf_page": 106,
   "bbox": [
-   328.8,
-   643.6,
-   421.9,
-   663.1
+   307.8,
+   622.6,
+   400.9,
+   642.1
   ],
   "duplicate": true,
   "book": "Bangkok Christmas"

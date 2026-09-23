@@ -18,6 +18,15 @@ code in this book has a printed size (0 unreadable, vs. roughly a third unreadab
 NewBook1/NewBook2 are no longer read here for the same reason the original pair stopped being
 read in 2026-08-19 — not deleted from ac5-source/, just superseded.
 
+2026-09-23: repointed a third time, to a cleaner single-page-per-page export of the same 2026
+catalogue (131 pages, one printed page per PDF page, vs NewBook3's 66 two-page spreads) —
+"the complete version" the shop meant to be the real source of truth. Data barely moved: 1394
+of NewBook3's 1397 Bangkok Christmas codes survive unchanged, 5 are new, 3 are dropped. Crop
+match quality is also a wash, not an improvement — measured identical at 141 problem codes
+(no_photo_found + no_rule_fitted) either way, just redistributed 75/66 vs 87/54 between the
+two tiers. Repointed anyway on the shop's own instruction to treat this file as canonical
+going forward; NewBook3 is not deleted from ac5-source/, only no longer read here.
+
 Replaces scripts/ingest_new_book.py's merge-into-the-old-catalogue approach: the shop
 decided the old catalogue (built from a different, larger PDF) should be discarded, and the
 two books here are now the sole source of truth. This writes catalog/products.json and
@@ -52,7 +61,7 @@ import extract_catalog  # noqa: E402
 # this kind of "whose product is this" label to tell the two apart.
 BRAND = "Bangkok Christmas"
 SOURCES = [
-    (ROOT / "ac5-source" / "NewBook3.pdf", ROOT / "ac5-source" / "NewBook3", (1, 66), BRAND),
+    (ROOT / "ac5-source" / "NewBook4.pdf", ROOT / "ac5-source" / "NewBook4", (1, 131), BRAND),
 ]
 
 CATALOG_DIR = ROOT / "catalog"
