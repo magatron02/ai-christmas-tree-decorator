@@ -315,7 +315,18 @@ def _crop_users():
 
 def crop_is_ambiguous(code):
     """True when this code's photo is shared by so many codes that it cannot be showing any
-    one of them. Such a photo is worse than no photo in a picker: it looks like an answer."""
+    one of them. Such a photo is worse than no photo in a picker: it looks like an answer.
+
+    2026-09-23: a tree-category exemption was tried and reverted the same day — a size-line
+    family sharing one hero photo (5/6/7 Ft. of the same model, stacked under it) has the
+    *exact* same page layout as the original Rainbow Christmas Tree case this rule exists for
+    (same page, same x, y increasing with size — see test_a_shared_crop_is_hidden_even_when_
+    it_shows_a_real_product), and that crop had a *different* code's own price ribbon baked
+    into the image itself, provably wrong for the other four. Geometry cannot tell the two
+    apart; only reading the pixels can, and nothing here does that. Showing a family's shared
+    photo requires a human to confirm it per code (shop_overlay's shop_photo override already
+    exists for exactly this), not a blanket category rule.
+    """
     return _crop_users().get(code, 0) + 1 >= MAX_SHARED_CROP
 
 
