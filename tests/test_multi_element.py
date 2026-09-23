@@ -104,7 +104,7 @@ def test_a_template_missing_the_elements_placeholder_is_refused(monkeypatch, tmp
 def test_each_decoration_keeps_its_own_size_in_the_prompt(client, conn, fake_gen, fake_rembg):
     tokens = cut_out(client, 2)
     ready = prepare(
-        client, tokens, tree_code="05021-1", element_code=["017-06", "018-02"]
+        client, tokens, tree_code="05021-1", element_code=["053-07", "015-04"]
     )
     assert ready.status_code == 200, ready.text
     client.post(f"/api/generate/{ready.json()['request_id']}")
@@ -118,7 +118,7 @@ def test_codes_are_all_or_nothing(client, fake_gen, fake_rembg):
     """Two decorations, one code. Sizing one and guessing the other is exactly the mixed
     state NonGoals 8 rules out."""
     response = prepare(
-        client, cut_out(client, 2), tree_code="05021-1", element_code=["017-06"]
+        client, cut_out(client, 2), tree_code="05021-1", element_code=["053-07"]
     )
 
     assert response.status_code == 422

@@ -38,6 +38,20 @@
   font-weight: 600;
   color: var(--text-muted);
 }
+/* Set off from the two ways of adding a decoration above it: a rule and some air say "this
+   one is not part of that job" better than a number in front of it, which read as a step. */
+.section-optional {
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-4);
+  margin-top: var(--space-2);
+}
+
+/* The button that stands in for a native file input (api.js upgradeFilePickers), with the
+   chosen filename beside it — long names truncate rather than push the button off the card. */
+.file-picker { display: flex; align-items: center; gap: var(--space-2); min-width: 0 }
+.file-picker .btn { flex: none }
+.file-picker-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+
 .hint { font-size: var(--text-sm); color: var(--text-muted) }
 /* A link inside body copy keeps the copy's own colour and marks itself with an underline —
    the browser default is a blue that exists nowhere else in the palette. */
@@ -70,6 +84,23 @@
 .btn:hover    { transform: translateY(-1px); box-shadow: var(--shadow-hover) }
 .btn:active   { transform: scale(0.97); transition: transform var(--transition-press) }
 .btn:disabled { opacity: .5; cursor: default; transform: none; box-shadow: none }
+/* tokens.css's global `:focus-visible` ring and this rule's own box-shadow are the same
+   specificity (one class, one pseudo-class); components.css loads second, so .btn's plain
+   shadow silently won every tab-focus on every button in the app with no ring at all —
+   verified with a real Tab press, not just :focus (impeccable polish, 2026-09). Restated here,
+   at higher specificity than either loser, so a keyboard user can see where focus is. */
+.btn:focus-visible { box-shadow: var(--focus-ring) }
+
+/* `pointer: coarse` is touch, not "narrow screen" — a touchscreen laptop at desktop width
+   still needs this, and a mouse in a narrow window doesn't. Every button measured 35px tall
+   at --space-2/--space-4 padding (impeccable audit, 2026-09): 44px is the WCAG 2.5.5 floor,
+   met here with min-height rather than more padding so the visible size (and the box-shadow
+   it casts) doesn't change on desktop. */
+@media (pointer: coarse) {
+  .btn, .row, .attach-btn { min-height: 44px }
+  .send-btn { width: 44px; height: 44px }
+  .input, select.input { min-height: 44px }
+}
 
 /* primary — Generate. One per view (Rule carried over from the previous system: colour
    carries emphasis, so only one control may claim it). */
@@ -368,12 +399,19 @@ select.select-native {
     width: auto; min-height: 0; display: flex; gap: var(--space-2);
     padding: var(--space-2) var(--space-3); border-right: none;
     border-bottom: 1px solid var(--border);
+    /* five destinations do not fit across a phone: let the strip scroll sideways rather than
+       squeeze each label into a three-line stack of single words */
+    overflow-x: auto;
   }
-  .sidebar .row { width: auto }
+  .sidebar .row { width: auto; flex: none; white-space: nowrap }
   /* the collapse toggle is a desktop convenience for panel width the phone layout does not
      have — same specificity as the collapsed rule above, later in the file, so this wins */
   :root[data-sidebar="collapsed"] .sidebar { width: auto }
   :root[data-sidebar="collapsed"] .sidebar .row { gap: var(--space-2); font-size: var(--text-base) }
+  /* the counters keep their own width here too — stretched to fill, "สร้างไปแล้ว" wraps */
+  .topbar { gap: var(--space-3); padding: 0 var(--space-3) }
+  .topbar .tile { flex: none; padding: 0 var(--space-3) }
+  .topbar .tile .k { white-space: nowrap }
 }
 
 /* ---- decoration panel: picked items on the left, controls to add more on the right —
@@ -390,7 +428,12 @@ select.select-native {
   flex: 1;
   min-height: 0;
 }
-.decoration-list-col { min-height: 0 }
+/* min-width: 0, not just min-height: a grid item's default min-width is auto — "never shrink
+   below your content's own width" — so without this the item-top row below (thumb + density
+   pill + remove button, none of it wrapping) forced this whole column past the 140px floor
+   the grid track was given, and the overflow showed up as the entire decoration card scrolling
+   sideways rather than this one column's row wrapping onto a second line. */
+.decoration-list-col { min-height: 0; min-width: 0 }
 .decoration-list-col .accepted { flex: 1; min-height: 0; overflow-y: auto }
 /* the three controls (scene ref, upload, catalogue) are left at their natural size — trying
    to make one of them flex to fill the leftover space either collapsed it to zero (button
@@ -399,6 +442,12 @@ select.select-native {
    Neither is acceptable. The column scrolls as a whole instead: predictable at every content
    length, and everything stays reachable inside the card, never past it. */
 .decoration-controls-col { gap: var(--space-4); min-height: 0; overflow-y: auto }
+
+/* The tree panel's three "ways to fill this slot" (catalogue / upload / samples) are the same
+   pattern as the decoration panel's own alternatives, so they get the same --space-4 rhythm
+   between them, not .card's plainer --space-3 — the two read as one choice made twice rather
+   than the second one being a slightly denser afterthought (impeccable polish, 2026-09). */
+.alt-group { gap: var(--space-4) }
 @media (max-width: 720px) {
   .decoration-columns { grid-template-columns: minmax(0, 1fr) }
 }
@@ -420,9 +469,15 @@ select.select-native {
 .accepted li.has-warning { border-color: var(--state-warning-border); background: var(--state-warning-bg) }
 .accepted-item-top {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
 }
+/* thumb, density pill and remove button together don't fit on one line at the column's
+   140px floor — wrapping keeps every one of them fully visible and tappable instead of
+   clipping or forcing the whole card to scroll sideways (see .decoration-list-col above). */
+.accepted-item-top .thumb-wrap { flex-shrink: 0 }
+.accepted-item-top .density-pill { flex-shrink: 0 }
 /* A preview with its catalogue code burned onto it, same treatment the accepted list uses —
    the code is never typed any more, so the picture is the only place it can be read back.
    Two variants because the tree preview fills its panel (.thumb, width 100%) while the
@@ -511,6 +566,15 @@ select.select-native {
 .size-input-field { display: flex; align-items: center; gap: var(--space-2) }
 .size-input-row .input { width: 90px; padding: 4px 8px; font-size: var(--text-xs) }
 .size-input-row .unit { font-size: var(--text-xs); color: var(--text-muted) }
+/* The unit choice (issue #29) is a real <select>, not the plain text label the price row's
+ * "บาท" still is — .unit alone left it unstyled OS chrome crammed into an 11px row, so it
+ * gets the same border/radius the number field beside it already has, just compact. */
+.size-input-row select.unit {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 3px 4px;
+}
 .size-warn-text { font-size: var(--text-xs); color: var(--state-warning-text) }
 /* --text-success is the result panel's own role accent (DESIGN.md section 2, "one accent per
    role") — this affirmation shows up outside that panel too, so it stays neutral and lets the
@@ -690,6 +754,13 @@ select.select-native {
 .candidate-rename:focus-visible {
   opacity: 1;
 }
+/* `hover: none` is touch, not "narrow screen": these two are opacity-0-until-hover on a mouse,
+   which makes them undiscoverable on any device with no hover at all — a shop worker on a
+   tablet or phone would never see the icon exists to tap it. Always visible there instead, at
+   the same 44px floor coarse pointers get everywhere else (impeccable audit, 2026-09). */
+@media (hover: none) {
+  .candidate-expand, .candidate-rename { opacity: 1; min-width: 44px; min-height: 44px }
+}
 /* loading placeholder for the picker grid — same footprint as a real card, so the grid
    doesn't reflow once results replace them */
 .candidate-skeleton {
@@ -769,6 +840,24 @@ dialog h2 {
 .picker-filters [data-for="catalog-category"] { flex: 0 1 220px }
 .picker-filters [data-for="catalog-shop"] { flex: 0 1 180px }
 .picker-filters #catalog-search { flex: 1 1 220px; min-width: 0 }
+/* What has been picked so far, pinned above the results (issue #31) — flex: none so the grid
+   below keeps taking the leftover height and this never grows into it, and the strip scrolls
+   sideways rather than wrapping into rows that would push the grid down as picks accumulate. */
+.picker-picked {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+.picker-picked-strip {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding-bottom: var(--space-1);
+}
+
 .picker-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -789,6 +878,30 @@ dialog h2 {
 .picker-grid.is-busy {
   opacity: .5;
   pointer-events: none;
+}
+
+/* Style-reference gallery cards: a plain photo button, no code/price overlay like a
+   .candidate carries, so it only needs its own image rule inside the shared .picker-grid. */
+.gallery-item {
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  cursor: pointer;
+  background: none;
+}
+.gallery-item img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+}
+.gallery-item:hover {
+  border-color: var(--text-muted);
+}
+.gallery-item:focus-visible {
+  box-shadow: var(--focus-ring);
 }
 
 /* ---- lightbox: one photo, full size ---- */

@@ -143,9 +143,14 @@
   --thumb-code-bg: rgba(0, 0, 0, 0.65);
   --thumb-code-text: #FFFFFF;
 
-  /* focus ring — a double ring, because no single colour clears 3:1 against every surface */
+  /* focus ring — a double ring, because no single colour clears 3:1 against every surface.
+     Named as one composite token, not just the two colours it's built from: components.css's
+     own rule 6 requires every box-shadow there to be a single var(--token), and a component
+     that needs to restate this ring (rather than just inheriting the bare :focus-visible
+     below) has no other way to reach it that stays inside that rule. */
   --focus-ring-gap: #FFFFFF;
   --focus-ring-color: #2E2A22;
+  --focus-ring: 0 0 0 2px var(--focus-ring-gap), 0 0 0 4px var(--focus-ring-color);
 
   /* fonts — --font-heading for headings and the sidebar, --font-th for everything that reads
      as body copy. Both carry Thai and Latin, so a mixed Thai/English line stays in one face. */
@@ -253,6 +258,7 @@
      pairing DESIGN.md's audit checks for the light side: 7.77 / 16.08 / 17.55 / 17.55. */
   --focus-ring-gap: #FFFFFF;
   --focus-ring-color: #1E1815;
+  --focus-ring: 0 0 0 2px var(--focus-ring-gap), 0 0 0 4px var(--focus-ring-color);
 }
 
 body {
@@ -263,7 +269,7 @@ body {
 }
 
 :focus-visible {
-  box-shadow: 0 0 0 2px var(--focus-ring-gap), 0 0 0 4px var(--focus-ring-color);
+  box-shadow: var(--focus-ring);
   outline: none;
 }
 

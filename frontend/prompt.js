@@ -106,20 +106,41 @@ async function attachTreeFromCatalog(code, image) {
   refreshPromptSend();
 }
 
+/* Same reasoning as app.js's addElementFromCatalog (issue #28): a catalogue pick is a known-
+ * good pre-cut photo, nothing to preview or reject, so the dialog stays open for the next
+ * pick instead of closing after one. `catalogBusy`/`setCatalogBusy` are app.js's own globals
+ * (loaded before this file) — reused rather than duplicated, so a pick here gets the same
+ * "grid dims and stops taking clicks while a cut is running" guard the main flow already has.
+ * Returns what catalogCard() should tell the shop, same contract as addElementFromCatalog. */
 async function attachElementFromCatalog(code, image) {
-  const body = new FormData();
-  body.append("code", code);
-  if (image) body.append("image", image);
-  const result = await call("/api/element/from-catalog", { method: "POST", body });
-  promptState.attachments.push({
-    // .name is the stored filename /api/prepare's "element" field wants verbatim, the same
-    // way state.elements[].name already is in app.js — never re-uploaded
-    role: "element", code, name: result.element, url: result.element_url,
-    sizeMm: result.size_mm, manualMm: null,
-  });
-  $("catalog-dialog").close();
-  renderPromptAttachments();
-  refreshPromptSend();
+  if (catalogBusy) return undefined;
+  if (promptElements().length >= MAX_ELEMENTS) {
+    return `ใส่ได้ถึง ${MAX_ELEMENTS} ชิ้น — เอาออกสักชิ้นถ้าจะเพิ่ม`;
+  }
+  setCatalogBusy(true, "กำลังตัดพื้นหลัง… ครั้งแรกหลังเปิดโปรแกรมจะนานหน่อย");
+  try {
+    const body = new FormData();
+    body.append("code", code);
+    if (image) body.append("image", image);
+    const result = await call("/api/element/from-catalog", { method: "POST", body });
+    promptState.attachments.push({
+      // .name is the stored filename /api/prepare's "element" field wants verbatim, the same
+      // way state.elements[].name already is in app.js — never re-uploaded
+      role: "element", code, name: result.element, url: result.element_url,
+      sizeMm: result.size_mm, manualMm: null,
+    });
+    renderPromptAttachments();
+    refreshPromptSend();
+    return true;
+  } catch (err) {
+    // same reasoning as app.js's addElementFromCatalog: #catalog-count is what's actually
+    // visible while the dialog stays open, but showError still fires too so closing the
+    // dialog without noticing the last pick failed doesn't read as a quiet, working app
+    showError(err.message);
+    return err.message;
+  } finally {
+    setCatalogBusy(false);
+  }
 }
 
 $("prompt-attach-tree").addEventListener("click", () => {
@@ -143,7 +164,10 @@ $("prompt-tree-file").addEventListener("change", async (event) => {
 
 $("prompt-attach-element").addEventListener("click", () => {
   if (promptElements().length >= MAX_ELEMENTS) return;
-  openCatalogPicker("element", attachElementFromCatalog);
+  openCatalogPicker(
+    "element", attachElementFromCatalog,
+    () => promptElements().map((a) => ({ code: a.code, url: a.url })),
+  );
 });
 $("prompt-element-file").addEventListener("change", async (event) => {
   const file = event.target.files[0];
@@ -165,6 +189,18 @@ $("prompt-element-file").addEventListener("change", async (event) => {
   }
 });
 
+async function useAsScene(file) {
+  const body = new FormData();
+  body.append("files", file);
+  const result = await call("/api/reference", { method: "POST", body });
+  promptState.attachments = promptState.attachments.filter((a) => a.role !== "scene");
+  promptState.attachments.push({
+    role: "scene", code: null, name: result.reference, url: result.reference_url,
+  });
+  renderPromptAttachments();
+  refreshPromptSend();
+}
+
 $("prompt-attach-scene").addEventListener("click", () => {
   $("prompt-scene-file").click();
 });
@@ -174,19 +210,51 @@ $("prompt-scene-file").addEventListener("change", async (event) => {
   if (!file) return;
   showError("");
   try {
-    const body = new FormData();
-    body.append("files", file);
-    const result = await call("/api/reference", { method: "POST", body });
-    promptState.attachments = promptState.attachments.filter((a) => a.role !== "scene");
-    promptState.attachments.push({
-      role: "scene", code: null, name: result.reference, url: result.reference_url,
-    });
-    renderPromptAttachments();
-    refreshPromptSend();
+    await useAsScene(file);
   } catch (err) {
     showError(err.message);
   }
 });
+
+/* ---- style-reference gallery: the 2026 book's own display-gallery photos, pickable in
+ * place of an uploaded scene photo (same /api/reference underneath — see useAsScene above). */
+
+let galleryLoaded = false;
+
+async function renderGallery() {
+  const grid = $("gallery-results");
+  if (galleryLoaded) return;
+  const { images } = await call("/api/gallery");
+  galleryLoaded = true;
+  if (!images.length) {
+    grid.innerHTML = '<span class="hint">ยังไม่มีรูปตัวอย่าง</span>';
+    return;
+  }
+  grid.innerHTML = "";
+  for (const image of images) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "gallery-item";
+    button.innerHTML = `<img src="${image.url}" alt="รูปตัวอย่างสไตล์การจัด" loading="lazy">`;
+    button.addEventListener("click", async () => {
+      showError("");
+      try {
+        const blob = await fetch(image.url).then((r) => r.blob());
+        await useAsScene(new File([blob], image.name, { type: blob.type }));
+        $("gallery-dialog").close();
+      } catch (err) {
+        showError(err.message);
+      }
+    });
+    grid.appendChild(button);
+  }
+}
+
+$("prompt-attach-gallery").addEventListener("click", () => {
+  $("gallery-dialog").showModal();
+  renderGallery().catch((err) => showError(err.message));
+});
+$("gallery-close").addEventListener("click", () => $("gallery-dialog").close());
 
 /* ---- composer text + size ---- */
 const promptTextarea = $("prompt-textarea");

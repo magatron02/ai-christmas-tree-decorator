@@ -15,6 +15,7 @@ silently guessing — NonGoals.md 8 forbids inventing a dimension, not generatin
 """
 
 import json
+import math
 import re
 from functools import lru_cache
 
@@ -28,6 +29,8 @@ __all__ = [
     "auto_pool", "row_matches_tone", "label_for", "orphans", "pricing_queue",
     "overridden_fields", "product_detail", "resolve_image_path", "split_codes",
     "set_colour_split", "clear_colour_split", "colour_name", "supporting_photos",
+    "placement_of", "placement_of_code", "suits_backdrop", "is_offered", "packs_for",
+    "all_products",
 ]
 
 
@@ -101,6 +104,15 @@ def image_path(code):
     return resolve_image_path(image_for(code))
 
 
+def all_products():
+    """Every product record, merged (ADR-0001) and in printed order — for a caller that wants
+    the whole catalogue rather than a page or a filtered view. The staff worksheet is the one
+    that needs this: it lists everything precisely because it is the fill-in-the-gaps sheet,
+    problem crops included, and reading the base file directly would show the book's blanks
+    over the shop's own answers."""
+    return list(_rows())
+
+
 def recent(n=20):
     """The last n rows in file order — the admin form appends, so this is "most recently
     added" without needing a timestamp field the PDF-derived rows never had."""
@@ -127,15 +139,66 @@ CATEGORIES = [
     # "wflake" rather than "snowflake": it matches both the clean spelling and the catalogue's
     # own "Sno wflakes", which is how that heading actually comes out of the PDF
     ("ornament", "ลูกบอล & ออร์นาเมนต์แขวน",  ("ornament", "bauble", "ball", "glitter", "honeycomb", "tinsel", "wflake",
-                                              "ลูกบอล", "นกตกแต่ง", "นกตกเเต่ง")),
+                                              "candy cane", "ลูกบอล", "นกตกแต่ง", "นกตกเเต่ง")),
     ("topper",   "ดาว & ยอดต้น",              ("topper", "star")),
     ("tree",     "ต้นคริสต์มาส",              ("tree", "fir", "spruce", "pine", "rosemary", "ต้นคริสต์มาส")),
     ("banner",   "ป้ายอวยพร & แบนเนอร์",      ("banner", "blessing")),
-    # "u u t t c c" is the Nutcracker heading as the PDF actually renders it, every letter
-    # doubled: "N N u u t t c c r r a a c c". There is no un-mangled spelling to match on.
+    # "u u t t c c" is the Nutcracker heading as the PDF section text renders it, every letter
+    # doubled: "N N u u t t c c r r a a c c" — kept alongside the plain "nutcracker" spelling
+    # since a vision caption (unlike the mangled PDF text) spells it normally.
+    # "reindeer" (new in the 2026 catalogue): a standing floor/tabletop figure the same way a
+    # santa or a sleigh is — not a hung decoration, so it joins "figure" rather than getting
+    # its own category and placement.
     ("figure",   "ตุ๊กตา & ของตั้งโชว์",      ("figure", "santa", "sleigh", "fantasy", "sculpture",
-                                              "foam", "display", "u u t t c c", "ตุ๊กตา")),
+                                              "foam", "display", "u u t t c c", "nutcracker",
+                                              "ตุ๊กตา", "reindeer")),
 ]
+
+# How a category's decorations attach to whatever backdrop they land on (CONTEXT.md, ADR-0004)
+# — a fixed, code-owned fact about the category itself, not a shop opinion, so it lives beside
+# CATEGORIES rather than in the overlay. "light" and "tree" have none: a light string was
+# already excluded from the recipe (ADR-0003), and a tree cannot decorate itself.
+PLACEMENTS = {
+    "ornament": "hung", "bell": "hung", "ribbon": "hung", "topper": "hung", "flower": "hung",
+    "garland": "wrapped",
+    "giftbox": "grounded", "figure": "grounded",
+    "wreath": "mounted", "banner": "mounted",
+}
+NO_PLACEMENT = {"light", "tree"}  # every other category must be in PLACEMENTS instead
+assert {key for key, _label, _needles in CATEGORIES} == set(PLACEMENTS) | NO_PLACEMENT, (
+    "a category was added to CATEGORIES without deciding its placement"
+)
+
+
+def placement_of(category):
+    """The category's placement, or None when it has none (light, tree) or isn't recognised."""
+    return PLACEMENTS.get(category)
+
+
+def placement_of_code(code):
+    """A product code's placement — None for an empty code, one with no category, or a
+    category with no placement (light, tree)."""
+    return placement_of(category_of(find(code))) if code else None
+
+
+def suits_backdrop(category, backdrop):
+    """Whether this category belongs on this backdrop (issue #23).
+
+    A mounted category attaches flat to a surface and has nowhere to go on a tree; everything
+    else hangs, wraps or stands on the tree and has nothing to attach to on a wall.
+
+    No category at all — a photo the shop uploaded itself — is judged by neither rule and goes
+    on either: refusing it would take away the manual path that has always worked. A category
+    that simply has no placement (a light string) is a different case: it keeps exactly the
+    reach it has always had on a tree, and is not offered on a wall, where the only thing that
+    makes sense is something meant to be mounted.
+    """
+    if category is None:
+        return True
+    placement = placement_of(category)
+    if backdrop == "tree":
+        return placement != "mounted"
+    return placement == "mounted"
 
 
 @lru_cache(maxsize=1)
@@ -165,13 +228,56 @@ def label_for(category):
     return next((label for key, label, _needles in CATEGORIES if key == category), category)
 
 
+def _needle_in(needle, haystack):
+    r"""Whether `needle` appears in `haystack` without being embedded inside a larger English
+    word — not a plain substring check. A bare `in` check let the "ribbon" category's "bow"
+    needle match inside "Rainbow", miscategorising 9 real "Rainbow Christmas Tree" products
+    as ribbon (issue #34).
+
+    Only an *ASCII letter* immediately before the needle disqualifies a match — not "any word
+    character" — because Thai section text has no spaces between words at all ("พวงดอกไม้..."
+    is one run of characters), so a Thai needle like "ดอกไม้" is legitimately preceded by
+    another Thai character in real catalogue text. English needles are the only ones ever
+    concatenated onto a preceding English word by accident; Thai text is concatenated by
+    normal spelling, and must still match.
+
+    Known gap: this only blocks an English needle glued onto a preceding *English* word — an
+    English needle glued onto a preceding *Thai* character with no separator (e.g. a section
+    reading "...สีwhite...") is not caught, since the character immediately before it is not
+    an ASCII letter. Not observed in the current catalogue (checked: no needle collides this
+    way today), but a future import could hit it — closing it fully would need to also
+    disqualify a non-ASCII-but-still-a-letter character before the needle, which was left out
+    here to avoid another silent breakage the way a full \w boundary did.
+
+    Only the leading edge is checked, deliberately: several needles here ("wflake", "tree",
+    "garland"...) are themselves prefixes of the plural PDF text they are meant to match ("Sno
+    wflakes", "trees", "garlands"), so requiring a trailing boundary too would silently
+    un-match those."""
+    return re.search(rf"(?<![A-Za-z]){re.escape(needle)}", haystack) is not None
+
+
 def category_of(row):
-    """The first category whose substrings appear in this product's section or photo kind,
-    or None when nothing matches."""
+    """The first category whose needles appear, as whole words, in this product's section or
+    photo kind, or None when nothing matches.
+
+    A last resort, tried only when that finds nothing: the vision pass's own "shape" attribute
+    (e.g. "candy cane"), for the rare product whose section text is unusable (a PDF-extraction
+    mangling with nothing recognisable left in it — issue: 90768-4, kind "other", no section
+    text at all) and whose photo kind is the vision model's own "nothing else fit" answer,
+    "other". Not folded into the main haystack: a shape word is far more likely to collide
+    with an unrelated category's needle (topper's "star", ornament's own shapes) than a
+    section heading or a specific "kind" ever is, so it only gets a say once those two have
+    both already failed to place the product anywhere."""
     haystack = f"{row.get('section') or ''} {_kinds().get(row['code'], '')}".lower()
     for key, _label, needles in CATEGORIES:
-        if any(needle in haystack for needle in needles):
+        if any(_needle_in(needle, haystack) for needle in needles):
             return key
+    shape = (_descriptions().get(row["code"], {}).get("attributes") or {}).get("shape", "")
+    if shape:
+        haystack = shape.lower()
+        for key, _label, needles in CATEGORIES:
+            if any(_needle_in(needle, haystack) for needle in needles):
+                return key
     return None
 
 
@@ -314,7 +420,8 @@ def conflicts():
 
 
 def crop_is_showable(code):
-    """The one question the picker asks: can this photo stand for this code on a card?
+    """Can this photo stand for this code on a card? Half of what the picker asks — is_offered()
+    is the whole of it, and adds whether the shop still carries the thing at all.
 
     A shop's own photo (issue #12) is trusted outright, bypassing every book-crop failure
     mode below — the shop took it of the real product, so a shared crop, page furniture, or a
@@ -362,24 +469,59 @@ def _qualify_colour_photo(entry):
     return entry if entry.startswith(("/", "variants/")) else f"variants/{entry}"
 
 
+def _too_small_to_decorate(row):
+    """A tree the shop has stopped offering for being too small (issue #26).
+
+    Computed from the printed size every time rather than stored per code: the rule has to
+    hold for trees no book has imported yet, and a re-import that corrects a size has to
+    change what is cut. A tree whose size cannot be parsed at all is kept — the app never
+    invents a dimension (NonGoals.md 8), and will not guess one to hide something either.
+    """
+    if category_of(row) != "tree":
+        return False
+    millimetres = longest_side_mm(row)
+    return millimetres is not None and millimetres <= config.MIN_TREE_MM
+
+
+def is_offered(row):
+    """Whether the picker shows this product at all: a photo that can stand for it, and not
+    something the shop has stopped carrying."""
+    return crop_is_showable(row["code"]) and not _too_small_to_decorate(row)
+
+
+def is_offered_code(code):
+    """is_offered() for a caller holding a code rather than a row — the photo-match index
+    keeps codes, not rows (backend/services/matching.py).
+
+    A code the catalogue no longer has is not offered, rather than an error: that index is
+    built ahead of time and outlives the rows it was built from.
+    """
+    row = _by_code().get((code or "").strip().upper())
+    return row is not None and is_offered(row)
+
+
 @lru_cache(maxsize=1)
 def _with_photos():
-    return [row for row in _rows() if crop_is_showable(row["code"])]
+    return [row for row in _rows() if is_offered(row)]
 
 
-def browse(limit=60, offset=0, category=None, book=None):
+def browse(limit=60, offset=0, category=None, book=None, backdrop=None):
     """One page of the catalogue in printed order, plus how many pages' worth there are.
 
     Only the codes that have a photo worth showing: this backs a thumbnail grid, and a card
     showing the wrong thing is worse than no card. search() answers the empty query with
     nothing on purpose (it also backs a datalist, which must not swallow 1,300 rows), so
     browsing is asked here instead of by widening that.
+
+    `backdrop`, when given, keeps only what can go on it (issue #23) — see suits_backdrop.
     """
     rows = _with_photos()
     if category:
         rows = [row for row in rows if category_of(row) == category]
     if book:
         rows = [row for row in rows if row.get("book") == book]
+    if backdrop:
+        rows = [row for row in rows if suits_backdrop(category_of(row), backdrop)]
     return rows[offset : offset + limit], len(rows)
 
 
@@ -417,7 +559,24 @@ def auto_pool(category, tone_colours):
     return pool
 
 
-EDITABLE_DISPLAY_FIELDS = frozenset({"price", "size_raw", "section", "book"})
+EDITABLE_DISPLAY_FIELDS = frozenset({"price", "size_raw", "section", "book", "pack_size"})
+
+
+def packs_for(code, pieces):
+    """How many packs cover `pieces` of this product, or None if it is sold by the piece
+    (issue #25).
+
+    Rounded up, because nobody sells two thirds of a box: ten pieces out of a pack of six is
+    two packs. A product with no pack size returns None rather than a pack of one, so every
+    caller can tell "sold loose" from "sold in ones" without a special case. A code the
+    catalogue no longer has is sold loose as far as this is concerned, rather than an error —
+    a finished run outlives the rows it was made from.
+    """
+    row = _by_code().get((code or "").strip().upper())
+    pack_size = (row or {}).get("pack_size")
+    if not pack_size:
+        return None
+    return {"packs": math.ceil(pieces / pack_size), "pack_size": pack_size}
 
 
 def overridden_fields(code):
@@ -443,6 +602,7 @@ def product_detail(row):
         "code": row["code"], "image": image_for(row["code"]),
         "size_raw": row.get("size_raw"), "book": row.get("book"),
         "section": row.get("section"), "price": row.get("price"),
+        "pack_size": row.get("pack_size"),
         "category": category_of(row),
         "overridden": overridden_fields(row["code"]),
         "has_shop_photo": bool(shop_overlay.fields_for(row["code"]).get("shop_photo")),
@@ -613,13 +773,19 @@ def search(query, limit=20):
 # was typed into the settings-page add/edit form
 _FEET = re.compile(r"([\d.]+)\s*Ft", re.I)
 _INCHES = re.compile(r"([\d.]+)\s*in(?:c|ch|ches)?\b", re.I)
-_SERIES = re.compile(r"([\d.]+(?:\s*[x×]\s*[\d.]+)+)\s*(cm|mm|in(?:c|ch)?)", re.I)
+# The unit is optional on every dimension but the last, here and in _LABELLED_SERIES below:
+# "29 x 150 cm." and "36 cm x 60 cm" are the same measurement written two ways, and reading
+# only the first form left six real products measured by their width — four of them trees then
+# cut for being "too small" (issue #26) while standing 60-75 cm tall.
+_SERIES = re.compile(r"([\d.]+(?:\s*(?:cm|mm)?\s*[x×]\s*[\d.]+)+)\s*(cm|mm|in(?:c|ch)?)", re.I)
 # "H 215 x D 142 cm", "D80xL80xH10cm" — each number carries its own axis letter, so the plain
 # digit-x-digit _SERIES regex can't match (a letter sits between the "x" and the next number).
 # Tried before _SERIES: a labelled dimension is also a valid _SERIES-shaped string once you
 # ignore the letters, and _SERIES would silently mis-split it (no letters ever changed the
 # answer here, longest_side_mm only ever wants the largest of the numbers).
-_LABELLED_SERIES = re.compile(r"(?:[HDLW]\s*[\d.]+\s*[x×]\s*)+[HDLW]\s*[\d.]+\s*(cm|mm)", re.I)
+_LABELLED_SERIES = re.compile(
+    r"(?:[HDLW]\s*[\d.]+\s*(?:cm|mm)?\s*[x×]\s*)+[HDLW]\s*[\d.]+\s*(cm|mm)", re.I
+)
 _NUMBER = re.compile(r"[\d.]+")
 _CM = re.compile(r"([\d.]+)\s*cm", re.I)
 _MM = re.compile(r"([\d.]+)\s*mm", re.I)
@@ -643,7 +809,9 @@ def parse_size(raw):
         return {"dimensions_mm": [round(n * factor) for n in numbers], "unit_printed": unit}
 
     if match := _SERIES.search(text):
-        parts = [float(p) for p in re.split(r"[x×]", match.group(1))]
+        # findall, not a split on "x": a dimension may carry its own unit ("36 cm x 60 cm"),
+        # and float() would choke on the unit riding along with the number
+        parts = [float(p) for p in _NUMBER.findall(match.group(1))]
         unit = match.group(2).lower()
         unit = "inch" if unit.startswith("in") else unit
         factor = 10 if unit == "cm" else _MM_PER_INCH if unit == "inch" else 1
@@ -708,11 +876,18 @@ def require_size(row, size_lookup=longest_side_mm):
 _GENERIC_SCALE = (
     "Keep every copy in proportion to the tree, as if it were the real object hanging there."
 )
+# The same sentence for a wall or door (issue #23). The tree wording above is the only place a
+# wall generation would otherwise be told to size against a tree — and to imagine the
+# decoration hanging off one, which is exactly what the wall template forbids.
+_GENERIC_WALL_SCALE = (
+    "Keep every copy in proportion to the wall or door, as if it were the real object mounted "
+    "there."
+)
 
 
 def scale_sentence(
     tree_code, element_codes, tree_mm_override=None, element_mm_overrides=None,
-    size_lookup=longest_side_mm,
+    size_lookup=longest_side_mm, backdrop="tree",
 ):
     """The paragraph that replaces 'keep it in proportion' with actual numbers, for whichever
     codes the catalogue actually prints a size for.
@@ -749,7 +924,7 @@ def scale_sentence(
     overrides = [override for _code, override in paired]
 
     if not tree_code and not element_codes:
-        return (_GENERIC_SCALE, [])
+        return (_GENERIC_SCALE if backdrop == "tree" else _GENERIC_WALL_SCALE, [])
     if not tree_code or not element_codes:
         raise ValidationError(
             "ใส่รหัสสินค้าให้ทั้งต้นไม้และของตกแต่งทุกชิ้น หรือไม่ใส่เลยก็ได้ — "

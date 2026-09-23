@@ -42,6 +42,11 @@ SHOP_PHOTOS_DIR = DATA_DIR / "shop_photos"
 THUMBS_DIR = STORAGE_DIR / "thumbs"
 DB_PATH = DATA_DIR / "app.db"
 PROMPT_PATH = BACKEND_DIR / "prompts" / "compositing_prompt.txt"
+# A wall or door is a valid backdrop alongside a tree (CONTEXT.md, ADR-0004, issue #22) — its
+# own template, tuned independently, since its preservation rules have nothing to do with a
+# tree's branch structure or fullness.
+WALL_PROMPT_PATH = BACKEND_DIR / "prompts" / "wall_compositing_prompt.txt"
+BACKDROPS = ("tree", "wall")
 FRONTEND_DIR = ROOT / "frontend"
 CATALOG_PATH = ROOT / "catalog" / "products.json"
 # Suppliers' own wholesale price and printed size — the exclusive source for both, per code
@@ -68,6 +73,19 @@ MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 # scripts/check_scale_and_ratio.py confirmed the real API accepts a 12-image request
 # (tree + 10 elements + reference) at full quality.
 MAX_ELEMENTS = 10
+
+# A grounded element (gift box, figure — CONTEXT.md, issue #21) sits in its own cluster at the
+# tree's foot, never on a branch, so it never competes with MAX_ELEMENTS for a hung slot. Kept
+# deliberately small: a cluster reads as a cluster only while it stays a handful of pieces.
+MAX_GROUNDED = 3
+
+# The shop offers no tree at or under this (issue #26): below it the tree category is desk
+# ornaments — it runs down to 9 inches — and a picture of one decorated is not what anybody is
+# here for. Only trees; a 9-inch bauble is an ordinary product. A rule rather than a per-product
+# flag, so it holds for trees no book has imported yet. The shop drew the line at "1.5 ft and
+# under", which parses to 457mm rather than the round 450 it reads as.
+MIN_TREE_MM = 460
+
 ALLOWED_EXT = {".jpg", ".jpeg", ".png"}
 ALLOWED_MIME = {"image/jpeg", "image/png"}
 ALLOWED_FORMATS = {"JPEG", "PNG"}  # what Pillow reports after sniffing the actual bytes
@@ -113,6 +131,15 @@ DENSITY_PRESETS = {
 DENSITY_LABELS = {"light": "โปร่ง", "normal": "ปกติ", "full": "แน่น"}
 DEFAULT_DENSITY = "normal"
 
+# The {density} slot for a wall/door backdrop (issue #22). Every DENSITY_PRESETS sentence
+# above is about a tree — a count for "a full-height tree", gaps "of bare branch" — and a wall
+# holds what the shop mounted on it and nothing else. There is no light/normal/full to choose
+# between here, so this is a statement rather than a preset table.
+WALL_DENSITY = (
+    "Place exactly the decorations supplied, one copy of each, and nothing else. There is no "
+    "surface to fill here: do not repeat a decoration to cover empty space."
+)
+
 # Per-item density phrasing (workstream C) — same 3 levels/labels as DENSITY_PRESETS above,
 # different vocabulary: DENSITY_PRESETS states a total count for the whole tree, which reads
 # fine as one sentence but makes no sense repeated once per decoration kind when kinds differ.
@@ -150,36 +177,73 @@ ELEMENT_DENSITY_PHRASES = {
 # future billed check must have its numbers copied here too.
 ELEMENT_DENSITY_QTY_RANGE = {"light": (1, 6), "normal": (8, 12), "full": (18, 24)}
 
-# What auto pick places on every tree: the same mix of categories and counts for every tone
-# and every tree size (ADR-0003). The tone decides which products fill these slots, never what
-# the slots are, and the tree's size does not enter into it — density already governs how
+# What auto pick hangs on every tree: the same mix of hung categories and counts for every
+# tone and every tree size (ADR-0003). The tone decides which products fill these slots, never
+# what the slots are, and the tree's size does not enter into it — density already governs how
 # thickly the result reads, and an uploaded tree photo has no known size to reason from.
 #
 # Lights and figures are deliberately absent. A light string is not a single hangable object
 # the compositor places well, and a figure is prominent enough to deserve being chosen on
-# purpose rather than arriving in a mix.
+# purpose rather than arriving in a mix. Grounded categories (gift boxes) are a separate pool,
+# AUTO_GROUNDED below — not hung, so not part of this recipe (issue #21).
 #
-# Ordered, and kept under MAX_ELEMENTS: this is the whole proposal, and the order is the order
-# the shop sees it in.
+# Ordered, and kept under MAX_ELEMENTS: this is the whole hung proposal, and the order is the
+# order the shop sees it in.
 AUTO_RECIPE = (
     ("ornament", 3),
     ("ribbon", 1),
     ("topper", 1),
     ("flower", 1),
     ("bell", 1),
+)
+
+# The grounded half of auto pick's proposal (CONTEXT.md, issue #21) — its own pool, filled the
+# same way as AUTO_RECIPE but counted against MAX_GROUNDED, never MAX_ELEMENTS. A gift box was
+# in AUTO_RECIPE from the start; moving it here is a bug fix, not a change to what auto pick
+# proposes by default.
+AUTO_GROUNDED = (
     ("giftbox", 1),
 )
-AUTO_RECIPE_TOTAL = sum(count for _category, count in AUTO_RECIPE)
 
-# Auto pick's colour-tone presets, reviewed as the 5-tone mockup. Colours are
-# free strings matched through matching._normalize()/COLOUR_BUCKETS, so no separate bucket
-# table lives here — catalog.auto_pool() does the matching.
+# What auto pick mounts on a wall or door (issue #24) — the mounted categories, the only ones
+# that can go there at all (catalog.suits_backdrop). A door usually takes one wreath, and a
+# banner beside it is the pairing the domain modelling had in mind; a slot the shop cannot
+# stock in the chosen tone simply places nothing, the same as an empty tree slot.
+AUTO_WALL_RECIPE = (
+    ("wreath", 1),
+    ("banner", 1),
+)
+
+# The whole proposal per backdrop, which is all either auto pick endpoint needs to know about
+# the difference between them — one engine, not one per backdrop (ADR-0004).
+AUTO_RECIPES = {
+    "tree": AUTO_RECIPE + AUTO_GROUNDED,
+    "wall": AUTO_WALL_RECIPE,
+}
+
+# Auto pick's colour-tone presets. Colours are free strings matched through
+# matching._normalize()/COLOUR_BUCKETS, so no separate bucket table lives here —
+# catalog.auto_pool() does the matching.
+#
+# 2026 book: these 6 replace the old 5 made-up tones wholesale, named and ordered exactly as
+# the book's own "Theme Collection" page prints them (page 12 of the 2026 PDF) — a real,
+# shop-chosen naming rather than ones invented for the mockup.
+#
+# "Jingle Jingle" was first tried against the "multicolour" bucket alone (only a product
+# whose own vision description says "multicolour"/"rainbow" outright) — measured against the
+# real 2026 catalogue that matched just 12 products, against 142-427 for every other tone,
+# because row_matches_tone() checks a product's single primary_colour, and nothing in this
+# catalogue is described as multicolour even when it visibly mixes red/gold/green. Listing
+# all three colours instead works the same way every other tone already does — any one of a
+# product's own colour counts, an OR not an AND — and measured at 593, comfortably within the same range
+# as the rest.
 TONE_PRESETS = {
-    "redgold": {"label": "แดง-ทอง คลาสสิก", "colours": ["red", "gold"]},
-    "whitesilver": {"label": "ขาว-เงิน มินิมอล", "colours": ["white", "silver"]},
-    "natural": {"label": "ธรรมชาติ ใบไม้", "colours": ["green", "brown"]},
-    "pastel": {"label": "พาสเทลหวาน", "colours": ["pink", "blue"]},
-    "luxe": {"label": "น้ำเงิน-เงิน หรู", "colours": ["blue", "silver"]},
+    "goldisglow": {"label": "Gold is Glow", "colours": ["gold"]},
+    "peppermint": {"label": "Peppermint", "colours": ["red", "white"]},
+    "greenforest": {"label": "Green Forest", "colours": ["green", "brown"]},
+    "christmasclassic": {"label": "Christmas Classic", "colours": ["red", "gold"]},
+    "winterwonderland": {"label": "Winter Wonderland", "colours": ["white", "silver"]},
+    "jinglejingle": {"label": "Jingle Jingle", "colours": ["red", "gold", "green"]},
 }
 
 # Prompt mode: a free-text description the shop types instead of picking a density — see

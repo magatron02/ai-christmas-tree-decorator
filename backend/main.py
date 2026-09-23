@@ -81,6 +81,13 @@ CATALOG_CUTOUTS = config.CATALOG_PATH.parent / "cutouts"
 if CATALOG_IMAGES.is_dir():
     app.mount("/catalog", StaticFiles(directory=CATALOG_IMAGES), name="catalog")
 
+# Finished-look photos from the 2026 book's own display gallery pages (real installations,
+# not a product) — a style reference the shop can hand a customer's request straight into
+# Prompt mode without hunting down or uploading one of their own (Product.md 8.3).
+GALLERY_DIR = config.CATALOG_PATH.parent / "gallery"
+if GALLERY_DIR.is_dir():
+    app.mount("/gallery", StaticFiles(directory=GALLERY_DIR), name="gallery")
+
 STORED_NAME = re.compile(r"^[0-9a-f]{32}_(tree|element|output|reference)\.(png|jpg)$")
 EXT_FOR_FORMAT = {"PNG": "png", "JPEG": "jpg"}
 
@@ -251,6 +258,29 @@ def _priced_extra(code):
     }
 
 
+def _stock_for(tree_code, code):
+    """What to pull off the shelf for one item of a finished run (issue #25): how many pieces
+    that tree takes, and how many packs that is for a product sold by the pack.
+
+    Recomputed from the row's own codes rather than stored with the request: both numbers are
+    derived from catalogue facts the shop keeps correcting, and a pack size typed in today
+    should show on a run generated last week rather than the blank it was made with.
+    """
+    if not tree_code or not code:
+        return None, None
+    from backend.services import matching
+
+    try:
+        quantity = matching.suggest_quantity(tree_code, code)
+    except ValidationError:
+        return None, None  # no catalogue size for one of them; nothing is invented (NonGoals 8)
+    packs = catalog.packs_for(code, quantity["high"])
+    if packs:
+        packs = {"low": catalog.packs_for(code, quantity["low"])["packs"],
+                 "high": packs["packs"], "pack_size": packs["pack_size"]}
+    return quantity, packs
+
+
 def _row_json(row):
     elements = request_log.elements_of(row)
     element_extras = [_priced_extra(e.get("code")) for e in elements]
@@ -265,6 +295,7 @@ def _row_json(row):
         if extra["price"] is None
     ]
     tree_extra = _priced_extra(row["tree_code"])
+    stock = [_stock_for(row["tree_code"], e.get("code")) for e in elements]
     return {
         "request_id": row["request_id"],
         "status": row["status"],
@@ -272,9 +303,10 @@ def _row_json(row):
             {
                 "url": _url(e["path"]), "code": e.get("code"), "colour": e.get("colour"),
                 "density": e.get("density"), "manual_mm": e.get("manual_mm"),
+                "quantity": quantity, "packs": packs,
                 **extra,
             }
-            for e, extra in zip(elements, element_extras)
+            for e, extra, (quantity, packs) in zip(elements, element_extras, stock)
         ],
         "price_total": price_total,
         "price_missing": price_missing,
@@ -486,7 +518,7 @@ def api_catalog_shops():
 
 
 @app.get("/api/catalog/categories")
-def api_catalog_categories(book: str = ""):
+def api_catalog_categories(book: str = "", backdrop: str = ""):
     """The browsing categories and how many showable products each holds, so the picker can
     label its filters with real counts instead of offering an empty one.
 
@@ -497,7 +529,7 @@ def api_catalog_categories(book: str = ""):
     with nothing behind it in the chosen shop is now simply not offered.
     """
     counts = {}
-    for row in catalog.browse(10_000, 0, None, book or None)[0]:
+    for row in catalog.browse(10_000, 0, None, book or None, backdrop or None)[0]:
         key = catalog.category_of(row)
         counts[key] = counts.get(key, 0) + 1
     return {
@@ -510,7 +542,8 @@ def api_catalog_categories(book: str = ""):
 
 
 @app.get("/api/catalog/search")
-def api_catalog_search(q: str = "", category: str = "", book: str = "", limit: int = 60, offset: int = 0):
+def api_catalog_search(q: str = "", category: str = "", book: str = "", limit: int = 60,
+                       offset: int = 0, backdrop: str = ""):
     """Thumbnail picker for panel 2 — the catalogue photo alongside the code, so a decoration
     can be chosen without touching the filesystem.
 
@@ -519,19 +552,25 @@ def api_catalog_search(q: str = "", category: str = "", book: str = "", limit: i
     is what lets the browser say "showing 60 of 1252" and know whether to offer another page.
     Codes whose crop is shared by too many codes to identify any of them are left out of both
     paths — see catalog.crop_is_ambiguous.
+
+    `backdrop` narrows the offer to what can actually go on it (issue #23): a wreath is not
+    offered for a tree, an ornament is not offered for a wall. Empty means "no backdrop in
+    mind" and browses everything, which is what the tree picker and every older caller do.
     """
     if q.strip():
-        matched = [
-            row for row in catalog.search(q, 10_000)
-            if catalog.crop_is_showable(row["code"])
-        ]
+        matched = [row for row in catalog.search(q, 10_000) if catalog.is_offered(row)]
         if category:
             matched = [row for row in matched if catalog.category_of(row) == category]
         if book:
             matched = [row for row in matched if row.get("book") == book]
+        if backdrop:
+            matched = [
+                row for row in matched
+                if catalog.suits_backdrop(catalog.category_of(row), backdrop)
+            ]
         rows, total = matched[offset : offset + limit], len(matched)
     else:
-        rows, total = catalog.browse(limit, offset, category or None, book or None)
+        rows, total = catalog.browse(limit, offset, category or None, book or None, backdrop or None)
 
     # one card per colour, not per code: a product photographed across its colour range is one
     # code with several pictures, and picking "the whole photo" would hand the generator every
@@ -705,6 +744,23 @@ def api_catalog_update(
         raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
 
     return catalog_admin.update_product(code, size_raw, section, book, price)
+
+
+@app.post("/api/catalog/products/{code}/pack-size")
+def api_catalog_set_pack_size(code: str, request: Request, pack_size: str = Form("")):
+    """How many pieces come in one pack of this product (issue #25). Its own endpoint rather
+    than a field on update_product: that one diffs every field against the book and would read
+    a form carrying only a pack size as "clear the size, section and book too", and a pack size
+    has no book counterpart to diff against in the first place. Blank clears it."""
+    from backend.services import catalog_admin, settings
+
+    if not settings.is_local(request):
+        raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
+
+    raw = (pack_size or "").strip()
+    if raw and not raw.isdigit():
+        raise ValidationError(f"จำนวนต่อแพ็ค '{raw}' ไม่ใช่จำนวนเต็ม")
+    return catalog_admin.set_pack_size(code, int(raw) if raw else None)
 
 
 @app.post("/api/catalog/products/{code}/photo")
@@ -981,6 +1037,17 @@ def api_remove_bg(files: list[UploadFile] = File(...)):
     return {"element": name, "element_url": _url(name)}
 
 
+@app.get("/api/gallery")
+def api_gallery():
+    """The style-reference gallery's contents, for Prompt mode's picker — plain filenames off
+    disk rather than a JSON manifest, since these are static photos with nothing per-item to
+    say beyond their picture."""
+    if not GALLERY_DIR.is_dir():
+        return {"images": []}
+    names = sorted(p.name for p in GALLERY_DIR.glob("*.jpg"))
+    return {"images": [{"name": name, "url": f"/gallery/{name}"} for name in names]}
+
+
 @app.post("/api/reference")
 def api_reference(files: list[UploadFile] = File(...)):
     """An optional photo whose setting and light the result should adopt (Product.md 8.3).
@@ -1052,26 +1119,46 @@ def api_analyse_reference(name: str, tree_code: str = ""):
 
 
 @app.get("/api/auto/config")
-def api_auto_config():
+def api_auto_config(backdrop: str = ""):
     """What auto pick offers: the tone presets, and the recipe it will fill (ADR-0003).
 
     No tree heights, no category picker, no budget: the shop is asked for a tone and nothing
-    else, and the recipe is the same for every tone and every tree.
+    else, and the recipe is the same for every tone and every backdrop of a kind.
+
+    `backdrop` (issue #24) chooses which recipe that is — the hung-and-grounded mix for a
+    tree, the mounted one for a wall or door.
+
+    On a wall or door, a tone with nothing behind it is not offered at all: that recipe is two
+    categories wide and coming back empty is a routine outcome, so asking the shop to choose a
+    tone that can only disappoint is worse than one fewer button. The tree's six-category
+    recipe is not filtered — every tone it offers today it goes on offering, and a tone that
+    fills some slots but not all is offered on either backdrop, the same as a tree tone with
+    an unfillable bell slot always has been.
     """
+    backdrop = validation.resolve_backdrop(backdrop)
+    recipe = config.AUTO_RECIPES[backdrop]
     return {
         "tones": [
-            {"key": key, "label": preset["label"]} for key, preset in config.TONE_PRESETS.items()
+            {"key": key, "label": preset["label"]}
+            for key, preset in config.TONE_PRESETS.items()
+            if backdrop == "tree"
+            or any(catalog.auto_pool(category, preset["colours"]) for category, _n in recipe)
         ],
         "recipe": [
             {"category": key, "label": catalog.label_for(key), "count": count}
-            for key, count in config.AUTO_RECIPE
+            for key, count in recipe
         ],
     }
 
 
 @app.post("/api/auto/pick")
-def api_auto_pick(tone: str = Form(...), exclude: list[str] = Form(default=[])):
+def api_auto_pick(tone: str = Form(...), exclude: list[str] = Form(default=[]),
+                  backdrop: str = Form("")):
     """Fill the recipe with products in one tone — the whole of auto pick.
+
+    `backdrop` (issue #24) decides which recipe is filled: the hung-and-grounded mix for a
+    tree, the mounted one for a wall or door. Everything below is the same machinery either
+    way, which is the whole point of ADR-0004.
 
     Each recipe slot draws from its own category's pool. A category with nothing in this tone
     contributes nothing and is reported in `missing`; a category with less stock than the
@@ -1090,12 +1177,14 @@ def api_auto_pick(tone: str = Form(...), exclude: list[str] = Form(default=[])):
     """
     if tone not in config.TONE_PRESETS:
         raise ValidationError(f"ไม่รู้จักโทน '{tone}'")
+    backdrop = validation.resolve_backdrop(backdrop)
+    recipe = config.AUTO_RECIPES[backdrop]
 
     tone_colours = config.TONE_PRESETS[tone]["colours"]
     excluded = set(exclude)
     decorations, missing, short = [], [], {}
 
-    for category, wanted in config.AUTO_RECIPE:
+    for category, wanted in recipe:
         pool = catalog.auto_pool(category, tone_colours)
         if not pool:
             missing.append(category)
@@ -1117,7 +1206,7 @@ def api_auto_pick(tone: str = Form(...), exclude: list[str] = Form(default=[])):
 
     return {
         "decorations": decorations,
-        "requested": config.AUTO_RECIPE_TOTAL,
+        "requested": sum(count for _category, count in recipe),
         "missing": missing,
         "short": short,
     }
@@ -1138,6 +1227,7 @@ def api_prepare(
     element_manual_mm: list[str] = Form(default=[]),
     element_density: list[str] = Form(default=[]),
     custom_prompt: str = Form(""),
+    backdrop: str = Form(""),
 ):
     """Input A + one to MAX_ELEMENTS accepted decorations -> a `pending` request. Still free;
     still no API call.
@@ -1188,11 +1278,14 @@ def api_prepare(
     else:
         width, height = validation.resolve_size(size)
     validation.resolve_density(density)  # fail fast; the sentence itself is re-resolved at generate time
+    backdrop = validation.resolve_backdrop(backdrop)
     custom_prompt = validation.parse_custom_prompt(custom_prompt)
     names = validation.element_count([e.strip() for e in element if e.strip()])
     paths = [_stored_path(name) for name in names]
 
-    tree_code = tree_code.strip()
+    # A wall or door is the shop's own photo, never a catalogue product, so it has no code to
+    # carry (issue #23) — dropping one sent anyway keeps an unvalidated string out of the row.
+    tree_code = tree_code.strip() if backdrop == "tree" else ""
     codes = [c.strip() for c in element_code][: len(paths)]
     codes += [""] * (len(paths) - len(codes))
     if any(codes) and not all(codes):
@@ -1219,10 +1312,46 @@ def api_prepare(
         if d:
             validation.resolve_density(d)  # fail fast, per item
 
-    scale, missing_sizes = catalog.scale_sentence(
-        tree_code, codes, tree_mm_override, element_mm_overrides,
-        size_lookup=_size_lookup_for_scale,
-    )
+    # Every element has to belong on the backdrop it was picked for (issue #23) — checked
+    # before the sizing below, since a wreath on a tree is wrong whatever its measurements say.
+    chosen, other = ("ต้นคริสต์มาส", "ผนัง/ประตู") if backdrop == "tree" else ("ผนัง/ประตู", "ต้นคริสต์มาส")
+    for code in codes:
+        if code and not catalog.suits_backdrop(catalog.category_of(catalog.find(code)), backdrop):
+            raise ValidationError(f"'{code}' เป็นของสำหรับ{other} ใส่กับ{chosen}ไม่ได้")
+
+    if backdrop == "tree":
+        scale, missing_sizes = catalog.scale_sentence(
+            tree_code, codes, tree_mm_override, element_mm_overrides,
+            size_lookup=_size_lookup_for_scale,
+        )
+    else:
+        # A wall or door is the shop's own photo, not a catalogue product, so there is no code
+        # to measure it by — nothing here can be exact, and the tree's all-or-nothing code
+        # rule has nothing to pair an element's code with (issue #23).
+        scale, missing_sizes = catalog.scale_sentence("", [], backdrop=backdrop)
+    # A garland wraps once around the trunk (issue #20) — a second one has nowhere to wrap
+    # that the first doesn't already occupy, the same way a duplicate element file is refused.
+    wrapped = [c for c in codes if catalog.placement_of_code(c) == "wrapped"]
+    if len(wrapped) > 1:
+        raise ValidationError(
+            f"เลือกการ์แลนด์ได้ครั้งละ 1 เส้นเท่านั้น — ตอนนี้เลือกมา {len(wrapped)} เส้น"
+        )
+    # A grounded item (gift box, figure — issue #21) sits in its own cluster at the tree's
+    # foot and never occupies a hung slot, so it is counted against its own ceiling here
+    # rather than against MAX_ELEMENTS. `codes` already has one entry per element, empty
+    # string for one with no code — those count as hung, same as before this ceiling split.
+    grounded_count = sum(1 for c in codes if catalog.placement_of_code(c) == "grounded")
+    hung_count = len(codes) - grounded_count
+    if hung_count > config.MAX_ELEMENTS:
+        raise ValidationError(
+            f"ใส่ของแขวนต้นได้มากสุด {config.MAX_ELEMENTS} ชิ้น — ตอนนี้ใส่มา {hung_count} ชิ้น "
+            "(ของตั้งพื้นอย่างกล่องของขวัญไม่นับรวมในนี้)"
+        )
+    if grounded_count > config.MAX_GROUNDED:
+        raise ValidationError(
+            f"ใส่ของตั้งพื้น (กล่องของขวัญ/ตุ๊กตา) ได้มากสุด {config.MAX_GROUNDED} ชิ้น — "
+            f"ตอนนี้ใส่มา {grounded_count} ชิ้น"
+        )
     quantities = None
     if tree_code and all(codes):
         from backend.services import matching
@@ -1260,7 +1389,7 @@ def api_prepare(
     try:
         request_id = request_log.create(
             conn, tree_name, elements, size, tree_code or None, reference_name, density,
-            tree_mm_override, custom_prompt,
+            tree_mm_override, custom_prompt, backdrop,
         )
     finally:
         conn.close()
@@ -1311,11 +1440,17 @@ def api_generate(request_id: str):
             float(e["manual_mm"]) if e.get("manual_mm") not in (None, "") else None
             for e in elements
         ]
-        scale, _missing_sizes = catalog.scale_sentence(
-            row["tree_code"], [e.get("code") for e in elements],
-            tree_mm_override, element_mm_overrides,
-            size_lookup=_size_lookup_for_scale,
-        )
+        # rows written before issue #22 have backdrop=NULL — they all decorated a tree
+        backdrop = row["backdrop"] or "tree"
+        if backdrop == "tree":
+            scale, _missing_sizes = catalog.scale_sentence(
+                row["tree_code"], [e.get("code") for e in elements],
+                tree_mm_override, element_mm_overrides,
+                size_lookup=_size_lookup_for_scale,
+            )
+        else:
+            # no catalogue code measures a wall or door, same as at prepare time (issue #23)
+            scale, _missing_sizes = catalog.scale_sentence("", [], backdrop=backdrop)
 
         # Once the request is claimed it must reach a terminal state on every path, or it is
         # stranded at calling_api and can never be retried. So this catches everything, not
@@ -1330,20 +1465,32 @@ def api_generate(request_id: str):
         # otherwise an old row that explicitly chose "full" would silently regenerate as
         # "normal" the next time it was reused.
         fallback_density = row["density"] or config.DEFAULT_DENSITY
-        elements_for_density = [
-            {**e, "density": e.get("density") or fallback_density} for e in elements
+        elements_for_prompt = [
+            {
+                **e,
+                "density": e.get("density") or fallback_density,
+                "placement": catalog.placement_of_code(e.get("code")),
+            }
+            for e in elements
         ]
         # Prompt mode: a free-text description the shop typed instead of picking a density
         # wins outright, verbatim, over the whole density system above — it lands in exactly
         # the same {density} slot in the template (backend/services/image_gen.py:load_prompt),
         # which sits after the template's hard preservation rules, never before them.
-        density_sentence = row["custom_prompt"] or image_gen.describe_element_density(elements_for_density)
+        # Every DENSITY_PRESETS sentence counts decorations across a tree, so a wall/door gets
+        # its own statement instead (issue #22). Prompt mode still wins over both.
+        density_sentence = row["custom_prompt"] or (
+            image_gen.describe_element_density(elements_for_prompt) if backdrop == "tree"
+            else config.WALL_DENSITY
+        )
+        placement_notes = image_gen.describe_placement(elements_for_prompt, backdrop)
 
         try:
             output, usage = image_gen.generate(
                 tree_path.read_bytes(),
                 [path.read_bytes() for path in element_paths],
-                width, height, scale, reference_bytes, density_sentence,
+                width, height, scale, reference_bytes, density_sentence, placement_notes,
+                backdrop,
             )
             name = _store(output, "output", "png")
         except Exception as exc:

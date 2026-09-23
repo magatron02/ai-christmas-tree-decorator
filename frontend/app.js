@@ -33,9 +33,13 @@ const state = {
   treeCode: null, // set only by the catalogue picker — an uploaded photo has no code
   treeSizeMm: null, // the tree code's catalogue size, or null if it has none (blocking gate)
   treeManualMm: null, // person-typed override when treeSizeMm is null
-  // {name, url, code, image, colours, sizeMm, manualMm, density} — one entry per accepted
+  treePrice: null, // the tree code's price, null = the book never printed one (issue #27)
+  treeTypedPrice: null, // one typed into that offer and saved — shown back, never a gate
+  // {name, url, code, image, colours, sizeMm, manualMm, price, density} — one entry per accepted
   // cut-out, up to MAX_ELEMENTS. sizeMm is the code's catalogue size (null = none, blocking
-  // gate); manualMm is a person-typed override; density is a DENSITY_PRESETS key, per item.
+  // gate); manualMm is a person-typed override; price is the code's price (null = unpriced,
+  // an offer to fill it in, never a gate) and typedPrice one filled into that offer;
+  // density is a DENSITY_PRESETS key, per item.
   // image is the catalogue colour photo this cutout came from (null for an uploaded photo);
   // colours is that product's other colours (issue #15), fetched once at accept time — null
   // unless the product actually has more than one, which is also the "offer a switcher" flag.
@@ -102,39 +106,164 @@ function refreshGenerateButton() {
 const DENSITY_LEVELS = ["light", "normal", "full"];
 const DENSITY_LABEL_TH = { light: "โปร่ง", normal: "ปกติ", full: "แน่น" };
 
-/* The blocking size-input row + density pill shared by the tree slot and every accepted
- * element — one small builder so the two call sites (renderTreeSizeGate, renderElements)
- * agree on markup and behaviour instead of drifting apart. */
-function buildSizeRow(sizeMm, manualMm, onInput) {
+/* The markup both inline rows below share: a line of explanation, then a number field with its
+ * unit. Only what they have in common lives here — each keeps its own wording, its own reason
+ * for being hidden, and its own idea of when the typed value counts.
+ *
+ * The unit is a fixed label (a price is always บาท) unless the caller passes `unitOptions`
+ * (issue #29) — a size can be measured several ways, so that one gets a real `<select>`
+ * instead, and the caller reads back whichever unit is currently chosen via `unitEl.value`. */
+function buildInlineRow({ warnText, warnClass, unit, unitOptions, min, placeholder, value }) {
   const row = document.createElement("div");
   row.className = "size-input-row";
-  if (sizeMm != null) {
-    row.hidden = true;
-    return row;
-  }
   const warn = document.createElement("span");
+  warn.className = warnClass;
+  warn.textContent = warnText;
   const input = document.createElement("input");
   input.className = "input";
   input.type = "number";
-  input.min = "1";
-  input.placeholder = "เช่น 150";
-  if (manualMm != null) {
-    warn.className = "size-ok-text";
-    warn.textContent = `✓ ใช้ ${manualMm} มม. ในการคำนวณสัดส่วน`;
-    input.value = manualMm;
+  input.min = min;
+  input.placeholder = placeholder;
+  if (value != null) input.value = value;
+  let unitEl;
+  if (unitOptions) {
+    unitEl = document.createElement("select");
+    unitEl.className = "unit";
+    // built dynamically, so it never got the fix that gave every static <select> in this app
+    // a real name (issue #26's audit) unless it asks for one itself
+    unitEl.setAttribute("aria-label", "หน่วยขนาด");
+    for (const option of unitOptions) {
+      const el = document.createElement("option");
+      el.value = option.value;
+      el.textContent = option.label;
+      unitEl.append(el);
+    }
   } else {
-    warn.className = "size-warn-text";
-    warn.textContent = "ระบบจะไม่เดาขนาดให้ — ใส่ขนาดจริงก่อนสร้างภาพ";
+    unitEl = document.createElement("span");
+    unitEl.className = "unit";
+    unitEl.textContent = unit;
   }
-  input.addEventListener("input", () => onInput(input.value));
-  const unit = document.createElement("span");
-  unit.className = "unit";
-  unit.textContent = "มม.";
   const field = document.createElement("div");
   field.className = "size-input-field";
-  field.append(input, unit);
+  field.append(input, unitEl);
   row.append(warn, field);
+  return { row, input, warn, unitEl };
+}
+
+/* Same mm-per-unit factors catalog.parse_size already uses server-side (backend/services/
+ * catalog.py's _MM_PER_INCH / _MM_PER_FOOT) — a shop typing "6 นิ้ว" here and a book printing
+ * "6 inc." must land on the same millimetre number either way (issue #29). */
+const SIZE_UNITS = [
+  { key: "mm", label: "มม.", perMm: 1 },
+  { key: "cm", label: "ซม.", perMm: 10 },
+  { key: "inch", label: "นิ้ว", perMm: 25.4 },
+  { key: "ft", label: "ฟุต", perMm: 304.8 },
+];
+
+/* The blocking size-input row + density pill shared by the tree slot and every accepted
+ * element — one small builder so the two call sites (renderTreeSizeGate, renderElements)
+ * agree on markup and behaviour instead of drifting apart.
+ *
+ * A tape measure at the counter reads in cm as often as mm, and a shop reaching for a ruler
+ * might have inches on it instead — so the unit is a choice (issue #29), not a fixed "มม."
+ * label, while the number this row ultimately reports is still always a plain millimetre
+ * value: everything downstream (Generate's disabled state, the scale prompt, `manualMm`
+ * itself) is unchanged and still only ever sees mm, exactly as before this issue. Rounded to
+ * the nearest whole millimetre on conversion — the same precision parse_size itself keeps,
+ * not a long decimal that claims more accuracy than a tape measure gives. */
+function buildSizeRow(sizeMm, manualMm, onInput) {
+  if (sizeMm != null) {
+    const hidden = document.createElement("div");
+    hidden.className = "size-input-row";
+    hidden.hidden = true;
+    return hidden;
+  }
+  const { row, input, warn, unitEl } = buildInlineRow({
+    warnText: manualMm != null
+      ? `✓ ใช้ ${manualMm} มม. ในการคำนวณสัดส่วน`
+      : "ระบบจะไม่เดาขนาดให้ — ใส่ขนาดจริงก่อนสร้างภาพ",
+    warnClass: manualMm != null ? "size-ok-text" : "size-warn-text",
+    unitOptions: SIZE_UNITS.map((unit) => ({ value: unit.key, label: unit.label })),
+    min: "1", placeholder: "เช่น 150", value: manualMm,
+  });
+
+  function mmValue() {
+    const unit = SIZE_UNITS.find((u) => u.key === unitEl.value) || SIZE_UNITS[0];
+    const typed = Number(input.value);
+    return input.value && typed > 0 ? Math.round(typed * unit.perMm) : null;
+  }
+  // Reports the current mm value (or "") to the caller — called on every keystroke AND as
+  // part of committing, so both paths agree on exactly one place that turns a null mm into
+  // the empty string `onInput` expects.
+  function report() {
+    const mm = mmValue();
+    onInput(mm != null ? String(mm) : "");
+    return mm;
+  }
+
+  // `report` only updates state + Generate's disabled flag, both of which read state directly
+  // and need no DOM of their own — never a re-render of the list this row lives in, which
+  // would tear out and rebuild this very input mid-keystroke. Reported live: typing "100" only
+  // ever registered the "1", because every keystroke's re-render handed focus to a brand-new
+  // node the browser had never actually focused. The confirmation text below still catches up,
+  // just on `change` (blur/Enter, or switching the unit) rather than every keystroke, updated
+  // in place by `commit`.
+  input.addEventListener("input", report);
+  function commit() {
+    const mm = report();
+    const unit = SIZE_UNITS.find((u) => u.key === unitEl.value);
+    warn.className = mm != null ? "size-ok-text" : "size-warn-text";
+    warn.textContent = mm == null
+      ? "ระบบจะไม่เดาขนาดให้ — ใส่ขนาดจริงก่อนสร้างภาพ"
+      : unit.key === "mm"
+        ? `✓ ใช้ ${mm} มม. ในการคำนวณสัดส่วน`
+        : `✓ ใช้ ${input.value} ${unit.label} (${mm} มม.) ในการคำนวณสัดส่วน`;
+  }
+  input.addEventListener("change", commit);
+  unitEl.addEventListener("change", commit);
   return row;
+}
+
+/* The same inline treatment as the size row above, for a picked product the book never priced
+ * (issue #27) — the shop notices the gap here, mid-pick, and can close it without leaving for
+ * the pricing queue. Deliberately NOT a gate: a price has never been needed to make a picture
+ * (CONTEXT.md), so this never disables Generate, and skipping it costs nothing but a total.
+ * `onTyped` gets the raw string on `change` — not `input`, which would fire a save per
+ * keystroke — and does the saving, the same division of labour buildSizeRow has.
+ *
+ * `price` and `typedPrice` split the same way buildSizeRow's two do: a price the product
+ * already had hides the row entirely, while one typed here keeps it, showing what was saved.
+ * Both states are muted rather than a warning — this is an offer, not the blocking gate. */
+function buildPriceRow(code, price, typedPrice, onTyped) {
+  if (!code || price != null) {
+    const hidden = document.createElement("div");
+    hidden.className = "size-input-row";
+    hidden.hidden = true;
+    return hidden;
+  }
+  const { row, input } = buildInlineRow({
+    warnText: typedPrice != null
+      ? `✓ บันทึกราคา ${typedPrice} บาทแล้ว`
+      : "ยังไม่มีราคา — ใส่ตอนนี้ก็ได้ ไม่ใส่ก็สร้างภาพได้",
+    warnClass: "size-ok-text",
+    unit: "บาท", min: "0", placeholder: "ราคา", value: typedPrice,
+  });
+  input.addEventListener("change", () => {
+    if (input.value && Number(input.value) >= 0) onTyped(input.value);
+  });
+  return row;
+}
+
+/* One write path for a price however it was typed: the pricing queue's own endpoint, which is
+ * where this has always been stored (issue #27). Returns the price the server parsed, so the
+ * panel shows what was actually saved rather than what was typed at it. */
+async function savePrice(code, value) {
+  const body = new FormData();
+  body.append("price", value);
+  const saved = await call(`/api/catalog/pricing-queue/${encodeURIComponent(code)}/price`, {
+    method: "POST", body,
+  });
+  return saved.price;
 }
 
 /* A named colour reads by its name; one nobody has named yet (issue #14's seeding pass ran,
@@ -187,8 +316,15 @@ function renderTreeSizeGate() {
   host.append(buildSizeRow(state.treeSizeMm, state.treeManualMm, (value) => {
     const parsed = Number(value);
     state.treeManualMm = value && parsed > 0 ? parsed : null;
-    renderTreeSizeGate();
     refreshGenerateButton();
+  }));
+  host.append(buildPriceRow(state.treeCode, state.treePrice, state.treeTypedPrice, async (value) => {
+    try {
+      state.treeTypedPrice = await savePrice(state.treeCode, value);
+      renderTreeSizeGate();
+    } catch (err) {
+      showError(err.message);
+    }
   }));
 }
 
@@ -205,6 +341,7 @@ async function switchColour(element, newImage) {
     element.name = result.element;
     element.image = newImage;
     element.sizeMm = result.size_mm;
+    element.price = result.price ?? null;  // same code, so the same price — kept in step
   } catch (err) {
     showError(err.message);
   }
@@ -262,10 +399,19 @@ function renderElements() {
     const sizeRow = buildSizeRow(element.sizeMm, element.manualMm, (value) => {
       const parsed = Number(value);
       element.manualMm = value && parsed > 0 ? parsed : null;
-      renderElements();
       refreshGenerateButton();
     });
     item.append(sizeRow);
+    // no refreshGenerateButton: a price never gated anything, and filling one in must not
+    // start (issue #27)
+    item.append(buildPriceRow(element.code, element.price, element.typedPrice, async (value) => {
+      try {
+        element.typedPrice = await savePrice(element.code, value);
+        renderElements();
+      } catch (err) {
+        showError(err.message);
+      }
+    }));
     list.append(item);
   });
 
@@ -285,6 +431,8 @@ function resetRun() {
   $("out-result").hidden = true;
   $("result-actions").hidden = true;
   $("result-quantities").hidden = true;
+  $("result-stock").hidden = true;
+  $("stock-note").hidden = true;
   $("count-actions").hidden = true;
   $("count-note").hidden = true;
   $("result-empty").hidden = false;
@@ -314,6 +462,29 @@ function renderQuantities(target, quantities) {
     });
   }
   target.hidden = !shown;
+}
+
+/* How many packs to pull off the shelf for a finished run (issue #25) — the number a shop can
+ * actually order against, which a piece count is not when the product comes in boxes of ten.
+ *
+ * Only products sold by the pack appear here. A loose one has nothing to convert, and its
+ * piece estimate stays off this panel for the reason given where the count button is set up:
+ * it answers "how many fit on a tree this size", and the finished picture routinely does not
+ * honour that scale. The pack figure is not a reading of the picture either, which is what
+ * #stock-note says out loud. */
+function renderStock(elements) {
+  const list = $("result-stock");
+  list.innerHTML = "";
+  for (const element of elements || []) {
+    if (!element.quantity || !element.packs) continue;
+    const pieces = rangeText(element.quantity.low, element.quantity.high);
+    const li = document.createElement("li");
+    li.textContent = `${element.code}: ${packPhrase(element.packs)} — ประมาณ ${pieces} ชิ้น`;
+    list.append(li);
+  }
+  const shown = list.children.length > 0;
+  list.hidden = !shown;
+  $("stock-note").hidden = !shown;
 }
 
 function showTotals(totals) {
@@ -435,28 +606,34 @@ function refreshAutoSize() {
  * Product.md 8.2 wanted them so the prompt could state real millimetres; a code typed from
  * memory out of ~1,300 was always a wrong order waiting to happen. Settings is where a code
  * gets entered by hand, against the catalogue row it belongs to. */
-function showTreeCode(code, sizeMm = null) {
+function showTreeCode(code, sizeMm = null, price = null) {
   state.treeCode = code || null;
   state.treeSizeMm = code ? sizeMm : null;
   state.treeManualMm = null; // a new tree slot starts its own gate over from nothing
+  state.treePrice = code ? price : null;
+  state.treeTypedPrice = null;
   const badge = $("tree-code-badge");
   badge.textContent = code || "";
   badge.hidden = !code;
   renderTreeSizeGate();
 }
 
-function showElementCode(code, sizeMm = null, image = null) {
+function showElementCode(code, sizeMm = null, image = null, price = null) {
   const badge = $("element-code-badge");
   badge.textContent = code || "";
   badge.hidden = !code;
   $("element-preview").dataset.code = code || "";
   $("element-preview").dataset.sizeMm = code && sizeMm != null ? sizeMm : "";
+  // "" covers both "no code" and "priced at nothing yet" — the accepted item turns it back
+  // into null, which is what buildPriceRow reads as "offer to fill this in" (issue #27)
+  $("element-preview").dataset.price = code && price != null ? price : "";
   // Which colour photo this cutout came from (issue #15) — carried from here into the
   // accepted item so its card knows what to offer a colour switcher against. Empty for an
   // uploaded photo, which has no catalogue colours to switch between.
   $("element-preview").dataset.image = image || "";
 }
 
+upgradeFilePickers(); // native file inputs say "Choose File" in English; this swaps in a Thai button
 renderElements();
 
 /* ---- step 1: bare tree ---- */
@@ -494,7 +671,7 @@ function showElementPreview(result, code = null, sizeMm = null, image = null) {
   $("element-preview-frame").hidden = false;
   $("element-actions").hidden = false;
   $("element-preview").dataset.name = result.element;
-  showElementCode(code, sizeMm, image);
+  showElementCode(code, sizeMm, image, result.price ?? null);
 }
 
 $("cut-btn").addEventListener("click", async () => {
@@ -624,7 +801,18 @@ function catalogCard(item) {
   }
   if (item.image) card.append(expandButton(catalogImageUrl(item.image), item.code));
   if (item.supporting && item.supporting.length) card.append(moreButton(item));
-  card.addEventListener("click", () => catalogPickerCallback(item.code, item.image));
+  // A tree pick closes the dialog itself and returns nothing worth reporting here. A
+  // decoration pick (issue #28) does not — the dialog stays open for the next pick, so this
+  // is the only place left to say what just happened: a string is an error or a "you're full"
+  // refusal to show verbatim, `true` is a plain success, anything else is quietly ignored.
+  card.addEventListener("click", async () => {
+    const result = await catalogPickerCallback(item.code, item.image);
+    if (typeof result === "string") $("catalog-count").textContent = result;
+    else if (result === true) {
+      $("catalog-count").textContent = `เพิ่ม ${item.code} แล้ว ✓`;
+      renderCatalogPicked();
+    }
+  });
   return card;
 }
 
@@ -649,6 +837,12 @@ async function loadCatalogShops() {
   }
 }
 
+/* Which backdrop the picker is filling for (issue #23). Only the decoration picker filters:
+ * the tree picker is choosing the backdrop itself, so it browses the whole catalogue. */
+function pickerBackdrop() {
+  return catalogPickerMode === "element" ? $("backdrop-select").value : "";
+}
+
 /* The category list belongs to whichever shop is selected, so it is rebuilt whenever that
  * changes rather than fetched once. Counted across every shop it advertised stock the chosen
  * shop does not carry — MS Natural Design still offered ribbons (43), bells (25) and toppers
@@ -662,7 +856,8 @@ async function loadCatalogCategories() {
   try {
     const shop = $("catalog-shop").value;
     const { categories } = await call(
-      `/api/catalog/categories?book=${encodeURIComponent(shop)}`
+      `/api/catalog/categories?book=${encodeURIComponent(shop)}` +
+        `&backdrop=${encodeURIComponent(pickerBackdrop())}`
     );
     // everything after the "ทุกหมวด" option is the previous shop's list
     while (select.options.length > 1) select.remove(1);
@@ -691,6 +886,7 @@ async function loadCatalogPage(restart) {
       `/api/catalog/search?q=${encodeURIComponent(catalogQuery)}` +
         `&category=${encodeURIComponent($("catalog-category").value)}` +
         `&book=${encodeURIComponent($("catalog-shop").value)}` +
+        `&backdrop=${encodeURIComponent(pickerBackdrop())}` +
         `&limit=${CATALOG_PAGE}&offset=${catalogCodesShown}`
     );
     if (restart) host.innerHTML = "";
@@ -713,9 +909,57 @@ async function loadCatalogPage(restart) {
  * from one panel's picker to the other's would show the wrong (stale-mode) results. The shop
  * filter is never locked by mode — both shops sell trees, so panel 1 still needs to choose
  * between them, just within the tree category. */
-async function openCatalogPicker(mode, onPick) {
+/* The strip of what has been picked so far, drawn inside the dialog (issue #31): the accepted
+ * list itself sits on the page behind the modal, so without this the only sign a pick landed
+ * is one line of text that the next pick overwrites.
+ *
+ * Reads the caller's own list every time rather than counting picks as they happen — the two
+ * decoration pickers keep separate lists (state.elements, promptState.attachments), and a
+ * tally kept here would be a third copy free to disagree with both. `catalogPickerPicked` is
+ * whichever provider the current caller handed openCatalogPicker; the tree picker hands none,
+ * which is also how the strip knows to stay hidden for a slot that holds one tree. */
+let catalogPickerPicked = null;   // () => [{code, url}] | null
+
+function renderCatalogPicked() {
+  const host = $("catalog-picked");
+  host.innerHTML = "";
+  const picked = catalogPickerPicked ? catalogPickerPicked() : [];
+  host.hidden = !picked.length;
+  if (!picked.length) return;
+
+  const label = document.createElement("span");
+  label.className = "hint";
+  label.textContent = `เลือกแล้ว ${picked.length} จาก ${MAX_ELEMENTS} ชิ้น`;
+  host.append(label);
+
+  const strip = document.createElement("div");
+  strip.className = "picker-picked-strip";
+  for (const item of picked) {
+    // same thumbnail vocabulary the accepted list uses — these are the same transparent
+    // cut-outs, so they need the same checker backing to read against a light dialog
+    const wrap = document.createElement("div");
+    wrap.className = "thumb-wrap";
+    const img = document.createElement("img");
+    img.className = "thumb-sm checker";
+    img.src = item.url;
+    img.alt = item.code || "ของตกแต่งที่เลือกไว้";
+    wrap.append(img);
+    if (item.code) {
+      const badge = document.createElement("span");
+      badge.className = "thumb-code";
+      badge.textContent = item.code;
+      wrap.append(badge);
+    }
+    strip.append(wrap);
+  }
+  host.append(strip);
+}
+
+async function openCatalogPicker(mode, onPick, listPicked = null) {
   catalogPickerMode = mode;
   catalogPickerCallback = onPick;
+  catalogPickerPicked = listPicked;
+  renderCatalogPicked();
   const categorySelect = $("catalog-category");
   const shopSelect = $("catalog-shop");
   // shops first: the category list is scoped to the selected shop, so it cannot be built
@@ -729,7 +973,10 @@ async function openCatalogPicker(mode, onPick) {
   loadCatalogPage(true);
 }
 
-$("catalog-toggle").addEventListener("click", () => openCatalogPicker("element", useFromCatalog));
+$("catalog-toggle").addEventListener("click", () => openCatalogPicker(
+  "element", addElementFromCatalog,
+  () => state.elements.map((e) => ({ code: e.code, url: e.url })),
+));
 $("tree-catalog-toggle").addEventListener("click", () => openCatalogPicker("tree", useTreeFromCatalog));
 
 $("catalog-shop").addEventListener("change", async () => {
@@ -765,7 +1012,7 @@ function setCatalogBusy(busy, message) {
 }
 
 /* The one request every catalogue-element pick makes, whether it is the first pick
- * (useFromCatalog) or a later colour switch (switchColour, issue #15) — same code+image pair,
+ * (addElementFromCatalog) or a later colour switch (switchColour, issue #15) — same code+image pair,
  * same precut-aware endpoint (issue #13: a file read, never a live background removal). */
 async function fetchElementFromCatalog(code, image) {
   const body = new FormData();
@@ -774,25 +1021,60 @@ async function fetchElementFromCatalog(code, image) {
   return call("/api/element/from-catalog", { method: "POST", body });
 }
 
-async function useFromCatalog(code, image) {
-  if (catalogBusy) return;
-  showError("");
+/* A code's other colours (issue #15), for the accepted-item switcher — fetched once at
+ * accept/add time rather than on every render, which would ask the same question dozens of
+ * times over a session. A product with only one colour comes back with exactly one entry,
+ * which is also the "offer no switcher" signal downstream, so `null` (not `[]`) is what
+ * means "nothing to switch between". Shared by the upload path's accept-btn and the
+ * catalogue path's addElementFromCatalog — same question, asked the same way either time. */
+async function lookupColours(code) {
+  if (!code) return null;
+  try {
+    const found = await call(`/api/catalog/products/${encodeURIComponent(code)}/colours`);
+    return found.colours.length > 1 ? found.colours : null;
+  } catch {
+    return null; // the switcher is a convenience; a decoration must still work without it
+  }
+}
+
+/* A catalogue pick is a known-good pre-cut product photo, never a live rembg cut that might
+ * come out wrong — so unlike an uploaded photo (showElementPreview + accept-btn/reject-btn,
+ * a real "back out of a bad cut" step) it goes straight into the accepted list with no
+ * preview to confirm first. The dialog stays open afterwards (issue #28), so picking five
+ * decorations is five clicks in the one dialog, not five open/pick/close/reopen cycles.
+ *
+ * Returns what catalogCard() should tell the shop: a string to show verbatim (the cap was
+ * already full, or the pick failed), or `true` for a plain success. */
+async function addElementFromCatalog(code, image) {
+  if (catalogBusy) return undefined;
+  if (state.elements.length >= MAX_ELEMENTS) {
+    return `ใส่ได้ถึง ${MAX_ELEMENTS} ชิ้น — เอาออกสักชิ้นถ้าจะเพิ่ม`;
+  }
   setCatalogBusy(true, "กำลังตัดพื้นหลัง… ครั้งแรกหลังเปิดโปรแกรมจะนานหน่อย");
   try {
     const result = await fetchElementFromCatalog(code, image);
-    showElementPreview(result, code, result.size_mm, image || null);
-    $("catalog-dialog").close();
+    state.elements.push({
+      name: result.element, url: result.element_url, code, image: image || null,
+      colours: await lookupColours(code),
+      sizeMm: result.size_mm, manualMm: null, price: result.price ?? null, typedPrice: null,
+      density: "normal",
+    });
+    renderElements();
+    resetRun();
+    return true;
   } catch (err) {
-    $("catalog-dialog").close();
+    // the dialog is still open (that's the whole point of this function), so the usual
+    // showError() would land in a box the open <dialog> covers — #catalog-count is what is
+    // actually visible right now. Still calls showError too: closing the dialog without
+    // having noticed the last pick failed should not read as a quiet, working app.
     showError(err.message);
+    return err.message;
   } finally {
-    // the count line is rewritten by the next loadCatalogPage, so it only has to stop saying
-    // "working" — reopening the picker reloads it anyway
     setCatalogBusy(false);
   }
 }
 
-/* Same idea as useFromCatalog, but for the tree slot — no background removal (a tree keeps
+/* Same idea as addElementFromCatalog, but for the tree slot — no background removal (a tree keeps
  * its own photographed background), so state.treeFile needs a real File the same way
  * #tree-file's own change handler produces one, not just a stored server filename. */
 async function useTreeFromCatalog(code, image) {
@@ -808,8 +1090,8 @@ async function useTreeFromCatalog(code, image) {
     state.treeFile = new File([blob], result.tree, { type: "image/png" });
     $("tree-preview").src = result.tree_url;
     $("tree-preview-frame").hidden = false;
-    $("tree-file").value = "";  // the picker's tree replaces whatever was uploaded
-    showTreeCode(code, result.size_mm);
+    clearFilePicker($("tree-file"));  // the picker's tree replaces whatever was uploaded
+    showTreeCode(code, result.size_mm, result.price ?? null);
     try {
       const { width, height } = await imageDimensions(state.treeFile);
       state.treeRatio = width / height;
@@ -831,31 +1113,20 @@ $("accept-btn").addEventListener("click", async () => {
   const preview = $("element-preview");
   const code = preview.dataset.code || "";
   const image = preview.dataset.image || "";
-  // Fetched once, up front, rather than per render: a card only ever needs this list to
-  // build its switcher (issue #15), and re-fetching on every renderElements() call would ask
-  // the same question dozens of times over a session. A product with only one colour comes
-  // back with exactly one entry, which is also the "offer no switcher" signal downstream.
-  let colours = null;
-  if (code) {
-    try {
-      const found = await call(`/api/catalog/products/${encodeURIComponent(code)}/colours`);
-      if (found.colours.length > 1) colours = found.colours;
-    } catch {
-      /* the switcher is a convenience; a decoration must still be accepted without it */
-    }
-  }
   state.elements.push({
     name: preview.dataset.name,
     url: preview.src,
     code,
     image: image || null,
-    colours,
+    colours: await lookupColours(code),
     sizeMm: code && preview.dataset.sizeMm ? Number(preview.dataset.sizeMm) : null,
     manualMm: null,
+    price: code && preview.dataset.price ? Number(preview.dataset.price) : null,
+    typedPrice: null,
     density: "normal",
   });
   // clear the slot so the next decoration starts from nothing
-  $("element-file").value = "";
+  clearFilePicker($("element-file"));
   $("element-preview-frame").hidden = true;
   $("element-actions").hidden = true;
   $("cut-btn").disabled = true;
@@ -867,7 +1138,7 @@ $("accept-btn").addEventListener("click", async () => {
 /* AC-2: a bad cut-out is a dead end the user can back out of, not something they have to
  * ride to the end of the pipeline. */
 $("reject-btn").addEventListener("click", () => {
-  $("element-file").value = "";
+  clearFilePicker($("element-file"));
   $("element-preview-frame").hidden = true;
   $("element-actions").hidden = true;
   $("cut-btn").disabled = true;
@@ -901,7 +1172,7 @@ $("scene-reference-file").addEventListener("change", async (event) => {
     }
   } catch (err) {
     showError(err.message);
-    $("scene-reference-file").value = "";
+    clearFilePicker($("scene-reference-file"));
   }
   resetRun();
 });
@@ -909,7 +1180,7 @@ $("scene-reference-file").addEventListener("change", async (event) => {
 $("scene-reference-clear").addEventListener("click", () => {
   state.sceneReference = null;
   state.sceneRatio = null;
-  $("scene-reference-file").value = "";
+  clearFilePicker($("scene-reference-file"));
   $("scene-reference-preview").hidden = true;
   $("scene-reference-actions").hidden = true;
   refreshAutoSize(); // falls back to the tree photo's own ratio, if any
@@ -976,7 +1247,7 @@ $("tree-sample-toggle").addEventListener("click", () => {
       state.treeFile = await fetchSampleFile(url);
       $("tree-preview").src = url;
       $("tree-preview-frame").hidden = false;
-      $("tree-file").value = "";
+      clearFilePicker($("tree-file"));
       showTreeCode(null);
       const { width, height } = await imageDimensions(state.treeFile);
       state.treeRatio = width / height;
@@ -1003,7 +1274,7 @@ $("scene-sample-toggle").addEventListener("click", () => {
       $("scene-reference-preview").src = result.reference_url;
       $("scene-reference-preview").hidden = false;
       $("scene-reference-actions").hidden = false;
-      $("scene-reference-file").value = "";
+      clearFilePicker($("scene-reference-file"));
       const { width, height } = await imageDimensions(sceneFile);
       state.sceneRatio = width / height;
       refreshAutoSize();
@@ -1031,6 +1302,7 @@ $("generate-btn").addEventListener("click", async () => {
   try {
     const body = new FormData();
     body.append("files", state.treeFile);
+    body.append("backdrop", $("backdrop-select").value);
     body.append("size", $("size-select").value);
     if ($("size-select").value === "auto") {
       body.append("scene_ratio", String(state.sceneRatio || state.treeRatio || ""));
@@ -1114,6 +1386,9 @@ $("confirm-btn").addEventListener("click", async () => {
     // many fit on a tree this size" from the catalogue millimetres, and the picture routinely
     // does not honour that scale. Counting the picture itself is the button below.
     $("count-actions").hidden = false;
+    // What to pull off the shelf, which is a different question from what the picture shows —
+    // labelled as such, right where the shop finishes a job (issue #25).
+    renderStock(result.elements);
     $("download-btn").href = result.output_url;
     const priceText = result.price_total || result.price_missing.length
       ? ` · ฿${result.price_total.toLocaleString("th-TH")}` +
