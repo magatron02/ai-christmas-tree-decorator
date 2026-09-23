@@ -139,7 +139,7 @@ CATEGORIES = [
     # "wflake" rather than "snowflake": it matches both the clean spelling and the catalogue's
     # own "Sno wflakes", which is how that heading actually comes out of the PDF
     ("ornament", "ลูกบอล & ออร์นาเมนต์แขวน",  ("ornament", "bauble", "ball", "glitter", "honeycomb", "tinsel", "wflake",
-                                              "ลูกบอล", "นกตกแต่ง", "นกตกเเต่ง")),
+                                              "candy cane", "ลูกบอล", "นกตกแต่ง", "นกตกเเต่ง")),
     ("topper",   "ดาว & ยอดต้น",              ("topper", "star")),
     ("tree",     "ต้นคริสต์มาส",              ("tree", "fir", "spruce", "pine", "rosemary", "ต้นคริสต์มาส")),
     ("banner",   "ป้ายอวยพร & แบนเนอร์",      ("banner", "blessing")),
@@ -258,11 +258,26 @@ def _needle_in(needle, haystack):
 
 def category_of(row):
     """The first category whose needles appear, as whole words, in this product's section or
-    photo kind, or None when nothing matches."""
+    photo kind, or None when nothing matches.
+
+    A last resort, tried only when that finds nothing: the vision pass's own "shape" attribute
+    (e.g. "candy cane"), for the rare product whose section text is unusable (a PDF-extraction
+    mangling with nothing recognisable left in it — issue: 90768-4, kind "other", no section
+    text at all) and whose photo kind is the vision model's own "nothing else fit" answer,
+    "other". Not folded into the main haystack: a shape word is far more likely to collide
+    with an unrelated category's needle (topper's "star", ornament's own shapes) than a
+    section heading or a specific "kind" ever is, so it only gets a say once those two have
+    both already failed to place the product anywhere."""
     haystack = f"{row.get('section') or ''} {_kinds().get(row['code'], '')}".lower()
     for key, _label, needles in CATEGORIES:
         if any(_needle_in(needle, haystack) for needle in needles):
             return key
+    shape = (_descriptions().get(row["code"], {}).get("attributes") or {}).get("shape", "")
+    if shape:
+        haystack = shape.lower()
+        for key, _label, needles in CATEGORIES:
+            if any(_needle_in(needle, haystack) for needle in needles):
+                return key
     return None
 
 

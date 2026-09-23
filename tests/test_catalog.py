@@ -186,6 +186,15 @@ def test_every_product_lands_in_exactly_one_category():
             key for key, _label, needles in catalog.CATEGORIES
             if any(catalog._needle_in(n, haystack) for n in needles)
         ]
+        if not matches:
+            # category_of()'s own last-resort pass: the vision "shape" attribute, tried only
+            # once section+kind together found nothing.
+            shape = (catalog._descriptions().get(row["code"], {}).get("attributes") or {}).get("shape", "")
+            if shape:
+                matches = [
+                    key for key, _label, needles in catalog.CATEGORIES
+                    if any(catalog._needle_in(n, shape.lower()) for n in needles)
+                ]
         assert catalog.category_of(row) == (matches[0] if matches else None)
 
 
