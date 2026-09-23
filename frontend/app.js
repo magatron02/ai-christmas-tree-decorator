@@ -50,6 +50,11 @@ const state = {
   quantities: null, // prepared.quantities from the last /api/prepare, indexed like state.elements
   treeRatio: null, // width/height of whatever photo is in the tree slot right now
   sceneRatio: null, // width/height of the scene reference, when one is set
+  // code -> exact count from the last "นับของในรูปนี้" click, or null before that button is
+  // pressed (or after anything about the tree/decorations changes and invalidates it — see
+  // resetRun). Only used to redraw #result-quantities here — the full price breakdown lives
+  // on its own page now (quote.html/quote.js), reached via #quote-link once generated.
+  counted: null,
 };
 
 // A code-bearing item (tree or element) whose catalogue row has no size, and that has not
@@ -422,6 +427,7 @@ function renderElements() {
 function resetRun() {
   state.requestId = null;
   state.quantities = null;
+  state.counted = null; // a new tree/decoration set invalidates any earlier count
   $("out-result").hidden = true;
   $("result-actions").hidden = true;
   $("result-quantities").hidden = true;
@@ -434,6 +440,7 @@ function resetRun() {
   if (state.treeFile && state.elements.length) setStatus("pending");
   else setStatus("waiting", "รอต้นเปล่ากับของตกแต่งอย่างน้อย 1 ชิ้น");
   refreshGenerateButton();
+  $("quote-link").hidden = true;
 }
 
 /* The pre-generate estimate, in the confirm dialog: how many of this product fit on a tree
@@ -1383,8 +1390,16 @@ $("confirm-btn").addEventListener("click", async () => {
     // labelled as such, right where the shop finishes a job (issue #25).
     renderStock(result.elements);
     $("download-btn").href = result.output_url;
+    const priceText = result.price_total || result.price_missing.length
+      ? ` · ฿${result.price_total.toLocaleString("th-TH")}` +
+        (result.price_missing.length ? " (ราคาไม่ครบ)" : "")
+      : "";
     $("result-meta").textContent =
-      `${result.request_id} · ${result.size} · ${result.usage ? result.usage.total_tokens.toLocaleString() + " โทเคน" : "ไม่ทราบต้นทุน"}`;
+      `${result.request_id} · ${result.size} · ` +
+      (result.usage ? result.usage.total_tokens.toLocaleString() + " โทเคน" : "ไม่ทราบต้นทุน") +
+      priceText;
+    $("quote-link").href = `/quote?request_id=${encodeURIComponent(result.request_id)}`;
+    $("quote-link").hidden = false;
     $("result-actions").hidden = false;
     setStatus("api_success");
 
@@ -1408,6 +1423,29 @@ $("confirm-btn").addEventListener("click", async () => {
  * question the shop quotes from: the size-based suggestion says how many would fit on a tree
  * that size, the picture regularly shows a different number, and the customer is looking at
  * the picture. */
+/* Shared by a fresh count-btn click and by resumeFromHistory's replay of a persisted count
+ * (request_log.set_counted, backend/main.py) — same list, same state.counted update, so a
+ * result read back from history looks identical to one just counted live. `note` is omitted
+ * on replay (nothing new was just billed, so the "billed a little more" hint would be wrong). */
+function applyCountedItems(items, note) {
+  const list = $("result-quantities");
+  list.innerHTML = "";
+  for (const item of items) {
+    const li = document.createElement("li");
+    li.textContent = `${item.code}: ${item.count} ชิ้น`;
+    list.append(li);
+  }
+  if (!items.length) {
+    const li = document.createElement("li");
+    li.textContent = "ไม่เจอของตกแต่งในรูปนี้";
+    list.append(li);
+  }
+  list.hidden = false;
+  $("count-note").textContent = note || "";
+  $("count-note").hidden = !note;
+  state.counted = Object.fromEntries(items.map((item) => [item.code, item.count]));
+}
+
 $("count-btn").addEventListener("click", async () => {
   if (!state.requestId) return;
   const button = $("count-btn");
@@ -1417,21 +1455,7 @@ $("count-btn").addEventListener("click", async () => {
 
   try {
     const counted = await call(`/api/count/${state.requestId}`, { method: "POST" });
-    const list = $("result-quantities");
-    list.innerHTML = "";
-    for (const kind of counted.kinds) {
-      const li = document.createElement("li");
-      li.textContent = `${kind.summary}: ${kind.count} ชิ้น`;
-      list.append(li);
-    }
-    if (!counted.kinds.length) {
-      const li = document.createElement("li");
-      li.textContent = "ไม่เจอของตกแต่งในรูปนี้";
-      list.append(li);
-    }
-    list.hidden = false;
-    $("count-note").textContent = counted.note;
-    $("count-note").hidden = false;
+    applyCountedItems(counted.items, counted.note);
   } catch (err) {
     showError(err.message);
   } finally {
@@ -1575,3 +1599,91 @@ function showMode(name) {
   }
 }
 $("mode-btn-custom").addEventListener("click", () => showMode("custom"));
+
+/* ---- "จัดการต่อ" from the history page (history.js's own link) ----
+ * /?request_id=<id> pre-fills panels 1-4 from a past request so it can be counted (again, or
+ * for the first time) or re-checked for price without redoing the pick from scratch. Read-only
+ * against the server (GET /api/request/{id}) — nothing here is a new request until Generate
+ * is pressed again, which needs a real tree File the same as any other run, hence re-fetching
+ * it as a blob rather than only pointing an <img> at the stored URL. */
+function fileNameFrom(url) {
+  return url ? url.split("/").pop() : null;
+}
+
+async function resumeFromHistory(requestId) {
+  let row;
+  try {
+    row = await call(`/api/request/${requestId}`);
+  } catch (err) {
+    showError(err.message);
+    return;
+  }
+  if (!row.output_url) {
+    showError("request นี้ยังไม่มีภาพผลลัพธ์ให้จัดการต่อ");
+    return;
+  }
+
+  showMode("custom");
+
+  state.treeCode = row.tree_code || null;
+  state.treeSizeMm = row.tree_size_mm;
+  state.treeManualMm = row.tree_manual_mm;
+  $("tree-preview").src = row.tree_url;
+  $("tree-preview-frame").hidden = false;
+  $("tree-code-badge").textContent = state.treeCode || "";
+  $("tree-code-badge").hidden = !state.treeCode;
+  try {
+    const blob = await (await fetch(row.tree_url)).blob();
+    state.treeFile = new File([blob], fileNameFrom(row.tree_url), { type: "image/png" });
+    const { width, height } = await imageDimensions(state.treeFile);
+    state.treeRatio = width / height;
+    refreshAutoSize();
+  } catch {
+    // Generate needs a real tree file; viewing/counting/pricing this request does not, so a
+    // failed re-fetch here still leaves the rest of the resume usable.
+  }
+
+  state.elements = row.elements.map((e) => ({
+    name: fileNameFrom(e.url),
+    url: e.url,
+    code: e.code,
+    image: null,
+    colours: null, // the colour switcher is a bonus of picking fresh; skip it on resume
+    sizeMm: e.size_mm,
+    manualMm: e.manual_mm,
+    density: e.density || row.density || "normal",
+  }));
+
+  state.requestId = row.request_id;
+  $("out-result").src = row.output_url;
+  $("out-result").hidden = false;
+  $("result-empty").hidden = true;
+  $("result-actions").hidden = false;
+  $("download-btn").href = row.output_url;
+  $("count-actions").hidden = false;
+  $("result-quantities").hidden = true;
+  $("count-note").hidden = true;
+  $("result-meta").textContent =
+    `${row.request_id} · ${row.size} · ` +
+    (row.usage ? row.usage.total_tokens.toLocaleString() + " โทเคน" : "ไม่ทราบต้นทุน");
+  setStatus(row.status);
+  $("quote-link").href = `/quote?request_id=${encodeURIComponent(row.request_id)}`;
+  $("quote-link").hidden = false;
+
+  renderTreeSizeGate();
+  renderElements();
+  // request_log.set_counted persisted the last count for this request (backend/main.py) — a
+  // resume replays it here for free instead of state.counted staying empty until someone
+  // pays to count the same picture again.
+  state.counted = null;
+  if (row.counted_items) applyCountedItems(row.counted_items);
+  refreshGenerateButton();
+}
+
+const resumeId = new URLSearchParams(location.search).get("request_id");
+if (resumeId) {
+  resumeFromHistory(resumeId);
+  // drop the query param so a later refresh replays the current on-screen state, not a
+  // second fetch of the same request
+  history.replaceState(null, "", location.pathname);
+}

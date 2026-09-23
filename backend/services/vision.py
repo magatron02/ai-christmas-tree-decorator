@@ -137,13 +137,16 @@ CROP_AUDIT_PROMPT = (
 )
 
 
-class CountedKind(BaseModel):
-    summary: str = Field(description="one short line naming this decoration, in English")
-    count: int = Field(description="how many separate copies of it are visible in the picture")
+class CountedItem(BaseModel):
+    code: str = Field(description="the catalogue code exactly as given in its reference label")
+    count: int = Field(
+        description="how many separate copies of this exact reference decoration are visible "
+        "in the finished photo"
+    )
 
 
 class DecorationCounts(BaseModel):
-    kinds: list[CountedKind]
+    items: list[CountedItem]
 
 
 # Counting the picture, not the catalogue. catalog.scale_sentence tells the model how big a
@@ -155,16 +158,27 @@ class DecorationCounts(BaseModel):
 #
 # "Only what you can see" is the whole discipline here: the back of the tree is not in frame,
 # and a total that silently doubled the visible count to allow for it would be an invented
-# number (NonGoals.md 8). The caller says plainly that this is the front-facing count.
-COUNT_PROMPT = (
-    "This is a photo of a decorated Christmas tree. For each distinct kind of decoration on "
-    "it, count how many separate copies of that kind are visible, and give one short line "
-    "naming it.\n\n"
-    "Count only copies you can actually see in this picture. Do not add anything for pieces "
-    "that would be hidden behind branches or around the back of the tree, and do not round to "
-    "a convenient number — an exact count of what is visible is the useful answer.\n\n"
-    "Ignore the tree itself, its stand or pot, the floor and the background. One entry per "
-    "kind, not per copy. If there is nothing on the tree, return an empty list."
+# number (NonGoals.md 8). The caller says plainly that this is the front-facing count; a
+# separate, user-set multiplier for the unseen side lives in the pricing panel, not here.
+#
+# Counting is per catalogue code, not per free-text "kind" — an earlier version asked the
+# model to name and count whatever it saw, which read fine but gave the caller no way to say
+# which counted thing was which product. Feeding each accepted decoration's own cut-out photo
+# in as a labelled reference lets the model match against the actual products used instead of
+# guessing from a category name.
+COUNT_PROMPT_HEADER = (
+    "Each reference image below shows one specific Christmas decoration, labelled with its "
+    "catalogue code. After the references comes a photo of a finished, decorated Christmas "
+    "tree that was composited using exactly these decorations.\n\n"
+    "For every reference code, count how many separate copies of that exact decoration are "
+    "visible in the finished tree photo. Count only copies you can actually see — do not add "
+    "anything for copies that would be hidden behind branches or around the back of the tree, "
+    "and do not round to a convenient number. If a reference code does not appear at all in "
+    "the finished photo, report it with count 0.\n\n"
+    "Return exactly one entry per reference code given below, using the code exactly as "
+    "labelled. Ignore anything in the finished photo that is not one of the given reference "
+    "codes — the tree itself, its stand, the background, or any other object — do not invent "
+    "extra entries for it."
 )
 
 
@@ -222,13 +236,22 @@ def describe_reference(image_bytes, mime="image/png"):
     return describe(image_bytes, REFERENCE_PROMPT, mime)
 
 
-def count_decorations(image_bytes, mime="image/png"):
-    """Returns (DecorationCounts, usage) — how many of each kind are visible in a finished
-    picture. Billed, so nothing calls this on its own; the user asks for it."""
+def count_decorations(image_bytes, references, mime="image/png"):
+    """Returns (DecorationCounts, usage) — how many of each referenced code are visible in a
+    finished picture. `references` is a list of (code, image_bytes, mime) for every accepted
+    decoration that has a catalogue code — the same cut-outs the compositor was given, fed
+    back in as labelled reference photos so the count can be attributed to a code instead of
+    a free-text guess. Billed, so nothing calls this on its own; the user asks for it."""
+    content = [{"type": "input_text", "text": COUNT_PROMPT_HEADER}]
+    for code, ref_bytes, ref_mime in references:
+        content.append({"type": "input_text", "text": f"Reference code: {code}"})
+        content.append(_image_part(ref_bytes, ref_mime))
+    content.append({"type": "input_text", "text": "Finished tree photo:"})
+    content.append(_image_part(image_bytes, mime))
+
     response = _client().responses.parse(
         model=config.VISION_MODEL,
-        input=[{"role": "user", "content": [{"type": "input_text", "text": COUNT_PROMPT},
-                                            _image_part(image_bytes, mime)]}],
+        input=[{"role": "user", "content": content}],
         text_format=DecorationCounts,
     )
     usage = response.usage

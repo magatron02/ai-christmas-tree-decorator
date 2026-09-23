@@ -59,10 +59,12 @@
 .hint a:hover,
 .hint a:focus-visible { color: var(--text-primary) }
 .mono { font-family: var(--font-body-en), var(--font-th); font-size: var(--text-sm) }
+.text-right { text-align: right }
 .muted { color: var(--text-muted) }
 
 /* ---- buttons (section 4 + 8) ---- */
 .btn {
+  display: inline-block;
   background: transparent;
   border: none;
   border-radius: var(--radius-sm);
@@ -70,11 +72,15 @@
   padding: var(--space-2) var(--space-4);
   font: inherit;
   font-size: var(--text-base);
+  text-align: center;
   cursor: pointer;
   box-shadow: var(--shadow);
   transition: background var(--transition-gentle), transform var(--transition-gentle),
               box-shadow var(--transition-gentle);
 }
+/* smaller footprint for a table cell's own buttons (history.js) — the same look, just less
+   padding than a page-level action deserves */
+.btn-compact { padding: var(--space-1) var(--space-2) }
 .btn:hover    { transform: translateY(-1px); box-shadow: var(--shadow-hover) }
 .btn:active   { transform: scale(0.97); transition: transform var(--transition-press) }
 .btn:disabled { opacity: .5; cursor: default; transform: none; box-shadow: none }
@@ -295,6 +301,9 @@ select.select-native {
   font-family: var(--font-heading); font-size: var(--text-base);
   padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); cursor: pointer;
   text-decoration: none;
+  /* the label must not wrap mid-transition while .sidebar's width animates down to collapsed
+     — a wrapped second line for one frame reads as a jump, not a smooth shrink */
+  white-space: nowrap; overflow: hidden;
 }
 .row:hover,
 .row.active { background: var(--modal-item-selected-bg); color: var(--modal-item-selected-text) }
@@ -327,6 +336,16 @@ select.select-native {
   background: var(--surface-1);
   min-height: calc(100vh - 64px);
   box-sizing: border-box;
+  transition: width var(--transition-gentle);
+}
+/* ---- collapsed sidebar (icon-only), toggled by sidebar.js -----------------------------
+   The state lives as a data attribute on <html>, applied before paint the same way
+   data-theme is, so there is no flash of the wide sidebar on load. font-size:0 hides each
+   row's bare label text without touching markup in the five pages that each spell the nav
+   out by hand — .row-icon svg is sized in px, not em, so the icon itself is unaffected. */
+:root[data-sidebar="collapsed"] .sidebar { width: 64px }
+:root[data-sidebar="collapsed"] .sidebar .row {
+  gap: 0; justify-content: center; font-size: 0;
 }
 
 .page { padding: var(--space-6); flex: 1; min-width: 0 }
@@ -385,6 +404,10 @@ select.select-native {
     overflow-x: auto;
   }
   .sidebar .row { width: auto; flex: none; white-space: nowrap }
+  /* the collapse toggle is a desktop convenience for panel width the phone layout does not
+     have — same specificity as the collapsed rule above, later in the file, so this wins */
+  :root[data-sidebar="collapsed"] .sidebar { width: auto }
+  :root[data-sidebar="collapsed"] .sidebar .row { gap: var(--space-2); font-size: var(--text-base) }
   /* the counters keep their own width here too — stretched to fill, "สร้างไปแล้ว" wraps */
   .topbar { gap: var(--space-3); padding: 0 var(--space-3) }
   .topbar .tile { flex: none; padding: 0 var(--space-3) }
@@ -569,6 +592,17 @@ select.select-native {
   border: 1px solid var(--border);
 }
 
+/* quote.html's price table — one row per product, small enough not to dominate a table cell */
+.quote-thumb {
+  display: block;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  flex: none;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
 /* ---- preview surfaces ---- */
 .checker {
   background-color: var(--surface-0);
@@ -593,9 +627,9 @@ select.select-native {
 .triptych figure { margin: 0 }
 .triptych figcaption { margin-bottom: var(--space-2) }
 
-/* ---- settings page: quick app-level settings on the left (theme, key, status — short and
-   fixed-height), catalogue management on the right (a form plus a table that grows with the
-   catalogue) — the side that actually gets long is the one given the room to. ---- */
+/* ---- a 1:1.5 two-column split, controls on the narrower side — used by identify.html
+   (controls left, uploaded-photo preview right). settings.html used this too until its cards
+   moved into tabs (ทั่วไป / catalog / vendor); kept generic since another page still wants it. ---- */
 .settings-columns {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
@@ -617,6 +651,37 @@ select.select-native {
 @media (max-width: 720px) {
   .identify-columns { grid-template-columns: minmax(0, 1fr) }
 }
+
+/* ---- quote.html: the finished picture on the left, the price breakdown gets the wider
+   share on the right — it is the reason this page exists apart from the main panels, so it
+   should never be the one squeezed for room the way it was as panel 4 there. */
+.quote-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  gap: var(--space-4);
+  align-items: stretch;
+  /* align-items:stretch only stretches a grid row to whatever height it would otherwise be —
+     with both cards' own tall content living in flex:1 children (flex-basis 0), that natural
+     height rounds to ~0, so nothing had anything real to stretch into and the table and image
+     both collapsed to nothing. An explicit height (.topbar's 64px + .page's 24px top/bottom
+     padding, same reasoning /'s own .panels height is computed) gives them one. */
+  height: calc(100vh - 112px);
+}
+@media (max-width: 900px) {
+  .quote-columns { grid-template-columns: minmax(0, 1fr); height: auto }
+}
+/* a long decoration list scrolls inside its own box instead of growing the whole page — flex
+   (not a fixed max-height) so it fills whatever room .quote-columns' stretch leaves after the
+   title row and the notice/totals below it, which is also what pins those two to the card's
+   bottom edge rather than trailing right under a short table. min-height:0 overrides a flex
+   item's default min-height:auto, which otherwise refuses to shrink below the table's own
+   full height and defeats the scroll. */
+.quote-table-wrap { flex: 1 1 0; min-height: 0; overflow-y: auto }
+/* .quote-columns' stretch (above) matches this card's height to its taller neighbour — without
+   this the picture stayed its own aspect-ratio height and the leftover room just sat empty
+   below the download/count controls. Growing the image absorbs it instead; object-fit:contain
+   still letterboxes rather than distorting the picture itself. */
+#quote-result-image { flex: 1 1 0; min-height: 0; width: 100%; aspect-ratio: auto }
 
 /* ---- catalogue matches (8.3c) ----
    Each decoration keeps its existing grouped block (header, quantity, candidate row) — only
@@ -718,8 +783,30 @@ dialog {
   max-width: 420px;
   font: inherit;
   box-shadow: var(--modal-shadow);
+  position: relative; /* containing block for .dialog-close, an X pinned to this box's corner */
 }
 dialog::backdrop { background: var(--modal-backdrop) }
+/* A small icon-only close button in a dialog's own top-right corner (vendor-import-dialog),
+   as an alternative to a full "ปิด" button down in the .btn-row with the rest of the actions. */
+.dialog-close {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: var(--text-lg);
+  line-height: 1;
+  padding: var(--space-1);
+  cursor: pointer;
+}
+.dialog-close:hover { color: var(--text-primary) }
+/* vendor-import-dialog's own rows get .stack's gap, but scoped to [open] like every other
+   dialog here (.picker-dialog[open], .lightbox-dialog[open] below) — an unscoped `display:flex`
+   would override the browser's default `dialog:not([open]) { display: none }` (an author-origin
+   rule always beats a user-agent one, regardless of specificity), leaving the dialog rendered
+   inline at the bottom of the page even while closed. */
+.import-dialog[open] { display: flex; flex-direction: column; gap: var(--space-3) }
 dialog h2 {
   margin: 0 0 var(--space-3);
   font-family: var(--font-heading);
@@ -863,6 +950,10 @@ th { color: var(--text-muted) }
 td.shrink { width: 96px }
 .cat-recent-row { cursor: pointer }
 .cat-recent-row:hover { background: var(--surface-1) }
+/* The row currently open in an edit panel beside the table (vendor.js) — same selected-state
+   pairing as .row.active/.tone-card[aria-pressed] rather than a new one. */
+.cat-recent-row.selected,
+.cat-recent-row.selected:hover { background: var(--modal-item-selected-bg); color: var(--modal-item-selected-text) }
 
 /* ---- auto.js: mode switch, tone picker + the proposed-decorations strip.
    Selection states below deliberately reuse --modal-item-selected-bg/text (the existing
@@ -873,6 +964,48 @@ td.shrink { width: 96px }
    .row/.row.active pair rather than inventing a third way to say "active". */
 .mode-switch { display: inline-flex; gap: var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-1) }
 .mode-switch .row { width: auto; border-radius: calc(var(--radius-md) - 2px) }
+
+/* settings.html: the mode-switch tabs and a page-level action (e.g. "นำเข้าราคา", which opens
+   a dialog rather than living inline) share one row, action pinned right. */
+.tab-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap }
+/* Scoped to settings.html's own tab bar, not the generic .mode-switch (index.html's mode
+   selector keeps its plain outline) — a card-like surface so the tab pill reads as its own
+   control against the page background. */
+.tab-row .mode-switch { background: var(--surface-1) }
+/* Sits next to the tab pill rather than inside a card, so it needs its own surface to read as
+   a button rather than bare text on the page background — --surface-1 (a card's own white,
+   DESIGN.md), not a literal colour. */
+#vendor-import-open { background: var(--surface-1) }
+
+/* ---- settings.html's vendor tab: the price list on the left, its edit form on the right —
+   same technique as .quote-columns (a fixed viewport height + a flex child that scrolls
+   inside its own card), so a long price list scrolls in place instead of taking the whole
+   page down with it. 172px = .topbar (64) + .page's own top/bottom padding (24+24) + the
+   tab-row above this grid (~48) + .page.stack's gap to it (12). */
+.vendor-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: stretch;
+  height: calc(100vh - 172px);
+}
+@media (max-width: 900px) {
+  .vendor-columns { grid-template-columns: minmax(0, 1fr); height: auto }
+}
+/* Both cards' own content scrolls inside its own box rather than growing the card past the
+   grid's stretched height (which would force the whole page to scroll to reach it, dragging
+   the left card's title along) — same flex:1/min-height:0/overflow-y:auto technique as
+   .quote-table-wrap. .vendor-edit-wrap covers the edit form specifically: it has several
+   input+chip pairs and can run taller than the list card next to it. */
+.vendor-list-wrap,
+.vendor-edit-wrap { flex: 1 1 0; min-height: 0; overflow-y: auto }
+/* A field's own label to the left of its input, same row (the edit form's price/size/name/
+   pack fields) — .input has no width of its own outside a .stack, so it needs flex:1 here to
+   still fill the row the way it fills a plain .stack. */
+.field-row { display: flex; align-items: center; gap: var(--space-2) }
+.field-row .input { flex: 1; min-width: 0 }
+/* The column headers stay put while .vendor-results' rows scroll underneath them. */
+.vendor-list-wrap thead th { position: sticky; top: 0; background: var(--surface-1) }
 
 .tone-row { display: flex; gap: var(--space-2); flex-wrap: wrap }
 .tone-card {

@@ -6,6 +6,30 @@
 
 const $ = (id) => document.getElementById(id);
 
+/* ---- tabs: ทั่วไป / catalog / ข้อมูลราคาจากซัพพลายเออร์ — same primitive as index.html's mode
+ * switch (app.js's MODES/showMode), reusing the sidebar nav's .row/.row.active pair rather
+ * than inventing a second way to say "which is active" (test_ui_design_system.py rule 4 keeps
+ * .btn.primary to one real action per page; a tab is navigation, not that). */
+const SETTINGS_TABS = [
+  { name: "general", btn: "settings-tab-general", panel: "settings-panel-general" },
+  { name: "catalog", btn: "settings-tab-catalog", panel: "settings-panel-catalog" },
+  { name: "vendor", btn: "settings-tab-vendor", panel: "settings-panel-vendor" },
+];
+function showSettingsTab(name) {
+  for (const tab of SETTINGS_TABS) {
+    const active = tab.name === name;
+    $(tab.btn).classList.toggle("active", active);
+    $(tab.btn).setAttribute("aria-pressed", String(active));
+    $(tab.panel).hidden = !active;
+  }
+  // "นำเข้าราคา" opens a dialog that only makes sense from the vendor tab — shown beside the
+  // tabs rather than inside the panel (per request) but still scoped to that one tab.
+  $("vendor-import-open").hidden = name !== "vendor";
+}
+for (const tab of SETTINGS_TABS) {
+  $(tab.btn).addEventListener("click", () => showSettingsTab(tab.name));
+}
+
 /* ---- theme ---- */
 function applyTheme(theme) {
   if (theme === "dark") document.documentElement.setAttribute("data-theme", "dark");

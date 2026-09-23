@@ -49,6 +49,21 @@ WALL_PROMPT_PATH = BACKEND_DIR / "prompts" / "wall_compositing_prompt.txt"
 BACKDROPS = ("tree", "wall")
 FRONTEND_DIR = ROOT / "frontend"
 CATALOG_PATH = ROOT / "catalog" / "products.json"
+# Suppliers' own wholesale price and printed size — the exclusive source for both, per code
+# (2026-09-10 decision), committed separately from the catalogue on purpose. See
+# backend/services/vendor_lookup.py. Each key is a folder under vendor-pricelists/ with its own
+# pipeline (parse_pricelist.py -> build_lookup.py -> cleaned/lookup.json — see that folder's own
+# README); `book` is the catalog.py "book" field this supplier's codes line up with, letting
+# vendor_admin.py scope "catalogued but no vendor entry" per supplier rather than one hardcoded
+# book. An explicit registry, not directory auto-discovery — a folder existing on disk must not
+# silently start being read from without a deliberate decision that its codes actually line up
+# with a catalogue book (NonGoals.md 7/8's "never guess" stance). Missing a supplier's lookup.json
+# on a machine that never had that price list is not an error (vendor_lookup.py fails soft): that
+# supplier's price/size lookups just have nothing to offer there.
+VENDOR_PRICELISTS_DIR = ROOT / "vendor-pricelists"
+VENDOR_SUPPLIERS = {
+    "bangkok-christmas": {"label": "Bangkok Christmas", "book": "Bangkok Christmas"},
+}
 
 # Spec.md 3. gpt-image-2's own per-file ceiling is higher; this is ours.
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
@@ -155,6 +170,12 @@ ELEMENT_DENSITY_PHRASES = {
         "amount. Place them closely together, filling most of the space this kind would cover."
     ),
 }
+
+# Numeric (min, max) companion to ELEMENT_DENSITY_PHRASES above, for the price-estimate panel
+# only — never read by image_gen or fed to the model, so it carries none of that text's
+# re-measurement obligation. Kept in sync by hand with the prose; a phrase reworded after a
+# future billed check must have its numbers copied here too.
+ELEMENT_DENSITY_QTY_RANGE = {"light": (1, 6), "normal": (8, 12), "full": (18, 24)}
 
 # What auto pick hangs on every tree: the same mix of hung categories and counts for every
 # tone and every tree size (ADR-0003). The tone decides which products fill these slots, never

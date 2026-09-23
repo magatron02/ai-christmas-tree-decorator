@@ -213,6 +213,48 @@ def test_rule_8_the_page_ships_its_controls_disabled_rather_than_absent():
         assert match and "disabled" in match.group(0), f"{element_id} should start disabled"
 
 
+# ---- a closed <dialog> must never be given `display` outside an [open] guard --------------
+#
+# The browser's own UA stylesheet is `dialog:not([open]) { display: none }`. An author rule for
+# a dialog-related class that sets `display` WITHOUT `[open]` in its selector overrides that —
+# author-origin beats user-agent-origin regardless of specificity — so the dialog renders
+# inline on the page even while closed (happened for real: adding `.stack` to
+# #vendor-import-dialog left it sitting at the bottom of settings.html at all times, 2026-09-11).
+_DIALOG_DISPLAY_RULE = re.compile(r"([^{}]*\bdialog\b[^{}]*)\{([^}]*)\}", re.I)
+
+
+def test_rule_8_a_dialog_class_only_sets_display_when_scoped_to_open():
+    css = strip_comments(read(COMPONENTS))
+    for selector, body in _DIALOG_DISPLAY_RULE.findall(css):
+        if "display" not in body:
+            continue
+        # the bare reset (`dialog { ... }` with no display at all) and `dialog h2` never hit
+        # this branch; every selector that both mentions "dialog" and sets `display` must be
+        # scoped to the open state.
+        assert "[open]" in selector, f"{selector.strip()!r} sets display outside [open]"
+
+
+def test_every_dialog_element_uses_an_open_scoped_display_class_or_none():
+    """Every <dialog ... class="..."> in the frontend either uses no class-based display rule
+    at all (bare `dialog { ... }` already handles open/closed correctly) or a class that only
+    appears in components.css alongside `[open]` — catches the same mistake from the HTML side,
+    in case a page adds a new "helper" class to a dialog without also scoping it."""
+    css = strip_comments(read(COMPONENTS))
+    open_scoped_classes = {
+        cls
+        for selector, body in _DIALOG_DISPLAY_RULE.findall(css)
+        if "display" in body and "[open]" in selector
+        for cls in re.findall(r"\.([\w-]+)", selector)
+    }
+    for path in PAGES:
+        for match in re.finditer(r'<dialog\b[^>]*\bclass="([^"]*)"', read(path)):
+            for cls in match.group(1).split():
+                assert cls in open_scoped_classes, (
+                    f"{path.name}: <dialog class=\"{cls}\"> has no [open]-scoped display rule "
+                    f"for that class — it will render even while closed"
+                )
+
+
 # ---- typography: Thai always resolves through the Thai face -------------------------------
 
 
