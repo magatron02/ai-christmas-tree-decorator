@@ -9,6 +9,9 @@ numpy
 pystray
 # vendor-pricelists/bangkok-christmas/parse_pricelist.py, invoked by /api/vendor/import
 pypdf
+# scripts/extract_catalog.py, build_product_index.py, rebuild_catalog_from_books.py — offline
+# catalogue-book ingestion only, never imported by the running app
+pymupdf
 
 # test only
 pytest
