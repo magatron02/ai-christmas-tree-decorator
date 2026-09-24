@@ -11,14 +11,7 @@
  * while appearing to search all of it. The tree is the shop's own now — panel 1, as always.
  */
 
-const auto = {
-  loaded: null,    // which backdrop `config` was fetched for, null before the first fetch
-  config: null,
-  tone: null,
-  pick: null,      // last /api/auto/pick response
-  pickError: null,
-  exclude: [],     // codes already shown, so "สุ่มใหม่" avoids repeats where stock allows
-};
+const auto = store.auto;
 
 /* Cached per backdrop rather than once (issue #24): a wall or door fills a different recipe
  * and offers a different set of tones, so switching backdrop has to fetch again. */

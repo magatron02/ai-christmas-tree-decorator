@@ -8,11 +8,7 @@
  * elements list or panel 1/2, and nothing here runs unless "Prompt mode" is the active tab.
  */
 
-const promptState = {
-  attachments: [], // {role: "tree"|"element"|"scene", file, url, code, sizeMm, manualMm}
-  maxChars: 500,   // overwritten by /api/config's prompt_mode_max_chars once it loads
-  sending: false,
-};
+const promptState = store.prompt;
 
 function promptTree() {
   return promptState.attachments.find((a) => a.role === "tree") || null;
