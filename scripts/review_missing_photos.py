@@ -42,7 +42,7 @@ IMAGES_DIR = ROOT / "catalog" / "images"
 CONTEXT_MAX_PX = 1400
 
 
-def _images_on(page):
+def _images_on(page, min_side=None):
     """Like build_product_index.products_on(), minus its MAX_ASPECT cutoff — which exists
     there to drop wide flat price ribbons, but a garland is legitimately photographed as a
     tall narrow strip and gets dropped by that same cutoff for being "too elongated" the other
@@ -58,7 +58,7 @@ def _images_on(page):
         width, height = x1 - x0, y1 - y0
         if width * height > page_area * bpi.MAX_AREA_FRACTION:
             continue                                   # the page background
-        if min(width, height) < bpi.MIN_SIDE_PT:
+        if min(width, height) < (bpi.MIN_SIDE_PT if min_side is None else min_side):
             continue                                   # icons, hairlines
         out.append(info)
     return out
@@ -94,6 +94,95 @@ def _ranked_candidates(label_bbox, products, limit=10):
     ranked.sort(key=lambda t: t[0])
     return ranked[:limit]
 
+
+GROUP_GAP_PT = 30   # pieces of one product sit closer than this; separate products further apart
+
+
+def _caption_lines(page, digits_only=True):
+    """Every small text line that starts with a digit — a code label, including the hyphen-less
+    ones ("90134 (12 inc.)") that bpi.labels_on() doesn't recognise as codes but which still
+    mark where one product's caption sits and so where its neighbour's photo ends. With
+    digits_only=False, every small text line: a neighbour captioned "ML-C100" or "LED"
+    (beside 73003-2) still owns the photo above it."""
+    out = []
+    for block in page.get_text("dict")["blocks"]:
+        if block["type"] != 0:
+            continue
+        for line in block["lines"]:
+            text = "".join(s["text"] for s in line["spans"]).strip()
+            if ((text[:1].isdigit() or (text and not digits_only))
+                    and line["spans"] and line["spans"][0]["size"] < bpi.LABEL_MAX_PT):
+                out.append(tuple(line["bbox"]))
+    return out
+
+
+def _group_candidates(page, label_bbox, products):
+    """Multi-piece photos: this catalogue often stores one product's photo as several image
+    objects (one per colour/strand/ball, plus the pack), so every single-image candidate crops
+    only part of it (4465-1, 5600-97, 122-01, 90131-2, 2026-09-24). A caption printed under a
+    group sits centred under the *whole* group, so the group is the pieces in the label's row
+    that are nearer this caption than any other one on the same line, further restricted to the
+    ones that touch each other (GROUP_GAP_PT). Returns up to two (distance, rule, info) entries,
+    tightest first; `info["pieces"]` tells _render_candidate to paste only those pieces."""
+    cx = lambda b: (b[0] + b[2]) / 2
+    cy = lambda b: (b[1] + b[3]) / 2
+    captions = _caption_lines(page)
+    words = page.get_text("words")
+    lx = cx(label_bbox)
+
+    # the row: below the nearest caption line above this label, not below the label itself
+    # (a caption within 40pt above is another line of this same caption block — 71033-2 is
+    # the third size line under one photo — not the previous row's caption)
+    above = [c[3] for c in captions if c[3] < label_bbox[1] - 40 and c[0] < lx + 120 and c[2] > lx - 120]
+    ceiling = max(above, default=0)
+    # a piece may reach down past the caption's top — hanging beside it (the gold figure left
+    # of 90155-10) or just an image whose blank margin runs over it (the silver flower of
+    # 90665-19) — as long as its centre is above the caption and it ends near the caption
+    row = [tuple(p["bbox"]) for p in products
+           if ceiling < cy(p["bbox"]) < label_bbox[1] and p["bbox"][3] < label_bbox[3] + 30]
+    if not row:
+        return []
+
+    # other captions on this line; lines stacked under/over this one (76033-2 / 78033-2 /
+    # 71033-2, one block of sizes for one photo) belong to this caption, not a rival one
+    peers = [label_bbox] + [c for c in _caption_lines(page, digits_only=False)
+                            if abs(c[1] - label_bbox[1]) < 25
+                            and (c[2] < label_bbox[0] or c[0] > label_bbox[2])]
+    nearest_mine = [b for b in row
+                    if abs(cx(b) - lx) <= min(abs(cx(b) - cx(p)) for p in peers) + 1]
+    if not nearest_mine:
+        return []
+
+    def touches(a, b):
+        return not (a[2] + GROUP_GAP_PT < b[0] or b[2] + GROUP_GAP_PT < a[0]
+                    or a[3] + GROUP_GAP_PT < b[1] or b[3] + GROUP_GAP_PT < a[1])
+
+    seed = min(nearest_mine, key=lambda b: abs(cx(b) - lx) + (label_bbox[1] - b[3]))
+    cluster, frontier = {seed}, [seed]
+    while frontier:
+        cur = frontier.pop()
+        for b in nearest_mine:
+            if b not in cluster and touches(cur, b):
+                cluster.add(b)
+                frontier.append(b)
+
+    out, seen = [], set()
+    for rule, pieces in (("group", sorted(cluster)), ("group-row", sorted(nearest_mine))):
+        if len(pieces) < 2 or tuple(pieces) in seen:
+            continue
+        seen.add(tuple(pieces))
+        box = [min(b[0] for b in pieces), min(b[1] for b in pieces),
+               max(b[2] for b in pieces), max(b[3] for b in pieces)]
+        if all(b[3] < label_bbox[1] + 12 for b in pieces):
+            box[3] = min(box[3], label_bbox[1] - 0.5)  # never the group's own caption
+        # (otherwise a piece hangs beside the caption; the caption text is blanked below)
+        # captions printed over a piece's white margin ("Foil", "PVC Rigid" on 74033-2)
+        text = [tuple(w[:4]) for w in words
+                if w[0] < box[2] and w[2] > box[0] and w[1] < box[3] and w[3] > box[1]]
+        out.append((0.0, rule, {"bbox": box, "pieces": pieces, "text": text}))
+    return out
+
+
 PAGE = """<!doctype html>
 <html lang="th"><head><meta charset="utf-8">
 <title>ตรวจรูปสินค้าที่ดึงจาก PDF</title>
@@ -127,6 +216,7 @@ PAGE = """<!doctype html>
   .cand-thumb { width: 76px; height: 76px; object-fit: contain; border: 2px solid #ddd; border-radius: 6px; cursor: pointer; background: repeating-conic-gradient(#eee 0% 25%, #fff 0% 50%) 0 0/12px 12px; }
   .cand-thumb.selected { border-color: #1a6b2a; box-shadow: 0 0 0 2px #dcf5df; }
   .cand-thumb.original { border-color: #88a; }
+  .cand-thumb.group { width: 130px; border-color: #c07a00; border-style: dashed; }
 </style></head>
 <body>
 <div class="top">
@@ -175,7 +265,7 @@ async function loadNext() {
         กติกาจับคู่: <span class="tier ${item.match}">${item.match}</span> (${item.rule}, ${item.gap_pt ?? '-'} pt)
       </div>
       <div class="candidates">
-        <h3>รูปอื่นบนหน้านี้ที่อยู่ใกล้ๆ (คลิกเพื่อลองแทนที่)</h3>
+        <h3>รูปอื่นบนหน้านี้ที่อยู่ใกล้ๆ (คลิกเพื่อลองแทนที่) — กรอบเส้นประสีส้ม = ทั้งกลุ่ม</h3>
         <div class="cand-strip" id="cand-strip">กำลังโหลด...</div>
       </div>
       <div class="btns">
@@ -195,9 +285,9 @@ async function loadCandidates(code) {
     return;
   }
   strip.innerHTML = cands.map(c => `
-    <img class="cand-thumb" id="cand-${c.index}"
+    <img class="cand-thumb${c.rule.startsWith('group') ? ' group' : ''}" id="cand-${c.index}"
          src="/api/candidate-crop/${encodeURIComponent(code)}?index=${c.index}"
-         title="${c.rule}, ${c.distance} pt"
+         title="${c.rule === 'group' ? 'ทั้งกลุ่ม (ชิ้นที่ติดกัน)' : c.rule === 'group-row' ? 'ทั้งกลุ่ม (ทั้งแถว)' : c.rule + ', ' + c.distance + ' pt'}"
          onclick="selectCandidate('${code}', ${c.index})">
   `).join('');
 }
@@ -246,7 +336,11 @@ def build_app(staged: Path, pdf_path: str):
         label_bbox = next((bbox for c, bbox in bpi.labels_on(page) if c == code), None)
         if label_bbox is None:
             return None
-        ranked = _ranked_candidates(label_bbox, products)
+        # groups keep thin pieces: a bead garland is photographed as strands only ~5pt wide
+        # (6102-01), which MIN_SIDE_PT drops as "hairlines" — fine for a lone candidate, but
+        # a group of them is the whole product
+        pieces = _images_on(page, min_side=1)
+        ranked = _group_candidates(page, label_bbox, pieces) + _ranked_candidates(label_bbox, products)
         result = (page_png, scale, ranked, label_bbox)
         _candidate_cache[code] = result
         return result
@@ -259,7 +353,21 @@ def build_app(staged: Path, pdf_path: str):
         page_png, scale, ranked, label_bbox = found
         _distance, _rule, info = ranked[index]
 
-        crop = bpi.crop(page_png, info["bbox"], scale)
+        if "pieces" in info:
+            # only the group's own pieces, on white — the union rectangle (plus crop()'s 4%
+            # padding) would otherwise take in slivers of neighbouring products and captions
+            source = Image.new("RGB", page_png.size, "white")
+            u = info["bbox"]
+            for b in info["pieces"]:
+                box = tuple(round(v * scale) for v in
+                            (max(b[0], u[0]), max(b[1], u[1]), min(b[2], u[2]), min(b[3], u[3])))
+                source.paste(page_png.crop(box), box[:2])
+            blank = ImageDraw.Draw(source)
+            for w in info.get("text", ()):
+                blank.rectangle([v * scale for v in w], fill="white")
+        else:
+            source = page_png
+        crop = bpi.crop(source, info["bbox"], scale)
 
         context = page_png.copy()
         context.thumbnail((CONTEXT_MAX_PX, CONTEXT_MAX_PX))
@@ -351,6 +459,14 @@ def build_app(staged: Path, pdf_path: str):
 
         if decision == "accept":
             dest = IMAGES_DIR / item["image"]
+            if dest.is_file() and item.get("replace"):
+                # a code added to the queue by hand precisely to swap out an existing, badly
+                # cropped photo (the 71033-1 gift-box sizes) — keep the old one, then replace
+                keep = staged / "replaced" / item["image"]
+                keep.parent.mkdir(exist_ok=True)
+                if not keep.exists():
+                    shutil.copyfile(dest, keep)
+                dest.unlink()
             if dest.is_file():
                 # someone else already filled this in since staging — don't clobber it blind
                 raise HTTPException(409, f"{item['image']} มีไฟล์อยู่แล้ว ไม่เขียนทับ")
