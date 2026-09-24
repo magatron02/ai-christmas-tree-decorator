@@ -3,7 +3,7 @@ every field the app actually needs — highlighting whichever of them is still b
 
 Ad-hoc export, not part of the app or its tests — run it whenever the catalogue needs a fresh
 "fill this in" pass. Started as the price backfill for the retired budget wizard (wayfinder
-map #1); the pricing queue at issue #10 is what supersedes it as the in-app way to do this.
+map #1); the vendor price list (vendor_lookup.py) now covers most of it.
 Needs openpyxl (`pip install openpyxl` into .venv — not in requirements.txt,
 this script never runs in production).
 

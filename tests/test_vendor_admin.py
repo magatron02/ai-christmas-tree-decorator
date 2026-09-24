@@ -87,6 +87,27 @@ def test_search_reports_in_catalog(temp_catalog, temp_vendor_lookup):
     assert results["071-12"]["in_catalog"] is False
 
 
+def test_search_carries_the_catalogue_photo_for_a_catalogued_code(temp_catalog, temp_vendor_lookup):
+    set_lookup(temp_vendor_lookup, {"071-11": {"price": 89.0}, "071-12": {"price": 45.0}})
+    add_catalog_product("071-11")
+
+    results = {r["code"]: r for r in vendor_admin.search()}
+
+    assert results["071-11"]["image"] == catalog.image_for("071-11")
+    assert results["071-11"]["image"]
+    assert results["071-12"]["image"] is None  # a vendor-only code has no catalogue photo
+
+
+def test_a_photo_the_picker_would_withhold_is_withheld_here_too(temp_catalog, temp_vendor_lookup, monkeypatch):
+    """Next to a price a picture reads as the answer — a crop shared by many codes is exactly
+    the case the catalogue itself refuses to show (NonGoals.md 7)."""
+    set_lookup(temp_vendor_lookup, {"071-11": {"price": 89.0}})
+    add_catalog_product("071-11")
+    monkeypatch.setattr(catalog, "crop_is_showable", lambda code: False)
+
+    assert vendor_admin.find("071-11")["image"] is None
+
+
 def test_search_reports_overridden_fields(temp_vendor_lookup):
     set_lookup(temp_vendor_lookup, {"071-11": {"price": 89.0}})
     vendor_overlay.set_fields("071-11", {"price": 120.0}, speaks_for=("price",))

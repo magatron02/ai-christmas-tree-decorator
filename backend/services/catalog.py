@@ -26,7 +26,7 @@ from backend.validation import ValidationError
 __all__ = [
     "find", "search", "browse", "longest_side_mm", "describe", "require_size",
     "scale_sentence", "image_for", "image_path", "recent", "parse_size", "shops",
-    "auto_pool", "row_matches_tone", "label_for", "orphans", "pricing_queue",
+    "auto_pool", "row_matches_tone", "label_for", "orphans",
     "overridden_fields", "product_detail", "resolve_image_path", "split_codes",
     "set_colour_split", "clear_colour_split", "colour_name", "supporting_photos",
     "placement_of", "placement_of_code", "suits_backdrop", "is_offered", "packs_for",
@@ -679,17 +679,6 @@ def orphans():
         {"code": code, **fields}
         for code, fields in shop_overlay.all_fields().items()
         if code not in known
-    ]
-
-
-def pricing_queue():
-    """Every showable product with no price and not skipped — what the fast pricing entry
-    mode walks (issue #10). Printed order, same as browse(), so the queue is stable between
-    calls rather than reshuffling as prices come in.
-    """
-    return [
-        row for row in _with_photos()
-        if row.get("price") is None and not row.get("price_skipped")
     ]
 
 

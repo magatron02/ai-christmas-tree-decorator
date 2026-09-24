@@ -225,8 +225,8 @@ function buildSizeRow(sizeMm, manualMm, onInput) {
 }
 
 /* The same inline treatment as the size row above, for a picked product the book never priced
- * (issue #27) — the shop notices the gap here, mid-pick, and can close it without leaving for
- * the pricing queue. Deliberately NOT a gate: a price has never been needed to make a picture
+ * (issue #27) — the shop notices the gap here, mid-pick, and can close it without leaving the
+ * picker. Deliberately NOT a gate: a price has never been needed to make a picture
  * (CONTEXT.md), so this never disables Generate, and skipping it costs nothing but a total.
  * `onTyped` gets the raw string on `change` — not `input`, which would fire a save per
  * keystroke — and does the saving, the same division of labour buildSizeRow has.
@@ -254,13 +254,12 @@ function buildPriceRow(code, price, typedPrice, onTyped) {
   return row;
 }
 
-/* One write path for a price however it was typed: the pricing queue's own endpoint, which is
- * where this has always been stored (issue #27). Returns the price the server parsed, so the
+/* One write path for a price however it was typed (issue #27). Returns the price the server parsed, so the
  * panel shows what was actually saved rather than what was typed at it. */
 async function savePrice(code, value) {
   const body = new FormData();
   body.append("price", value);
-  const saved = await call(`/api/catalog/pricing-queue/${encodeURIComponent(code)}/price`, {
+  const saved = await call(`/api/catalog/products/${encodeURIComponent(code)}/price`, {
     method: "POST", body,
   });
   return saved.price;

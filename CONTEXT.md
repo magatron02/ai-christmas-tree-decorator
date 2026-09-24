@@ -36,10 +36,6 @@ silently dropped.
 What the shop sells one of these for. Optional — a product with no price is fully usable for
 generating a picture; only a total is unavailable.
 
-**Skipped for pricing**:
-A product the shop has declared it will never price. Stays usable, and leaves the pricing queue
-for good.
-
 ### Photos and colours
 
 **Colour**:

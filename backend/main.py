@@ -55,7 +55,7 @@ app.mount("/static", StaticFiles(directory=config.FRONTEND_DIR), name="static")
 app.mount("/shop-photos", StaticFiles(directory=config.SHOP_PHOTOS_DIR), name="shop-photos")
 
 
-PAGE_PATHS = {"/", "/history", "/settings", "/identify", "/pricing", "/quote"}
+PAGE_PATHS = {"/", "/history", "/settings", "/identify", "/quote"}
 
 
 @app.middleware("http")
@@ -356,11 +356,6 @@ def page_identify():
     return FileResponse(config.FRONTEND_DIR / "identify.html")
 
 
-@app.get("/pricing", include_in_schema=False)
-def page_pricing():
-    return FileResponse(config.FRONTEND_DIR / "pricing.html")
-
-
 @app.get("/quote", include_in_schema=False)
 def page_quote():
     """The full decoration-price breakdown for one already-generated request
@@ -409,40 +404,15 @@ def api_catalog_orphans():
     return {"orphans": catalog.orphans()}
 
 
-def _pricing_queue_item(row):
-    return {
-        "code": row["code"], "image": catalog.image_for(row["code"]),
-        "size_raw": row.get("size_raw"), "section": row.get("section"), "book": row.get("book"),
-    }
-
-
-@app.get("/api/catalog/pricing-queue")
-def api_pricing_queue():
-    """The fast pricing entry screen's whole state: how many are left, and the one to show
-    next. The queue itself decides "next" (printed order) — the page just re-fetches this
-    after every price or skip rather than tracking a position of its own."""
-    queue = catalog.pricing_queue()
-    return {"remaining": len(queue), "next": _pricing_queue_item(queue[0]) if queue else None}
-
-
-@app.post("/api/catalog/pricing-queue/{code}/price")
-def api_pricing_queue_set_price(code: str, request: Request, price: str = Form("")):
-    """The queue's one field. Localhost only, same reasoning as the other catalogue writes."""
+@app.post("/api/catalog/products/{code}/price")
+def api_set_price(code: str, request: Request, price: str = Form("")):
+    """One product's price — the inline entry after a catalogue pick (issue #27). Localhost
+    only, same reasoning as the other catalogue writes."""
     from backend.services import catalog_admin, settings
 
     if not settings.is_local(request):
         raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
-    return catalog_admin.queue_set_price(code, price)
-
-
-@app.post("/api/catalog/pricing-queue/{code}/skip")
-def api_pricing_queue_skip(code: str, request: Request):
-    """Marks a product skipped for pricing — it leaves the queue for good."""
-    from backend.services import catalog_admin, settings
-
-    if not settings.is_local(request):
-        raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
-    return catalog_admin.skip_pricing(code)
+    return catalog_admin.set_price(code, price)
 
 
 @app.post("/api/settings/api-key")

@@ -1,7 +1,7 @@
 """Total retail price of the decorations in one generation.
 
 Unrelated to the OpenAI billing removed by NonGoals #4 — this is the shop's own product
-`price` field (pricing queue / settings page), summed across a request's accepted
+`price` field (settings page / inline picker entry), summed across a request's accepted
 decorations. Only a fraction of the catalogue carries a price at all, so a decoration with
 none must show up as missing rather than being counted as free (the same stance
 `scale_sentence` already takes on an unresolved size).

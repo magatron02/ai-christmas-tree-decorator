@@ -160,15 +160,6 @@ def test_a_code_the_catalogue_no_longer_has_is_simply_not_offered(temp_catalog):
     assert catalog.is_offered_code("GONE-FOREVER") is False
 
 
-def test_it_leaves_the_pricing_queue(temp_catalog):
-    """No point pricing something the shop does not offer."""
-    add("SMALL", "1 Ft.")
-    add("BIG", "7 Ft.")
-    catalog.refresh()
-
-    assert codes(catalog.pricing_queue()) == {"BIG"}
-
-
 # ---- nothing is destroyed ----
 
 

@@ -78,6 +78,9 @@ function enterVendorEdit(item) {
   highlightVendorRow(item.code);
   $("vendor-edit-empty").hidden = true;
   $("vendor-edit-status").textContent = `กำลังแก้ไข ${item.code}`;
+  const editImage = $("vendor-edit-image");
+  editImage.hidden = !item.image;
+  if (item.image) editImage.src = catalogImageUrl(item.image);
   $("vendor-edit-note").textContent = item.note || "";
   $("vendor-edit-note").hidden = !item.note;
   $("vendor-price").value = item.price ?? "";
@@ -157,6 +160,7 @@ async function loadVendorResults(query) {
   results.forEach((item, index) => {
     addRow(host, [
       { className: "mono", text: `${offset + index + 1}` },
+      { text: "" }, // photo — filled in below, since addRow only sets textContent
       { className: "mono", text: item.code },
       { text: item.name || "(ไม่มีชื่อ)" },
       { className: "hint", text: vendorPackText(item.pack) },
@@ -170,7 +174,20 @@ async function loadVendorResults(query) {
     row.dataset.code = item.code;
     row.addEventListener("click", () => enterVendorEdit(item));
 
-    const catalogCell = row.children[6];
+    const photoCell = row.children[1];
+    if (item.image) {
+      const img = document.createElement("img");
+      img.className = "checker cat-thumb";
+      img.src = catalogImageUrl(item.image);
+      img.alt = item.code;
+      img.loading = "lazy";
+      photoCell.append(img);
+    } else {
+      photoCell.className = "hint";
+      photoCell.textContent = "—";
+    }
+
+    const catalogCell = row.children[7];
     catalogCell.className = "hint";
     catalogCell.style.textAlign = "center";
     catalogCell.textContent = item.in_catalog ? "มี" : "—";
