@@ -615,9 +615,57 @@ def product_detail(row):
         "section": row.get("section"), "price": row.get("price"),
         "pack_size": row.get("pack_size"),
         "category": category_of(row),
+        "crop_shared": _crop_is_shared(row["code"]),
         "overridden": overridden_fields(row["code"]),
         "has_shop_photo": bool(shop_overlay.fields_for(row["code"]).get("shop_photo")),
     }
+
+
+def _crop_is_shared(code):
+    """A book crop the picker withholds because several codes claim it. A shop's own photo
+    replaces the crop entirely (crop_is_showable), so it is never "shared" whatever the old
+    crop's count says."""
+    if not image_for(code) or shop_overlay.fields_for(code).get("shop_photo"):
+        return False
+    return crop_is_ambiguous(code)
+
+
+ADMIN_ISSUES = ("no_photo", "shared_photo", "no_size", "no_price")
+
+
+def admin_list(q="", book=None, category=None, issue=None, limit=50, offset=0):
+    """One page of *every* product for the settings page, plus how many match — unlike
+    browse(), which only lists what a picker can honestly show. The admin screen exists to fix
+    the ones that cannot be shown, so a product with no photo, or a crop shared by several
+    codes, has to be findable here.
+
+    `issue` narrows to one kind of problem: no_photo, shared_photo (a crop the picker withholds
+    because several codes claim it — crop_is_ambiguous), no_size (nothing printed to scale
+    from) or no_price. `q` matches part of a code or of the section.
+    """
+    q = (q or "").strip().lower()
+    seen, matched = set(), []
+    for row in _rows():
+        code = row["code"]
+        if code in seen:
+            continue
+        seen.add(code)
+        if q and q not in code.lower() and q not in (row.get("section") or "").lower():
+            continue
+        if book and row.get("book") != book:
+            continue
+        if category and category_of(row) != category:
+            continue
+        if issue == "no_photo" and image_for(code):
+            continue
+        if issue == "shared_photo" and not _crop_is_shared(code):
+            continue
+        if issue == "no_size" and longest_side_mm(row) is not None:
+            continue
+        if issue == "no_price" and row.get("price") is not None:
+            continue
+        matched.append(row)
+    return matched[offset : offset + limit], len(matched)
 
 
 def split_codes():

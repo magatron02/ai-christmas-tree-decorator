@@ -812,6 +812,18 @@ def api_catalog_remove_shop_photo(code: str, request: Request):
     return catalog.product_detail(catalog.find(code))
 
 
+@app.get("/api/catalog/products")
+def api_catalog_products(q: str = "", book: str = "", category: str = "", issue: str = "",
+                         limit: int = 50, offset: int = 0):
+    """Every product, one page at a time, for the settings page's catalogue table — including
+    the ones the picker withholds (see catalog.admin_list)."""
+    if issue and issue not in catalog.ADMIN_ISSUES:
+        raise ValidationError(f"ไม่รู้จักตัวกรอง '{issue}'")
+    limit = max(1, min(limit, 200))
+    rows, total = catalog.admin_list(q, book or None, category or None, issue or None, limit, max(offset, 0))
+    return {"results": [catalog.product_detail(row) for row in rows], "total": total}
+
+
 @app.get("/api/catalog/recent")
 def api_catalog_recent(limit: int = 20):
     """Read-only list for the settings page, newest addition first."""
