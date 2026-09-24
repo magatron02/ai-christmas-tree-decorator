@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tree Decorator</title>
 <link rel="icon" href="/static/icon.ico">
-<link rel="stylesheet" href="/static/styles/tokens.css?v=8.52">
-<link rel="stylesheet" href="/static/styles/components.css?v=8.52">
-<script src="/static/store.js?v=8.52"></script>
-<script src="/static/theme.js?v=8.52"></script>
-<script src="/static/sidebar.js?v=8.52"></script>
+<link rel="stylesheet" href="/static/styles/tokens.css?v=8.53">
+<link rel="stylesheet" href="/static/styles/components.css?v=8.53">
+<script src="/static/store.js?v=8.53"></script>
+<script src="/static/theme.js?v=8.53"></script>
+<script src="/static/sidebar.js?v=8.53"></script>
 </head>
 <body>
 
@@ -57,162 +57,24 @@
 
   <main class="workspace">
 
+  <!-- One shell for all three modes (SPEC layout v2). The sidebar body is filled in by render.js
+       from `store`, one panel per mode; the footer and the stage are shared. -->
   <aside class="work-side">
-    <div class="work-body">
-
-
-    <div class="stack" id="mode-custom">
-
-      <section class="card stack">
-        <span class="panel-title">1 — ต้นเปล่า / ผนัง</span>
-        <select class="input" id="backdrop-select" aria-label="พื้นหลัง: ต้นคริสต์มาส หรือ ผนัง">
-          <option value="tree">ต้นคริสต์มาส</option>
-          <option value="wall">ผนัง หรือ ประตู</option>
-        </select>
-
-        <!-- Three ways to fill this one slot, not three things to do: the catalogue first,
-             since a shop most often decorates its own stock, then an own photo, then the
-             samples for someone with neither to hand. Each is labelled as an alternative so
-             the stack does not read as a checklist. -->
-        <div class="stack alt-group">
-          <div class="stack">
-            <span class="section-title">เลือกจาก catalogue</span>
-            <div class="btn-row">
-              <button class="btn" id="tree-catalog-toggle">เปิด catalogue</button>
-            </div>
-          </div>
-          <div class="stack">
-            <span class="section-title">หรืออัปโหลดรูปเอง</span>
-            <input class="input" type="file" id="tree-file" accept="image/jpeg,image/png">
-          </div>
-          <div class="stack">
-            <span class="section-title">หรือใช้รูปตัวอย่าง</span>
-            <div class="btn-row">
-              <button class="btn" id="tree-sample-toggle">ดูรูปตัวอย่าง</button>
-            </div>
-            <div class="sample-strip" id="tree-samples" hidden></div>
-          </div>
-        </div>
-        <div id="tree-size-gate" hidden></div>
-      </section>
-
-      <section class="card stack role-decoration">
-        <span class="panel-title">2 — ของตกแต่ง</span>
-        <div class="decoration-columns">
-
-          <div class="stack decoration-list-col">
-            <span class="hint" id="element-count-hint">ใส่ได้ถึง 10 ชิ้น</span>
-            <ul class="accepted" id="accepted-elements"></ul>
-          </div>
-
-          <div class="stack decoration-controls-col">
-
-            <div class="stack">
-              <span class="section-title">เลือกจาก catalogue</span>
-              <button class="btn" id="catalog-toggle">เปิด catalogue</button>
-            </div>
-
-            <div class="stack">
-              <span class="section-title">หรืออัปโหลดรูปเอง</span>
-              <span class="hint">รูปของตกแต่งชิ้นเดียว ตัดพื้นหลังก่อนใช้</span>
-              <input class="input" type="file" id="element-file" accept="image/jpeg,image/png">
-              <div class="btn-row">
-                <button class="btn" id="cut-btn" disabled>ตัดพื้นหลัง</button>
-                <span class="hint" id="cut-hint"></span>
-              </div>
-              <div class="thumb-frame-sm" id="element-preview-frame" hidden>
-                <img class="thumb-sm checker" id="element-preview" alt="ของตกแต่งที่ตัดพื้นหลังแล้ว">
-                <span class="thumb-code" id="element-code-badge" hidden></span>
-              </div>
-              <div class="btn-row" id="element-actions" hidden>
-                <button class="btn" id="accept-btn">ใช้ชิ้นนี้</button>
-                <button class="btn danger" id="reject-btn">ทิ้ง แล้วลองใหม่</button>
-              </div>
-            </div>
-
-            <div class="stack section-optional">
-              <span class="section-title">บรรยากาศอ้างอิง <span class="hint">— ไม่ใส่ก็ได้</span></span>
-              <span class="hint">รูปสถานที่ที่อยากให้ต้นไปอยู่</span>
-              <input class="input" type="file" id="scene-reference-file" accept="image/jpeg,image/png">
-              <div class="btn-row">
-                <button class="btn" id="scene-sample-toggle">รูปตัวอย่าง</button>
-              </div>
-              <div class="sample-strip" id="scene-samples" hidden></div>
-              <div class="btn-row" id="scene-reference-actions" hidden>
-                <button class="btn danger" id="scene-reference-clear">เอารูปออก</button>
-              </div>
-              <img class="thumb-sm" id="scene-reference-preview" alt="รูปบรรยากาศอ้างอิง" hidden>
-            </div>
-
-          </div>
-
-        </div>
-      </section>
-
-
-    </div>
-
-    <!-- Owned entirely by auto.js — the tone row and the proposed decorations, built the
-         same way #accepted-elements is: a container the script fills in. -->
-    <div id="mode-auto" hidden></div>
-
-    <!-- Owned entirely by prompt.js. A chat log (bot greeting, then a user message + a bot
-         reply per send) above a composer: attachment chips, a free-text box, and Send —
-         built the same "script fills in the container" way as #mode-auto. -->
-    <div id="mode-prompt" class="chat-shell" hidden>
-      <div class="chat-log" id="prompt-log">
-        <div class="msg bot">
-          <div class="msg-bubble">แนบต้นไม้กับของตกแต่ง แล้วบอกว่าอยากได้แบบไหน กด ส่ง ครั้งเดียวจบ</div>
-        </div>
-      </div>
-      <div class="composer">
-        <div class="composer-attachments" id="prompt-attachments"></div>
-        <div class="composer-box">
-          <div class="composer-attach-row">
-            <button type="button" class="attach-btn" id="prompt-attach-tree">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M5 8l14 0M7 8l-3 6h16l-3-6M6 14l-2 4h16l-2-4"/></svg>
-              แนบต้นไม้
-            </button>
-            <button type="button" class="attach-btn" id="prompt-attach-element">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 4v2M12 18v2"/></svg>
-              แนบของตกแต่ง
-            </button>
-            <button type="button" class="attach-btn" id="prompt-attach-scene">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8" cy="10" r="1.5"/><path d="M3 16l5-4 4 3 5-5 4 4"/></svg>
-              แนบสถานที่จริง (บรรยากาศ)
-            </button>
-            <button type="button" class="attach-btn" id="prompt-attach-gallery">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-              เลือกจากตัวอย่าง
-            </button>
-            <input type="file" id="prompt-tree-file" accept="image/jpeg,image/png" hidden>
-            <input type="file" id="prompt-element-file" accept="image/jpeg,image/png" hidden>
-            <input type="file" id="prompt-scene-file" accept="image/jpeg,image/png" hidden>
-          </div>
-          <textarea class="composer-textarea" id="prompt-textarea"
-            placeholder="อยากได้แบบไหน เช่น “แต่งโทนแดง-ทอง หรูหรา เว้นระยะห่างพอสมควร”"></textarea>
-          <div class="composer-footer">
-            <div class="composer-footer-left">
-              <select class="input size-select-mini" id="prompt-size-select" disabled aria-label="ขนาดภาพผลลัพธ์"></select>
-              <span class="char-count" id="prompt-char-count">0 / 500</span>
-            </div>
-            <button type="button" class="btn send-btn" id="prompt-send" disabled aria-label="ส่ง" title="ส่ง">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <div class="work-body" id="work-body">
+      <div class="stack" id="panel-custom"></div>
+      <div class="stack" id="panel-auto" hidden></div>
+      <div class="stack" id="panel-prompt" hidden></div>
     </div>
 
     <div class="work-footer" id="generate-footer">
-    <select class="input option-name" id="size-select" disabled aria-label="ขนาดภาพผลลัพธ์"></select>
-    <select class="input" id="density-select" disabled aria-label="ความหนาแน่นของตกแต่ง"></select>
-    <div class="chip" id="status-chip">รอต้นเปล่ากับของตกแต่งอย่างน้อย 1 ชิ้น</div>
-    <div class="btn-row">
-      <button class="btn primary" id="generate-btn" disabled>สร้างภาพ</button>
-    </div>
-    <div class="notice" id="error-box" hidden></div>
+      <select class="input option-name" id="size-select" disabled aria-label="ขนาดภาพผลลัพธ์"></select>
+      <select class="input" id="density-select" disabled aria-label="ความหนาแน่นของตกแต่ง"></select>
+      <div class="chip" id="status-chip">รอต้นเปล่ากับของตกแต่งอย่างน้อย 1 ชิ้น</div>
+      <div class="btn-row">
+        <button class="btn primary" id="generate-btn" disabled>สร้างภาพ</button>
+      </div>
+      <a class="hint footer-link" id="auto-refine-link" href="#" hidden>ปรับละเอียดต่อในโหมดกำหนดเอง</a>
+      <div class="notice" id="error-box" hidden></div>
     </div>
   </aside>
 
@@ -222,42 +84,46 @@
         <button type="button" class="row active" id="stage-tab-original" aria-pressed="true">ต้นฉบับ</button>
         <button type="button" class="row" id="stage-tab-result" aria-pressed="false">ผลลัพธ์</button>
       </div>
+      <span class="hint" id="stage-status"></span>
     </div>
     <div class="stage-canvas" id="stage-view-original">
-    <div class="thumb-frame stage-frame" id="tree-preview-frame" hidden>
-      <img class="thumb" id="tree-preview" alt="ต้นเปล่า">
-      <span class="thumb-code" id="tree-code-badge" hidden></span>
-    </div>
-      <span class="hint stage-empty">ยังไม่ได้เลือกต้น — เลือกฐานภาพที่แถบซ้าย</span>
+      <div class="stage-frame" id="stage-original-frame" hidden>
+        <img class="thumb" id="stage-original" alt="ต้นเปล่า">
+        <span class="thumb-code" id="stage-original-code" hidden></span>
+      </div>
+      <span class="hint stage-empty" id="stage-original-empty">ยังไม่ได้เลือกต้น — เลือกฐานภาพที่แถบซ้าย</span>
     </div>
     <div class="stack stage-result" id="stage-view-result" hidden>
-    <span class="hint" id="result-empty">ภาพที่ได้จะปรากฏตรงนี้</span>
-    <img class="thumb" id="out-result" alt="ต้นที่แต่งแล้ว" hidden>
-    <div class="btn-row" id="count-actions" hidden>
-      <button class="btn" id="count-btn">นับของในรูปนี้</button>
-      <span class="hint">เสียเงินเพิ่มเล็กน้อย</span>
-    </div>
-    <ul class="hint" id="result-quantities" hidden></ul>
-    <span class="hint" id="count-note" hidden></span>
-    <span class="hint" id="stock-note" hidden>ของที่ต้องเบิก (คิดจากขนาดจริงในแคตตาล็อก ไม่ใช่การนับจากรูป)</span>
-    <ul class="hint" id="result-stock" hidden></ul>
-    <div class="btn-row" id="result-actions" hidden>
-      <a class="btn" id="download-btn" download>ดาวน์โหลด</a>
-      <!-- Full price breakdown now lives on its own page (quote.html/quote.js) — panels
-           1-3 were too cramped for it. href/hidden set by resumeFromHistory() and the
-           generate-btn handler in app.js once a request_id exists. -->
-      <a class="btn" id="quote-link" href="/quote" hidden>ดูราคาแบบเต็ม →</a>
-      <span class="hint mono" id="result-meta"></span>
-    </div>
+      <span class="hint" id="result-empty">ภาพที่ได้จะปรากฏตรงนี้</span>
+      <div class="stage-spinner" id="stage-spinner" hidden><span class="typing-dots"><span></span><span></span><span></span></span> กำลังสร้างภาพ…</div>
+      <img class="thumb" id="out-result" alt="ต้นที่แต่งแล้ว" hidden>
+      <div class="btn-row" id="count-actions" hidden>
+        <button class="btn" id="count-btn">นับของในรูปนี้</button>
+        <span class="hint">เสียเงินเพิ่มเล็กน้อย</span>
+      </div>
+      <ul class="hint" id="result-quantities" hidden></ul>
+      <span class="hint" id="count-note" hidden></span>
+      <span class="hint" id="stock-note" hidden>ของที่ต้องเบิก (คิดจากขนาดจริงในแคตตาล็อก ไม่ใช่การนับจากรูป)</span>
+      <ul class="hint" id="result-stock" hidden></ul>
+      <div class="btn-row" id="result-actions" hidden>
+        <a class="btn" id="download-btn" download>ดาวน์โหลด</a>
+        <a class="btn" id="quote-link" href="/quote" hidden>ดูราคาแบบเต็ม →</a>
+        <span class="hint mono" id="result-meta"></span>
+      </div>
     </div>
   </section>
 
-  </main>
+  <input type="file" id="base-file" accept="image/jpeg,image/png" hidden>
+  <input type="file" id="element-file" accept="image/jpeg,image/png" multiple hidden>
+  <input type="file" id="atmosphere-file" accept="image/jpeg,image/png" hidden>
+
+</main>
 </div>
 
 <dialog id="confirm-dialog">
   <h2>สร้างภาพนี้เลยไหม</h2>
   <p id="confirm-body"></p>
+  <div class="confirm-prompt-preview" id="confirm-prompt-preview" hidden></div>
   <div class="notice warning" id="confirm-missing-sizes" hidden></div>
   <ul class="hint" id="confirm-quantities" hidden></ul>
   <div class="btn-row">
@@ -266,18 +132,6 @@
   </div>
 </dialog>
 
-<!-- prompt.js's own confirm dialog — a near-duplicate of #confirm-dialog above (own ids), kept
-     separate rather than shared so app.js's and prompt.js's confirm/cancel handlers never
-     both fire on the same <dialog>. -->
-<dialog id="prompt-confirm-dialog">
-  <h2>สร้างภาพนี้เลยไหม</h2>
-  <p id="prompt-confirm-body"></p>
-  <div class="confirm-prompt-preview" id="prompt-confirm-preview" hidden></div>
-  <div class="btn-row">
-    <button class="btn success" id="prompt-confirm-yes">สร้างเลย</button>
-    <button class="btn danger" id="prompt-confirm-no">ยกเลิก</button>
-  </div>
-</dialog>
 
 <!-- The catalogue picker. A modal rather than an inline panel because it is a browse: the
      grid wants the whole width, and opening it should not push the rest of panel 2 around. -->
@@ -323,10 +177,10 @@
   <img id="lightbox-image" alt="">
 </dialog>
 
-<script src="/static/api.js?v=8.52"></script>
-<script src="/static/app.js?v=8.52"></script>
-<script src="/static/auto.js?v=8.52"></script>
-<script src="/static/prompt.js?v=8.52"></script>
-<script src="/static/shell.js?v=8.52"></script>
+<script src="/static/api.js?v=8.53"></script>
+<script src="/static/render.js?v=8.53"></script>
+<script src="/static/app.js?v=8.53"></script>
+<script src="/static/auto.js?v=8.53"></script>
+<script src="/static/prompt.js?v=8.53"></script>
 </body>
 </html>

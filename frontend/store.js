@@ -1,53 +1,73 @@
-/* The one place page state lives (SPEC-layout-v2 §3). Loaded before every other script.
+/* The one place page state lives (SPEC layout v2 §3). Loaded before every other script.
  *
- * Each mode keeps its own slice; app.js, auto.js and prompt.js alias their slice
- * (`const state = store.custom`) so they still read and write the same object they always did
- * — moving the objects here changed no field and no behaviour, which the ?dryrun=1 payload
- * snapshots in tests/payload-before/ check.
+ * Every mode reads and writes this object — nothing keeps a parallel copy. Switching mode
+ * changes `mode` and nothing else, so the base photo, decorations, atmosphere reference and
+ * output settings survive it. `setStore()` is the write path for anything that changes what is
+ * on screen; `render()` (render.js) is the only thing that turns the store into DOM.
+ *
+ * Fields a person is typing into (a size in mm, the prompt text) are written directly and
+ * followed by renderFooter() instead — a full render would rebuild the very input being typed in.
  */
 window.store = {
-  // "กำหนดเอง" — also where Auto's picks land before the shop reviews them
-  custom: {
-    treeFile: null,
-    treeCode: null, // set only by the catalogue picker — an uploaded photo has no code
-    treeSizeMm: null, // the tree code's catalogue size, or null if it has none (blocking gate)
-    treeManualMm: null, // person-typed override when treeSizeMm is null
-    treePrice: null, // the tree code's price, null = the book never printed one (issue #27)
-    treeTypedPrice: null, // one typed into that offer and saved — shown back, never a gate
-    // {name, url, code, image, colours, sizeMm, manualMm, price, density} — one entry per accepted
-    // cut-out, up to MAX_ELEMENTS. sizeMm is the code's catalogue size (null = none, blocking
-    // gate); manualMm is a person-typed override; price is the code's price (null = unpriced,
-    // an offer to fill it in, never a gate) and typedPrice one filled into that offer;
-    // density is a DENSITY_PRESETS key, per item.
-    // image is the catalogue colour photo this cutout came from (null for an uploaded photo);
-    // colours is that product's other colours (issue #15), fetched once at accept time — null
-    // unless the product actually has more than one, which is also the "offer a switcher" flag.
-    elements: [],
-    sceneReference: null, // stored filename of the optional scene/ambience photo (used at generate time)
+  mode: "custom",            // "custom" | "prompt" | "auto"
+  backdrop: "tree",          // "tree" | "wall" — what the base photo is, and what Auto/the picker fill for
+
+  // The tree (or wall) photo. null until one is chosen.
+  //   {type, file, url, code, sizeMm, manualMm, price, typedPrice, ratio}
+  //   code: set only by the catalogue picker — an uploaded photo has no code.
+  //   sizeMm: the code's catalogue size, or null if it has none (the blocking size gate).
+  //   manualMm: person-typed override when sizeMm is null.
+  //   price: null = the book never printed one (issue #27); typedPrice: one typed and saved.
+  //   ratio: width/height of the photo.
+  base: null,
+
+  // One entry per decoration, up to limits.maxElements:
+  //   {name, url, code, image, colours, sizeMm, manualMm, price, typedPrice, density, status}
+  //   name is the server's stored cut-out filename (what /api/prepare's "element" wants).
+  //   image: the catalogue colour photo it came from (null for an upload); colours: that
+  //   product's other colours, null unless it has more than one (issue #15).
+  //   status: "ready" | "pending" (uploaded, waiting for a manual cut) | "cutting" | "failed".
+  decorations: [],
+
+  atmosphereRef: null,       // {name, url, ratio} — the optional scene photo, `name` as the server stored it
+  output: { ratio: "4:5", density: "normal" },   // DENSITY_PRESETS key; ratio is a size preset key or "auto"
+  prompt: "",                // Prompt mode's free text
+  tone: null,                // Auto mode's chosen tone key
+
+  result: null,              // the last /api/generate response (or a request resumed from history)
+  status: "idle",            // pipeline state shown in the footer chip
+  busy: false,               // a request is being prepared or generated — locks the sidebar
+
+  run: {
     requestId: null,
-    busy: false,
-    quantities: null, // prepared.quantities from the last /api/prepare, indexed like state.elements
-    treeRatio: null, // width/height of whatever photo is in the tree slot right now
-    sceneRatio: null, // width/height of the scene reference, when one is set
-    // code -> exact count from the last "นับของในรูปนี้" click, or null before that button is
-    // pressed (or after anything about the tree/decorations changes and invalidates it — see
-    // resetRun). Only used to redraw #result-quantities here — the full price breakdown lives
-    // on its own page now (quote.html/quote.js), reached via #quote-link once generated.
+    quantities: null,        // prepared.quantities from the last /api/prepare, indexed like decorations
+    // code -> exact count from the last "นับของในรูปนี้" click, or null before it is pressed (or
+    // after anything about the tree/decorations changes and invalidates it — see resetRun).
     counted: null,
   },
 
-  prompt: {
-    attachments: [], // {role: "tree"|"element"|"scene", file, url, code, sizeMm, manualMm}
-    maxChars: 500,   // overwritten by /api/config's prompt_mode_max_chars once it loads
-    sending: false,
+  auto: {
+    loaded: null,            // which backdrop `config` was fetched for, null before the first fetch
+    config: null,
+    pick: null,              // last /api/auto/pick response
+    pickError: null,
+    exclude: [],             // codes already shown, so "สุ่มใหม่" avoids repeats where stock allows
+    preparing: false,        // the pick is being turned into cut-out files
   },
 
-  auto: {
-    loaded: null,    // which backdrop `config` was fetched for, null before the first fetch
-    config: null,
-    tone: null,
-    pick: null,      // last /api/auto/pick response
-    pickError: null,
-    exclude: [],     // codes already shown, so "สุ่มใหม่" avoids repeats where stock allows
+  config: { sizes: [], densities: [] },      // /api/config
+  limits: { maxElements: 10, promptMaxChars: 500 },
+
+  ui: {
+    autoCut: true,           // "ตัดพื้นหลังอัตโนมัติ" on the upload zone
+    samples: false,          // the base step's sample strip is open
+    atmosphereOpen: false,   // the atmosphere step is expanded
+    sceneSamples: false,
+    stageView: "original",   // "original" | "result"
   },
 };
+
+function setStore(patch) {
+  Object.assign(window.store, patch);
+  render();
+}

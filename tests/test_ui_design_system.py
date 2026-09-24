@@ -208,7 +208,7 @@ def test_rule_8_disabled_controls_stay_visible_at_reduced_opacity():
 
 def test_rule_8_the_page_ships_its_controls_disabled_rather_than_absent():
     html = read(FRONTEND / "index.html")
-    for element_id in ("cut-btn", "size-select", "generate-btn"):
+    for element_id in ("size-select", "generate-btn"):
         match = re.search(rf'<[^>]*id="{element_id}"[^>]*>', html)
         assert match and "disabled" in match.group(0), f"{element_id} should start disabled"
 
