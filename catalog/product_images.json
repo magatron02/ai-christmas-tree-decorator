@@ -803,31 +803,31 @@
   "code": "25022-3",
   "pdf_page": 11,
   "image": "25022-3.png",
-  "rule": "above",
-  "gap_pt": 55.2,
-  "match": "above_far",
+  "rule": "beside",
+  "gap_pt": 38.0,
+  "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 2
+  "shared_with": 7
  },
  {
   "code": "26022-3",
   "pdf_page": 11,
   "image": "26022-3.png",
-  "rule": "above",
-  "gap_pt": 70.2,
-  "match": "above_far",
+  "rule": "beside",
+  "gap_pt": 38.0,
+  "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 2
+  "shared_with": 7
  },
  {
   "code": "27022-3",
   "pdf_page": 11,
   "image": "27022-3.png",
-  "rule": "above",
-  "gap_pt": 85.2,
-  "match": "above_far",
+  "rule": "beside",
+  "gap_pt": 38.0,
+  "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 2
+  "shared_with": 7
  },
  {
   "code": "28022-3",
@@ -837,7 +837,7 @@
   "gap_pt": 38.0,
   "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 4
+  "shared_with": 7
  },
  {
   "code": "21022-3",
@@ -847,7 +847,7 @@
   "gap_pt": 38.0,
   "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 4
+  "shared_with": 7
  },
  {
   "code": "21222-3",
@@ -857,7 +857,7 @@
   "gap_pt": 38.0,
   "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 4
+  "shared_with": 7
  },
  {
   "code": "21522-3",
@@ -867,7 +867,7 @@
   "gap_pt": 38.0,
   "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 4
+  "shared_with": 7
  },
  {
   "code": "22022-3",
@@ -877,37 +877,37 @@
   "gap_pt": 38.0,
   "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 4
+  "shared_with": 7
  },
  {
   "code": "25022-5",
   "pdf_page": 11,
   "image": "25022-5.png",
-  "rule": "above",
-  "gap_pt": 58.5,
-  "match": "above_far",
+  "rule": "beside",
+  "gap_pt": 67.1,
+  "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 2
+  "shared_with": 7
  },
  {
   "code": "26022-5",
   "pdf_page": 11,
   "image": "26022-5.png",
-  "rule": "above",
-  "gap_pt": 73.5,
-  "match": "above_far",
+  "rule": "beside",
+  "gap_pt": 67.1,
+  "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 2
+  "shared_with": 7
  },
  {
   "code": "27022-5",
   "pdf_page": 11,
   "image": "27022-5.png",
-  "rule": "above",
-  "gap_pt": 88.5,
-  "match": "above_far",
+  "rule": "beside",
+  "gap_pt": 67.1,
+  "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 2
+  "shared_with": 7
  },
  {
   "code": "28022-5",
@@ -917,7 +917,7 @@
   "gap_pt": 67.1,
   "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 4
+  "shared_with": 7
  },
  {
   "code": "21022-5",
@@ -927,7 +927,7 @@
   "gap_pt": 67.1,
   "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 4
+  "shared_with": 7
  },
  {
   "code": "21222-5",
@@ -937,7 +937,7 @@
   "gap_pt": 67.1,
   "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 4
+  "shared_with": 7
  },
  {
   "code": "21522-5",
@@ -947,7 +947,7 @@
   "gap_pt": 67.1,
   "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 4
+  "shared_with": 7
  },
  {
   "code": "22022-5",
@@ -957,7 +957,7 @@
   "gap_pt": 67.1,
   "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 4
+  "shared_with": 7
  },
  {
   "code": "86031-1",
@@ -1013,9 +1013,9 @@
   "code": "07032-4",
   "pdf_page": 12,
   "image": "07032-4.png",
-  "rule": "above",
-  "gap_pt": 59.2,
-  "match": "above_far",
+  "rule": "beside",
+  "gap_pt": 7.4,
+  "match": "beside",
   "book": "Bangkok Christmas",
   "shared_with": 0
  },
@@ -1023,11 +1023,11 @@
   "code": "27023-1",
   "pdf_page": 13,
   "image": "27023-1.png",
-  "rule": "above",
-  "gap_pt": 82.3,
-  "match": "above_far",
+  "rule": "beside",
+  "gap_pt": 7.2,
+  "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 0
+  "shared_with": 1
  },
  {
   "code": "21023-1",
@@ -1037,15 +1037,15 @@
   "gap_pt": 7.3,
   "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 0
+  "shared_with": 1
  },
  {
   "code": "04036-1",
   "pdf_page": 13,
   "image": "04036-1.png",
-  "rule": "above",
-  "gap_pt": 38.0,
-  "match": "directly_above",
+  "rule": "beside",
+  "gap_pt": 26.2,
+  "match": "beside",
   "book": "Bangkok Christmas",
   "shared_with": 0
  },
@@ -1063,31 +1063,31 @@
   "code": "04012-2",
   "pdf_page": 14,
   "image": "04012-2.png",
-  "rule": "above",
-  "gap_pt": 57.1,
-  "match": "above_far",
+  "rule": "beside",
+  "gap_pt": 41.8,
+  "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 2
+  "shared_with": 4
  },
  {
   "code": "05512-2",
   "pdf_page": 14,
   "image": "05512-2.png",
-  "rule": "above",
-  "gap_pt": 72.1,
-  "match": "above_far",
+  "rule": "beside",
+  "gap_pt": 46.8,
+  "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 2
+  "shared_with": 4
  },
  {
   "code": "06012-2",
   "pdf_page": 14,
   "image": "06012-2.png",
-  "rule": "above",
-  "gap_pt": 87.1,
-  "match": "above_far",
+  "rule": "beside",
+  "gap_pt": 41.8,
+  "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 2
+  "shared_with": 4
  },
  {
   "code": "07012-2",
@@ -1097,7 +1097,7 @@
   "gap_pt": 41.9,
   "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 1
+  "shared_with": 4
  },
  {
   "code": "08012-2",
@@ -1107,7 +1107,7 @@
   "gap_pt": 40.1,
   "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 1
+  "shared_with": 4
  },
  {
   "code": "07512-2",
@@ -1133,11 +1133,11 @@
   "code": "27022-4",
   "pdf_page": 15,
   "image": "27022-4.png",
-  "rule": "above",
-  "gap_pt": 80.2,
-  "match": "above_far",
+  "rule": "beside",
+  "gap_pt": 31.3,
+  "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 0
+  "shared_with": 7
  },
  {
   "code": "41092-1",
@@ -1147,17 +1147,17 @@
   "gap_pt": 54.6,
   "match": "above_far",
   "book": "Bangkok Christmas",
-  "shared_with": 2
+  "shared_with": 1
  },
  {
   "code": "41292-1",
   "pdf_page": 15,
   "image": "41292-1.png",
-  "rule": "above",
-  "gap_pt": 69.6,
-  "match": "above_far",
+  "rule": "beside",
+  "gap_pt": 32.4,
+  "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 2
+  "shared_with": 4
  },
  {
   "code": "41592-1",
@@ -1167,7 +1167,7 @@
   "gap_pt": 84.6,
   "match": "above_far",
   "book": "Bangkok Christmas",
-  "shared_with": 2
+  "shared_with": 1
  },
  {
   "code": "42092-1",
@@ -1177,7 +1177,7 @@
   "gap_pt": 32.4,
   "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 3
+  "shared_with": 4
  },
  {
   "code": "42592-1",
@@ -1187,7 +1187,7 @@
   "gap_pt": 32.4,
   "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 3
+  "shared_with": 4
  },
  {
   "code": "43092-1",
@@ -1197,7 +1197,7 @@
   "gap_pt": 32.4,
   "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 3
+  "shared_with": 4
  },
  {
   "code": "44092-1",
@@ -1207,37 +1207,37 @@
   "gap_pt": 32.4,
   "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 3
+  "shared_with": 4
  },
  {
   "code": "06012-3",
   "pdf_page": 15,
   "image": "06012-3.png",
-  "rule": "above",
-  "gap_pt": 45.2,
-  "match": "above_far",
+  "rule": "beside",
+  "gap_pt": 62.3,
+  "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 2
+  "shared_with": 7
  },
  {
   "code": "08012-3",
   "pdf_page": 15,
   "image": "08012-3.png",
-  "rule": "above",
-  "gap_pt": 60.2,
-  "match": "above_far",
+  "rule": "beside",
+  "gap_pt": 62.3,
+  "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 2
+  "shared_with": 7
  },
  {
   "code": "41092-3",
   "pdf_page": 15,
   "image": "41092-3.png",
-  "rule": "above",
-  "gap_pt": 75.2,
-  "match": "above_far",
+  "rule": "beside",
+  "gap_pt": 65.6,
+  "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 2
+  "shared_with": 7
  },
  {
   "code": "41292-3",
@@ -1247,7 +1247,7 @@
   "gap_pt": 65.6,
   "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 3
+  "shared_with": 7
  },
  {
   "code": "41592-3",
@@ -1257,7 +1257,7 @@
   "gap_pt": 65.6,
   "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 3
+  "shared_with": 7
  },
  {
   "code": "42092-3",
@@ -1267,7 +1267,7 @@
   "gap_pt": 65.6,
   "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 3
+  "shared_with": 7
  },
  {
   "code": "43092-3",
@@ -1277,37 +1277,37 @@
   "gap_pt": 65.6,
   "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 3
+  "shared_with": 7
  },
  {
   "code": "25022-2",
   "pdf_page": 16,
   "image": "25022-2.png",
-  "rule": "above",
-  "gap_pt": 58.7,
-  "match": "above_far",
+  "rule": "beside",
+  "gap_pt": 69.7,
+  "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 2
+  "shared_with": 4
  },
  {
   "code": "26022-2",
   "pdf_page": 16,
   "image": "26022-2.png",
-  "rule": "above",
-  "gap_pt": 73.7,
-  "match": "above_far",
+  "rule": "beside",
+  "gap_pt": 69.7,
+  "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 2
+  "shared_with": 4
  },
  {
   "code": "27022-2",
   "pdf_page": 16,
   "image": "27022-2.png",
-  "rule": "above",
-  "gap_pt": 88.7,
-  "match": "above_far",
+  "rule": "beside",
+  "gap_pt": 69.7,
+  "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 2
+  "shared_with": 4
  },
  {
   "code": "28022-2",
@@ -1317,7 +1317,7 @@
   "gap_pt": 69.7,
   "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 1
+  "shared_with": 4
  },
  {
   "code": "21022-2",
@@ -1337,7 +1337,7 @@
   "gap_pt": 66.3,
   "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 1
+  "shared_with": 4
  },
  {
   "code": "21522-2",
@@ -1383,11 +1383,11 @@
   "code": "07012-5",
   "pdf_page": 16,
   "image": "07012-5.png",
-  "rule": "above",
-  "gap_pt": 57.5,
-  "match": "above_far",
+  "rule": "beside",
+  "gap_pt": 42.0,
+  "match": "beside",
   "book": "Bangkok Christmas",
-  "shared_with": 1
+  "shared_with": 0
  },
  {
   "code": "08012-5",
@@ -1397,7 +1397,7 @@
   "gap_pt": 72.5,
   "match": "above_far",
   "book": "Bangkok Christmas",
-  "shared_with": 1
+  "shared_with": 0
  },
  {
   "code": "16032-1",
@@ -14809,21 +14809,21 @@
   "pdf_page": null,
   "image": "MSND-111437.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 2
  },
  {
   "code": "MSND-111448",
   "pdf_page": null,
   "image": "MSND-111448.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 2
  },
  {
   "code": "MSND-111449",
   "pdf_page": null,
   "image": "MSND-111449.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 2
  },
  {
   "code": "MSND-111436",
@@ -14921,49 +14921,49 @@
   "pdf_page": null,
   "image": "166150 WITH LIGHTING.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 6
  },
  {
   "code": "166180 WITH LIGHTING",
   "pdf_page": null,
   "image": "166180 WITH LIGHTING.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 6
  },
  {
   "code": "166210 WITH LIGHTING",
   "pdf_page": null,
   "image": "166210 WITH LIGHTING.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 6
  },
  {
   "code": "166270 WITH LIGHTING",
   "pdf_page": null,
   "image": "166270 WITH LIGHTING.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 6
  },
  {
   "code": "166300 WITH LIGHTING",
   "pdf_page": null,
   "image": "166300 WITH LIGHTING.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 6
  },
  {
   "code": "166400 WITH LIGHTING",
   "pdf_page": null,
   "image": "166400 WITH LIGHTING.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 6
  },
  {
   "code": "166240 WITH LIGHTING",
   "pdf_page": null,
   "image": "166240 WITH LIGHTING.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 6
  },
  {
   "code": "622265",
@@ -14991,35 +14991,35 @@
   "pdf_page": null,
   "image": "98120.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 4
  },
  {
   "code": "98150",
   "pdf_page": null,
   "image": "98150.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 4
  },
  {
   "code": "98180",
   "pdf_page": null,
   "image": "98180.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 4
  },
  {
   "code": "98210",
   "pdf_page": null,
   "image": "98210.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 4
  },
  {
   "code": "98240",
   "pdf_page": null,
   "image": "98240.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 4
  },
  {
   "code": "9140180",
@@ -15040,133 +15040,133 @@
   "pdf_page": null,
   "image": "966180.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 1
  },
  {
   "code": "966210",
   "pdf_page": null,
   "image": "966210.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 1
  },
  {
   "code": "420167",
   "pdf_page": null,
   "image": "420167.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 3
  },
  {
   "code": "420168",
   "pdf_page": null,
   "image": "420168.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 3
  },
  {
   "code": "420169",
   "pdf_page": null,
   "image": "420169.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 3
  },
  {
   "code": "420170",
   "pdf_page": null,
   "image": "420170.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 3
  },
  {
   "code": "420167 WITH LIGHTING",
   "pdf_page": null,
   "image": "420167 WITH LIGHTING.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 3
  },
  {
   "code": "420168 WITH LIGHTING",
   "pdf_page": null,
   "image": "420168 WITH LIGHTING.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 3
  },
  {
   "code": "420170 WITH LIGHTING",
   "pdf_page": null,
   "image": "420170 WITH LIGHTING.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 3
  },
  {
   "code": "420171 WITH LIGHTING",
   "pdf_page": null,
   "image": "420171 WITH LIGHTING.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 3
  },
  {
   "code": "MSND-60473",
   "pdf_page": null,
   "image": "MSND-60473.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 4
  },
  {
   "code": "MSND-60474",
   "pdf_page": null,
   "image": "MSND-60474.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 4
  },
  {
   "code": "MSND-60475",
   "pdf_page": null,
   "image": "MSND-60475.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 4
  },
  {
   "code": "MSND-107172",
   "pdf_page": null,
   "image": "MSND-107172.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 4
  },
  {
   "code": "MSND-111429",
   "pdf_page": null,
   "image": "MSND-111429.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 4
  },
  {
   "code": "MSND-60480",
   "pdf_page": null,
   "image": "MSND-60480.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 3
  },
  {
   "code": "MSND-60481",
   "pdf_page": null,
   "image": "MSND-60481.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 3
  },
  {
   "code": "MSND-81023",
   "pdf_page": null,
   "image": "MSND-81023.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 3
  },
  {
   "code": "MSND-81024",
   "pdf_page": null,
   "image": "MSND-81024.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 3
  },
  {
   "code": "9140394",
@@ -15250,14 +15250,14 @@
   "pdf_page": null,
   "image": "MSND-81105.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 1
  },
  {
   "code": "MSND-60915",
   "pdf_page": null,
   "image": "MSND-60915.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 1
  },
  {
   "code": "MSND-60930",
@@ -15789,7 +15789,7 @@
   "pdf_page": null,
   "image": "689830.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 1
  },
  {
   "code": "689831",
@@ -16013,7 +16013,7 @@
   "pdf_page": null,
   "image": "MSND-107170.png",
   "match": "manual",
-  "shared_with": 0
+  "shared_with": 1
  },
  {
   "code": "MSND-107171",

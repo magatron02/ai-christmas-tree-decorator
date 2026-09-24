@@ -147,6 +147,14 @@ def _note_for(price, size_mm, pack):
     return " · ".join(notes)
 
 
+def _showable_image(code):
+    """The catalogue photo for a code, only when the picker itself would show it — a crop shared
+    by several codes or judged page furniture is withheld here for the same reason it is there
+    (NonGoals.md 7): next to a price a picture reads as the answer, and a wrong one misleads.
+    A vendor-only code has no catalogue photo at all, which is simply None."""
+    return catalog.image_for(code) if catalog.crop_is_showable(code) else None
+
+
 def _row(code, entry, catalogued_by_book):
     price, size_mm = entry.get("price"), entry.get("size_mm")
     pack = vendor_lookup.pack_for(code)
@@ -160,6 +168,7 @@ def _row(code, entry, catalogued_by_book):
         "overridden": sorted(vendor_overlay.fields_for(code)),
         "supplier": supplier,
         "in_catalog": _in_catalog(code, supplier, catalogued_by_book),
+        "image": _showable_image(code),
         "note": _note_for(price, size_mm, pack),
     }
 

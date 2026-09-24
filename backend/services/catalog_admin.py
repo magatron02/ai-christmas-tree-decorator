@@ -251,13 +251,12 @@ def _reindex_one(code, image_bytes, fmt="PNG"):
     path.write_text(json.dumps(descriptions, indent=1, ensure_ascii=False), encoding="utf-8")
 
 
-def queue_set_price(code, price):
-    """The pricing queue's one field (issue #10) — sets just the price, nothing else.
+def set_price(code, price):
+    """Sets just the price, nothing else (issue #27's inline entry).
 
-    Unlike update_product this never diffs against the book: everything reaching the queue
-    already has no book price (pricing_queue() only lists those), so any typed number is by
-    definition the shop's own opinion. A blank clears that opinion and puts the product back
-    in the queue, same "absent means no opinion" rule as everywhere else in the overlay.
+    Unlike update_product this never diffs against the book: it is only offered for a product
+    with no book price, so any typed number is by definition the shop's own opinion. A blank
+    clears that opinion, same "absent means no opinion" rule as everywhere else in the overlay.
     """
     code = (code or "").strip().upper()
     catalog.find(code)  # raises ValidationError on an unknown code
@@ -452,16 +451,5 @@ def remove_photo(code, image):
         shop_overlay.set_fields(code, {"supporting_photos": supporting}, speaks_for=("supporting_photos",))
 
     _delete_shop_photo(key)
-    catalog.refresh()
-    return {"code": code}
-
-
-def skip_pricing(code):
-    """Mark a product as one the shop will never price (issue #10) — it leaves the queue for
-    good, but stays exactly as usable everywhere else: auto_pool never looks at price
-    (ADR-0003), and nothing downstream requires one."""
-    code = (code or "").strip().upper()
-    catalog.find(code)
-    shop_overlay.set_fields(code, {"price_skipped": True}, speaks_for=("price_skipped",))
     catalog.refresh()
     return {"code": code}

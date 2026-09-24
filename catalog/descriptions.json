@@ -1612,67 +1612,6 @@
   "text": "tree, green, natural, tree, dense branched, single",
   "tokens": 526
  },
- "25022-3": {
-  "code": "25022-3",
-  "pdf_page": 11,
-  "image": "25022-3.png",
-  "match": "above_far",
-  "attributes": {
-   "kind": "tree",
-   "primary_colour": "green",
-   "other_colours": [
-    "black"
-   ],
-   "finish": "natural",
-   "shape": "spray",
-   "pattern": "dense foliage",
-   "packaging": "single",
-   "summary": "A dense green artificial pine spray or branch with a natural foliage finish."
-  },
-  "text": "tree, green, black, natural, spray, dense foliage, single",
-  "tokens": 492
- },
- "26022-3": {
-  "code": "26022-3",
-  "pdf_page": 11,
-  "image": "26022-3.png",
-  "match": "above_far",
-  "attributes": {
-   "kind": "tree",
-   "primary_colour": "green",
-   "other_colours": [
-    "dark green",
-    "black"
-   ],
-   "finish": "natural",
-   "shape": "branch",
-   "pattern": "dense evergreen branches",
-   "packaging": "single",
-   "summary": "Artificial-looking green evergreen branch spray with dense pine needles."
-  },
-  "text": "tree, green, dark green, black, natural, branch, dense evergreen branches, single",
-  "tokens": 492
- },
- "27022-3": {
-  "code": "27022-3",
-  "pdf_page": 11,
-  "image": "27022-3.png",
-  "match": "above_far",
-  "attributes": {
-   "kind": "tree",
-   "primary_colour": "green",
-   "other_colours": [
-    "black"
-   ],
-   "finish": "natural",
-   "shape": "branch",
-   "pattern": "dense pine needles",
-   "packaging": "single",
-   "summary": "A lush green artificial pine branch cluster with dense needles."
-  },
-  "text": "tree, green, black, natural, branch, dense pine needles, single",
-  "tokens": 489
- },
  "28022-3": {
   "code": "28022-3",
   "pdf_page": 11,
@@ -1771,60 +1710,6 @@
   },
   "text": "tree, green, white, dark green, natural, conical, full branched, single",
   "tokens": 556
- },
- "25022-5": {
-  "code": "25022-5",
-  "pdf_page": 11,
-  "image": "25022-5.png",
-  "match": "above_far",
-  "attributes": {
-   "kind": "tree",
-   "primary_colour": "green",
-   "other_colours": [],
-   "finish": "natural",
-   "shape": "round",
-   "pattern": "full, bushy evergreen branches",
-   "packaging": "single",
-   "summary": "A green artificial evergreen tree top with full, bushy branches."
-  },
-  "text": "tree, green, natural, round, full, bushy evergreen branches, single",
-  "tokens": 492
- },
- "26022-5": {
-  "code": "26022-5",
-  "pdf_page": 11,
-  "image": "26022-5.png",
-  "match": "above_far",
-  "attributes": {
-   "kind": "tree",
-   "primary_colour": "green",
-   "other_colours": [],
-   "finish": "natural",
-   "shape": "round",
-   "pattern": "dense evergreen foliage",
-   "packaging": "single",
-   "summary": "A dense green evergreen tree or branch decoration with a natural look."
-  },
-  "text": "tree, green, natural, round, dense evergreen foliage, single",
-  "tokens": 489
- },
- "27022-5": {
-  "code": "27022-5",
-  "pdf_page": 11,
-  "image": "27022-5.png",
-  "match": "above_far",
-  "attributes": {
-   "kind": "tree",
-   "primary_colour": "green",
-   "other_colours": [],
-   "finish": "natural",
-   "shape": "spray",
-   "pattern": "mixed",
-   "packaging": "single",
-   "summary": "A green artificial Christmas tree spray with dense, realistic-looking needles."
-  },
-  "text": "tree, green, natural, spray, mixed, single",
-  "tokens": 488
  },
  "28022-5": {
   "code": "28022-5",
@@ -2010,42 +1895,6 @@
   "text": "pick, green, yellow, natural, spray, single",
   "tokens": 494
  },
- "07032-4": {
-  "code": "07032-4",
-  "pdf_page": 12,
-  "image": "07032-4.png",
-  "match": "above_far",
-  "attributes": {
-   "kind": "tree",
-   "primary_colour": "green",
-   "other_colours": [],
-   "finish": "natural",
-   "shape": "fir tree foliage",
-   "pattern": "none",
-   "packaging": "single",
-   "summary": "Artificial-looking green fir foliage decoration with a natural finish."
-  },
-  "text": "tree, green, natural, fir tree foliage, single",
-  "tokens": 487
- },
- "27023-1": {
-  "code": "27023-1",
-  "pdf_page": 13,
-  "image": "27023-1.png",
-  "match": "above_far",
-  "attributes": {
-   "kind": "tree",
-   "primary_colour": "green",
-   "other_colours": [],
-   "finish": "natural",
-   "shape": "round",
-   "pattern": "dense pine foliage",
-   "packaging": "single",
-   "summary": "A dense green artificial Christmas tree with natural-looking pine foliage."
-  },
-  "text": "tree, green, natural, round, dense pine foliage, single",
-  "tokens": 488
- },
  "21023-1": {
   "code": "21023-1",
   "pdf_page": 13,
@@ -2063,24 +1912,6 @@
   },
   "text": "tree, green, natural, conical tree, single",
   "tokens": 548
- },
- "04036-1": {
-  "code": "04036-1",
-  "pdf_page": 13,
-  "image": "04036-1.png",
-  "match": "directly_above",
-  "attributes": {
-   "kind": "tree",
-   "primary_colour": "green",
-   "other_colours": [],
-   "finish": "natural",
-   "shape": "branch/foliage",
-   "pattern": "dense evergreen needles",
-   "packaging": "single",
-   "summary": "Green evergreen tree foliage with dense natural-looking needles."
-  },
-  "text": "tree, green, natural, branch/foliage, dense evergreen needles, single",
-  "tokens": 490
  },
  "06072-3": {
   "code": "06072-3",
@@ -2101,60 +1932,6 @@
   },
   "text": "garland, green, yellow, natural, spray, dense pine needles, single",
   "tokens": 495
- },
- "04012-2": {
-  "code": "04012-2",
-  "pdf_page": 14,
-  "image": "04012-2.png",
-  "match": "above_far",
-  "attributes": {
-   "kind": "tree",
-   "primary_colour": "green",
-   "other_colours": [],
-   "finish": "natural",
-   "shape": "round",
-   "pattern": "tufted pine needle spray",
-   "packaging": "single",
-   "summary": "A round green pine-style Christmas pick with dense needle tufts."
-  },
-  "text": "tree, green, natural, round, tufted pine needle spray, single",
-  "tokens": 492
- },
- "05512-2": {
-  "code": "05512-2",
-  "pdf_page": 14,
-  "image": "05512-2.png",
-  "match": "above_far",
-  "attributes": {
-   "kind": "tree",
-   "primary_colour": "green",
-   "other_colours": [],
-   "finish": "natural",
-   "shape": "round",
-   "pattern": "full bristle spray",
-   "packaging": "single",
-   "summary": "Green artificial Christmas tree foliage piece with dense bristle-like branches."
-  },
-  "text": "tree, green, natural, round, full bristle spray, single",
-  "tokens": 490
- },
- "06012-2": {
-  "code": "06012-2",
-  "pdf_page": 14,
-  "image": "06012-2.png",
-  "match": "above_far",
-  "attributes": {
-   "kind": "tree",
-   "primary_colour": "green",
-   "other_colours": [],
-   "finish": "mixed",
-   "shape": "round",
-   "pattern": "spray",
-   "packaging": "single",
-   "summary": "Green pine-style Christmas tree foliage pick with dense spiky needles."
-  },
-  "text": "tree, green, mixed, round, spray, single",
-  "tokens": 488
  },
  "07012-2": {
   "code": "07012-2",
@@ -2234,26 +2011,6 @@
   "text": "tree, green, gold, natural, conical, undefined, single",
   "tokens": 550
  },
- "27022-4": {
-  "code": "27022-4",
-  "pdf_page": 15,
-  "image": "27022-4.png",
-  "match": "above_far",
-  "attributes": {
-   "kind": "tree",
-   "primary_colour": "green",
-   "other_colours": [
-    "white"
-   ],
-   "finish": "mixed",
-   "shape": "spray",
-   "pattern": "frosted tips",
-   "packaging": "single",
-   "summary": "Artificial green Christmas pine spray with frosted white tips."
-  },
-  "text": "tree, green, white, mixed, spray, frosted tips, single",
-  "tokens": 491
- },
  "41092-1": {
   "code": "41092-1",
   "pdf_page": 15,
@@ -2271,24 +2028,6 @@
   },
   "text": "garland, green, mixed, spray, dense pine-style foliage, single",
   "tokens": 494
- },
- "41292-1": {
-  "code": "41292-1",
-  "pdf_page": 15,
-  "image": "41292-1.png",
-  "match": "above_far",
-  "attributes": {
-   "kind": "tree",
-   "primary_colour": "green",
-   "other_colours": [],
-   "finish": "natural",
-   "shape": "spray",
-   "pattern": "dense pine needles",
-   "packaging": "single",
-   "summary": "A green pine-like Christmas spray with dense needle branches."
-  },
-  "text": "tree, green, natural, spray, dense pine needles, single",
-  "tokens": 488
  },
  "41592-1": {
   "code": "41592-1",
@@ -2386,60 +2125,6 @@
   "text": "tree, green, natural, conical tree, dense fir-like branches, single",
   "tokens": 551
  },
- "06012-3": {
-  "code": "06012-3",
-  "pdf_page": 15,
-  "image": "06012-3.png",
-  "match": "above_far",
-  "attributes": {
-   "kind": "tree",
-   "primary_colour": "green",
-   "other_colours": [],
-   "finish": "natural",
-   "shape": "spray",
-   "pattern": "clustered pine needles",
-   "packaging": "single",
-   "summary": "A green pine-style Christmas tree spray with dense clustered needles."
-  },
-  "text": "tree, green, natural, spray, clustered pine needles, single",
-  "tokens": 490
- },
- "08012-3": {
-  "code": "08012-3",
-  "pdf_page": 15,
-  "image": "08012-3.png",
-  "match": "above_far",
-  "attributes": {
-   "kind": "tree",
-   "primary_colour": "green",
-   "other_colours": [],
-   "finish": "natural",
-   "shape": "spray",
-   "pattern": "none",
-   "packaging": "single",
-   "summary": "Green artificial pine spray with dense bristly needles."
-  },
-  "text": "tree, green, natural, spray, single",
-  "tokens": 486
- },
- "41092-3": {
-  "code": "41092-3",
-  "pdf_page": 15,
-  "image": "41092-3.png",
-  "match": "above_far",
-  "attributes": {
-   "kind": "tree",
-   "primary_colour": "green",
-   "other_colours": [],
-   "finish": "natural",
-   "shape": "spray",
-   "pattern": "dense pine foliage",
-   "packaging": "single",
-   "summary": "A dense green pine foliage decoration with a natural look."
-  },
-  "text": "tree, green, natural, spray, dense pine foliage, single",
-  "tokens": 488
- },
  "41292-3": {
   "code": "41292-3",
   "pdf_page": 15,
@@ -2511,60 +2196,6 @@
   },
   "text": "tree, green, natural, conical, dense branches, single",
   "tokens": 545
- },
- "25022-2": {
-  "code": "25022-2",
-  "pdf_page": 16,
-  "image": "25022-2.png",
-  "match": "above_far",
-  "attributes": {
-   "kind": "tree",
-   "primary_colour": "green",
-   "other_colours": [],
-   "finish": "natural",
-   "shape": "tree",
-   "pattern": "spray",
-   "packaging": "single",
-   "summary": "A green artificial Christmas tree branch with a natural-looking finish."
-  },
-  "text": "tree, green, natural, tree, spray, single",
-  "tokens": 487
- },
- "26022-2": {
-  "code": "26022-2",
-  "pdf_page": 16,
-  "image": "26022-2.png",
-  "match": "above_far",
-  "attributes": {
-   "kind": "tree",
-   "primary_colour": "green",
-   "other_colours": [],
-   "finish": "natural",
-   "shape": "tree",
-   "pattern": "none",
-   "packaging": "single",
-   "summary": "Artificial green Christmas tree with dense, realistic branch tips."
-  },
-  "text": "tree, green, natural, tree, single",
-  "tokens": 485
- },
- "27022-2": {
-  "code": "27022-2",
-  "pdf_page": 16,
-  "image": "27022-2.png",
-  "match": "above_far",
-  "attributes": {
-   "kind": "tree",
-   "primary_colour": "green",
-   "other_colours": [],
-   "finish": "natural",
-   "shape": "branching fir tree foliage",
-   "pattern": "",
-   "packaging": "single",
-   "summary": "Artificial green Christmas tree foliage with a natural look."
-  },
-  "text": "tree, green, natural, branching fir tree foliage, single",
-  "tokens": 486
  },
  "28022-2": {
   "code": "28022-2",
@@ -2695,24 +2326,6 @@
   },
   "text": "tree, green, brown, natural, cone, single, single",
   "tokens": 533
- },
- "07012-5": {
-  "code": "07012-5",
-  "pdf_page": 16,
-  "image": "07012-5.png",
-  "match": "above_far",
-  "attributes": {
-   "kind": "tree",
-   "primary_colour": "green",
-   "other_colours": [],
-   "finish": "natural",
-   "shape": "spray",
-   "pattern": "mixed",
-   "packaging": "single",
-   "summary": "A green artificial pine spray with layered, needle-like branches."
-  },
-  "text": "tree, green, natural, spray, mixed, single",
-  "tokens": 487
  },
  "08012-5": {
   "code": "08012-5",
@@ -30884,6 +30497,398 @@
   },
   "text": "figure, grey, white, cream, fabric, gnome figure, single",
   "tokens": 519
+ },
+ "25022-3": {
+  "code": "25022-3",
+  "pdf_page": 11,
+  "image": "25022-3.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "conical",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with a full conical shape."
+  },
+  "text": "tree, green, natural, conical, single",
+  "tokens": 541
+ },
+ "26022-3": {
+  "code": "26022-3",
+  "pdf_page": 11,
+  "image": "26022-3.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "natural",
+   "shape": "conical",
+   "pattern": "snow-dusted branches",
+   "packaging": "single",
+   "summary": "A green artificial Christmas tree with snow-dusted-looking branches."
+  },
+  "text": "tree, green, white, natural, conical, snow-dusted branches, single",
+  "tokens": 549
+ },
+ "27022-3": {
+  "code": "27022-3",
+  "pdf_page": 11,
+  "image": "27022-3.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "conical",
+   "pattern": "mixed green needles",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with a conical shape and dense mixed green needles."
+  },
+  "text": "tree, green, natural, conical, mixed green needles, single",
+  "tokens": 549
+ },
+ "25022-5": {
+  "code": "25022-5",
+  "pdf_page": 11,
+  "image": "25022-5.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "tree",
+   "pattern": "undefined",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with full branches."
+  },
+  "text": "tree, green, natural, tree, undefined, single",
+  "tokens": 553
+ },
+ "26022-5": {
+  "code": "26022-5",
+  "pdf_page": 11,
+  "image": "26022-5.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "conical tree",
+   "pattern": "mixed",
+   "packaging": "single",
+   "summary": "Green artificial Christmas tree with a natural-looking conical shape and dense branches."
+  },
+  "text": "tree, green, natural, conical tree, mixed, single",
+  "tokens": 562
+ },
+ "27022-5": {
+  "code": "27022-5",
+  "pdf_page": 11,
+  "image": "27022-5.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "conical tree",
+   "pattern": "none",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with a conical shape and full branches."
+  },
+  "text": "tree, green, natural, conical tree, single",
+  "tokens": 560
+ },
+ "07032-4": {
+  "code": "07032-4",
+  "pdf_page": 12,
+  "image": "07032-4.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "conical tree",
+   "pattern": "dense evergreen branches",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with dense evergreen branches."
+  },
+  "text": "tree, green, natural, conical tree, dense evergreen branches, single",
+  "tokens": 529
+ },
+ "27023-1": {
+  "code": "27023-1",
+  "pdf_page": 13,
+  "image": "27023-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "natural",
+   "shape": "conical",
+   "pattern": "mixed needles",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with a natural-looking mixed-needle style."
+  },
+  "text": "tree, green, white, natural, conical, mixed needles, single",
+  "tokens": 548
+ },
+ "04036-1": {
+  "code": "04036-1",
+  "pdf_page": 13,
+  "image": "04036-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "brown"
+   ],
+   "finish": "natural",
+   "shape": "cone",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with a natural-looking finish and burlap-wrapped base."
+  },
+  "text": "tree, green, brown, natural, cone, single",
+  "tokens": 519
+ },
+ "04012-2": {
+  "code": "04012-2",
+  "pdf_page": 14,
+  "image": "04012-2.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "mixed",
+   "shape": "cone",
+   "pattern": "none",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with a cone shape and dense branches."
+  },
+  "text": "tree, green, mixed, cone, single",
+  "tokens": 528
+ },
+ "05512-2": {
+  "code": "05512-2",
+  "pdf_page": 14,
+  "image": "05512-2.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "cone",
+   "pattern": "mixed",
+   "packaging": "single",
+   "summary": "A green artificial Christmas tree with a full cone shape."
+  },
+  "text": "tree, green, natural, cone, mixed, single",
+  "tokens": 527
+ },
+ "06012-2": {
+  "code": "06012-2",
+  "pdf_page": 14,
+  "image": "06012-2.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "yellow"
+   ],
+   "finish": "natural",
+   "shape": "conical",
+   "pattern": "dense branches",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with dense branches and a conical shape."
+  },
+  "text": "tree, green, yellow, natural, conical, dense branches, single",
+  "tokens": 533
+ },
+ "27022-4": {
+  "code": "27022-4",
+  "pdf_page": 15,
+  "image": "27022-4.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "conical tree",
+   "pattern": "dense bristle-like branches",
+   "packaging": "single",
+   "summary": "A full green artificial Christmas tree with dense, natural-looking branches."
+  },
+  "text": "tree, green, natural, conical tree, dense bristle-like branches, single",
+  "tokens": 550
+ },
+ "41292-1": {
+  "code": "41292-1",
+  "pdf_page": 15,
+  "image": "41292-1.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "frosted",
+   "shape": "conical",
+   "pattern": "dense flocked branches",
+   "packaging": "single",
+   "summary": "Frosted green artificial Christmas tree with dense snow-dusted branches."
+  },
+  "text": "tree, green, white, frosted, conical, dense flocked branches, single",
+  "tokens": 553
+ },
+ "06012-3": {
+  "code": "06012-3",
+  "pdf_page": 15,
+  "image": "06012-3.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "conical",
+   "pattern": "dense foliage",
+   "packaging": "single",
+   "summary": "A green artificial Christmas tree with a dense conical shape."
+  },
+  "text": "tree, green, natural, conical, dense foliage, single",
+  "tokens": 545
+ },
+ "08012-3": {
+  "code": "08012-3",
+  "pdf_page": 15,
+  "image": "08012-3.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "conical",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "A full green Christmas tree with a natural-looking conical shape."
+  },
+  "text": "tree, green, natural, conical, single",
+  "tokens": 543
+ },
+ "41092-3": {
+  "code": "41092-3",
+  "pdf_page": 15,
+  "image": "41092-3.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "conical",
+   "pattern": "single",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with a full conical shape and dense branches."
+  },
+  "text": "tree, green, natural, conical, single, single",
+  "tokens": 546
+ },
+ "25022-2": {
+  "code": "25022-2",
+  "pdf_page": 16,
+  "image": "25022-2.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "cone",
+   "pattern": "",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with a natural-looking conical shape."
+  },
+  "text": "tree, green, natural, cone, single",
+  "tokens": 555
+ },
+ "26022-2": {
+  "code": "26022-2",
+  "pdf_page": 16,
+  "image": "26022-2.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "black"
+   ],
+   "finish": "natural",
+   "shape": "conical",
+   "pattern": "mixed",
+   "packaging": "single",
+   "summary": "Artificial Christmas tree with a natural green look and black stand."
+  },
+  "text": "tree, green, black, natural, conical, mixed, single",
+  "tokens": 560
+ },
+ "27022-2": {
+  "code": "27022-2",
+  "pdf_page": 16,
+  "image": "27022-2.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [],
+   "finish": "natural",
+   "shape": "cone",
+   "pattern": "mixed",
+   "packaging": "single",
+   "summary": "A green artificial Christmas tree with a conical shape and snowy-tipped branches."
+  },
+  "text": "tree, green, natural, cone, mixed, single",
+  "tokens": 561
+ },
+ "07012-5": {
+  "code": "07012-5",
+  "pdf_page": 16,
+  "image": "07012-5.png",
+  "match": "beside",
+  "attributes": {
+   "kind": "tree",
+   "primary_colour": "green",
+   "other_colours": [
+    "white"
+   ],
+   "finish": "natural",
+   "shape": "conical",
+   "pattern": "frosted tips",
+   "packaging": "single",
+   "summary": "Artificial green Christmas tree with snowy white-tipped branches."
+  },
+  "text": "tree, green, white, natural, conical, frosted tips, single",
+  "tokens": 533
  },
  "90159": {
   "code": "90159",

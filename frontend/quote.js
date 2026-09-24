@@ -5,8 +5,10 @@
  * Quantity per decoration comes from one of two sources, the exact one always winning once it
  * exists: an exact per-code count from "นับของในรูปนี้" (row.counted_items if one was already
  * persisted server-side, or a fresh click here — see request_log.set_counted, backend/main.py),
- * otherwise a density-range estimate (config.ELEMENT_DENSITY_QTY_RANGE, mirrored below). Either
- * is multiplied by a user-set multiplier: the picture only shows the tree's front.
+ * otherwise the backend's size-aware estimate (element.estimate — backend/main.py's
+ * _estimate_for: tree and decoration sizes, scaled by density; exactly one for a wrapped
+ * garland). Either is multiplied by a user-set multiplier, since the picture only shows the
+ * tree's front — except a wrapped garland, which has no unseen back.
  *
  * Price/size for each line already came pre-resolved from the backend (catalogue first for
  * size, vendor wholesale first for price — backend/main.py's _priced_extra) — this page never
@@ -34,11 +36,6 @@ async function refreshTotals() {
 function money(amount) {
   return `฿${Math.round(amount).toLocaleString("th-TH")}`;
 }
-
-// Mirrors backend/config.py's ELEMENT_DENSITY_QTY_RANGE — the per-item quantity estimate used
-// before anything has been counted from the picture. Kept in sync by hand, same as app.js
-// used to before this page existed.
-const ELEMENT_DENSITY_QTY = { light: [1, 6], normal: [8, 12], full: [18, 24] };
 
 let row = null; // the /api/request/{id} response, fetched once on load
 let counted = null; // code -> exact count, from row.counted_items or a fresh count click here
@@ -122,9 +119,12 @@ function render() {
     }
 
     const exact = counted ? counted[element.code] : null;
-    const [rangeMin, rangeMax] = ELEMENT_DENSITY_QTY[element.density || "normal"] || [null, null];
-    const calcMin = (exact != null ? exact : rangeMin) * m;
-    const calcMax = (exact != null ? exact : rangeMax) * m;
+    const [rangeMin, rangeMax] = element.estimate;
+    // a wrapped garland is one strand round the whole trunk — there is no unseen back for a
+    // multiplier to cover, whatever the tree's size
+    const em = element.placement === "wrapped" ? 1 : m;
+    const calcMin = (exact != null ? exact : rangeMin) * em;
+    const calcMax = (exact != null ? exact : rangeMax) * em;
     if (exact == null) anyEstimated = true;
     const extra = extras[i] || 0;
     const qtyMin = calcMin + extra;
@@ -221,7 +221,7 @@ function render() {
   const notes = [];
   if (anyEstimated) {
     notes.push(
-      "* จำนวนบางชิ้นยังเป็นการประมาณจาก density — กด \"นับของในรูปนี้\" ด้านซ้ายเพื่อความแม่นยำ"
+      "* จำนวนบางชิ้นยังเป็นการประมาณจากขนาดต้นและขนาดของ — กด \"นับของในรูปนี้\" ด้านซ้ายเพื่อความแม่นยำ"
     );
   }
   if (anyVendor) {

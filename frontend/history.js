@@ -133,11 +133,10 @@ function money(amount) {
   return `฿${Math.round(amount).toLocaleString("th-TH")}`;
 }
 
-// Mirrors quote.js's own copy of backend/config.py's ELEMENT_DENSITY_QTY_RANGE, and the same
-// default multiplier quote.js starts every request at — there is no per-request stored
+// The same default multiplier quote.js starts every request at — there is no per-request stored
 // multiplier to read back (it is a client-side-only control, never persisted), so this is the
 // same estimate a fresh visit to /quote for this request would show before anyone touches it.
-const ELEMENT_DENSITY_QTY = { light: [1, 6], normal: [8, 12], full: [18, 24] };
+// The per-item base count comes from the backend (element.estimate), same as quote.js.
 const DEFAULT_MULTIPLIER = 2;
 
 /* Mirrors quote.js's packCost() (2026-09-10): a pack price (element.pack = {qty, unit}) is the
@@ -184,11 +183,12 @@ function decorationTotal(request) {
       continue;
     }
     const exact = counted ? counted[element.code] : null;
-    const [rangeMin, rangeMax] = ELEMENT_DENSITY_QTY[element.density || "normal"] || [null, null];
+    const [rangeMin, rangeMax] = element.estimate;
+    const em = element.placement === "wrapped" ? 1 : m;
     if (exact == null) anyEstimated = true;
     if (element.price_source === "vendor") anyVendor = true;
-    const qtyMin = (exact != null ? exact : rangeMin) * m;
-    const qtyMax = (exact != null ? exact : rangeMax) * m;
+    const qtyMin = (exact != null ? exact : rangeMin) * em;
+    const qtyMax = (exact != null ? exact : rangeMax) * em;
     const { costMin, costMax } = packCost(qtyMin, qtyMax, element.price, element.pack);
     min += costMin;
     max += costMax;
@@ -234,7 +234,7 @@ function priceCell(row, request) {
     ? `${text}${totals.incomplete ? " *" : ""}${totals.anyVendor ? " †" : ""}`
     : "—";
   const titles = [];
-  if (totals.anyEstimated) titles.push("จำนวนบางชิ้นเป็นการประมาณจาก density ยังไม่เคยกดนับของในรูป");
+  if (totals.anyEstimated) titles.push("จำนวนบางชิ้นเป็นการประมาณจากขนาดต้น-ของตกแต่ง ยังไม่เคยกดนับของในรูป");
   if (totals.missing.length) titles.push(`ไม่มีราคา: ${totals.missing.join(", ")}`);
   if (totals.noCatalog.length) titles.push(`ไม่ได้มาจากแคตตาล็อก (ไม่รวมในราคา): ${totals.noCatalog.join(", ")}`);
   if (totals.anyVendor) titles.push("† มีบางส่วนเป็นราคาทุนจาก vendor ไม่ใช่ราคาที่ร้านตั้งเอง");

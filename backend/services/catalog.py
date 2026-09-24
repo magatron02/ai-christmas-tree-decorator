@@ -26,7 +26,7 @@ from backend.validation import ValidationError
 __all__ = [
     "find", "search", "browse", "longest_side_mm", "describe", "require_size",
     "scale_sentence", "image_for", "image_path", "recent", "parse_size", "shops",
-    "auto_pool", "row_matches_tone", "label_for", "orphans", "pricing_queue",
+    "auto_pool", "row_matches_tone", "label_for", "orphans",
     "overridden_fields", "product_detail", "resolve_image_path", "split_codes",
     "set_colour_split", "clear_colour_split", "colour_name", "supporting_photos",
     "placement_of", "placement_of_code", "suits_backdrop", "is_offered", "packs_for",
@@ -315,7 +315,18 @@ def _crop_users():
 
 def crop_is_ambiguous(code):
     """True when this code's photo is shared by so many codes that it cannot be showing any
-    one of them. Such a photo is worse than no photo in a picker: it looks like an answer."""
+    one of them. Such a photo is worse than no photo in a picker: it looks like an answer.
+
+    2026-09-23: a tree-category exemption was tried and reverted the same day — a size-line
+    family sharing one hero photo (5/6/7 Ft. of the same model, stacked under it) has the
+    *exact* same page layout as the original Rainbow Christmas Tree case this rule exists for
+    (same page, same x, y increasing with size — see test_a_shared_crop_is_hidden_even_when_
+    it_shows_a_real_product), and that crop had a *different* code's own price ribbon baked
+    into the image itself, provably wrong for the other four. Geometry cannot tell the two
+    apart; only reading the pixels can, and nothing here does that. Showing a family's shared
+    photo requires a human to confirm it per code (shop_overlay's shop_photo override already
+    exists for exactly this), not a blanket category rule.
+    """
     return _crop_users().get(code, 0) + 1 >= MAX_SHARED_CROP
 
 
@@ -604,9 +615,57 @@ def product_detail(row):
         "section": row.get("section"), "price": row.get("price"),
         "pack_size": row.get("pack_size"),
         "category": category_of(row),
+        "crop_shared": _crop_is_shared(row["code"]),
         "overridden": overridden_fields(row["code"]),
         "has_shop_photo": bool(shop_overlay.fields_for(row["code"]).get("shop_photo")),
     }
+
+
+def _crop_is_shared(code):
+    """A book crop the picker withholds because several codes claim it. A shop's own photo
+    replaces the crop entirely (crop_is_showable), so it is never "shared" whatever the old
+    crop's count says."""
+    if not image_for(code) or shop_overlay.fields_for(code).get("shop_photo"):
+        return False
+    return crop_is_ambiguous(code)
+
+
+ADMIN_ISSUES = ("no_photo", "shared_photo", "no_size", "no_price")
+
+
+def admin_list(q="", book=None, category=None, issue=None, limit=50, offset=0):
+    """One page of *every* product for the settings page, plus how many match — unlike
+    browse(), which only lists what a picker can honestly show. The admin screen exists to fix
+    the ones that cannot be shown, so a product with no photo, or a crop shared by several
+    codes, has to be findable here.
+
+    `issue` narrows to one kind of problem: no_photo, shared_photo (a crop the picker withholds
+    because several codes claim it — crop_is_ambiguous), no_size (nothing printed to scale
+    from) or no_price. `q` matches part of a code or of the section.
+    """
+    q = (q or "").strip().lower()
+    seen, matched = set(), []
+    for row in _rows():
+        code = row["code"]
+        if code in seen:
+            continue
+        seen.add(code)
+        if q and q not in code.lower() and q not in (row.get("section") or "").lower():
+            continue
+        if book and row.get("book") != book:
+            continue
+        if category and category_of(row) != category:
+            continue
+        if issue == "no_photo" and image_for(code):
+            continue
+        if issue == "shared_photo" and not _crop_is_shared(code):
+            continue
+        if issue == "no_size" and longest_side_mm(row) is not None:
+            continue
+        if issue == "no_price" and row.get("price") is not None:
+            continue
+        matched.append(row)
+    return matched[offset : offset + limit], len(matched)
 
 
 def split_codes():
@@ -668,17 +727,6 @@ def orphans():
         {"code": code, **fields}
         for code, fields in shop_overlay.all_fields().items()
         if code not in known
-    ]
-
-
-def pricing_queue():
-    """Every showable product with no price and not skipped — what the fast pricing entry
-    mode walks (issue #10). Printed order, same as browse(), so the queue is stable between
-    calls rather than reshuffling as prices come in.
-    """
-    return [
-        row for row in _with_photos()
-        if row.get("price") is None and not row.get("price_skipped")
     ]
 
 

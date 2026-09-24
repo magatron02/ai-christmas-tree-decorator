@@ -6,7 +6,7 @@
 ; the API key — and a Program Files install would have made every one of those read-only.
 
 #define AppName "Tree Decorator"
-#define AppVersion "1.1.0"
+#define AppVersion "1.3.0"
 #define AppPublisher "VR Twin"
 #define AppExe "TreeDecorator.exe"
 
@@ -62,6 +62,12 @@ Source: "..\catalog\gallery\*"; DestDir: "{app}\catalog\gallery"; Flags: ignorev
 ; read instead of a run of rembg. skipifsourcedoesntexist because they are an optimisation:
 ; a build without them still produces a working installer, just one that cuts on the fly.
 Source: "..\catalog\cutouts\*"; DestDir: "{app}\catalog\cutouts"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+
+; Vendor price/size lookup (backend/services/vendor_lookup.py) — the base layer only
+; (cleaned/lookup.json, regenerated wholesale by build_lookup.py, same as the catalogue's own
+; products.json). The shop's own corrections live in data\vendor_overlay.json instead, created
+; at runtime, so refreshing this on every install never touches anything the shop typed in.
+Source: "..\vendor-pricelists\*"; DestDir: "{app}\vendor-pricelists"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 
 ; rembg's cut-out model, so the first background removal works offline instead of pulling
 ; 168 MB down mid-click. scripts/launcher.py points U2NET_HOME here.

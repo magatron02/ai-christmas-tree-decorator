@@ -1,8 +1,8 @@
 """Price entry after picking from the catalogue (issue #27).
 
 Picking a product with no printed size already opens an inline field to type the real one.
-Price got no equivalent: noticing an unpriced product mid-pick meant leaving the flow for the
-pricing queue. The picker now says whether a picked product has a price, so the same inline
+Price got no equivalent: noticing an unpriced product mid-pick meant leaving the flow to edit it
+on the settings page. The picker now says whether a picked product has a price, so the same inline
 treatment can offer to fill it in — and unlike the size gate, it never blocks Generate, because
 a price has never been required to make a picture (CONTEXT.md).
 """
@@ -77,7 +77,7 @@ def test_a_price_typed_after_picking_is_saved(client, temp_catalog, local, fake_
     catalog.refresh()
     assert client.post("/api/element/from-catalog", data={"code": "NOPRICE"}).json()["price"] is None
 
-    saved = client.post("/api/catalog/pricing-queue/NOPRICE/price", data={"price": "120"})
+    saved = client.post("/api/catalog/products/NOPRICE/price", data={"price": "120"})
 
     assert saved.status_code == 200, saved.text
     body = client.post("/api/element/from-catalog", data={"code": "NOPRICE"}).json()
@@ -85,11 +85,11 @@ def test_a_price_typed_after_picking_is_saved(client, temp_catalog, local, fake_
 
 
 def test_a_price_typed_after_picking_survives_a_re_import(client, temp_catalog, local, fake_rembg):
-    """It goes through the same overlay write as the pricing queue, so it is durable for the
+    """It goes through the same overlay write as the settings page, so it is durable for the
     same reason (ADR-0001) — this ticket adds a surface, not a second storage path."""
     add("NOPRICE")
     catalog.refresh()
-    client.post("/api/catalog/pricing-queue/NOPRICE/price", data={"price": "120"})
+    client.post("/api/catalog/products/NOPRICE/price", data={"price": "120"})
 
     from backend.services import shop_overlay
 

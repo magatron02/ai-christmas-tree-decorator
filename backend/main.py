@@ -55,7 +55,7 @@ app.mount("/static", StaticFiles(directory=config.FRONTEND_DIR), name="static")
 app.mount("/shop-photos", StaticFiles(directory=config.SHOP_PHOTOS_DIR), name="shop-photos")
 
 
-PAGE_PATHS = {"/", "/history", "/settings", "/identify", "/pricing", "/quote"}
+PAGE_PATHS = {"/", "/history", "/settings", "/identify", "/quote"}
 
 
 @app.middleware("http")
@@ -258,6 +258,46 @@ def _priced_extra(code):
     }
 
 
+def _placement_of(code):
+    """catalog.placement_of_code, but None for a code the catalogue no longer holds — a history
+    row outlives a re-import, and an old run must still open rather than fail on a dropped code."""
+    try:
+        return catalog.placement_of_code(code)
+    except ValidationError:
+        return None
+
+
+def _estimate_for(tree_code, code, density, placement):
+    """(min, max) of how many pieces of one decoration this picture calls for, before the
+    multiplier for the back of the tree — what the quote/history price ranges are built on.
+
+    Size-aware, because a fixed count per density read as nonsense (16-24 six-foot garlands
+    for a two-foot tree): the same tree-and-decoration size sums as the stock figure, scaled by
+    the item's own density against "normal" — the level suggest_quantity's 12-20 was written
+    for. A garland is wrapped once around the trunk whatever the tree's size (placement
+    "wrapped", issue #20), so it is exactly one. With no size to work from (a code with none
+    in the catalogue or the vendor list, or no code at all) it falls back to the plain density
+    range, which is a guess at the count, not a measurement.
+    """
+    if placement == "wrapped":
+        return 1, 1
+    fallback = config.ELEMENT_DENSITY_QTY_RANGE[density or config.DEFAULT_DENSITY]
+    if not tree_code or not code:
+        return fallback
+    from backend.services import matching
+
+    try:
+        quantity = matching.suggest_quantity(tree_code, code, size_lookup=_size_lookup_for_scale)
+    except ValidationError:
+        return fallback
+    normal_lo, normal_hi = config.ELEMENT_DENSITY_QTY_RANGE["normal"]
+    lo, hi = fallback
+    return (
+        max(1, round(quantity["low"] * lo / normal_lo)),
+        max(1, round(quantity["high"] * hi / normal_hi)),
+    )
+
+
 def _stock_for(tree_code, code):
     """What to pull off the shelf for one item of a finished run (issue #25): how many pieces
     that tree takes, and how many packs that is for a product sold by the pack.
@@ -270,10 +310,13 @@ def _stock_for(tree_code, code):
         return None, None
     from backend.services import matching
 
-    try:
-        quantity = matching.suggest_quantity(tree_code, code)
-    except ValidationError:
-        return None, None  # no catalogue size for one of them; nothing is invented (NonGoals 8)
+    if _placement_of(code) == "wrapped":
+        quantity = {"low": 1, "high": 1}  # one strand around the trunk, however big the tree
+    else:
+        try:
+            quantity = matching.suggest_quantity(tree_code, code, size_lookup=_size_lookup_for_scale)
+        except ValidationError:
+            return None, None  # no size for one of them; nothing is invented (NonGoals 8)
     packs = catalog.packs_for(code, quantity["high"])
     if packs:
         packs = {"low": catalog.packs_for(code, quantity["low"])["packs"],
@@ -296,6 +339,11 @@ def _row_json(row):
     ]
     tree_extra = _priced_extra(row["tree_code"])
     stock = [_stock_for(row["tree_code"], e.get("code")) for e in elements]
+    placements = [_placement_of(e.get("code")) for e in elements]
+    estimates = [
+        _estimate_for(row["tree_code"], e.get("code"), e.get("density"), placement)
+        for e, placement in zip(elements, placements)
+    ]
     return {
         "request_id": row["request_id"],
         "status": row["status"],
@@ -304,9 +352,12 @@ def _row_json(row):
                 "url": _url(e["path"]), "code": e.get("code"), "colour": e.get("colour"),
                 "density": e.get("density"), "manual_mm": e.get("manual_mm"),
                 "quantity": quantity, "packs": packs,
+                "placement": placement, "estimate": list(estimate),
                 **extra,
             }
-            for e, extra, (quantity, packs) in zip(elements, element_extras, stock)
+            for e, extra, (quantity, packs), placement, estimate in zip(
+                elements, element_extras, stock, placements, estimates
+            )
         ],
         "price_total": price_total,
         "price_missing": price_missing,
@@ -354,11 +405,6 @@ def page_history():
 @app.get("/identify", include_in_schema=False)
 def page_identify():
     return FileResponse(config.FRONTEND_DIR / "identify.html")
-
-
-@app.get("/pricing", include_in_schema=False)
-def page_pricing():
-    return FileResponse(config.FRONTEND_DIR / "pricing.html")
 
 
 @app.get("/quote", include_in_schema=False)
@@ -409,40 +455,15 @@ def api_catalog_orphans():
     return {"orphans": catalog.orphans()}
 
 
-def _pricing_queue_item(row):
-    return {
-        "code": row["code"], "image": catalog.image_for(row["code"]),
-        "size_raw": row.get("size_raw"), "section": row.get("section"), "book": row.get("book"),
-    }
-
-
-@app.get("/api/catalog/pricing-queue")
-def api_pricing_queue():
-    """The fast pricing entry screen's whole state: how many are left, and the one to show
-    next. The queue itself decides "next" (printed order) — the page just re-fetches this
-    after every price or skip rather than tracking a position of its own."""
-    queue = catalog.pricing_queue()
-    return {"remaining": len(queue), "next": _pricing_queue_item(queue[0]) if queue else None}
-
-
-@app.post("/api/catalog/pricing-queue/{code}/price")
-def api_pricing_queue_set_price(code: str, request: Request, price: str = Form("")):
-    """The queue's one field. Localhost only, same reasoning as the other catalogue writes."""
+@app.post("/api/catalog/products/{code}/price")
+def api_set_price(code: str, request: Request, price: str = Form("")):
+    """One product's price — the inline entry after a catalogue pick (issue #27). Localhost
+    only, same reasoning as the other catalogue writes."""
     from backend.services import catalog_admin, settings
 
     if not settings.is_local(request):
         raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
-    return catalog_admin.queue_set_price(code, price)
-
-
-@app.post("/api/catalog/pricing-queue/{code}/skip")
-def api_pricing_queue_skip(code: str, request: Request):
-    """Marks a product skipped for pricing — it leaves the queue for good."""
-    from backend.services import catalog_admin, settings
-
-    if not settings.is_local(request):
-        raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
-    return catalog_admin.skip_pricing(code)
+    return catalog_admin.set_price(code, price)
 
 
 @app.post("/api/settings/api-key")
@@ -789,6 +810,18 @@ def api_catalog_remove_shop_photo(code: str, request: Request):
 
     catalog_admin.remove_shop_photo(code)
     return catalog.product_detail(catalog.find(code))
+
+
+@app.get("/api/catalog/products")
+def api_catalog_products(q: str = "", book: str = "", category: str = "", issue: str = "",
+                         limit: int = 50, offset: int = 0):
+    """Every product, one page at a time, for the settings page's catalogue table — including
+    the ones the picker withholds (see catalog.admin_list)."""
+    if issue and issue not in catalog.ADMIN_ISSUES:
+        raise ValidationError(f"ไม่รู้จักตัวกรอง '{issue}'")
+    limit = max(1, min(limit, 200))
+    rows, total = catalog.admin_list(q, book or None, category or None, issue or None, limit, max(offset, 0))
+    return {"results": [catalog.product_detail(row) for row in rows], "total": total}
 
 
 @app.get("/api/catalog/recent")

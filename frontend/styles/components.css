@@ -351,6 +351,17 @@ select.select-native {
 .page { padding: var(--space-6); flex: 1; min-width: 0 }
 .stack   { display: flex; flex-direction: column; gap: var(--space-3) }
 .btn-row { display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap }
+/* A search box and its filters, all on one line however many there are: each control shares
+   the width and shrinks (min-width:0) rather than wrapping onto a second row, and sits a step
+   smaller than a form field since these are scanning aids, not the thing being filled in. */
+.filter-row { display: flex; gap: var(--space-2); align-items: center; flex-wrap: nowrap }
+.filter-row .input {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-xs);
+}
+.filter-row .btn { flex: none }
 .option-name { font-size: var(--text-lg) }
 
 /* the 3-panel flow: bare tree -> decorations -> result, side by side so the whole job is
@@ -982,7 +993,7 @@ td.shrink { width: 96px }
    inside its own card), so a long price list scrolls in place instead of taking the whole
    page down with it. 172px = .topbar (64) + .page's own top/bottom padding (24+24) + the
    tab-row above this grid (~48) + .page.stack's gap to it (12). */
-.vendor-columns {
+.split-columns {
   display: grid;
   grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
   gap: var(--space-4);
@@ -990,22 +1001,22 @@ td.shrink { width: 96px }
   height: calc(100vh - 172px);
 }
 @media (max-width: 900px) {
-  .vendor-columns { grid-template-columns: minmax(0, 1fr); height: auto }
+  .split-columns { grid-template-columns: minmax(0, 1fr); height: auto }
 }
 /* Both cards' own content scrolls inside its own box rather than growing the card past the
    grid's stretched height (which would force the whole page to scroll to reach it, dragging
    the left card's title along) — same flex:1/min-height:0/overflow-y:auto technique as
-   .quote-table-wrap. .vendor-edit-wrap covers the edit form specifically: it has several
+   .quote-table-wrap. .split-edit covers the edit form specifically: it has several
    input+chip pairs and can run taller than the list card next to it. */
-.vendor-list-wrap,
-.vendor-edit-wrap { flex: 1 1 0; min-height: 0; overflow-y: auto }
+.split-list,
+.split-edit { flex: 1 1 0; min-height: 0; overflow-y: auto }
 /* A field's own label to the left of its input, same row (the edit form's price/size/name/
    pack fields) — .input has no width of its own outside a .stack, so it needs flex:1 here to
    still fill the row the way it fills a plain .stack. */
 .field-row { display: flex; align-items: center; gap: var(--space-2) }
 .field-row .input { flex: 1; min-width: 0 }
-/* The column headers stay put while .vendor-results' rows scroll underneath them. */
-.vendor-list-wrap thead th { position: sticky; top: 0; background: var(--surface-1) }
+/* The column headers stay put while the table's rows scroll underneath them. */
+.split-list thead th { position: sticky; top: 0; background: var(--surface-1) }
 
 .tone-row { display: flex; gap: var(--space-2); flex-wrap: wrap }
 .tone-card {

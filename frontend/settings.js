@@ -184,6 +184,8 @@ function enterEditMode(item) {
   $("cat-photo-preview").hidden = !item.image;
   $("cat-photo-override").hidden = !item.has_shop_photo;
   $("cat-add").textContent = "บันทึกการแก้ไข";
+  $("cat-form-title").textContent = `แก้ไข ${item.code}`;
+  highlightCatalogRow(item.code);
   $("cat-edit-status").hidden = false;
   $("cat-edit-status").textContent = `กำลังแก้ไข ${item.code}`;
   $("cat-edit-cancel").hidden = false;
@@ -203,6 +205,8 @@ function exitEditMode() {
   $("cat-photo-preview").src = "";
   $("cat-photo-override").hidden = true;
   $("cat-add").textContent = "เพิ่มสินค้า";
+  $("cat-form-title").textContent = "เพิ่มสินค้าใหม่";
+  highlightCatalogRow(null);
   $("cat-edit-status").hidden = true;
   $("cat-edit-cancel").hidden = true;
   showOverrides([]);
@@ -346,37 +350,13 @@ $("cat-photo-clear").addEventListener("click", async (event) => {
       method: "DELETE",
     });
     enterEditMode(item);
-    await loadRecentCatalog();
+    await loadCatalogResults();
   } catch (err) {
     $("cat-error").textContent = err.message;
     $("cat-error").hidden = false;
   } finally {
     $("cat-photo-clear").style.pointerEvents = "";
   }
-});
-
-$("cat-find").addEventListener("click", async () => {
-  const code = $("cat-code").value.trim();
-  $("cat-error").hidden = true;
-  if (!code) {
-    $("cat-error").textContent = "พิมพ์รหัสก่อนค้นหา";
-    $("cat-error").hidden = false;
-    return;
-  }
-  $("cat-find").disabled = true;
-  try {
-    const item = await call(`/api/catalog/products/${encodeURIComponent(code)}`);
-    enterEditMode(item);
-  } catch (err) {
-    $("cat-error").textContent = err.message;
-    $("cat-error").hidden = false;
-  } finally {
-    $("cat-find").disabled = false;
-  }
-});
-
-$("cat-code").addEventListener("keydown", (event) => {
-  if (event.key === "Enter" && !$("cat-code").disabled) $("cat-find").click();
 });
 
 for (const [field, inputId] of Object.entries(OVERRIDE_FIELDS)) {
@@ -393,7 +373,7 @@ for (const [field, inputId] of Object.entries(OVERRIDE_FIELDS)) {
         { method: "POST", body }
       );
       enterEditMode(item);
-      await loadRecentCatalog();
+      await loadCatalogResults();
     } catch (err) {
       $("cat-error").textContent = err.message;
       $("cat-error").hidden = false;
@@ -408,33 +388,118 @@ $("cat-edit-cancel").addEventListener("click", () => {
   exitEditMode();
 });
 
-async function loadRecentCatalog() {
-  const { results } = await call("/api/catalog/recent");
-  const host = $("cat-recent");
-  host.innerHTML = "";
-  for (const item of results) {
-    const row = document.createElement("tr");
-    row.className = "cat-recent-row";
-    const photo = document.createElement("td");
-    if (item.image) {
-      const img = document.createElement("img");
-      img.src = catalogImageUrl(item.image);
-      img.alt = item.code;
-      img.className = "checker cat-thumb";
-      photo.append(img);
-    }
-    const code = document.createElement("td");
-    code.className = "mono";
-    code.textContent = item.code;
-    const meta = document.createElement("td");
-    meta.className = "hint";
-    const priceText = item.price != null ? `${item.price} บาท` : null;
-    meta.textContent = [item.size_raw, priceText, item.book].filter(Boolean).join(" · ");
-    row.append(photo, code, meta);
-    row.addEventListener("click", () => enterEditMode(item));
-    host.append(row);
+const CATALOG_PAGE_SIZE = 50;
+let catalogPage = 1;
+let categoryLabels = {};
+
+function highlightCatalogRow(code) {
+  for (const row of $("cat-results").children) {
+    row.classList.toggle("selected", row.dataset.code === code);
   }
 }
+
+/* What is wrong with a row, in the words the filter offers — the same four things the
+ * "กรองตามปัญหา" box narrows to, so a shop scanning the table sees why a product might be
+ * missing from the picker without opening it. */
+function catalogNote(item) {
+  const notes = [];
+  if (!item.image) notes.push("ไม่มีรูป");
+  else if (item.crop_shared) notes.push("รูปแชร์กับ code อื่น (ซ่อนใน picker)");
+  if (!item.size_raw) notes.push("ไม่มีขนาด");
+  if (item.price == null) notes.push("ไม่มีราคา");
+  return notes.join(" · ");
+}
+
+async function loadCatalogResults() {
+  const offset = (catalogPage - 1) * CATALOG_PAGE_SIZE;
+  const params = new URLSearchParams({
+    q: $("cat-search").value.trim(), limit: `${CATALOG_PAGE_SIZE}`, offset: `${offset}`,
+  });
+  if ($("cat-filter-book").value) params.set("book", $("cat-filter-book").value);
+  if ($("cat-filter-category").value) params.set("category", $("cat-filter-category").value);
+  if ($("cat-filter-issue").value) params.set("issue", $("cat-filter-issue").value);
+  const { results, total } = await call(`/api/catalog/products?${params}`);
+
+  // a reload after an edit can land past the end — snap back to the new last page
+  const totalPages = Math.max(1, Math.ceil(total / CATALOG_PAGE_SIZE));
+  if (catalogPage > totalPages) {
+    catalogPage = totalPages;
+    return loadCatalogResults();
+  }
+
+  $("cat-results-count").textContent = `(${total})`;
+  $("cat-page-info").textContent = `หน้า ${catalogPage} / ${totalPages}`;
+  $("cat-page-prev").disabled = catalogPage <= 1;
+  $("cat-page-next").disabled = catalogPage >= totalPages;
+  $("cat-page-goto").disabled = totalPages <= 1;
+  $("cat-page-goto-btn").disabled = totalPages <= 1;
+  $("cat-page-goto").max = `${totalPages}`;
+  $("cat-page-goto").value = `${catalogPage}`;
+  $("cat-page-range").textContent =
+    total === 0 ? "" : `แสดงลำดับที่ ${offset + 1}–${offset + results.length} จาก ${total}`;
+
+  const host = $("cat-results");
+  host.innerHTML = "";
+  results.forEach((item, index) => {
+    addRow(host, [
+      { className: "mono", text: `${offset + index + 1}` },
+      { text: "" }, // photo — filled in below, since addRow only sets textContent
+      { className: "mono", text: item.code },
+      { className: "hint", text: item.size_raw || "—" },
+      { className: "hint", text: categoryLabels[item.category] || "—" },
+      { className: "hint", text: item.book || "—" },
+      { className: "mono text-right", text: item.price != null ? `${item.price}` : "—" },
+      { className: "hint", text: catalogNote(item) },
+    ]);
+    const row = host.lastElementChild;
+    row.className = "cat-recent-row"; // the table's pointer-cursor/hover/selected look
+    row.dataset.code = item.code;
+    row.addEventListener("click", () => {
+      $("cat-error").hidden = true;
+      enterEditMode(item);
+    });
+    const photoCell = row.children[1];
+    if (item.image) {
+      const img = document.createElement("img");
+      img.className = "checker cat-thumb";
+      img.src = catalogImageUrl(item.image);
+      img.alt = item.code;
+      img.loading = "lazy";
+      photoCell.append(img);
+    } else {
+      photoCell.className = "hint";
+      photoCell.textContent = "—";
+    }
+  });
+  highlightCatalogRow(editingCode);
+}
+
+/* A new search or filter starts back at page 1; paging and reloads after a save keep the page. */
+function searchCatalogResults() {
+  catalogPage = 1;
+  return loadCatalogResults().catch((err) => {
+    $("cat-error").textContent = err.message;
+    $("cat-error").hidden = false;
+  });
+}
+
+$("cat-search-btn").addEventListener("click", searchCatalogResults);
+$("cat-search").addEventListener("keydown", (event) => {
+  if (event.key === "Enter") searchCatalogResults();
+});
+for (const id of ["cat-filter-book", "cat-filter-category", "cat-filter-issue"]) {
+  $(id).addEventListener("change", searchCatalogResults);
+}
+$("cat-page-prev").addEventListener("click", () => { catalogPage -= 1; loadCatalogResults(); });
+$("cat-page-next").addEventListener("click", () => { catalogPage += 1; loadCatalogResults(); });
+$("cat-page-goto-btn").addEventListener("click", () => {
+  const wanted = Math.floor(Number($("cat-page-goto").value));
+  if (wanted >= 1) { catalogPage = wanted; loadCatalogResults(); }
+});
+$("cat-new").addEventListener("click", () => {
+  $("cat-error").hidden = true;
+  exitEditMode();
+});
 
 /* The shop and category boxes are free text on purpose — a new shop has to be typeable — but
  * both only do their job when they match what the rest of the app already knows, so what
@@ -456,6 +521,17 @@ async function loadCatalogLists() {
     };
     fill("cat-book-list", shops);
     fill("cat-section-list", categories);
+    categoryLabels = Object.fromEntries(categories.map((c) => [c.key, c.label]));
+    const fillSelect = (id, allLabel, items, valueOf) => {
+      const select = $(id);
+      const chosen = select.value;
+      select.innerHTML = "";
+      select.append(new Option(allLabel, ""));
+      for (const item of items) select.append(new Option(`${item.label} (${item.count})`, valueOf(item)));
+      select.value = chosen;
+    };
+    fillSelect("cat-filter-book", "ทุกร้าน", shops, (shop) => shop.key);
+    fillSelect("cat-filter-category", "ทุกหมวด", categories, (category) => category.key);
   } catch {
     /* the lists are a convenience; both boxes still accept anything typed into them */
   }
@@ -529,7 +605,7 @@ $("cat-add").addEventListener("click", async () => {
       clearFilePicker($("cat-image"));
     }
     showSavedState(saved);
-    await loadRecentCatalog();
+    await loadCatalogResults();
     await loadCatalogLists();
   } catch (err) {
     $("cat-error").textContent = err.message;
@@ -558,5 +634,4 @@ $("cat-sync").addEventListener("click", async () => {
   }
 });
 
-loadRecentCatalog();
-loadCatalogLists();
+loadCatalogLists().then(loadCatalogResults);
