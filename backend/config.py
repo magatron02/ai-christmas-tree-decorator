@@ -114,30 +114,30 @@ SIZE_PRESETS = {
 }
 DEFAULT_SIZE = "4:5"
 
-# How tightly the tree gets decorated. This only exists so a shop that wants a sparser or
-# fuller look has a control for it, without hand-editing the prompt file.
+# How tightly the tree gets decorated. "normal" is worded identically to what the prompt
+# always said, so the default behaviour is unchanged — this only exists so a shop that wants
+# a sparser or fuller look has a control for it, without hand-editing the prompt file.
 #
-# The counts were re-tuned for gpt-image-2.5-sunburst on 2026-09-24. The wording used to ask for
-# 8-12 / 12-20 / 20-30, and sunburst answered with about 7 / 8 / 16 pieces: it places fewer than
-# it is told to, and light and normal barely differed. A first candidate (12-16 / 20-28 / 32-42)
-# gave ~13 / ~24 / ~36 by eye, on target for what it asked but denser than the shop's own idea
-# of each level. The current 10-14 / 15-22 / 24-32 gave ~11 / ~20 / ~30 by eye on tree 05021-1
-# with one round decoration (053-07): the top of the old 8-12 / 12-20 / 20-30 bands. One image
-# per level, so treat the numbers as a direction; rerun scripts/measure_scale.py after any
-# model change.
+# Checked against gpt-image-2.5-sunburst on 2026-09-24 and left as it was. With ONE kind of
+# decoration sunburst places fewer than asked (about 7 / 8 / 16 for these counts). With several
+# kinds it places about the asked total (about 16-22 for "normal" over 3-8 kinds), and raising
+# the counts to fix the single-kind case (tried 10-14 / 15-22 / 24-32) put about 17 / 32 / 45
+# on an 8-kind tree, 1.5-2x too many. Several kinds is the normal way this app is used, so
+# these numbers stay; a lone decoration on "normal" will look sparse. Counts came from single
+# images, by eye and by scripts/measure_scale.py.
 DENSITY_PRESETS = {
     "light": (
-        "A lightly decorated tree: roughly 10 to 14 decorations in total for a full-height "
+        "A lightly decorated tree: roughly 8 to 12 decorations in total for a full-height "
         "tree, counting every kind together, fewer if they are large. Leave generous gaps of "
         "bare branch between them."
     ),
     "normal": (
-        "A naturally decorated tree, not a covered one: roughly 15 to 22 decorations in "
+        "A naturally decorated tree, not a covered one: roughly 12 to 20 decorations in "
         "total for a full-height tree, counting every kind together, fewer if they are "
         "large. Leave visible gaps of bare branch between them."
     ),
     "full": (
-        "A fully decorated tree: roughly 24 to 32 decorations in total for a full-height "
+        "A fully decorated tree: roughly 20 to 30 decorations in total for a full-height "
         "tree, counting every kind together, fewer if they are large. Leave only small gaps "
         "of bare branch between them."
     ),

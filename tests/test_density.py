@@ -1,8 +1,8 @@
 """How tightly the tree gets decorated — threaded through exactly like size (Product.md,
 user request: a density control for how packed the render looks).
 
-"normal" is the default level, so the default behaviour
-of every existing test/run is what DENSITY_PRESETS says (counts re-tuned 2026-09-24, see config.py).
+"normal" is worded identically to what the prompt always hardcoded, so the default behaviour
+of every existing test/run is unchanged; the other two levels are new.
 """
 
 from backend import config, validation
@@ -12,18 +12,18 @@ from backend.validation import ValidationError
 from helpers import png_bytes, upload
 
 
-def test_the_default_density_reaches_the_prompt():
+def test_the_default_density_is_the_prompt_s_old_hardcoded_text():
     prompt = image_gen.load_prompt("scale", 1)
 
     assert config.DENSITY_PRESETS[config.DEFAULT_DENSITY] in prompt
-    assert "roughly 15 to 22 decorations" in prompt
+    assert "roughly 12 to 20 decorations" in prompt
 
 
 def test_a_chosen_density_reaches_the_prompt():
     prompt = image_gen.load_prompt("scale", 1, density=config.DENSITY_PRESETS["full"])
 
-    assert "roughly 24 to 32 decorations" in prompt
-    assert "roughly 15 to 22 decorations" not in prompt
+    assert "roughly 20 to 30 decorations" in prompt
+    assert "roughly 12 to 20 decorations" not in prompt
 
 
 def test_resolve_density_rejects_an_unknown_key():
