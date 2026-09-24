@@ -26,6 +26,32 @@ function catalogImageUrl(image) {
   return image.startsWith("/") ? image : `/catalog/${image}`;
 }
 
+/* Dry run (?dryrun=1): pressing Generate builds the request exactly as it would send it, logs
+ * it and stops — nothing is prepared, nothing is billed. It is the safety net for moving the
+ * page's state around (SPEC-layout-v2 8.0): the same inputs must always produce the same
+ * fields, and this is the only way to see that without spending money.
+ *
+ * A FormData cannot be JSON.stringify'd (a File comes out as {}), so it is flattened to
+ * [field, value] pairs in send order, with each File reduced to its name/size/type. The last
+ * one is kept on window.lastDryRun for a test to read back. */
+function dryRunEnabled() {
+  return new URLSearchParams(window.location.search).get("dryrun") === "1";
+}
+
+function describeForm(form) {
+  return [...form.entries()].map(([field, value]) => [
+    field,
+    value instanceof File ? { file: value.name, size: value.size, type: value.type } : value,
+  ]);
+}
+
+function dryRunReport(mode, form) {
+  const payload = { mode, fields: describeForm(form) };
+  window.lastDryRun = payload;
+  console.log(`[dryrun] ${JSON.stringify(payload)}`);
+  return payload;
+}
+
 /* The native file input paints its own "Choose File / No file chosen" — the browser's words,
  * in the browser's language, and no attribute or stylesheet changes them. On a page that is
  * Thai everywhere else that reads as a hole, so every visible file input here is hidden behind

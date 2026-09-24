@@ -301,6 +301,27 @@ function promptExactScaleReady() {
   return Boolean(tree && tree.code) && elements.length > 0 && elements.every((e) => e.code);
 }
 
+/* The whole /api/prepare form for a Prompt-mode run — the counterpart of app.js's
+ * buildGenerateRequest, pulled out of the click handler unchanged so a dry run (?dryrun=1) can
+ * read exactly what a real run would send. */
+function buildPromptGenerateRequest(tree, elements, scene, exact) {
+  const body = new FormData();
+  body.append("files", tree.file);
+  body.append("size", $("prompt-size-select").value);
+  body.append("density", "normal"); // irrelevant once custom_prompt wins server-side
+  body.append("tree_code", exact ? tree.code : "");
+  body.append("tree_manual_mm", tree.manualMm != null ? String(tree.manualMm) : "");
+  body.append("custom_prompt", promptTextarea.value.trim());
+  if (scene) body.append("reference", scene.name);
+  for (const element of elements) {
+    body.append("element", element.name);
+    body.append("element_code", exact ? element.code : "");
+    body.append("element_manual_mm", element.manualMm != null ? String(element.manualMm) : "");
+    body.append("element_density", "normal");
+  }
+  return body;
+}
+
 $("prompt-send").addEventListener("click", async () => {
   promptState.sending = true;
   refreshPromptSend();
@@ -311,19 +332,10 @@ $("prompt-send").addEventListener("click", async () => {
     const scene = promptScene();
     const exact = promptExactScaleReady();
 
-    const body = new FormData();
-    body.append("files", tree.file);
-    body.append("size", $("prompt-size-select").value);
-    body.append("density", "normal"); // irrelevant once custom_prompt wins server-side
-    body.append("tree_code", exact ? tree.code : "");
-    body.append("tree_manual_mm", tree.manualMm != null ? String(tree.manualMm) : "");
-    body.append("custom_prompt", promptTextarea.value.trim());
-    if (scene) body.append("reference", scene.name);
-    for (const element of elements) {
-      body.append("element", element.name);
-      body.append("element_code", exact ? element.code : "");
-      body.append("element_manual_mm", element.manualMm != null ? String(element.manualMm) : "");
-      body.append("element_density", "normal");
+    const body = buildPromptGenerateRequest(tree, elements, scene, exact);
+    if (dryRunEnabled()) {
+      dryRunReport("prompt", body);
+      return;
     }
 
     const prepared = await call("/api/prepare", { method: "POST", body });

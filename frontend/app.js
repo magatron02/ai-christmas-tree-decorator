@@ -1286,6 +1286,35 @@ $("scene-sample-toggle").addEventListener("click", () => {
   toggleSampleStrip(host);
 });
 
+/* The whole /api/prepare form for the tree and decorations currently set, and nothing else —
+ * every field the server ever receives about a run comes from here (/api/generate has no body
+ * at all). `exact` is exactScaleReady(): the all-codes-or-none gate. Pulled out of the click
+ * handler unchanged so a dry run (?dryrun=1) can read exactly what a real run would send. */
+function buildGenerateRequest(exact) {
+  const body = new FormData();
+  body.append("files", state.treeFile);
+  body.append("backdrop", $("backdrop-select").value);
+  body.append("size", $("size-select").value);
+  if ($("size-select").value === "auto") {
+    body.append("scene_ratio", String(state.sceneRatio || state.treeRatio || ""));
+  }
+  body.append("density", $("density-select").value);
+  body.append("tree_code", exact ? state.treeCode : "");
+  body.append("tree_manual_mm", state.treeManualMm != null ? String(state.treeManualMm) : "");
+  if (state.sceneReference) body.append("reference", state.sceneReference);
+  for (const element of state.elements) {
+    body.append("element", element.name);
+    body.append("element_code", exact ? element.code : "");
+    // Travels with the code, never without it (issue #16) — a colour is only meaningful
+    // paired with the product it names one photo of (ADR-0002), same "all codes or none"
+    // gate `exact` already applies to element_code above.
+    body.append("element_image", exact ? (element.image || "") : "");
+    body.append("element_manual_mm", element.manualMm != null ? String(element.manualMm) : "");
+    body.append("element_density", element.density || "");
+  }
+  return body;
+}
+
 /* ---- step 4 + 5: prepare, confirm, generate ---- */
 $("generate-btn").addEventListener("click", async () => {
   state.busy = true;
@@ -1299,26 +1328,12 @@ $("generate-btn").addEventListener("click", async () => {
     && (Boolean(state.treeCode) || state.elements.some((element) => element.code));
 
   try {
-    const body = new FormData();
-    body.append("files", state.treeFile);
-    body.append("backdrop", $("backdrop-select").value);
-    body.append("size", $("size-select").value);
-    if ($("size-select").value === "auto") {
-      body.append("scene_ratio", String(state.sceneRatio || state.treeRatio || ""));
-    }
-    body.append("density", $("density-select").value);
-    body.append("tree_code", exact ? state.treeCode : "");
-    body.append("tree_manual_mm", state.treeManualMm != null ? String(state.treeManualMm) : "");
-    if (state.sceneReference) body.append("reference", state.sceneReference);
-    for (const element of state.elements) {
-      body.append("element", element.name);
-      body.append("element_code", exact ? element.code : "");
-      // Travels with the code, never without it (issue #16) — a colour is only meaningful
-      // paired with the product it names one photo of (ADR-0002), same "all codes or none"
-      // gate `exact` already applies to element_code above.
-      body.append("element_image", exact ? (element.image || "") : "");
-      body.append("element_manual_mm", element.manualMm != null ? String(element.manualMm) : "");
-      body.append("element_density", element.density || "");
+    const body = buildGenerateRequest(exact);
+    if (dryRunEnabled()) {
+      dryRunReport($("mode-btn-auto").getAttribute("aria-pressed") === "true" ? "auto" : "custom", body);
+      state.busy = false;
+      refreshGenerateButton();
+      return;
     }
 
     const prepared = await call("/api/prepare", { method: "POST", body });
