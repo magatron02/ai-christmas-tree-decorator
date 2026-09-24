@@ -334,7 +334,7 @@ select.select-native {
   padding: var(--space-6) var(--space-3);
   border-right: 1px solid var(--border);
   background: var(--surface-1);
-  min-height: calc(100vh - 64px);
+  min-height: calc(100vh / var(--ui-scale) - 64px);
   box-sizing: border-box;
   transition: width var(--transition-gentle);
 }
@@ -598,7 +598,7 @@ select.select-native {
      height rounds to ~0, so nothing had anything real to stretch into and the table and image
      both collapsed to nothing. An explicit height (.topbar's 64px + .page's 24px top/bottom
      padding, same reasoning /'s own .panels height is computed) gives them one. */
-  height: calc(100vh - 112px);
+  height: calc(100vh / var(--ui-scale) - 112px);
 }
 @media (max-width: 900px) {
   .quote-columns { grid-template-columns: minmax(0, 1fr); height: auto }
@@ -757,8 +757,8 @@ dialog h2 {
   flex-direction: column;
   gap: var(--space-3);
   width: 100%;
-  max-width: min(1200px, 94vw);
-  max-height: 90vh;
+  max-width: min(1200px, calc(94vw / var(--ui-scale)));
+  max-height: calc(90vh / var(--ui-scale));
 }
 .picker-head {
   display: flex;
@@ -842,11 +842,11 @@ dialog h2 {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  max-width: min(900px, 94vw);
-  max-height: 90vh;
+  max-width: min(900px, calc(94vw / var(--ui-scale)));
+  max-height: calc(90vh / var(--ui-scale));
   align-items: center;
 }
-.lightbox-dialog img { max-width: 100%; max-height: 80vh; object-fit: contain }
+.lightbox-dialog img { max-width: 100%; max-height: calc(80vh / var(--ui-scale)); object-fit: contain }
 
 dialog p { margin: 0 0 var(--space-3); font-size: var(--text-base); color: var(--text-muted) }
 #confirm-quantities, #result-quantities { list-style: none; margin: 0 0 var(--space-3); padding: 0; display: flex; flex-direction: column; gap: var(--space-1) }
@@ -920,7 +920,7 @@ td.shrink { width: 96px }
   grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
   gap: var(--space-4);
   align-items: stretch;
-  height: calc(100vh - 172px);
+  height: calc(100vh / var(--ui-scale) - 172px);
 }
 @media (max-width: 900px) {
   .split-columns { grid-template-columns: minmax(0, 1fr); height: auto }
@@ -983,7 +983,7 @@ td.shrink { width: 96px }
 /* ---- workspace shell (SPEC layout v2): one sidebar + one stage shared by every mode ----
    The sidebar body scrolls on its own; the footer (size, density, Generate) never scrolls
    away, at any window height. The height is the viewport minus .topbar. */
-.workspace { display: flex; align-items: stretch; height: calc(100vh - 64px); min-width: 0; flex: 1 }
+.workspace { display: flex; align-items: stretch; height: calc(100vh / var(--ui-scale) - 64px); min-width: 0; flex: 1 }
 .work-side {
   width: 400px;
   flex: none;

@@ -76,6 +76,13 @@
 :root {
   color-scheme: light;
 
+  /* One knob for how big the whole UI draws, on every page. It is a browser zoom rather than
+     scaled tokens because sizes are also written as px in components.css (topbar, sidebar,
+     thumbnails); scaling only the tokens would leave those behind. Anything sized against the
+     viewport has to divide by it — layout still runs in unzoomed px — see components.css. */
+  --ui-scale: 0.85;
+  zoom: var(--ui-scale);
+
   /* surfaces */
   --surface-0: #F7F1E8;
   --surface-1: #FFFFFF;
