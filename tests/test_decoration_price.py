@@ -178,6 +178,27 @@ def test_api_request_returns_one_row_by_id(client, conn, fake_gen, fake_rembg, t
     assert response.json()["price_total"] == 150.0
 
 
+def test_a_request_carries_both_the_fits_and_the_shown_estimate(
+    client, conn, fake_gen, fake_rembg, temp_catalog
+):
+    """`estimate` is how many the tree could take (sizes); `estimate_shown` is how many the
+    picture is expected to show (the density total shared between the kinds)."""
+    catalog_admin.add_product("TREE1", "150 cm.", "tree", "2026", png_bytes())
+    catalog_admin.add_product("E001", "80 mm.", "ornament", "2026", png_bytes(), price="150")
+    catalog_admin.add_product("E002", "80 mm.", "ornament", "2026", png_bytes(), price="99")
+
+    tokens = cut_out(client, 2)
+    ready = prepare(client, tokens, tree_code="TREE1", element_code=["E001", "E002"])
+    request_id = ready.json()["request_id"]
+    client.post(f"/api/generate/{request_id}")
+
+    elements = client.get(f"/api/request/{request_id}").json()["elements"]
+
+    # default density "normal": 12-20 in total, two kinds -> 6-10 each
+    assert [e["estimate_shown"] for e in elements] == [[6, 10], [6, 10]]
+    assert all(len(e["estimate"]) == 2 for e in elements)
+
+
 def test_api_request_404s_on_an_unknown_id(client, conn, temp_catalog):
     response = client.get("/api/request/does-not-exist")
 

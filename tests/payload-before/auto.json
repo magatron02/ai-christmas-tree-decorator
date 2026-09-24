@@ -1,0 +1,23 @@
+{
+  "flow": "auto",
+  "note": "Auto's pick is random server-side, so this is the payload AFTER one pick (tone goldisglow) was handed off; the codes below are the fixture to replay with. 6006-01 has no catalogue size, so it carries the manual size that clears the blocking gate. Auto hands off to the custom panels, so the button that reports it says mode custom.",
+  "picked": ["9140121", "6181-02", "6165-02", "6006-01", "6764-01", "90586-7", "5835-02", "90633-2"],
+  "manual_mm": {"6006-01": "100"},
+  "mode": "custom",
+  "fields": [
+    ["files", {"file": "<id>_tree.png", "size": 71214, "type": "image/png"}],
+    ["backdrop", "tree"],
+    ["size", "4:5"],
+    ["density", "normal"],
+    ["tree_code", "05021-1"],
+    ["tree_manual_mm", ""],
+    ["element", "<id>_element.png"], ["element_code", "9140121"], ["element_image", ""], ["element_manual_mm", ""], ["element_density", "normal"],
+    ["element", "<id>_element.png"], ["element_code", "6181-02"], ["element_image", ""], ["element_manual_mm", ""], ["element_density", "normal"],
+    ["element", "<id>_element.png"], ["element_code", "6165-02"], ["element_image", ""], ["element_manual_mm", ""], ["element_density", "normal"],
+    ["element", "<id>_element.png"], ["element_code", "6006-01"], ["element_image", ""], ["element_manual_mm", "100"], ["element_density", "normal"],
+    ["element", "<id>_element.png"], ["element_code", "6764-01"], ["element_image", ""], ["element_manual_mm", ""], ["element_density", "normal"],
+    ["element", "<id>_element.png"], ["element_code", "90586-7"], ["element_image", ""], ["element_manual_mm", ""], ["element_density", "normal"],
+    ["element", "<id>_element.png"], ["element_code", "5835-02"], ["element_image", ""], ["element_manual_mm", ""], ["element_density", "normal"],
+    ["element", "<id>_element.png"], ["element_code", "90633-2"], ["element_image", ""], ["element_manual_mm", ""], ["element_density", "normal"]
+  ]
+}

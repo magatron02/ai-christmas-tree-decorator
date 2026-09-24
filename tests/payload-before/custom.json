@@ -1,0 +1,21 @@
+{
+  "mode": "custom",
+  "fields": [
+    ["files", {"file": "<id>_tree.png", "size": 71214, "type": "image/png"}],
+    ["backdrop", "tree"],
+    ["size", "4:5"],
+    ["density", "normal"],
+    ["tree_code", "05021-1"],
+    ["tree_manual_mm", ""],
+    ["element", "<id>_element.png"],
+    ["element_code", "053-07"],
+    ["element_image", ""],
+    ["element_manual_mm", ""],
+    ["element_density", "normal"],
+    ["element", "<id>_element.png"],
+    ["element_code", "015-04"],
+    ["element_image", ""],
+    ["element_manual_mm", ""],
+    ["element_density", "normal"]
+  ]
+}

@@ -75,12 +75,12 @@ def test_a_wall_backdrop_uses_the_wall_template():
 
 
 def test_the_picker_offers_exactly_the_backdrops_the_backend_knows():
-    """The two <option>s are hardcoded in the HTML rather than fetched — this is what stops
-    them drifting from config.BACKDROPS."""
-    html = (config.FRONTEND_DIR / "index.html").read_text(encoding="utf-8")
-    block = html.split('id="backdrop-select"')[1].split("</select>")[0]
-    offered = re.findall(r'<option value="([^"]+)"', block)
-    assert offered == list(config.BACKDROPS)
+    """The two backdrop buttons are hardcoded in render.js's BackdropSwitch rather than fetched —
+    this is what stops them drifting from config.BACKDROPS."""
+    js = (config.FRONTEND_DIR / "render.js").read_text(encoding="utf-8")
+    block = js.split("function BackdropSwitch()")[1].split("function ")[0]
+    offered = re.search(r"\[((?:\"[a-z]+\",?\s*)+)\]\.map", block).group(1)
+    assert re.findall(r'"([a-z]+)"', offered) == list(config.BACKDROPS)
 
 
 def test_a_wall_prompt_never_narrates_a_tree():

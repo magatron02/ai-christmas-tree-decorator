@@ -8,7 +8,8 @@ Internal single-user tool: upload a photo of a bare Christmas tree and a photo o
 decoration, get back a photo of the tree decorated with it, so a shop can show customers
 combinations without physically decorating and photographing every one. Backend is FastAPI +
 SQLite, frontend is static HTML/vanilla JS with no build step, image generation goes through
-OpenAI's `gpt-image-2` `images.edit` endpoint.
+OpenAI's `gpt-image-2.5-sunburst` `images.edit` endpoint (was `gpt-image-2` until 2026-09-24, see
+`IMAGE_MODEL` in `backend/config.py`).
 
 Read `docs/Product.md`, `docs/Spec.md`, `docs/NonGoals.md`, `docs/AcceptanceCriteria.md`,
 `docs/DESIGN.md` and `docs/TestPlan.md` before treating a domain decision as open — they are
@@ -156,8 +157,8 @@ installs per-user under `%LOCALAPPDATA%`, not Program Files, so those writes act
 
 ### Sizing and density are prompt-driven, not corrected numerically
 
-`gpt-image-2` does not render decorations at a size linearly controllable by the instructed
-fraction (measured 0.55–0.70× of what's asked, and compensating with a multiplier made it
+`gpt-image-2` did not render decorations at a size linearly controllable by the instructed
+fraction (measured 0.55–0.70× of what's asked — not re-measured on the 2.5 model, and compensating with a multiplier made it
 worse, not better — see `backend/config.py` comment above `MAX_DIMENSION`). There is
 deliberately no scale-correction constant. Likewise density presets (`light`/`normal`/`full`)
 were tuned by real billed measurement (`scripts/check_per_item_density.py`) — the "light" phrasing

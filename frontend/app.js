@@ -1,6 +1,8 @@
-/* Front end for the decorate page.
+/* Front end for the decorate page: the handlers and the generate pipeline.
  *
- * Two things here are requirements rather than polish:
+ * What is on screen comes from `store` (store.js) via render() (render.js); this file changes
+ * the store and calls render()/setStore(), and talks to the server. Two things here are
+ * requirements rather than polish:
  *
  *  - The confirm dialog is not optional. Generate never reaches the paid endpoint; it
  *    prepares the request first, then asks (AC-4).
@@ -23,40 +25,6 @@ const STATE_LABEL = {
   delivered: ["done", "ส่งถึงแล้ว"],
 };
 
-// Pre-fetch fallback only — renderElements() runs before loadConfig()'s await resolves.
-// loadConfig() overwrites this with the real backend.config.MAX_ELEMENTS once it lands, so
-// the two never have to be kept in sync by hand.
-let MAX_ELEMENTS = 5;
-
-const state = {
-  treeFile: null,
-  treeCode: null, // set only by the catalogue picker — an uploaded photo has no code
-  treeSizeMm: null, // the tree code's catalogue size, or null if it has none (blocking gate)
-  treeManualMm: null, // person-typed override when treeSizeMm is null
-  treePrice: null, // the tree code's price, null = the book never printed one (issue #27)
-  treeTypedPrice: null, // one typed into that offer and saved — shown back, never a gate
-  // {name, url, code, image, colours, sizeMm, manualMm, price, density} — one entry per accepted
-  // cut-out, up to MAX_ELEMENTS. sizeMm is the code's catalogue size (null = none, blocking
-  // gate); manualMm is a person-typed override; price is the code's price (null = unpriced,
-  // an offer to fill it in, never a gate) and typedPrice one filled into that offer;
-  // density is a DENSITY_PRESETS key, per item.
-  // image is the catalogue colour photo this cutout came from (null for an uploaded photo);
-  // colours is that product's other colours (issue #15), fetched once at accept time — null
-  // unless the product actually has more than one, which is also the "offer a switcher" flag.
-  elements: [],
-  sceneReference: null, // stored filename of the optional scene/ambience photo (used at generate time)
-  requestId: null,
-  busy: false,
-  quantities: null, // prepared.quantities from the last /api/prepare, indexed like state.elements
-  treeRatio: null, // width/height of whatever photo is in the tree slot right now
-  sceneRatio: null, // width/height of the scene reference, when one is set
-  // code -> exact count from the last "นับของในรูปนี้" click, or null before that button is
-  // pressed (or after anything about the tree/decorations changes and invalidates it — see
-  // resetRun). Only used to redraw #result-quantities here — the full price breakdown lives
-  // on its own page now (quote.html/quote.js), reached via #quote-link once generated.
-  counted: null,
-};
-
 // A code-bearing item (tree or element) whose catalogue row has no size, and that has not
 // been given a manual one yet — the thing the blocking gate exists to stop. NonGoals.md 8:
 // the app must not guess this number, so Generate simply cannot be pressed until it is filled.
@@ -65,8 +33,31 @@ function needsManualSize(code, sizeMm, manualMm) {
 }
 
 function anyManualSizeMissing() {
-  return needsManualSize(state.treeCode, state.treeSizeMm, state.treeManualMm)
-    || state.elements.some((e) => needsManualSize(e.code, e.sizeMm, e.manualMm));
+  const base = store.base;
+  return Boolean(base && needsManualSize(base.code, base.sizeMm, base.manualMm))
+    || store.decorations.some((e) => needsManualSize(e.code, e.sizeMm, e.manualMm));
+}
+
+/* What Generate is still waiting for, in the words the footer shows under the button (SPEC §5).
+ * Empty means it can go. One list serves every mode, so the button and its reason cannot disagree. */
+function missingForGenerate() {
+  const missing = [];
+  if (!store.base) missing.push("ต้น/ผนัง");
+  else if (!store.base.file) missing.push("ไฟล์รูปต้น (โหลดใหม่ไม่สำเร็จ)");
+  const decorations = store.decorations;
+  if (!decorations.length) missing.push("ของตกแต่งอย่างน้อย 1 ชิ้น");
+  if (decorations.some((e) => e.status === "cutting")) missing.push("รอตัดพื้นหลังให้เสร็จ");
+  if (decorations.some((e) => e.status === "pending")) missing.push("ตัดพื้นหลังของชิ้นที่อัปโหลด");
+  if (decorations.some((e) => e.status === "failed")) missing.push("เอาชิ้นที่ตัดไม่สำเร็จออก");
+  if (store.mode === "prompt" && !store.prompt.trim()) missing.push("คำอธิบายที่อยากได้");
+  if (anyManualSizeMissing()) {
+    const codes = [store.base, ...decorations]
+      .filter((item) => item && needsManualSize(item.code, item.sizeMm, item.manualMm))
+      .map((item) => item.code);
+    missing.push(`ขนาดของ ${codes.join(", ")}${store.mode === "auto" ? " (ใส่ในโหมดกำหนดเอง)" : ""}`);
+  }
+  if (store.auto.preparing) missing.push("รอเตรียมรูป");
+  return missing;
 }
 
 function setStatus(key, override) {
@@ -94,13 +85,8 @@ function showError(message) {
  * thing that must not happen — the server refuses it, and it could not produce a ratio
  * anyway. */
 function exactScaleReady() {
-  return Boolean(state.treeCode) && state.elements.length > 0
-    && state.elements.every((element) => element.code);
-}
-
-function refreshGenerateButton() {
-  $("generate-btn").disabled =
-    !(state.treeFile && state.elements.length) || state.busy || anyManualSizeMissing();
+  return Boolean(store.base && store.base.code) && store.decorations.length > 0
+    && store.decorations.every((element) => element.code);
 }
 
 const DENSITY_LEVELS = ["light", "normal", "full"];
@@ -273,7 +259,7 @@ function colourLabel(name, position, total) {
 }
 
 /* A dropdown of a decoration's other colours, by name (issue #15) — only ever built for an
- * item whose `colours` came back with more than one entry (state.elements' own "offer a
+ * item whose `colours` came back with more than one entry (a decoration's own "offer a
  * switcher" rule), so callers never have to check that here too. */
 function buildColourSelect(colours, current, onPick) {
   const select = document.createElement("select");
@@ -304,29 +290,6 @@ function buildDensityPill(current, onPick) {
   return wrap;
 }
 
-/* Panel 1's own blocking gate — same rule as an accepted element, for the tree slot. Only
- * ever shown when the tree came from the catalogue (an uploaded photo has no code and no
- * catalogue size question to ask). */
-function renderTreeSizeGate() {
-  const host = $("tree-size-gate");
-  host.innerHTML = "";
-  host.hidden = !state.treeCode;
-  if (!state.treeCode) return;
-  host.append(buildSizeRow(state.treeSizeMm, state.treeManualMm, (value) => {
-    const parsed = Number(value);
-    state.treeManualMm = value && parsed > 0 ? parsed : null;
-    refreshGenerateButton();
-  }));
-  host.append(buildPriceRow(state.treeCode, state.treePrice, state.treeTypedPrice, async (value) => {
-    try {
-      state.treeTypedPrice = await savePrice(state.treeCode, value);
-      renderTreeSizeGate();
-    } catch (err) {
-      showError(err.message);
-    }
-  }));
-}
-
 /* Swaps an accepted item's picture to another colour of the same product, in place (issue
  * #15) — position, size override and density are all on `element` itself and untouched.
  * Reuses /api/element/from-catalog, the same endpoint the original accept went through, so
@@ -344,108 +307,24 @@ async function switchColour(element, newImage) {
   } catch (err) {
     showError(err.message);
   }
-  renderElements(); // also reverts the select to element.image on failure
-  resetRun();
+  resetRun(); // also redraws, which reverts the select to element.image on failure
 }
 
-/* The accepted decorations, each removable. Shown as a list rather than a count so it is
- * obvious which five went in — a wrong one costs a whole generation to discover. */
-function renderElements() {
-  const list = $("accepted-elements");
-  list.innerHTML = "";
-  state.elements.forEach((element, index) => {
-    const item = document.createElement("li");
-    item.className = needsManualSize(element.code, element.sizeMm, element.manualMm)
-      ? "has-warning" : "";
-    const top = document.createElement("div");
-    top.className = "accepted-item-top";
-    const thumbWrap = document.createElement("div");
-    thumbWrap.className = "thumb-wrap";
-    const thumb = document.createElement("img");
-    thumb.src = element.url;
-    thumb.className = "checker";
-    thumb.alt = `Decoration ${index + 1}`;
-    thumbWrap.append(thumb);
-    // the code travels with the picture rather than sitting beside it as its own field —
-    // picking from the catalogue already supplies it, there is nothing left to fill in
-    if (element.code) {
-      const badge = document.createElement("span");
-      badge.className = "thumb-code";
-      badge.textContent = element.code;
-      thumbWrap.append(badge);
-    }
-    const pill = buildDensityPill(element.density || "normal", (level) => {
-      element.density = level;
-      renderElements();
-    });
-    const drop = document.createElement("button");
-    drop.className = "btn danger";
-    drop.textContent = "เอาออก";
-    drop.addEventListener("click", () => {
-      state.elements.splice(index, 1);
-      renderElements();
-      resetRun();
-    });
-    top.append(thumbWrap, pill, drop);
-    item.append(top);
-    if (element.colours) {
-      const select = buildColourSelect(element.colours, element.image, (image) => {
-        switchColour(element, image);
-      });
-      item.append(select);
-      enhanceSelect(select); // needs a parent to attach its popup to — must run after append
-    }
-    const sizeRow = buildSizeRow(element.sizeMm, element.manualMm, (value) => {
-      const parsed = Number(value);
-      element.manualMm = value && parsed > 0 ? parsed : null;
-      refreshGenerateButton();
-    });
-    item.append(sizeRow);
-    // no refreshGenerateButton: a price never gated anything, and filling one in must not
-    // start (issue #27)
-    item.append(buildPriceRow(element.code, element.price, element.typedPrice, async (value) => {
-      try {
-        element.typedPrice = await savePrice(element.code, value);
-        renderElements();
-      } catch (err) {
-        showError(err.message);
-      }
-    }));
-    list.append(item);
-  });
-
-  const room = MAX_ELEMENTS - state.elements.length;
-  $("element-count-hint").textContent = room
-    ? `ใส่แล้ว ${state.elements.length} จาก ${MAX_ELEMENTS} ชิ้น`
-    : `ครบ ${MAX_ELEMENTS} ชิ้นแล้ว — เอาออกสักชิ้นถ้าจะเปลี่ยน`;
-  $("element-file").disabled = room === 0;
-}
-
-/* The chip shows the pipeline state of the current run, so it is only reset when the user
- * changes an input — that is the moment the previous run stops being the current one. */
+/* Only reset when the user changes an input — that is the moment the previous run stops being
+ * the current one. The pipeline chip, the result and any count all belong to that run. */
 function resetRun() {
-  state.requestId = null;
-  state.quantities = null;
-  state.counted = null; // a new tree/decoration set invalidates any earlier count
-  $("out-result").hidden = true;
-  $("result-actions").hidden = true;
-  $("result-quantities").hidden = true;
-  $("result-stock").hidden = true;
-  $("stock-note").hidden = true;
-  $("count-actions").hidden = true;
-  $("count-note").hidden = true;
-  $("result-empty").hidden = false;
+  store.result = null;
+  store.run = { requestId: null, quantities: null, counted: null };
+  store.status = "idle";
+  store.ui.stageView = "original";
   showError("");
-  if (state.treeFile && state.elements.length) setStatus("pending");
-  else setStatus("waiting", "รอต้นเปล่ากับของตกแต่งอย่างน้อย 1 ชิ้น");
-  refreshGenerateButton();
-  $("quote-link").hidden = true;
+  render();
 }
 
 /* The pre-generate estimate, in the confirm dialog: how many of this product fit on a tree
  * that size, from the catalogue millimetres. Not reused against the finished picture — see
  * the count button at the bottom of this file for why those are two different numbers.
- * Indexed against state.elements since that is the order /api/prepare received them in. An
+ * Indexed against store.decorations since that is the order /api/prepare received them in. An
  * entry is null when that item has no catalogue size — suggest_quantity() has no fallback for
  * that case the way scale_sentence() does, so the item is skipped rather than invented. */
 function renderQuantities(target, quantities) {
@@ -455,12 +334,25 @@ function renderQuantities(target, quantities) {
     quantities.forEach((q, i) => {
       if (!q) return;
       const li = document.createElement("li");
-      li.textContent = `${state.elements[i].code}: ควรใช้ประมาณ ${q.low}–${q.high} ชิ้นบนต้นนี้`;
+      li.textContent = `${store.decorations[i].code}: ควรใช้ประมาณ ${q.low}–${q.high} ชิ้นบนต้นนี้`;
       target.append(li);
       shown = true;
     });
   }
   target.hidden = !shown;
+}
+
+function showTotals(totals) {
+  $("generations").textContent = totals.generations;
+  $("tokens").textContent = totals.total_tokens.toLocaleString();
+}
+
+async function refreshTotals() {
+  try {
+    showTotals(await call("/api/usage"));
+  } catch (err) {
+    showError(err.message);
+  }
 }
 
 /* How many packs to pull off the shelf for a finished run (issue #25) — the number a shop can
@@ -486,61 +378,19 @@ function renderStock(elements) {
   $("stock-note").hidden = !shown;
 }
 
-function showTotals(totals) {
-  $("generations").textContent = totals.generations;
-  $("tokens").textContent = totals.total_tokens.toLocaleString();
-}
-
-async function refreshTotals() {
-  try {
-    showTotals(await call("/api/usage"));
-  } catch (err) {
-    showError(err.message);
-  }
-}
-
-let sizePresets = []; // [{key, width, height, orientation}] from /api/config, for refreshAutoSize below
-
 const ORIENTATION_TH = { portrait: "แนวตั้ง", landscape: "แนวนอน", square: "จัตุรัส" };
 
 async function loadConfig() {
   const config = await call("/api/config");
-  sizePresets = config.sizes;
-  MAX_ELEMENTS = config.max_elements;
-  renderElements(); // the "ใส่ได้ถึง N ชิ้น" hint was built against the pre-fetch fallback
-
-  const select = $("size-select");
-  select.innerHTML = "";
-  // "match the scene photo's own ratio" — resolved into a concrete size server-side
-  // (fit_custom_size) once a scene reference exists; see refreshAutoSize below for how it
-  // gets auto-selected the moment a scene photo is set.
-  const auto = document.createElement("option");
-  auto.value = "auto";
-  auto.textContent = "ตามสัดส่วนรูปบรรยากาศ";
-  select.append(auto);
-  for (const size of config.sizes) {
-    const option = document.createElement("option");
-    option.value = size.key;
-    option.textContent =
-      `${size.key} — ${size.width} × ${size.height} (${ORIENTATION_TH[size.orientation]})`;
-    option.selected = size.key === config.default_size;
-    select.append(option);
-  }
-  select.disabled = false;
-
-  const densitySelect = $("density-select");
-  densitySelect.innerHTML = "";
-  for (const density of config.densities) {
-    const option = document.createElement("option");
-    option.value = density.key;
-    option.textContent = density.label;
-    option.selected = density.key === config.default_density;
-    densitySelect.append(option);
-  }
-  densitySelect.disabled = false;
-
-  $("cut-hint").textContent = `ไม่เกิน ${config.max_upload_mb} MB, JPG หรือ PNG`;
+  store.config = { sizes: config.sizes, densities: config.densities };
+  store.limits.maxElements = config.max_elements;
+  store.limits.promptMaxChars = config.prompt_mode_max_chars;
+  store.output = { ratio: config.default_size, density: config.default_density };
+  render();
 }
+
+$("size-select").addEventListener("change", () => { store.output.ratio = $("size-select").value; });
+$("density-select").addEventListener("change", () => { store.output.density = $("density-select").value; });
 
 /* ---- picking the output size from the photos actually given, not a fixed default ----
  * The size selector used to just sit on Product.md's 4:5 default until a user thought to
@@ -570,14 +420,24 @@ function imageDimensions(file) {
   });
 }
 
+async function ratioOf(file) {
+  try {
+    const { width, height } = await imageDimensions(file);
+    return width / height;
+  } catch {
+    return null; /* size auto-pick is a convenience; a photo the browser can't measure still uploads fine */
+  }
+}
+
 function nearestSizeKey(ratio) {
-  if (!sizePresets.length || !ratio) return null;
+  const presets = store.config.sizes;
+  if (!presets.length || !ratio) return null;
   // compared in log space so a 2:1 landscape and a 1:2 portrait are equally "far" from
   // square — a plain numeric difference would treat every landscape preset as closer to
   // square than any portrait one just because their ratio values happen to be larger
   let best = null;
   let bestDiff = Infinity;
-  for (const preset of sizePresets) {
+  for (const preset of presets) {
     const diff = Math.abs(Math.log(preset.width / preset.height) - Math.log(ratio));
     if (diff < bestDiff) {
       bestDiff = diff;
@@ -592,105 +452,57 @@ function refreshAutoSize() {
   // backend), so there is no "nearest of five" step to run once one is set. Without a scene,
   // the tree photo's own ratio still snaps to the closest preset, same as before this option
   // existed. Either way the user can still override manually via the dropdown afterward.
-  if (state.sceneRatio) {
-    $("size-select").value = "auto";
+  if (store.atmosphereRef && store.atmosphereRef.ratio) {
+    store.output.ratio = "auto";
     return;
   }
-  const key = nearestSizeKey(state.treeRatio);
-  if (key) $("size-select").value = key;
+  const key = nearestSizeKey(store.base && store.base.ratio);
+  if (key) store.output.ratio = key;
 }
+
+/* ---- the base photo (tree, wall or door) ---- */
 
 /* Codes are never typed on this page: they ride along with whatever the catalogue picker
  * hands over, and are shown burned onto the preview so they can still be read back.
  * Product.md 8.2 wanted them so the prompt could state real millimetres; a code typed from
  * memory out of ~1,300 was always a wrong order waiting to happen. Settings is where a code
- * gets entered by hand, against the catalogue row it belongs to. */
-function showTreeCode(code, sizeMm = null, price = null) {
-  state.treeCode = code || null;
-  state.treeSizeMm = code ? sizeMm : null;
-  state.treeManualMm = null; // a new tree slot starts its own gate over from nothing
-  state.treePrice = code ? price : null;
-  state.treeTypedPrice = null;
-  const badge = $("tree-code-badge");
-  badge.textContent = code || "";
-  badge.hidden = !code;
-  renderTreeSizeGate();
-}
-
-function showElementCode(code, sizeMm = null, image = null, price = null) {
-  const badge = $("element-code-badge");
-  badge.textContent = code || "";
-  badge.hidden = !code;
-  $("element-preview").dataset.code = code || "";
-  $("element-preview").dataset.sizeMm = code && sizeMm != null ? sizeMm : "";
-  // "" covers both "no code" and "priced at nothing yet" — the accepted item turns it back
-  // into null, which is what buildPriceRow reads as "offer to fill this in" (issue #27)
-  $("element-preview").dataset.price = code && price != null ? price : "";
-  // Which colour photo this cutout came from (issue #15) — carried from here into the
-  // accepted item so its card knows what to offer a colour switcher against. Empty for an
-  // uploaded photo, which has no catalogue colours to switch between.
-  $("element-preview").dataset.image = image || "";
-}
-
-upgradeFilePickers(); // native file inputs say "Choose File" in English; this swaps in a Thai button
-renderElements();
-
-/* ---- step 1: bare tree ---- */
-$("tree-file").addEventListener("change", async (event) => {
-  const file = event.target.files[0] || null;
-  state.treeFile = file;
-  $("tree-preview-frame").hidden = !file;
-  if (file) $("tree-preview").src = URL.createObjectURL(file);
-  // an own photo carries no catalogue code, and must not keep the one the picker left behind
-  showTreeCode(null);
-  state.treeRatio = null;
-  if (file) {
-    try {
-      const { width, height } = await imageDimensions(file);
-      state.treeRatio = width / height;
-    } catch {
-      /* size auto-pick is a convenience; a photo the browser can't measure still uploads fine */
-    }
-    refreshAutoSize();
-  }
+ * gets entered by hand, against the catalogue row it belongs to. A new base starts its size
+ * gate over from nothing, and an uploaded photo carries no code at all. */
+async function setBase({ file, url, code = null, sizeMm = null, price = null }) {
+  const ratio = await ratioOf(file);
+  store.base = {
+    type: store.backdrop, file, url, code,
+    sizeMm: code ? sizeMm : null, manualMm: null,
+    price: code ? price : null, typedPrice: null, ratio,
+  };
+  refreshAutoSize();
   resetRun();
-});
-
-/* ---- step 2: element, background removed, previewed, accepted or discarded ---- */
-$("element-file").addEventListener("change", (event) => {
-  $("cut-btn").disabled = !event.target.files[0];
-  $("element-preview-frame").hidden = true;
-  $("element-actions").hidden = true;
-  showElementCode(null);
-  resetRun();
-});
-
-function showElementPreview(result, code = null, sizeMm = null, image = null) {
-  $("element-preview").src = result.element_url;
-  $("element-preview-frame").hidden = false;
-  $("element-actions").hidden = false;
-  $("element-preview").dataset.name = result.element;
-  showElementCode(code, sizeMm, image, result.price ?? null);
 }
 
-$("cut-btn").addEventListener("click", async () => {
-  const file = $("element-file").files[0];
-  if (!file) return;
-
-  $("cut-btn").disabled = true;
-  $("cut-btn").textContent = "กำลังตัดพื้นหลัง…";
+function setBaseFromFile(file) {
   showError("");
-  try {
-    const body = new FormData();
-    body.append("files", file);
-    showElementPreview(await call("/api/remove-bg", { method: "POST", body }));
-  } catch (err) {
-    // rembg failed. Nothing continues on its own — the user re-uploads or cuts by hand.
-    showError(err.message);
-    $("cut-btn").disabled = false;
-  } finally {
-    $("cut-btn").textContent = "ตัดพื้นหลัง";
-  }
+  return setBase({ file, url: URL.createObjectURL(file) });
+}
+
+function clearBase() {
+  store.base = null;
+  resetRun();
+}
+
+function setBackdrop(type) {
+  if (store.backdrop === type) return;
+  // Auto's recipe and tones are per backdrop (issue #24): a tone chosen for a tree means nothing on a wall
+  store.tone = null;
+  store.auto.pick = null;
+  store.auto.pickError = null;
+  store.auto.exclude = [];
+  setStore({ backdrop: type });
+}
+
+$("base-file").addEventListener("change", (event) => {
+  const file = event.target.files[0];
+  event.target.value = "";
+  if (file) setBaseFromFile(file);
 });
 
 /* ---- lightbox: a full-size look at a candidate's photo before deciding ----
@@ -839,7 +651,7 @@ async function loadCatalogShops() {
 /* Which backdrop the picker is filling for (issue #23). Only the decoration picker filters:
  * the tree picker is choosing the backdrop itself, so it browses the whole catalogue. */
 function pickerBackdrop() {
-  return catalogPickerMode === "element" ? $("backdrop-select").value : "";
+  return catalogPickerMode === "element" ? store.backdrop : "";
 }
 
 /* The category list belongs to whichever shop is selected, so it is rebuilt whenever that
@@ -913,7 +725,7 @@ async function loadCatalogPage(restart) {
  * is one line of text that the next pick overwrites.
  *
  * Reads the caller's own list every time rather than counting picks as they happen — the two
- * decoration pickers keep separate lists (state.elements, promptState.attachments), and a
+ * decoration pickers keep separate lists (store.decorations, and Prompt mode's before it shared them), and a
  * tally kept here would be a third copy free to disagree with both. `catalogPickerPicked` is
  * whichever provider the current caller handed openCatalogPicker; the tree picker hands none,
  * which is also how the strip knows to stay hidden for a slot that holds one tree. */
@@ -928,7 +740,7 @@ function renderCatalogPicked() {
 
   const label = document.createElement("span");
   label.className = "hint";
-  label.textContent = `เลือกแล้ว ${picked.length} จาก ${MAX_ELEMENTS} ชิ้น`;
+  label.textContent = `เลือกแล้ว ${picked.length} จาก ${store.limits.maxElements} ชิ้น`;
   host.append(label);
 
   const strip = document.createElement("div");
@@ -971,12 +783,6 @@ async function openCatalogPicker(mode, onPick, listPicked = null) {
   $("catalog-dialog").showModal();
   loadCatalogPage(true);
 }
-
-$("catalog-toggle").addEventListener("click", () => openCatalogPicker(
-  "element", addElementFromCatalog,
-  () => state.elements.map((e) => ({ code: e.code, url: e.url })),
-));
-$("tree-catalog-toggle").addEventListener("click", () => openCatalogPicker("tree", useTreeFromCatalog));
 
 $("catalog-shop").addEventListener("change", async () => {
   // categories first: the grid must not be reloaded against a filter the new shop has no
@@ -1036,29 +842,35 @@ async function lookupColours(code) {
   }
 }
 
+/* ---- decorations ---- */
+
 /* A catalogue pick is a known-good pre-cut product photo, never a live rembg cut that might
- * come out wrong — so unlike an uploaded photo (showElementPreview + accept-btn/reject-btn,
- * a real "back out of a bad cut" step) it goes straight into the accepted list with no
- * preview to confirm first. The dialog stays open afterwards (issue #28), so picking five
- * decorations is five clicks in the one dialog, not five open/pick/close/reopen cycles.
+ * come out wrong — so unlike an uploaded photo it goes straight into the list, already
+ * "ready". The dialog stays open afterwards (issue #28), so picking five decorations is five
+ * clicks in the one dialog, not five open/pick/close/reopen cycles.
+ *
+ * The first cut after launch pays for loading the model: measured 10s on a warm dev box and
+ * 68s on a cold installed copy, so the grid dims and stops taking clicks while one runs
+ * (setCatalogBusy) — several rembg calls fighting over one session is what turned a slow pick
+ * into a stuck one.
  *
  * Returns what catalogCard() should tell the shop: a string to show verbatim (the cap was
  * already full, or the pick failed), or `true` for a plain success. */
-async function addElementFromCatalog(code, image) {
+async function addDecorationFromCatalog(code, image) {
   if (catalogBusy) return undefined;
-  if (state.elements.length >= MAX_ELEMENTS) {
-    return `ใส่ได้ถึง ${MAX_ELEMENTS} ชิ้น — เอาออกสักชิ้นถ้าจะเพิ่ม`;
+  const max = store.limits.maxElements;
+  if (store.decorations.length >= max) {
+    return `ใส่ได้ถึง ${max} ชิ้น — เอาออกสักชิ้นถ้าจะเพิ่ม`;
   }
   setCatalogBusy(true, "กำลังตัดพื้นหลัง… ครั้งแรกหลังเปิดโปรแกรมจะนานหน่อย");
   try {
     const result = await fetchElementFromCatalog(code, image);
-    state.elements.push({
+    store.decorations.push({
       name: result.element, url: result.element_url, code, image: image || null,
       colours: await lookupColours(code),
       sizeMm: result.size_mm, manualMm: null, price: result.price ?? null, typedPrice: null,
-      density: "normal",
+      density: "normal", status: "ready",
     });
-    renderElements();
     resetRun();
     return true;
   } catch (err) {
@@ -1073,126 +885,97 @@ async function addElementFromCatalog(code, image) {
   }
 }
 
-/* Same idea as addElementFromCatalog, but for the tree slot — no background removal (a tree keeps
- * its own photographed background), so state.treeFile needs a real File the same way
- * #tree-file's own change handler produces one, not just a stored server filename. */
-async function useTreeFromCatalog(code, image) {
-  if (catalogBusy) return;
-  showError("");
-  setCatalogBusy(true, "กำลังโหลดรูปต้น…");
+/* An uploaded photo goes through the same background removal a catalogue pick has already had
+ * (NonGoals: never skip it). With "ตัดพื้นหลังอัตโนมัติ" ticked that happens straight away, one
+ * photo at a time; unticked, the row waits with its own "ตัดพื้นหลัง" button. Either way a bad cut
+ * is a dead end the user can back out of by removing the row (AC-2). */
+async function cutDecoration(item) {
+  item.status = "cutting";
+  render();
   try {
     const body = new FormData();
-    body.append("code", code);
-    if (image) body.append("image", image);
-    const result = await call("/api/tree/from-catalog", { method: "POST", body });
-    const blob = await (await fetch(result.tree_url)).blob();
-    state.treeFile = new File([blob], result.tree, { type: "image/png" });
-    $("tree-preview").src = result.tree_url;
-    $("tree-preview-frame").hidden = false;
-    clearFilePicker($("tree-file"));  // the picker's tree replaces whatever was uploaded
-    showTreeCode(code, result.size_mm, result.price ?? null);
-    try {
-      const { width, height } = await imageDimensions(state.treeFile);
-      state.treeRatio = width / height;
-      refreshAutoSize();
-    } catch {
-      /* size auto-pick is a convenience */
-    }
-    $("catalog-dialog").close();
-    resetRun();
+    body.append("files", item.file);
+    const result = await call("/api/remove-bg", { method: "POST", body });
+    item.name = result.element;
+    item.url = result.element_url;
+    item.file = null;
+    item.status = "ready";
   } catch (err) {
-    $("catalog-dialog").close();
+    // rembg failed. Nothing continues on its own — the user removes the row and re-uploads.
+    item.status = "failed";
+    item.error = err.message;
     showError(err.message);
-  } finally {
-    setCatalogBusy(false);
   }
+  render();
 }
 
-$("accept-btn").addEventListener("click", async () => {
-  const preview = $("element-preview");
-  const code = preview.dataset.code || "";
-  const image = preview.dataset.image || "";
-  state.elements.push({
-    name: preview.dataset.name,
-    url: preview.src,
-    code,
-    image: image || null,
-    colours: await lookupColours(code),
-    sizeMm: code && preview.dataset.sizeMm ? Number(preview.dataset.sizeMm) : null,
-    manualMm: null,
-    price: code && preview.dataset.price ? Number(preview.dataset.price) : null,
-    typedPrice: null,
-    density: "normal",
-  });
-  // clear the slot so the next decoration starts from nothing
-  clearFilePicker($("element-file"));
-  $("element-preview-frame").hidden = true;
-  $("element-actions").hidden = true;
-  $("cut-btn").disabled = true;
-  showElementCode(null);
-  renderElements();
+async function addDecorationFiles(files) {
+  const room = store.limits.maxElements - store.decorations.length;
+  const added = [];
+  for (const file of files.slice(0, Math.max(room, 0))) {
+    const item = {
+      name: null, url: URL.createObjectURL(file), file, code: null, image: null, colours: null,
+      sizeMm: null, manualMm: null, price: null, typedPrice: null, density: "normal",
+      status: store.ui.autoCut ? "cutting" : "pending",
+    };
+    store.decorations.push(item);
+    added.push(item);
+  }
+  if (!added.length) return;
   resetRun();
+  if (store.ui.autoCut) for (const item of added) await cutDecoration(item);
+}
+
+function removeDecoration(index) {
+  store.decorations.splice(index, 1);
+  resetRun();
+}
+
+$("element-file").addEventListener("change", (event) => {
+  const files = [...event.target.files];
+  event.target.value = "";
+  if (files.length) addDecorationFiles(files);
 });
 
-/* AC-2: a bad cut-out is a dead end the user can back out of, not something they have to
- * ride to the end of the pipeline. */
-$("reject-btn").addEventListener("click", () => {
-  clearFilePicker($("element-file"));
-  $("element-preview-frame").hidden = true;
-  $("element-actions").hidden = true;
-  $("cut-btn").disabled = true;
-  showElementCode(null);
-  resetRun();
-});
-
-/* ---- step 3: the optional scene/ambience reference ----
+/* ---- the optional scene/ambience reference ----
  * Uploaded on its own endpoint rather than with the tree, because it is not
  * background-removed: its background is the only thing being taken from it. Independent of
  * the find-from-photo page (identify.html/identify.js) — this one only ever feeds the
  * background of the generated result, never the catalogue search. */
-$("scene-reference-file").addEventListener("change", async (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
+async function setAtmosphereFromFile(file) {
   showError("");
   try {
     const body = new FormData();
     body.append("files", file);
     const result = await call("/api/reference", { method: "POST", body });
-    state.sceneReference = result.reference;
-    $("scene-reference-preview").src = result.reference_url;
-    $("scene-reference-preview").hidden = false;
-    $("scene-reference-actions").hidden = false;
-    try {
-      const { width, height } = await imageDimensions(file);
-      state.sceneRatio = width / height;
-      refreshAutoSize();
-    } catch {
-      /* size auto-pick is a convenience */
-    }
+    store.atmosphereRef = { name: result.reference, url: result.reference_url, ratio: await ratioOf(file) };
+    store.ui.atmosphereOpen = true;
+    store.ui.sceneSamples = false;
+    refreshAutoSize();
   } catch (err) {
     showError(err.message);
-    clearFilePicker($("scene-reference-file"));
   }
   resetRun();
-});
+}
 
-$("scene-reference-clear").addEventListener("click", () => {
-  state.sceneReference = null;
-  state.sceneRatio = null;
-  clearFilePicker($("scene-reference-file"));
-  $("scene-reference-preview").hidden = true;
-  $("scene-reference-actions").hidden = true;
+function clearAtmosphere() {
+  store.atmosphereRef = null;
   refreshAutoSize(); // falls back to the tree photo's own ratio, if any
   resetRun();
+}
+
+$("atmosphere-file").addEventListener("change", (event) => {
+  const file = event.target.files[0];
+  event.target.value = "";
+  if (file) setAtmosphereFromFile(file);
 });
 
 /* ---- sample pictures ----
  * A shop trying the app for the first time has no bare-tree photo and no room photo to hand,
  * which is two dead ends before it can generate anything. These are committed under
  * frontend/samples/ and served by the existing /static mount, so there is no endpoint here —
- * each one is fetched as a blob and then goes through exactly the path a real upload takes:
- * the tree becomes a File in state.treeFile, the room is POSTed to /api/reference. Nothing
- * downstream can tell a sample from something the user chose, which is the point.
+ * each one is fetched as a blob and then goes through exactly the path a real upload takes.
+ * Nothing downstream can tell a sample from something the user chose, which is the point.
  *
  * A sample tree carries no catalogue code, the same as any other photo the user supplies. */
 const SAMPLE_TREES = [
@@ -1210,120 +993,139 @@ const SAMPLE_SCENES = [
   { file: "living-plants-wood.jpg", label: "ห้องโทนอุ่น ต้นไม้" },
 ];
 
-function buildSampleStrip(host, folder, samples, onPick) {
-  if (host.childElementCount) return;  // built once, on first open
-  for (const sample of samples) {
-    const url = `/static/samples/${folder}/${sample.file}`;
-    const button = document.createElement("button");
-    button.type = "button";
-    button.title = sample.label;
-    const img = document.createElement("img");
-    img.src = url;
-    img.alt = sample.label;
-    // no loading="lazy" here, unlike the catalogue grid: the strip is only built the first
-    // time its button is pressed, so these are already fetched on demand — lazy on top of
-    // that just leaves them unloaded until the row happens to be scrolled into view.
-    button.append(img);
-    button.addEventListener("click", () => onPick(url, sample));
-    host.append(button);
-  }
-}
-
-function toggleSampleStrip(host) {
-  host.hidden = !host.hidden;
-}
-
 async function fetchSampleFile(url, type = "image/jpeg") {
   const blob = await (await fetch(url)).blob();
   return new File([blob], url.split("/").pop(), { type });
 }
 
-$("tree-sample-toggle").addEventListener("click", () => {
-  const host = $("tree-samples");
-  buildSampleStrip(host, "trees", SAMPLE_TREES, async (url) => {
-    showError("");
-    try {
-      state.treeFile = await fetchSampleFile(url);
-      $("tree-preview").src = url;
-      $("tree-preview-frame").hidden = false;
-      clearFilePicker($("tree-file"));
-      showTreeCode(null);
-      const { width, height } = await imageDimensions(state.treeFile);
-      state.treeRatio = width / height;
-      refreshAutoSize();
-      host.hidden = true;
-      resetRun();
-    } catch (err) {
-      showError(err.message);
-    }
-  });
-  toggleSampleStrip(host);
-});
+async function useSampleTree(url) {
+  showError("");
+  try {
+    store.ui.samples = false;
+    await setBase({ file: await fetchSampleFile(url), url });
+  } catch (err) {
+    showError(err.message);
+  }
+}
 
-$("scene-sample-toggle").addEventListener("click", () => {
-  const host = $("scene-samples");
-  buildSampleStrip(host, "scenes", SAMPLE_SCENES, async (url) => {
-    showError("");
-    try {
-      const sceneFile = await fetchSampleFile(url);
-      const body = new FormData();
-      body.append("files", sceneFile);
-      const result = await call("/api/reference", { method: "POST", body });
-      state.sceneReference = result.reference;
-      $("scene-reference-preview").src = result.reference_url;
-      $("scene-reference-preview").hidden = false;
-      $("scene-reference-actions").hidden = false;
-      clearFilePicker($("scene-reference-file"));
-      const { width, height } = await imageDimensions(sceneFile);
-      state.sceneRatio = width / height;
-      refreshAutoSize();
-      host.hidden = true;
-      resetRun();
-    } catch (err) {
-      showError(err.message);
-    }
-  });
-  toggleSampleStrip(host);
-});
+async function useSampleScene(url) {
+  try {
+    await setAtmosphereFromFile(await fetchSampleFile(url));
+  } catch (err) {
+    showError(err.message);
+  }
+}
 
-/* ---- step 4 + 5: prepare, confirm, generate ---- */
+/* Same idea as a decoration pick, but for the base slot — no background removal (a tree keeps
+ * its own photographed background), so it needs a real File the same way an upload produces
+ * one, not just a stored server filename. */
+async function useTreeFromCatalog(code, image) {
+  if (catalogBusy) return;
+  showError("");
+  setCatalogBusy(true, "กำลังโหลดรูปต้น…");
+  try {
+    const body = new FormData();
+    body.append("code", code);
+    if (image) body.append("image", image);
+    const result = await call("/api/tree/from-catalog", { method: "POST", body });
+    const blob = await (await fetch(result.tree_url)).blob();
+    await setBase({
+      file: new File([blob], result.tree, { type: "image/png" }),
+      url: result.tree_url, code, sizeMm: result.size_mm, price: result.price ?? null,
+    });
+    $("catalog-dialog").close();
+  } catch (err) {
+    $("catalog-dialog").close();
+    showError(err.message);
+  } finally {
+    setCatalogBusy(false);
+  }
+}
+
+/* ---- prepare, confirm, generate ---- */
+
+/* The whole /api/prepare form for what is currently set, and nothing else — every field the
+ * server ever receives about a run comes from here (/api/generate has no body at all). `exact`
+ * is exactScaleReady(): the all-codes-or-none gate. Kept apart from the click handler so a dry
+ * run (?dryrun=1) can read exactly what a real run would send.
+ *
+ * Custom and Auto share one shape. Prompt mode sends the same photos with its typed text in
+ * place of a density (backend/main.py's /api/generate substitutes it into {density}, after the
+ * template's own hard preservation rules, never before them). */
+function buildGenerateRequest(exact) {
+  return store.mode === "prompt" ? buildPromptRequest(exact) : buildCustomRequest(exact);
+}
+
+function appendSize(body) {
+  body.append("size", store.output.ratio);
+  if (store.output.ratio === "auto") {
+    const scene = store.atmosphereRef && store.atmosphereRef.ratio;
+    body.append("scene_ratio", String(scene || (store.base && store.base.ratio) || ""));
+  }
+}
+
+function buildCustomRequest(exact) {
+  const body = new FormData();
+  body.append("files", store.base.file);
+  body.append("backdrop", store.backdrop);
+  appendSize(body);
+  body.append("density", store.output.density);
+  body.append("tree_code", exact ? store.base.code : "");
+  body.append("tree_manual_mm", store.base.manualMm != null ? String(store.base.manualMm) : "");
+  if (store.atmosphereRef) body.append("reference", store.atmosphereRef.name);
+  for (const element of store.decorations) {
+    body.append("element", element.name);
+    body.append("element_code", exact ? element.code : "");
+    // Travels with the code, never without it (issue #16) — a colour is only meaningful
+    // paired with the product it names one photo of (ADR-0002), same "all codes or none"
+    // gate `exact` already applies to element_code above.
+    body.append("element_image", exact ? (element.image || "") : "");
+    body.append("element_manual_mm", element.manualMm != null ? String(element.manualMm) : "");
+    body.append("element_density", element.density || "");
+  }
+  return body;
+}
+
+function buildPromptRequest(exact) {
+  const body = new FormData();
+  body.append("files", store.base.file);
+  if (store.backdrop !== "tree") body.append("backdrop", store.backdrop);
+  appendSize(body);
+  body.append("density", "normal"); // irrelevant once custom_prompt wins server-side
+  body.append("tree_code", exact ? store.base.code : "");
+  body.append("tree_manual_mm", store.base.manualMm != null ? String(store.base.manualMm) : "");
+  body.append("custom_prompt", store.prompt.trim());
+  if (store.atmosphereRef) body.append("reference", store.atmosphereRef.name);
+  for (const element of store.decorations) {
+    body.append("element", element.name);
+    body.append("element_code", exact ? element.code : "");
+    body.append("element_manual_mm", element.manualMm != null ? String(element.manualMm) : "");
+    body.append("element_density", "normal");
+  }
+  return body;
+}
+
 $("generate-btn").addEventListener("click", async () => {
-  state.busy = true;
-  refreshGenerateButton();
+  setStore({ busy: true });
   showError("");
 
   // all the codes or none: a partial set cannot produce a ratio and the server refuses it,
   // and it is no longer something the user could complete by hand (see exactScaleReady)
   const exact = exactScaleReady();
   const droppedCodes = !exact
-    && (Boolean(state.treeCode) || state.elements.some((element) => element.code));
+    && (Boolean(store.base.code) || store.decorations.some((element) => element.code));
 
   try {
-    const body = new FormData();
-    body.append("files", state.treeFile);
-    body.append("backdrop", $("backdrop-select").value);
-    body.append("size", $("size-select").value);
-    if ($("size-select").value === "auto") {
-      body.append("scene_ratio", String(state.sceneRatio || state.treeRatio || ""));
-    }
-    body.append("density", $("density-select").value);
-    body.append("tree_code", exact ? state.treeCode : "");
-    body.append("tree_manual_mm", state.treeManualMm != null ? String(state.treeManualMm) : "");
-    if (state.sceneReference) body.append("reference", state.sceneReference);
-    for (const element of state.elements) {
-      body.append("element", element.name);
-      body.append("element_code", exact ? element.code : "");
-      // Travels with the code, never without it (issue #16) — a colour is only meaningful
-      // paired with the product it names one photo of (ADR-0002), same "all codes or none"
-      // gate `exact` already applies to element_code above.
-      body.append("element_image", exact ? (element.image || "") : "");
-      body.append("element_manual_mm", element.manualMm != null ? String(element.manualMm) : "");
-      body.append("element_density", element.density || "");
+    const body = buildGenerateRequest(exact);
+    if (dryRunEnabled()) {
+      dryRunReport(store.mode, body);
+      setStore({ busy: false });
+      return;
     }
 
     const prepared = await call("/api/prepare", { method: "POST", body });
-    state.requestId = prepared.request_id;
-    setStatus("pending");
+    store.run.requestId = prepared.request_id;
+    store.status = "pending";
     const many = prepared.element_count > 1
       ? `ของตกแต่ง ${prepared.element_count} ชิ้นผสมกัน`
       : `ของตกแต่ง 1 ชิ้น`;
@@ -1341,77 +1143,62 @@ $("generate-btn").addEventListener("click", async () => {
             ? `มีบางชิ้นที่ไม่ได้เลือกจาก catalogue ขนาดจึงไม่ตรงของจริง`
             : `ไม่ได้เลือกจาก catalogue ขนาดจึงไม่ตรงของจริง`);
 
+    // Prompt mode: say back what will be asked for, since it replaces the density choice
+    const text = store.prompt.trim();
+    const preview = $("confirm-prompt-preview");
+    preview.textContent = text ? `“${text}”` : "";
+    preview.hidden = store.mode !== "prompt" || !text;
+
     const missingBox = $("confirm-missing-sizes");
     missingBox.textContent = prepared.missing_sizes.length
       ? `แคตตาล็อกไม่มีขนาดของ: ${prepared.missing_sizes.join(", ")} — ขนาดชิ้นนี้จะไม่ตรงของจริง`
       : "";
     missingBox.hidden = !prepared.missing_sizes.length;
 
-    state.quantities = prepared.quantities || null;
-    renderQuantities($("confirm-quantities"), state.quantities);
+    store.run.quantities = prepared.quantities || null;
+    renderQuantities($("confirm-quantities"), store.run.quantities);
 
     $("confirm-btn").disabled = false;
+    render();
     $("confirm-dialog").showModal();
   } catch (err) {
     showError(err.message);
-    state.busy = false;
-    refreshGenerateButton();
+    setStore({ busy: false });
   }
 });
 
 $("cancel-btn").addEventListener("click", () => {
   $("confirm-dialog").close();
-  state.requestId = null;
-  state.busy = false;
-  refreshGenerateButton();
+  store.run.requestId = null;
+  store.status = "idle";
+  setStore({ busy: false });
 });
 
 $("confirm-btn").addEventListener("click", async () => {
   // first line of defence against a double-click; the server's claim() is the second
   $("confirm-btn").disabled = true;
   $("confirm-dialog").close();
-  setStatus("calling_api");
+  store.ui.stageView = "result"; // the spinner and then the picture appear on the stage
+  setStore({ status: "calling_api" });
 
   try {
-    // What went into this run is already visible in panels 1 and 2 (the tree preview and
-    // the accepted-decorations list) — repeating them here would just be the same pictures
-    // twice, so the result panel shows only the thing this step actually produced.
-    const result = await call(`/api/generate/${state.requestId}`, { method: "POST" });
+    const requestId = store.run.requestId;
+    const result = await call(`/api/generate/${requestId}`, { method: "POST" });
     showTotals(result.totals);
-    $("out-result").src = result.output_url;
-    $("out-result").hidden = false;
-    $("result-empty").hidden = true;
     // the pre-generate suggestion is not shown against the finished picture: it answers "how
     // many fit on a tree this size" from the catalogue millimetres, and the picture routinely
-    // does not honour that scale. Counting the picture itself is the button below.
-    $("count-actions").hidden = false;
-    // What to pull off the shelf, which is a different question from what the picture shows —
-    // labelled as such, right where the shop finishes a job (issue #25).
-    renderStock(result.elements);
-    $("download-btn").href = result.output_url;
-    const priceText = result.price_total || result.price_missing.length
-      ? ` · ฿${result.price_total.toLocaleString("th-TH")}` +
-        (result.price_missing.length ? " (ราคาไม่ครบ)" : "")
-      : "";
-    $("result-meta").textContent =
-      `${result.request_id} · ${result.size} · ` +
-      (result.usage ? result.usage.total_tokens.toLocaleString() + " โทเคน" : "ไม่ทราบต้นทุน") +
-      priceText;
-    $("quote-link").href = `/quote?request_id=${encodeURIComponent(result.request_id)}`;
-    $("quote-link").hidden = false;
-    $("result-actions").hidden = false;
-    setStatus("api_success");
+    // does not honour that scale. Counting the picture itself is the button on the stage.
+    setStore({ result, status: "api_success" });
 
     // tell the server the browser really got it, so a row left at api_success is a genuine
     // "paid for, never seen" case and not just a page that forgot to say so (Spec.md 7)
-    await call(`/api/delivered/${state.requestId}`, { method: "POST" }).catch(() => {});
-    setStatus("delivered");
+    await call(`/api/delivered/${requestId}`, { method: "POST" }).catch(() => {});
+    setStore({ status: "delivered" });
   } catch (err) {
-    setStatus("api_failed");
     showError(err.message);
+    setStore({ status: "api_failed" });
   } finally {
-    state.busy = false;
-    refreshGenerateButton();
+    setStore({ busy: false });
     refreshTotals();
   }
 });
@@ -1423,43 +1210,29 @@ $("confirm-btn").addEventListener("click", async () => {
  * that size, the picture regularly shows a different number, and the customer is looking at
  * the picture. */
 /* Shared by a fresh count-btn click and by resumeFromHistory's replay of a persisted count
- * (request_log.set_counted, backend/main.py) — same list, same state.counted update, so a
- * result read back from history looks identical to one just counted live. `note` is omitted
- * on replay (nothing new was just billed, so the "billed a little more" hint would be wrong). */
+ * (request_log.set_counted, backend/main.py) — same list, same store.run.counted, so a result
+ * read back from history looks identical to one just counted live. `note` is omitted on replay
+ * (nothing new was just billed, so the "billed a little more" hint would be wrong). */
 function applyCountedItems(items, note) {
-  const list = $("result-quantities");
-  list.innerHTML = "";
-  for (const item of items) {
-    const li = document.createElement("li");
-    li.textContent = `${item.code}: ${item.count} ชิ้น`;
-    list.append(li);
-  }
-  if (!items.length) {
-    const li = document.createElement("li");
-    li.textContent = "ไม่เจอของตกแต่งในรูปนี้";
-    list.append(li);
-  }
-  list.hidden = false;
-  $("count-note").textContent = note || "";
-  $("count-note").hidden = !note;
-  state.counted = Object.fromEntries(items.map((item) => [item.code, item.count]));
+  store.run.counted = { items, note: note || "" };
+  render();
 }
 
 $("count-btn").addEventListener("click", async () => {
-  if (!state.requestId) return;
-  const button = $("count-btn");
-  button.disabled = true;
-  button.textContent = "กำลังนับ…";
+  if (!store.run.requestId) return;
+  const btn = $("count-btn");
+  btn.disabled = true;
+  btn.textContent = "กำลังนับ…";
   showError("");
 
   try {
-    const counted = await call(`/api/count/${state.requestId}`, { method: "POST" });
+    const counted = await call(`/api/count/${store.run.requestId}`, { method: "POST" });
     applyCountedItems(counted.items, counted.note);
   } catch (err) {
     showError(err.message);
   } finally {
-    button.disabled = false;
-    button.textContent = "นับของในรูปนี้";
+    btn.disabled = false;
+    btn.textContent = "นับของในรูปนี้";
   }
 });
 
@@ -1579,32 +1352,41 @@ document.querySelectorAll("select.input").forEach(enhanceSelect);
 loadConfig().catch((err) => showError(err.message));
 refreshTotals();
 
-/* ---- mode switch — one primitive shared by every mode's own button/container pair, so
- * auto.js and prompt.js each only have to say which name is theirs. Reuses the sidebar
- * nav's .row/.row.active pattern for "which is active", the same reasoning auto.js's own
- * comment already gives: Generate is the one control allowed the primary-button colour on
- * this page (test_ui_design_system.py rule 4), and a mode tab is navigation, not that. */
-const MODES = [
-  { name: "custom", btn: "mode-btn-custom", panel: "mode-custom" },
-  { name: "prompt", btn: "mode-btn-prompt", panel: "mode-prompt" },
-  { name: "auto", btn: "mode-btn-auto", panel: "mode-auto" },
-];
-function showMode(name) {
-  for (const mode of MODES) {
-    const active = mode.name === name;
-    $(mode.btn).classList.toggle("active", active);
-    $(mode.btn).setAttribute("aria-pressed", String(active));
-    $(mode.panel).hidden = !active;
+/* ---- mode switch — the three tabs in the top bar. Only `mode` changes: the base photo,
+ * decorations, atmosphere reference and output settings all live in the store, so they are
+ * exactly where they were when the tab is switched back. Reuses the sidebar nav's
+ * .row/.row.active pattern for "which is active": Generate is the one control allowed the
+ * primary-button colour on this page (test_ui_design_system.py rule 4), and a mode tab is
+ * navigation, not that. */
+async function setMode(mode) {
+  showError("");
+  setStore({ mode });
+  if (mode === "auto") {
+    try {
+      await loadAutoConfig();
+    } catch (err) {
+      store.auto.pickError = err.message;
+    }
+    render();
   }
 }
-$("mode-btn-custom").addEventListener("click", () => showMode("custom"));
+$("mode-btn-custom").addEventListener("click", () => setMode("custom"));
+$("mode-btn-prompt").addEventListener("click", () => setMode("prompt"));
+$("mode-btn-auto").addEventListener("click", () => setMode("auto"));
+
+$("stage-tab-original").addEventListener("click", () => setStore({ ui: { ...store.ui, stageView: "original" } }));
+$("stage-tab-result").addEventListener("click", () => setStore({ ui: { ...store.ui, stageView: "result" } }));
+$("auto-refine-link").addEventListener("click", (event) => {
+  event.preventDefault();
+  setMode("custom"); // the pick is already in store.decorations — this is only a change of view
+});
 
 /* ---- "จัดการต่อ" from the history page (history.js's own link) ----
- * /?request_id=<id> pre-fills panels 1-4 from a past request so it can be counted (again, or
- * for the first time) or re-checked for price without redoing the pick from scratch. Read-only
- * against the server (GET /api/request/{id}) — nothing here is a new request until Generate
- * is pressed again, which needs a real tree File the same as any other run, hence re-fetching
- * it as a blob rather than only pointing an <img> at the stored URL. */
+ * /?request_id=<id> pre-fills the base and decorations from a past request so it can be counted
+ * (again, or for the first time) or re-checked for price without redoing the pick from scratch.
+ * Read-only against the server (GET /api/request/{id}) — nothing here is a new request until
+ * Generate is pressed again, which needs a real tree File the same as any other run, hence
+ * re-fetching it as a blob rather than only pointing an <img> at the stored URL. */
 function fileNameFrom(url) {
   return url ? url.split("/").pop() : null;
 }
@@ -1622,27 +1404,22 @@ async function resumeFromHistory(requestId) {
     return;
   }
 
-  showMode("custom");
-
-  state.treeCode = row.tree_code || null;
-  state.treeSizeMm = row.tree_size_mm;
-  state.treeManualMm = row.tree_manual_mm;
-  $("tree-preview").src = row.tree_url;
-  $("tree-preview-frame").hidden = false;
-  $("tree-code-badge").textContent = state.treeCode || "";
-  $("tree-code-badge").hidden = !state.treeCode;
+  const base = {
+    type: store.backdrop, file: null, url: row.tree_url, code: row.tree_code || null,
+    sizeMm: row.tree_size_mm, manualMm: row.tree_manual_mm, price: null, typedPrice: null, ratio: null,
+  };
   try {
     const blob = await (await fetch(row.tree_url)).blob();
-    state.treeFile = new File([blob], fileNameFrom(row.tree_url), { type: "image/png" });
-    const { width, height } = await imageDimensions(state.treeFile);
-    state.treeRatio = width / height;
-    refreshAutoSize();
+    base.file = new File([blob], fileNameFrom(row.tree_url), { type: "image/png" });
+    base.ratio = await ratioOf(base.file);
   } catch {
     // Generate needs a real tree file; viewing/counting/pricing this request does not, so a
     // failed re-fetch here still leaves the rest of the resume usable.
   }
+  store.base = base;
+  refreshAutoSize();
 
-  state.elements = row.elements.map((e) => ({
+  store.decorations = row.elements.map((e) => ({
     name: fileNameFrom(e.url),
     url: e.url,
     code: e.code,
@@ -1650,33 +1427,23 @@ async function resumeFromHistory(requestId) {
     colours: null, // the colour switcher is a bonus of picking fresh; skip it on resume
     sizeMm: e.size_mm,
     manualMm: e.manual_mm,
+    price: null,
+    typedPrice: null,
     density: e.density || row.density || "normal",
+    status: "ready",
   }));
 
-  state.requestId = row.request_id;
-  $("out-result").src = row.output_url;
-  $("out-result").hidden = false;
-  $("result-empty").hidden = true;
-  $("result-actions").hidden = false;
-  $("download-btn").href = row.output_url;
-  $("count-actions").hidden = false;
-  $("result-quantities").hidden = true;
-  $("count-note").hidden = true;
-  $("result-meta").textContent =
-    `${row.request_id} · ${row.size} · ` +
-    (row.usage ? row.usage.total_tokens.toLocaleString() + " โทเคน" : "ไม่ทราบต้นทุน");
-  setStatus(row.status);
-  $("quote-link").href = `/quote?request_id=${encodeURIComponent(row.request_id)}`;
-  $("quote-link").hidden = false;
-
-  renderTreeSizeGate();
-  renderElements();
+  store.run = { requestId: row.request_id, quantities: null, counted: null };
+  store.result = {
+    request_id: row.request_id, output_url: row.output_url, size: row.size, usage: row.usage, resumed: true,
+  };
+  store.status = row.status;
+  store.ui.stageView = "result";
   // request_log.set_counted persisted the last count for this request (backend/main.py) — a
-  // resume replays it here for free instead of state.counted staying empty until someone
-  // pays to count the same picture again.
-  state.counted = null;
-  if (row.counted_items) applyCountedItems(row.counted_items);
-  refreshGenerateButton();
+  // resume replays it here for free instead of the count staying empty until someone pays to
+  // count the same picture again.
+  if (row.counted_items) store.run.counted = { items: row.counted_items, note: "" };
+  setStore({ mode: "custom" });
 }
 
 const resumeId = new URLSearchParams(location.search).get("request_id");

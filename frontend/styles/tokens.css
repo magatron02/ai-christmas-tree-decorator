@@ -76,6 +76,13 @@
 :root {
   color-scheme: light;
 
+  /* One knob for how big the whole UI draws, on every page. It is a browser zoom rather than
+     scaled tokens because sizes are also written as px in components.css (topbar, sidebar,
+     thumbnails); scaling only the tokens would leave those behind. Anything sized against the
+     viewport has to divide by it — layout still runs in unzoomed px — see components.css. */
+  --ui-scale: 0.85;
+  zoom: var(--ui-scale);
+
   /* surfaces */
   --surface-0: #F7F1E8;
   --surface-1: #FFFFFF;
@@ -185,6 +192,15 @@
   --text-md: 18px;
   --text-xl: 20px;
   --text-2xl: 26px;
+
+  /* swatches: one per colour word in config.TONE_PRESETS, drawn as dots on the Auto tone cards.
+     Same in both themes — a swatch says which colour a tone means, it is not a surface. */
+  --swatch-gold: #C9A227;
+  --swatch-red: #B3312F;
+  --swatch-white: #F5F1E8;
+  --swatch-green: #2F6B45;
+  --swatch-brown: #7A5230;
+  --swatch-silver: #B8BCC2;
 
   /* motion */
   --transition-gentle: 200ms ease-out;

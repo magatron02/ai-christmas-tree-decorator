@@ -85,12 +85,14 @@ def test_a_price_typed_after_picking_is_saved(client, temp_catalog, local, fake_
 
 
 def test_a_price_typed_after_picking_survives_a_re_import(client, temp_catalog, local, fake_rembg):
-    """It goes through the same overlay write as the settings page, so it is durable for the
-    same reason (ADR-0001) — this ticket adds a surface, not a second storage path."""
+    """The inline price is written to the supplier-price overlay, durable for the same reason
+    (ADR-0001): a re-import of the book or the supplier sheet never touches an overlay."""
     add("NOPRICE")
     catalog.refresh()
     client.post("/api/catalog/products/NOPRICE/price", data={"price": "120"})
 
-    from backend.services import shop_overlay
+    from backend.services import vendor_lookup, vendor_overlay
 
-    assert shop_overlay.fields_for("NOPRICE")["price"] == 120.0
+    # prices live with the supplier's price list now, in an overlay a re-import never touches
+    assert vendor_overlay.fields_for("NOPRICE")["price"] == 120.0
+    assert vendor_lookup.price_for("NOPRICE") == 120.0

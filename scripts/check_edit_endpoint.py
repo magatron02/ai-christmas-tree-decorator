@@ -22,7 +22,9 @@ from PIL import Image
 
 from _bootstrap import ROOT
 
-MODEL = "gpt-image-2"
+from backend import config
+
+MODEL = config.IMAGE_MODEL
 SIZE = "1536x1920"
 
 
@@ -116,7 +118,7 @@ def main():
         print(f"      WARN — asked for {SIZE}, got {got[0]}x{got[1]}. Raise this before building on it.")
         return 1
 
-    print("\nPASS: gpt-image-2 + images.edit + multi-image + 1536x1920 all work.")
+    print(f"\nPASS: {MODEL} + images.edit + multi-image + 1536x1920 all work.")
     return 0
 
 

@@ -6,7 +6,7 @@ Builder ห้ามแก้ค่าในไฟล์นี้เอง — �
 ## 1. Stack (เสนอ — รอยืนยัน)
 - **Backend**: Python (FastAPI) — เหตุผล: เรียก OpenAI SDK ตรง, จัดการ background-removal (rembg เป็น Python lib) ได้ในระบบเดียว
 - **Background removal**: `rembg` (local, ไม่มี cost ต่อครั้ง) — fallback เป็น manual upload ที่ user ตัดมาเองแล้ว (Photoshop) ถ้า auto-remove คุณภาพไม่พอ
-- **Image-gen**: OpenAI API — `gpt-image-2`
+- **Image-gen**: OpenAI API — `gpt-image-2.5-sunburst` (เปลี่ยนจาก `gpt-image-2` เมื่อ 2026-09-24 โดยเจ้าของโปรเจกต์ — ดูเหตุผลที่ `backend/config.py` `IMAGE_MODEL`)
 - **Frontend**: เว็บง่าย ๆ (internal tool ใช้คนเดียว) — framework-free CSS ไม่มี build step ผูกกับ font/component library
   **ปรับ 2026-08-05**: เปลี่ยนจาก Factory design system เป็น [[DESIGN.md]] (warm cream/wine/forest,
   light theme เป็นค่าเริ่มต้น, dark เป็นตัวเลือก) — [[factory-design-system.md]] เก็บไว้เป็นประวัติ

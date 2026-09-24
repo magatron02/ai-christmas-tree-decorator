@@ -298,6 +298,25 @@ def _estimate_for(tree_code, code, density, placement):
     )
 
 
+def _shown_estimate_for(density, placement, kinds):
+    """(min, max) of how many pieces of one decoration the finished picture is expected to
+    SHOW — the other half of _estimate_for, which says how many a tree of that size could take.
+
+    The two disagree on purpose, and by a lot on a big tree with several kinds. The model is
+    asked for a whole-tree total by density (config.DENSITY_PRESETS) and draws about that many
+    whatever the tree's size, shared roughly evenly between the kinds, so this is that total
+    divided by `kinds` — every decoration of the request that is not a wrapped garland. A
+    wrapped garland is exactly one, the same as in _estimate_for. Measured, not derived: see
+    config.TREE_DENSITY_QTY_RANGE.
+    """
+    if placement == "wrapped":
+        return 1, 1
+    lo, hi = config.TREE_DENSITY_QTY_RANGE[density or config.DEFAULT_DENSITY]
+    kinds = max(kinds, 1)
+    low = max(1, round(lo / kinds))
+    return low, max(low, round(hi / kinds))
+
+
 def _stock_for(tree_code, code):
     """What to pull off the shelf for one item of a finished run (issue #25): how many pieces
     that tree takes, and how many packs that is for a product sold by the pack.
@@ -324,6 +343,14 @@ def _stock_for(tree_code, code):
     return quantity, packs
 
 
+def _with_price_used(detail):
+    """A catalogue admin record plus the price a quote would actually use and where it comes
+    from ("vendor" / "catalog" / None) — the catalogue's own `price` alone is not the answer
+    when the supplier has one."""
+    extra = _priced_extra(detail["code"])
+    return {**detail, "price_used": extra["price"], "price_source": extra["price_source"]}
+
+
 def _row_json(row):
     elements = request_log.elements_of(row)
     element_extras = [_priced_extra(e.get("code")) for e in elements]
@@ -344,6 +371,11 @@ def _row_json(row):
         _estimate_for(row["tree_code"], e.get("code"), e.get("density"), placement)
         for e, placement in zip(elements, placements)
     ]
+    kinds = sum(1 for placement in placements if placement != "wrapped")
+    shown_estimates = [
+        _shown_estimate_for(e.get("density"), placement, kinds)
+        for e, placement in zip(elements, placements)
+    ]
     return {
         "request_id": row["request_id"],
         "status": row["status"],
@@ -353,10 +385,11 @@ def _row_json(row):
                 "density": e.get("density"), "manual_mm": e.get("manual_mm"),
                 "quantity": quantity, "packs": packs,
                 "placement": placement, "estimate": list(estimate),
+                "estimate_shown": list(shown),
                 **extra,
             }
-            for e, extra, (quantity, packs), placement, estimate in zip(
-                elements, element_extras, stock, placements, estimates
+            for e, extra, (quantity, packs), placement, estimate, shown in zip(
+                elements, element_extras, stock, placements, estimates, shown_estimates
             )
         ],
         "price_total": price_total,
@@ -457,13 +490,22 @@ def api_catalog_orphans():
 
 @app.post("/api/catalog/products/{code}/price")
 def api_set_price(code: str, request: Request, price: str = Form("")):
-    """One product's price — the inline entry after a catalogue pick (issue #27). Localhost
-    only, same reasoning as the other catalogue writes."""
-    from backend.services import catalog_admin, settings
+    """One product's price — the inline entry after a catalogue pick (issue #27). Prices are
+    managed with the supplier's price list, so this writes the vendor overlay (the one a run's
+    price actually reads first), never the catalogue's. Localhost only, same reasoning as the
+    other catalogue writes."""
+    from backend.services import catalog_admin, settings, vendor_admin
 
     if not settings.is_local(request):
         raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
-    return catalog_admin.set_price(code, price)
+    code = (code or "").strip().upper()
+    catalog.find(code)  # raises ValidationError on an unknown code
+    parsed = catalog_admin._parse_price(price)
+    if parsed is None:
+        vendor_admin.clear_override(code, "price")
+    else:
+        vendor_admin.set_override(code, "price", str(parsed))
+    return {"code": code, "price": parsed}
 
 
 @app.post("/api/settings/api-key")
@@ -754,7 +796,7 @@ def api_catalog_update(
     size_raw: str = Form(""),
     section: str = Form(""),
     book: str = Form(""),
-    price: str = Form(""),
+    price: str | None = Form(None),
 ):
     """Edit one existing product's fields (settings page). Same localhost-only gate as add —
     this writes to data/shop_overlay.json. The photo is a separate action now (issue #12):
@@ -821,13 +863,13 @@ def api_catalog_products(q: str = "", book: str = "", category: str = "", issue:
         raise ValidationError(f"ไม่รู้จักตัวกรอง '{issue}'")
     limit = max(1, min(limit, 200))
     rows, total = catalog.admin_list(q, book or None, category or None, issue or None, limit, max(offset, 0))
-    return {"results": [catalog.product_detail(row) for row in rows], "total": total}
+    return {"results": [_with_price_used(catalog.product_detail(row)) for row in rows], "total": total}
 
 
 @app.get("/api/catalog/recent")
 def api_catalog_recent(limit: int = 20):
     """Read-only list for the settings page, newest addition first."""
-    return {"results": [catalog.product_detail(row) for row in catalog.recent(limit)]}
+    return {"results": [_with_price_used(catalog.product_detail(row)) for row in catalog.recent(limit)]}
 
 
 @app.get("/api/catalog/products/{code}")
@@ -835,7 +877,7 @@ def api_catalog_find(code: str):
     """Find one product by its code and show its merged record (issue #11) — the book-derived
     position fields (bbox, pdf_page) are never part of catalog.product_detail, so they never
     reach this response either."""
-    return catalog.product_detail(catalog.find(code))
+    return _with_price_used(catalog.product_detail(catalog.find(code)))
 
 
 @app.get("/api/catalog/products/{code}/colours")
@@ -1172,7 +1214,7 @@ def api_auto_config(backdrop: str = ""):
     recipe = config.AUTO_RECIPES[backdrop]
     return {
         "tones": [
-            {"key": key, "label": preset["label"]}
+            {"key": key, "label": preset["label"], "colours": preset["colours"]}
             for key, preset in config.TONE_PRESETS.items()
             if backdrop == "tree"
             or any(catalog.auto_pool(category, preset["colours"]) for category, _n in recipe)

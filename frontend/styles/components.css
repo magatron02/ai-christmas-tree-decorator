@@ -334,7 +334,7 @@ select.select-native {
   padding: var(--space-6) var(--space-3);
   border-right: 1px solid var(--border);
   background: var(--surface-1);
-  min-height: calc(100vh - 64px);
+  min-height: calc(100vh / var(--ui-scale) - 64px);
   box-sizing: border-box;
   transition: width var(--transition-gentle);
 }
@@ -364,46 +364,6 @@ select.select-native {
 .filter-row .btn { flex: none }
 .option-name { font-size: var(--text-lg) }
 
-/* the 3-panel flow: bare tree -> decorations -> result, side by side so the whole job is
-   visible at once instead of stacked one screen apart. Decorations gets double share — it is
-   the one panel that holds an accepted-list column plus three separate controls next to it,
-   so an equal third is not enough room for it. Stretch keeps all three the same height — the
-   tallest panel sets the row, and everything else (accepted list, catalogue results) scrolls
-   inside that height rather than the page growing underneath it. */
-.panels {
-  display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
-  gap: var(--space-6);
-  align-items: stretch;
-  /* an auto grid row sizes to whatever its tallest cell WANTS to be — max-height alone does not
-     feed back into track sizing, so a long accepted-list or catalogue result set still grows
-     the whole row. A definite height does: it gives align-items:stretch something real to
-     stretch every card to, so overflow becomes each card's problem (it scrolls) rather than
-     the page's (it grows). */
-  height: calc(100vh - 220px);
-}
-/* ...and "each card's problem" has to actually be handled by each card. Only the decoration
-   panel owns designated scroll regions (its two inner columns); panels 1 and 3 are a plain
-   stack ending in a full-width .thumb, so once a preview or a result image was in them their
-   content ran straight past the border the definite height had just pinned — the download row
-   and the quantity line rendered outside the card. Scrolling the card itself covers all three
-   at once, and is a no-op for the decoration panel, whose inner columns never let it grow. */
-.panels > .card { overflow-y: auto }
-/* ...and both of those only hold while the three panels really are one row across. Wrapped,
-   the same definite height is split between stacked rows — at phone width three cards shared
-   one viewport height, about 160px each, and the download row and quantity line were pushed
-   straight out through the bottom border. Nothing is gained by pinning the height once the
-   layout is stacked: the page is already scrolling, so the cards size to their content and
-   the whole result stays inside its own card. */
-@media (max-width: 1100px) {
-  .panels { grid-template-columns: repeat(2, minmax(0, 1fr)); height: auto }
-  .panels > .card { overflow-y: visible }
-  .panels .role-decoration { grid-column: 1 / -1 }
-}
-@media (max-width: 720px) {
-  .panels { grid-template-columns: minmax(0, 1fr) }
-  .panels .role-decoration { grid-column: auto }
-}
 @media (max-width: 720px) {
   .frame { display: block }
   .sidebar {
@@ -423,44 +383,6 @@ select.select-native {
   .topbar { gap: var(--space-3); padding: 0 var(--space-3) }
   .topbar .tile { flex: none; padding: 0 var(--space-3) }
   .topbar .tile .k { white-space: nowrap }
-}
-
-/* ---- decoration panel: picked items on the left, controls to add more on the right —
-   picking something never has to open a full-size preview, so the whole left column is
-   built out of the same small thumbnail the accepted list already used, and only needs a
-   third of the row: a 140px floor covers one 40px thumbnail plus its remove button even when
-   the card itself is narrow (it sits in the 3-panel row, not the full page), and above that
-   floor it holds to a 1:2 share so the controls column keeps the rest. ---- */
-.decoration-columns {
-  display: grid;
-  grid-template-columns: minmax(140px, 0.5fr) minmax(0, 1fr);
-  gap: var(--space-4);
-  align-items: stretch;
-  flex: 1;
-  min-height: 0;
-}
-/* min-width: 0, not just min-height: a grid item's default min-width is auto — "never shrink
-   below your content's own width" — so without this the item-top row below (thumb + density
-   pill + remove button, none of it wrapping) forced this whole column past the 140px floor
-   the grid track was given, and the overflow showed up as the entire decoration card scrolling
-   sideways rather than this one column's row wrapping onto a second line. */
-.decoration-list-col { min-height: 0; min-width: 0 }
-.decoration-list-col .accepted { flex: 1; min-height: 0; overflow-y: auto }
-/* the three controls (scene ref, upload, catalogue) are left at their natural size — trying
-   to make one of them flex to fill the leftover space either collapsed it to zero (button
-   vanished) or, once it couldn't shrink any further, spilled past the card's own border
-   (visible on real content, since a fixed test string is never the same length as this one).
-   Neither is acceptable. The column scrolls as a whole instead: predictable at every content
-   length, and everything stays reachable inside the card, never past it. */
-.decoration-controls-col { gap: var(--space-4); min-height: 0; overflow-y: auto }
-
-/* The tree panel's three "ways to fill this slot" (catalogue / upload / samples) are the same
-   pattern as the decoration panel's own alternatives, so they get the same --space-4 rhythm
-   between them, not .card's plainer --space-3 — the two read as one choice made twice rather
-   than the second one being a slightly denser afterthought (impeccable polish, 2026-09). */
-.alt-group { gap: var(--space-4) }
-@media (max-width: 720px) {
-  .decoration-columns { grid-template-columns: minmax(0, 1fr) }
 }
 
 /* ---- accepted decorations list ----
@@ -676,7 +598,7 @@ select.select-native {
      height rounds to ~0, so nothing had anything real to stretch into and the table and image
      both collapsed to nothing. An explicit height (.topbar's 64px + .page's 24px top/bottom
      padding, same reasoning /'s own .panels height is computed) gives them one. */
-  height: calc(100vh - 112px);
+  height: calc(100vh / var(--ui-scale) - 112px);
 }
 @media (max-width: 900px) {
   .quote-columns { grid-template-columns: minmax(0, 1fr); height: auto }
@@ -835,8 +757,8 @@ dialog h2 {
   flex-direction: column;
   gap: var(--space-3);
   width: 100%;
-  max-width: min(1200px, 94vw);
-  max-height: 90vh;
+  max-width: min(1200px, calc(94vw / var(--ui-scale)));
+  max-height: calc(90vh / var(--ui-scale));
 }
 .picker-head {
   display: flex;
@@ -920,11 +842,11 @@ dialog h2 {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  max-width: min(900px, 94vw);
-  max-height: 90vh;
+  max-width: min(900px, calc(94vw / var(--ui-scale)));
+  max-height: calc(90vh / var(--ui-scale));
   align-items: center;
 }
-.lightbox-dialog img { max-width: 100%; max-height: 80vh; object-fit: contain }
+.lightbox-dialog img { max-width: 100%; max-height: calc(80vh / var(--ui-scale)); object-fit: contain }
 
 dialog p { margin: 0 0 var(--space-3); font-size: var(--text-base); color: var(--text-muted) }
 #confirm-quantities, #result-quantities { list-style: none; margin: 0 0 var(--space-3); padding: 0; display: flex; flex-direction: column; gap: var(--space-1) }
@@ -998,7 +920,7 @@ td.shrink { width: 96px }
   grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
   gap: var(--space-4);
   align-items: stretch;
-  height: calc(100vh - 172px);
+  height: calc(100vh / var(--ui-scale) - 172px);
 }
 @media (max-width: 900px) {
   .split-columns { grid-template-columns: minmax(0, 1fr); height: auto }
@@ -1018,91 +940,12 @@ td.shrink { width: 96px }
 /* The column headers stay put while the table's rows scroll underneath them. */
 .split-list thead th { position: sticky; top: 0; background: var(--surface-1) }
 
-.tone-row { display: flex; gap: var(--space-2); flex-wrap: wrap }
-.tone-card {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: var(--space-2) var(--space-3);
-  cursor: pointer;
-  background: var(--surface-1);
-}
-.tone-card[aria-pressed="true"] { border-color: var(--modal-item-selected-text); background: var(--modal-item-selected-bg) }
-.tone-name { font-family: var(--font-heading); font-size: var(--text-sm) }
-
 .chip.warn { color: var(--state-warning-text); background: var(--state-warning-bg); border-color: var(--state-warning-border) }
 /* Same reasoning as .hint a: a link inside a chip keeps the chip's own colour rather than the
    browser's default blue, which exists nowhere else in this palette. */
 .chip a { color: inherit; text-decoration: underline }
 .chip a:hover,
 .chip a:focus-visible { color: var(--text-primary) }
-
-.auto-preview-strip {
-  display: flex;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-  padding: var(--space-4);
-  background: var(--surface-0);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-}
-.auto-pick { width: 84px; display: flex; flex-direction: column; align-items: center; gap: 4px }
-.auto-pick-thumb {
-  width: 84px;
-  height: 84px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-  background: var(--surface-1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-.auto-pick-img { width: 100%; height: 100%; object-fit: contain }
-.auto-pick-code { font-size: 9px; font-family: var(--font-body-en); color: var(--text-muted); text-align: center }
-
-/* ---- prompt.js: "Prompt mode", a chat-style third way to generate. Ported from the
-   grilled-and-approved prototype (scratchpad, artifact 0fbfa3ee) verbatim except for two
-   role-token substitutions test_ui_design_system.py's rule 2 forces: an "is-tree" accent
-   reuses --state-success-bg rather than --fill-success, and .attach-btn's hover drops the
-   gold accent for the same neutral ghost-hover every other bare .btn already uses. ---- */
-.chat-shell {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  max-width: 760px;
-  width: 100%;
-  margin: 0 auto;
-}
-.chat-log {
-  flex: 1;
-  min-height: 300px;
-  max-height: 60vh;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  padding: var(--space-4) 0;
-}
-.msg { display: flex; flex-direction: column; gap: var(--space-2); max-width: 82% }
-.msg.bot { align-self: flex-start }
-.msg.user { align-self: flex-end; align-items: flex-end }
-.msg-bubble { border-radius: var(--radius-lg); padding: var(--space-3) var(--space-4); font-size: var(--text-sm) }
-.msg.bot .msg-bubble { background: var(--surface-1); border: 1px solid var(--border); border-bottom-left-radius: 4px }
-.msg.user .msg-bubble { background: var(--modal-item-selected-bg); color: var(--text-primary); border-bottom-right-radius: 4px }
-.msg-bubble.hint { color: var(--text-muted) }
-.msg-attachments { display: flex; gap: var(--space-2); flex-wrap: wrap; justify-content: flex-end }
-.attach-thumb {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--surface-1);
-  overflow: hidden;
-}
-.attach-thumb.is-tree { border-color: var(--state-success-bg) }
-.msg-result-img { width: 100%; border-radius: var(--radius-md); display: block; margin-top: var(--space-2) }
-.msg-meta { font-size: var(--text-xs); color: var(--text-muted); font-family: var(--font-body-en) }
 
 .typing-dots { display: inline-flex; gap: 3px; padding: 2px 0 }
 .typing-dots span {
@@ -1123,99 +966,9 @@ td.shrink { width: 96px }
   .typing-dots span { animation: none; opacity: .7 }
 }
 
-/* ---- composer ---- */
-.composer { flex: none; border-top: 1px solid var(--border); padding: var(--space-4) 0 }
-#prompt-attachments { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-3) }
-#prompt-attachments:empty { display: none }
-.composer-chip {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  background: var(--surface-1);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-1);
-}
-.composer-chip.is-tree { border-color: var(--state-success-bg) }
-.composer-chip .thumb {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-sm);
-  background: var(--surface-0);
-  flex: none;
-  overflow: hidden;
-}
-.composer-chip .meta { display: flex; flex-direction: column; line-height: 1.25 }
-.composer-chip .code { font-family: var(--font-body-en); font-size: var(--text-xs) }
-.composer-chip .role { font-size: 10px; color: var(--text-muted) }
-.composer-chip .remove {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-muted);
-  font-size: var(--text-sm);
-  padding: 0 var(--space-1);
-  line-height: 1;
-}
-.composer-chip .remove:hover { color: var(--btn-secondary-text) }
-.composer-chip .size-input-row { flex: 1 1 100%; margin-top: var(--space-1) }
-
-.composer-box {
-  background: var(--surface-1);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  padding: var(--space-3);
-}
-.composer-attach-row { display: flex; gap: var(--space-2); margin-bottom: var(--space-2); flex-wrap: wrap }
-.attach-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--text-xs);
-  font-family: var(--font-heading);
-  color: var(--text-muted);
-  background: var(--surface-0);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-full);
-  padding: 5px 10px;
-  cursor: pointer;
-}
-.attach-btn:hover { background: var(--btn-ghost-bg-hover); color: var(--text-primary) }
-.attach-btn svg { width: 13px; height: 13px }
-
-#prompt-textarea {
-  width: 100%;
-  border: none;
-  background: transparent;
-  font: inherit;
-  font-size: var(--text-sm);
-  color: var(--text-primary);
-  resize: none;
-  outline: none;
-  min-height: 44px;
-  max-height: 140px;
-}
-#prompt-textarea::placeholder { color: var(--text-muted) }
-
-.composer-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: var(--space-2);
-  border-top: 1px solid var(--border);
-  margin-top: var(--space-2);
-}
-.composer-footer-left { display: flex; align-items: center; gap: var(--space-3) }
 .char-count { font-size: 10px; color: var(--text-muted); font-family: var(--font-body-en); font-variant-numeric: tabular-nums }
 .char-count.near-limit { color: var(--state-warning-text) }
-.size-select-mini { font-size: var(--text-xs); padding: 4px 8px }
-.send-btn { border-radius: var(--radius-full); width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center }
-.send-btn svg { width: 16px; height: 16px }
-
-/* ---- #prompt-confirm-dialog's own bit: the typed text, previewed verbatim above the usual
-   confirm-body copy every <dialog> here already gets ---- */
+/* Prompt mode's typed text, previewed verbatim in the confirm dialog above the usual body copy */
 .confirm-prompt-preview {
   background: var(--surface-0);
   border: 1px solid var(--border);
@@ -1226,3 +979,116 @@ td.shrink { width: 96px }
   margin-bottom: var(--space-3);
   font-style: italic;
 }
+
+/* ---- workspace shell (SPEC layout v2): one sidebar + one stage shared by every mode ----
+   The sidebar body scrolls on its own; the footer (size, density, Generate) never scrolls
+   away, at any window height. The height is the viewport minus .topbar. */
+.workspace { display: flex; align-items: stretch; height: calc(100vh / var(--ui-scale) - 64px); min-width: 0; flex: 1 }
+.work-side {
+  width: 400px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--surface-0);
+  border-right: 1px solid var(--border);
+}
+.work-body { flex: 1; min-height: 0; overflow-y: auto; padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-4) }
+.work-footer {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--surface-1);
+  border-top: 1px solid var(--border);
+}
+.work-footer .btn.primary { width: 100%; min-height: var(--space-12) }
+.stage { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-4) var(--space-6); overflow-y: auto }
+.stage-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3) }
+.stage-canvas { display: flex; flex-direction: column; align-items: center; gap: var(--space-3) }
+.stage-frame { position: relative; max-width: 528px; width: 100% }
+.stage-frame .thumb-code { font-size: var(--text-sm); padding: var(--space-1) var(--space-2) }
+.stage-frame .thumb, .stage-result .thumb { aspect-ratio: 4 / 5; max-height: 660px; width: auto; max-width: 100%; margin: 0 auto }
+.stage-result { align-items: center }
+
+/* ---- shared components (render.js) ---- */
+.step-header { display: flex; align-items: center; gap: var(--space-2) }
+.step-header .step-count { margin-left: auto }
+.step-num {
+  flex: none;
+  width: var(--space-6);
+  height: var(--space-6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+.step-num.is-done { color: var(--text-primary); border-color: var(--text-muted) }
+.segmented { align-self: stretch }
+.segmented .row { flex: 1; justify-content: center }
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-0);
+  transition: background var(--transition-gentle);
+}
+/* the add buttons stay on one row and read as secondary controls, not the step's main content */
+.dropzone { gap: var(--space-2); padding: var(--space-3) }
+.dropzone .btn-row { flex-wrap: nowrap; gap: var(--space-2) }
+.dropzone .btn { flex: 1 1 0; min-width: 0; padding: var(--space-1) var(--space-2); font-size: var(--text-sm); white-space: nowrap }
+.dropzone.is-over { background: var(--modal-item-selected-bg) }
+.check-row { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); color: var(--text-muted) }
+.base-card { display: flex; align-items: center; gap: var(--space-3) }
+.base-thumb { width: 56px; height: 56px }
+.base-card-meta { display: flex; flex-direction: column; flex: 1; min-width: 0 }
+.base-card-name { font-family: var(--font-body-en); font-size: var(--text-sm) }
+.decoration-status { font-size: var(--text-xs) }
+.decoration-status.is-failed { color: var(--state-error-text) }
+.atmosphere-step > summary { display: flex; align-items: center; gap: var(--space-2); cursor: pointer; list-style: none }
+.atmosphere-step > summary::-webkit-details-marker { display: none }
+.atmosphere-step[open] > summary { margin-bottom: var(--space-3) }
+.decoration-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-2) }
+.grid-cell { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); min-width: 0 }
+.grid-cell .thumb-wrap { width: 100%; height: auto; aspect-ratio: 1 }
+.grid-code { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-xs); font-family: var(--font-body-en); color: var(--text-muted) }
+.grid-add { aspect-ratio: 1; padding: 0; min-height: 0 }
+.tone-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2) }
+.tone-card {
+  min-height: var(--space-12);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+.tone-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-1) }
+.swatches { display: flex; gap: var(--space-1) }
+.swatch { width: var(--space-3); height: var(--space-3); border-radius: var(--radius-full); border: 1px solid var(--border) }
+.tone-card[aria-pressed="true"] { border-color: var(--modal-item-selected-text); background: var(--modal-item-selected-bg) }
+.suggestion-row { display: flex; flex-wrap: wrap; gap: var(--space-2) }
+.suggestion { padding: var(--space-1) var(--space-3); font-size: var(--text-xs); border-radius: var(--radius-full) }
+#prompt-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-0);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-sm);
+  resize: vertical;
+}
+#prompt-textarea::placeholder { color: var(--text-muted) }
+.stage-spinner { display: flex; align-items: center; justify-content: center; gap: var(--space-2); padding: var(--space-8) 0; color: var(--text-muted) }
+.footer-link { align-self: center }

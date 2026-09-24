@@ -206,10 +206,12 @@ def test_a_negative_price_is_refused(temp_catalog):
         catalog_admin.add_product("017-06", "80 mm.", "", "", png_bytes(), price="-5")
 
 
-def test_edit_updates_the_price(temp_catalog):
+def test_an_edit_that_sends_no_price_leaves_it_alone(temp_catalog):
+    """Prices are managed on the supplier-price page now; the catalogue form still posts the
+    other fields, and whatever price was already there must survive that save untouched."""
     catalog_admin.add_product("017-06", "80 mm.", "", "", png_bytes(), price="350")
-    catalog_admin.update_product("017-06", "80 mm.", "", "", price="400")
-    assert catalog.find("017-06")["price"] == 400.0
+    catalog_admin.update_product("017-06", "90 mm.", "", "")
+    assert catalog.find("017-06")["price"] == 350.0
 
 
 def test_recent_endpoint_includes_price(client, temp_catalog, monkeypatch):

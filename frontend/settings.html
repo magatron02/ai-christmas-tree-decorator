@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tree Decorator — ตั้งค่า</title>
 <link rel="icon" href="/static/icon.ico">
-<link rel="stylesheet" href="/static/styles/tokens.css?v=8.77">
-<link rel="stylesheet" href="/static/styles/components.css?v=8.77">
+<link rel="stylesheet" href="/static/styles/tokens.css?v=8.55">
+<link rel="stylesheet" href="/static/styles/components.css?v=8.55">
 <script src="/static/theme.js?v=8.77"></script>
 <script src="/static/sidebar.js?v=8.77"></script>
 </head>
@@ -171,16 +171,18 @@
             <span class="chip warn" id="cat-book-override" hidden>แก้โดยร้านแล้ว — <a href="#" id="cat-book-clear">ล้างกลับเป็นค่าจากเล่ม</a></span>
 
             <div class="field-row">
-              <span class="hint">ราคา (บาท) :</span>
-              <input class="input" id="cat-price" type="number" min="0" step="0.01" placeholder="ไม่ใส่ก็ได้">
+              <span class="hint">ราคาที่ใช้ :</span>
+              <span id="cat-price-used">—</span>
             </div>
-            <span class="chip warn" id="cat-price-override" hidden>แก้โดยร้านแล้ว — <a href="#" id="cat-price-clear">ล้างกลับเป็นค่าจากเล่ม</a></span>
+            <span class="hint" id="cat-price-note" hidden></span>
+            <span class="hint">ราคาแก้ที่หน้า <a href="#" id="cat-price-goto">ข้อมูลราคาจากซัพพลายเออร์</a> ที่เดียว</span>
 
             <div class="field-row">
               <span class="hint">ชิ้นต่อแพ็ค :</span>
               <input class="input" id="cat-pack-size" type="number" min="2" step="1"
                      placeholder="ขายเป็นแพ็ค — ไม่ใส่ = ขายเป็นชิ้น">
             </div>
+            <span class="hint">ใช้คำนวณ "ของที่ต้องเบิก" (ปัดขึ้นเป็นแพ็ค) — ไม่ใช่หน่วยของราคา หน่วยของราคาดูที่หน้าซัพพลายเออร์</span>
 
             <img class="checker thumb-sm" id="cat-photo-preview" hidden alt="รูปปัจจุบัน">
             <span class="chip warn" id="cat-photo-override" hidden>ถ่ายเองแล้ว — <a href="#" id="cat-photo-clear">ลบรูปนี้ กลับไปใช้รูปจากเล่ม</a></span>
@@ -287,6 +289,7 @@
                 <span class="hint">ขนาด (ด้านยาวสุด มม.) :</span>
                 <input class="input" id="vendor-size_mm" type="number" min="0" step="0.1" placeholder="ขนาด (มม.)">
               </div>
+              <span class="hint" id="vendor-size-locked" hidden></span>
               <span class="chip warn" id="vendor-size_mm-override" hidden>แก้โดยร้านแล้ว — <a href="#" id="vendor-size_mm-clear">ล้างกลับเป็นค่าจากซัพพลายเออร์</a></span>
 
               <div class="field-row">
@@ -342,7 +345,7 @@
 </dialog>
 
 <script src="/static/api.js?v=8.77"></script>
-<script src="/static/settings.js?v=8.77"></script>
-<script src="/static/vendor.js?v=8.77"></script>
+<script src="/static/settings.js?v=8.78"></script>
+<script src="/static/vendor.js?v=8.78"></script>
 </body>
 </html>

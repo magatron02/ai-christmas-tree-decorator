@@ -21,7 +21,13 @@ if getattr(sys, "frozen", False):
 else:
     ROOT = BACKEND_DIR.parent
 
-IMAGE_MODEL = "gpt-image-2"
+# Switched from gpt-image-2 to gpt-image-2.5-sunburst on 2026-09-24 (owner's decision, NonGoals #2).
+# One replayed request (tree 05021-1 + 8 decorations, same prompt) gave the same 1536x1920 output,
+# the same token cost as gpt-image-2 (6,011 vs 5,921 total) and the tidiest placement of the
+# three models tried; gpt-image-2.5-flare doubled the output tokens and hung a whole packaging
+# box. That is one image per model, not a benchmark. The name floats: pin the dated snapshot
+# ("gpt-image-2.5-sunburst-2026-09-08") if a silent update ever shifts the tuned prompts.
+IMAGE_MODEL = "gpt-image-2.5-sunburst"
 
 # Reading what a decoration is, for the reference-photo matching in Product.md 8.3c. A
 # separate, much cheaper model than the image one: this only has to name a colour, a finish
@@ -111,6 +117,14 @@ DEFAULT_SIZE = "4:5"
 # How tightly the tree gets decorated. "normal" is worded identically to what the prompt
 # always said, so the default behaviour is unchanged — this only exists so a shop that wants
 # a sparser or fuller look has a control for it, without hand-editing the prompt file.
+#
+# Checked against gpt-image-2.5-sunburst on 2026-09-24 and left as it was. With ONE kind of
+# decoration sunburst places fewer than asked (about 7 / 8 / 16 for these counts). With several
+# kinds it places about the asked total (about 16-22 for "normal" over 3-8 kinds), and raising
+# the counts to fix the single-kind case (tried 10-14 / 15-22 / 24-32) put about 17 / 32 / 45
+# on an 8-kind tree, 1.5-2x too many. Several kinds is the normal way this app is used, so
+# these numbers stay; a lone decoration on "normal" will look sparse. Counts came from single
+# images, by eye and by scripts/measure_scale.py.
 DENSITY_PRESETS = {
     "light": (
         "A lightly decorated tree: roughly 8 to 12 decorations in total for a full-height "
@@ -176,6 +190,14 @@ ELEMENT_DENSITY_PHRASES = {
 # re-measurement obligation. Kept in sync by hand with the prose; a phrase reworded after a
 # future billed check must have its numbers copied here too.
 ELEMENT_DENSITY_QTY_RANGE = {"light": (1, 6), "normal": (8, 12), "full": (18, 24)}
+
+# The whole-tree totals DENSITY_PRESETS asks the model for, as numbers — what a picture is
+# expected to SHOW, as against what a tree of that size could take. Measured 2026-09-24 on
+# gpt-image-2.5-sunburst, the model draws about this many pieces in total whatever the tree's
+# size, shared roughly evenly between the kinds (2-4 of each kind on an 8-kind tree), so the
+# quote's "in the picture" estimate is this total divided by the number of kinds. Kept in sync
+# with the prose above by hand; tests/test_quantity_estimate.py checks the numbers appear in it.
+TREE_DENSITY_QTY_RANGE = {"light": (8, 12), "normal": (12, 20), "full": (20, 30)}
 
 # What auto pick hangs on every tree: the same mix of hung categories and counts for every
 # tone and every tree size (ADR-0003). The tone decides which products fill these slots, never

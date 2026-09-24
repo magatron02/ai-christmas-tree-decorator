@@ -56,3 +56,22 @@ def test_a_dropped_code_falls_back_instead_of_failing(client):
     """An old history row can name a code a later re-import removed — the row must still open."""
     assert main._estimate_for(FIVE_FT_TREE, "GONE-FOREVER", "normal", "hung") == config.ELEMENT_DENSITY_QTY_RANGE["normal"]
     assert main._placement_of("GONE-FOREVER") is None
+
+
+# ---- the "in the picture" estimate, next to the "fits on this tree" one -----------------
+
+
+def test_the_shown_estimate_is_the_whole_tree_total_shared_between_the_kinds():
+    assert main._shown_estimate_for("normal", "hung", 1) == (12, 20)
+    assert main._shown_estimate_for("normal", "hung", 8) == (2, 2)   # 1.5-2.5 each, rounded
+    assert main._shown_estimate_for("full", "hung", 8) == (2, 4)
+    assert main._shown_estimate_for("light", "hung", 8) == (1, 2)
+
+
+def test_a_wrapped_garland_is_one_in_the_picture_too():
+    assert main._shown_estimate_for("full", "wrapped", 5) == (1, 1)
+
+
+def test_the_shown_totals_are_the_numbers_the_density_prompt_asks_for():
+    for level, (lo, hi) in config.TREE_DENSITY_QTY_RANGE.items():
+        assert f"roughly {lo} to {hi} decorations" in config.DENSITY_PRESETS[level]
