@@ -258,6 +258,46 @@ def _priced_extra(code):
     }
 
 
+def _placement_of(code):
+    """catalog.placement_of_code, but None for a code the catalogue no longer holds — a history
+    row outlives a re-import, and an old run must still open rather than fail on a dropped code."""
+    try:
+        return catalog.placement_of_code(code)
+    except ValidationError:
+        return None
+
+
+def _estimate_for(tree_code, code, density, placement):
+    """(min, max) of how many pieces of one decoration this picture calls for, before the
+    multiplier for the back of the tree — what the quote/history price ranges are built on.
+
+    Size-aware, because a fixed count per density read as nonsense (16-24 six-foot garlands
+    for a two-foot tree): the same tree-and-decoration size sums as the stock figure, scaled by
+    the item's own density against "normal" — the level suggest_quantity's 12-20 was written
+    for. A garland is wrapped once around the trunk whatever the tree's size (placement
+    "wrapped", issue #20), so it is exactly one. With no size to work from (a code with none
+    in the catalogue or the vendor list, or no code at all) it falls back to the plain density
+    range, which is a guess at the count, not a measurement.
+    """
+    if placement == "wrapped":
+        return 1, 1
+    fallback = config.ELEMENT_DENSITY_QTY_RANGE[density or config.DEFAULT_DENSITY]
+    if not tree_code or not code:
+        return fallback
+    from backend.services import matching
+
+    try:
+        quantity = matching.suggest_quantity(tree_code, code, size_lookup=_size_lookup_for_scale)
+    except ValidationError:
+        return fallback
+    normal_lo, normal_hi = config.ELEMENT_DENSITY_QTY_RANGE["normal"]
+    lo, hi = fallback
+    return (
+        max(1, round(quantity["low"] * lo / normal_lo)),
+        max(1, round(quantity["high"] * hi / normal_hi)),
+    )
+
+
 def _stock_for(tree_code, code):
     """What to pull off the shelf for one item of a finished run (issue #25): how many pieces
     that tree takes, and how many packs that is for a product sold by the pack.
@@ -270,10 +310,13 @@ def _stock_for(tree_code, code):
         return None, None
     from backend.services import matching
 
-    try:
-        quantity = matching.suggest_quantity(tree_code, code)
-    except ValidationError:
-        return None, None  # no catalogue size for one of them; nothing is invented (NonGoals 8)
+    if _placement_of(code) == "wrapped":
+        quantity = {"low": 1, "high": 1}  # one strand around the trunk, however big the tree
+    else:
+        try:
+            quantity = matching.suggest_quantity(tree_code, code, size_lookup=_size_lookup_for_scale)
+        except ValidationError:
+            return None, None  # no size for one of them; nothing is invented (NonGoals 8)
     packs = catalog.packs_for(code, quantity["high"])
     if packs:
         packs = {"low": catalog.packs_for(code, quantity["low"])["packs"],
@@ -296,6 +339,11 @@ def _row_json(row):
     ]
     tree_extra = _priced_extra(row["tree_code"])
     stock = [_stock_for(row["tree_code"], e.get("code")) for e in elements]
+    placements = [_placement_of(e.get("code")) for e in elements]
+    estimates = [
+        _estimate_for(row["tree_code"], e.get("code"), e.get("density"), placement)
+        for e, placement in zip(elements, placements)
+    ]
     return {
         "request_id": row["request_id"],
         "status": row["status"],
@@ -304,9 +352,12 @@ def _row_json(row):
                 "url": _url(e["path"]), "code": e.get("code"), "colour": e.get("colour"),
                 "density": e.get("density"), "manual_mm": e.get("manual_mm"),
                 "quantity": quantity, "packs": packs,
+                "placement": placement, "estimate": list(estimate),
                 **extra,
             }
-            for e, extra, (quantity, packs) in zip(elements, element_extras, stock)
+            for e, extra, (quantity, packs), placement, estimate in zip(
+                elements, element_extras, stock, placements, estimates
+            )
         ],
         "price_total": price_total,
         "price_missing": price_missing,
