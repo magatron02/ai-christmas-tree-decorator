@@ -85,6 +85,14 @@ function enterVendorEdit(item) {
   $("vendor-edit-note").hidden = !item.note;
   $("vendor-price").value = item.price ?? "";
   $("vendor-size_mm").value = item.size_mm ?? "";
+  // The catalogue's own size wins over the supplier's whenever it has one (main._resolved_size_mm),
+  // so typing one here would change nothing a run reads — say so instead of offering the box.
+  const locked = item.catalog_size_mm != null;
+  $("vendor-size_mm").disabled = locked;
+  $("vendor-size-locked").hidden = !locked;
+  $("vendor-size-locked").textContent = locked
+    ? `ใช้ขนาด ${item.catalog_size_mm} มม. จาก catalogue อยู่แล้ว — ขนาดแก้ที่หน้า catalog`
+    : "";
   $("vendor-name").value = item.name ?? "";
   const pack = item.pack || {};
   $("vendor-pack_qty").value = pack.qty ?? "";

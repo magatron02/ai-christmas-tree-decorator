@@ -158,7 +158,7 @@ let editingPackSize = null; // what the product's pack size was when the form op
 /* Which field name (from the API's "overridden" list) each input shows a "แก้โดยร้านแล้ว"
  * badge for — issue #11: the shop's own opinion, distinguished from the book's value. */
 const OVERRIDE_FIELDS = {
-  size_raw: "cat-size", section: "cat-section", book: "cat-book", price: "cat-price",
+  size_raw: "cat-size", section: "cat-section", book: "cat-book",
 };
 
 function showOverrides(overridden) {
@@ -168,6 +168,34 @@ function showOverrides(overridden) {
   }
 }
 
+/* The price a quote would use for this product, and where it comes from — read-only here.
+ * The supplier's price wins over the catalogue's own (main._priced_extra), and prices are set
+ * on the supplier-price page, so an input on this screen would only ever be ignored. */
+function showPriceUsed(item) {
+  const source = { vendor: "จากซัพพลายเออร์", catalog: "ที่ร้านตั้งไว้ใน catalogue" }[item.price_source];
+  $("cat-price-used").textContent = item.price_used != null ? `฿${item.price_used}` : "ยังไม่มีราคา";
+  $("cat-price-note").textContent = source || "";
+  $("cat-price-note").hidden = !source;
+  $("cat-price-goto").dataset.code = item.code || "";
+}
+
+/* Jump to that product on the supplier-price tab and open it there. It may have no supplier
+ * row at all, in which case the tab opens it empty so a price can be set. */
+$("cat-price-goto").addEventListener("click", async (event) => {
+  event.preventDefault();
+  const code = event.currentTarget.dataset.code;
+  showSettingsTab("vendor");
+  if (!code) return;
+  $("vendor-search").value = code;
+  try {
+    enterVendorEdit(await call(`/api/vendor/products/${encodeURIComponent(code)}`));
+    searchVendorResults();
+  } catch (err) {
+    $("vendor-error").textContent = err.message;
+    $("vendor-error").hidden = false;
+  }
+});
+
 function enterEditMode(item) {
   editingCode = item.code;
   $("cat-code").value = item.code;
@@ -175,7 +203,7 @@ function enterEditMode(item) {
   $("cat-size").value = item.size_raw || "";
   $("cat-section").value = item.section || "";
   $("cat-book").value = item.book || "";
-  $("cat-price").value = item.price ?? "";
+  showPriceUsed(item);
   $("cat-pack-size").value = item.pack_size ?? "";
   editingPackSize = item.pack_size ?? null;
   clearFilePicker($("cat-image"));
@@ -197,7 +225,7 @@ function exitEditMode() {
   editingCode = null;
   editingPackSize = null;
   $("cat-code").disabled = false;
-  ["cat-code", "cat-size", "cat-section", "cat-book", "cat-price", "cat-pack-size"]
+  ["cat-code", "cat-size", "cat-section", "cat-book", "cat-pack-size"]
     .forEach((id) => ($(id).value = ""));
   clearFilePicker($("cat-image")); // its filename label has to be reset too, not just the value
   $("cat-image-hint").hidden = true;
@@ -210,6 +238,7 @@ function exitEditMode() {
   $("cat-edit-status").hidden = true;
   $("cat-edit-cancel").hidden = true;
   showOverrides([]);
+  showPriceUsed({});
   $("cat-colours").hidden = true;
   $("cat-colours").innerHTML = "";
 }
@@ -406,7 +435,7 @@ function catalogNote(item) {
   if (!item.image) notes.push("ไม่มีรูป");
   else if (item.crop_shared) notes.push("รูปแชร์กับ code อื่น (ซ่อนใน picker)");
   if (!item.size_raw) notes.push("ไม่มีขนาด");
-  if (item.price == null) notes.push("ไม่มีราคา");
+  if (item.price_used == null) notes.push("ไม่มีราคา");
   return notes.join(" · ");
 }
 
@@ -448,7 +477,7 @@ async function loadCatalogResults() {
       { className: "hint", text: item.size_raw || "—" },
       { className: "hint", text: categoryLabels[item.category] || "—" },
       { className: "hint", text: item.book || "—" },
-      { className: "mono text-right", text: item.price != null ? `${item.price}` : "—" },
+      { className: "mono text-right", text: item.price_used != null ? `${item.price_used}` : "—" },
       { className: "hint", text: catalogNote(item) },
     ]);
     const row = host.lastElementChild;
@@ -566,7 +595,7 @@ $("cat-add").addEventListener("click", async () => {
     body.append("size_raw", $("cat-size").value.trim());
     body.append("section", $("cat-section").value.trim());
     body.append("book", $("cat-book").value.trim());
-    body.append("price", $("cat-price").value.trim());
+    // no price: it is set on the supplier-price tab, and a save here leaves it as it was
     // Adding a brand-new product: the image is its base photo, part of the same request.
     // Editing one: a chosen file is a shop photo (issue #12) and goes through its own
     // endpoint below, since it no longer shares a code path with the book-derived fields.
@@ -600,7 +629,7 @@ $("cat-add").addEventListener("click", async () => {
 
     if (editingCode) exitEditMode();
     else {
-      ["cat-code", "cat-size", "cat-section", "cat-book", "cat-price", "cat-pack-size"]
+      ["cat-code", "cat-size", "cat-section", "cat-book", "cat-pack-size"]
         .forEach((id) => ($(id).value = ""));
       clearFilePicker($("cat-image"));
     }

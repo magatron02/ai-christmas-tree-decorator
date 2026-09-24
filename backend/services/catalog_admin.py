@@ -105,6 +105,7 @@ def add_product(code, size_raw, section, book, image_bytes, price=None):
 
 
 EDITABLE_FIELDS = ("size_raw", "size", "section", "book", "price")
+EDITABLE_FIELDS_NO_PRICE = tuple(f for f in EDITABLE_FIELDS if f != "price")
 
 
 def set_pack_size(code, pack_size):
@@ -160,12 +161,19 @@ def update_product(code, size_raw, section, book, price=None):
         "size": catalog.parse_size(size_raw) if size_raw else None,
         "section": section.strip() or None,
         "book": book.strip() or None,
-        "price": _parse_price(price),
     }
+    # `price=None` means "this edit says nothing about price" — the settings form no longer
+    # sends one, because prices are managed on the supplier-price page (vendor_admin). A price
+    # already in the overlay stays exactly as it was: still the fallback when the supplier has
+    # none, just not editable from the catalogue screen. Any string (even "") is an opinion.
+    speaks_for = EDITABLE_FIELDS_NO_PRICE
+    if price is not None:
+        typed["price"] = _parse_price(price)
+        speaks_for = EDITABLE_FIELDS
     opinions = {
         name: value for name, value in typed.items() if value != base.get(name)
     }
-    shop_overlay.set_fields(code, opinions, speaks_for=EDITABLE_FIELDS)
+    shop_overlay.set_fields(code, opinions, speaks_for=speaks_for)
     catalog.refresh()
     return {"code": code, **_saved_state(code)}
 
@@ -249,21 +257,6 @@ def _reindex_one(code, image_bytes, fmt="PNG"):
     except Exception as exc:
         descriptions[code] = {"code": code, "image": None, "error": f"{type(exc).__name__}: {exc}"}
     path.write_text(json.dumps(descriptions, indent=1, ensure_ascii=False), encoding="utf-8")
-
-
-def set_price(code, price):
-    """Sets just the price, nothing else (issue #27's inline entry).
-
-    Unlike update_product this never diffs against the book: it is only offered for a product
-    with no book price, so any typed number is by definition the shop's own opinion. A blank
-    clears that opinion, same "absent means no opinion" rule as everywhere else in the overlay.
-    """
-    code = (code or "").strip().upper()
-    catalog.find(code)  # raises ValidationError on an unknown code
-    parsed = _parse_price(price)
-    shop_overlay.set_fields(code, {"price": parsed} if parsed is not None else {}, speaks_for=("price",))
-    catalog.refresh()
-    return {"code": code, "price": parsed}
 
 
 # A field the find-and-correct screen (issue #11) can clear -> the overlay keys that opinion

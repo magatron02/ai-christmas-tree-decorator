@@ -324,6 +324,14 @@ def _stock_for(tree_code, code):
     return quantity, packs
 
 
+def _with_price_used(detail):
+    """A catalogue admin record plus the price a quote would actually use and where it comes
+    from ("vendor" / "catalog" / None) — the catalogue's own `price` alone is not the answer
+    when the supplier has one."""
+    extra = _priced_extra(detail["code"])
+    return {**detail, "price_used": extra["price"], "price_source": extra["price_source"]}
+
+
 def _row_json(row):
     elements = request_log.elements_of(row)
     element_extras = [_priced_extra(e.get("code")) for e in elements]
@@ -457,13 +465,22 @@ def api_catalog_orphans():
 
 @app.post("/api/catalog/products/{code}/price")
 def api_set_price(code: str, request: Request, price: str = Form("")):
-    """One product's price — the inline entry after a catalogue pick (issue #27). Localhost
-    only, same reasoning as the other catalogue writes."""
-    from backend.services import catalog_admin, settings
+    """One product's price — the inline entry after a catalogue pick (issue #27). Prices are
+    managed with the supplier's price list, so this writes the vendor overlay (the one a run's
+    price actually reads first), never the catalogue's. Localhost only, same reasoning as the
+    other catalogue writes."""
+    from backend.services import catalog_admin, settings, vendor_admin
 
     if not settings.is_local(request):
         raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
-    return catalog_admin.set_price(code, price)
+    code = (code or "").strip().upper()
+    catalog.find(code)  # raises ValidationError on an unknown code
+    parsed = catalog_admin._parse_price(price)
+    if parsed is None:
+        vendor_admin.clear_override(code, "price")
+    else:
+        vendor_admin.set_override(code, "price", str(parsed))
+    return {"code": code, "price": parsed}
 
 
 @app.post("/api/settings/api-key")
@@ -754,7 +771,7 @@ def api_catalog_update(
     size_raw: str = Form(""),
     section: str = Form(""),
     book: str = Form(""),
-    price: str = Form(""),
+    price: str | None = Form(None),
 ):
     """Edit one existing product's fields (settings page). Same localhost-only gate as add —
     this writes to data/shop_overlay.json. The photo is a separate action now (issue #12):
@@ -821,13 +838,13 @@ def api_catalog_products(q: str = "", book: str = "", category: str = "", issue:
         raise ValidationError(f"ไม่รู้จักตัวกรอง '{issue}'")
     limit = max(1, min(limit, 200))
     rows, total = catalog.admin_list(q, book or None, category or None, issue or None, limit, max(offset, 0))
-    return {"results": [catalog.product_detail(row) for row in rows], "total": total}
+    return {"results": [_with_price_used(catalog.product_detail(row)) for row in rows], "total": total}
 
 
 @app.get("/api/catalog/recent")
 def api_catalog_recent(limit: int = 20):
     """Read-only list for the settings page, newest addition first."""
-    return {"results": [catalog.product_detail(row) for row in catalog.recent(limit)]}
+    return {"results": [_with_price_used(catalog.product_detail(row)) for row in catalog.recent(limit)]}
 
 
 @app.get("/api/catalog/products/{code}")
@@ -835,7 +852,7 @@ def api_catalog_find(code: str):
     """Find one product by its code and show its merged record (issue #11) — the book-derived
     position fields (bbox, pdf_page) are never part of catalog.product_detail, so they never
     reach this response either."""
-    return catalog.product_detail(catalog.find(code))
+    return _with_price_used(catalog.product_detail(catalog.find(code)))
 
 
 @app.get("/api/catalog/products/{code}/colours")

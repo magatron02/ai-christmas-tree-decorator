@@ -155,6 +155,17 @@ def _showable_image(code):
     return catalog.image_for(code) if catalog.crop_is_showable(code) else None
 
 
+def _catalog_size_mm(code):
+    """The catalogue's own size for this code, or None. When there is one it wins over anything
+    the supplier says (main._resolved_size_mm), so editing the supplier's size would change
+    nothing a run ever reads."""
+    try:
+        row = catalog.find(code)
+    except ValidationError:
+        return None
+    return catalog.longest_side_mm(row)
+
+
 def _row(code, entry, catalogued_by_book):
     price, size_mm = entry.get("price"), entry.get("size_mm")
     pack = vendor_lookup.pack_for(code)
@@ -163,6 +174,7 @@ def _row(code, entry, catalogued_by_book):
         "code": code,
         "price": price,
         "size_mm": size_mm,
+        "catalog_size_mm": _catalog_size_mm(code),
         "name": entry.get("name"),
         "pack": pack,
         "overridden": sorted(vendor_overlay.fields_for(code)),
@@ -177,7 +189,14 @@ def find(code):
     code = (code or "").strip()
     all_entries = vendor_lookup.entries()
     if code not in all_entries:
-        raise ValidationError(f"รหัส '{code}' ไม่มีในข้อมูลราคาซัพพลายเออร์")
+        # A product the shop sells but the supplier's sheet never listed has no row to open, yet
+        # this page is where its price is set — so it opens as an empty row, and the first
+        # value saved creates the shop's opinion for it.
+        try:
+            catalog.find(code)
+        except ValidationError:
+            raise ValidationError(f"รหัส '{code}' ไม่มีในข้อมูลราคาซัพพลายเออร์") from None
+        return _row(code, {}, _catalogued_codes_by_book())
     return _row(code, all_entries[code], _catalogued_codes_by_book())
 
 
@@ -227,6 +246,11 @@ def set_override(code, field, value):
     code = (code or "").strip()
     if field not in vendor_overlay.OVERLAYABLE_FIELDS:
         raise ValidationError(f"แก้ทับฟิลด์ '{field}' ไม่ได้")
+
+    if field == "size_mm" and _catalog_size_mm(code) is not None:
+        raise ValidationError(
+            f"ขนาดของ {code} ใช้ค่าจาก catalogue อยู่แล้ว — แก้ที่หน้า catalog (ขนาดจากซัพพลายเออร์ไม่ถูกใช้)"
+        )
 
     if field in ("price", "size_mm"):
         parsed = _parse_number(value, field)
