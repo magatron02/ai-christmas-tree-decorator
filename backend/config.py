@@ -21,7 +21,13 @@ if getattr(sys, "frozen", False):
 else:
     ROOT = BACKEND_DIR.parent
 
-IMAGE_MODEL = "gpt-image-2"
+# Switched from gpt-image-2 to gpt-image-2.5-sunburst on 2026-09-24 (owner's decision, NonGoals #2).
+# One replayed request (tree 05021-1 + 8 decorations, same prompt) gave the same 1536x1920 output,
+# the same token cost as gpt-image-2 (6,011 vs 5,921 total) and the tidiest placement of the
+# three models tried; gpt-image-2.5-flare doubled the output tokens and hung a whole packaging
+# box. That is one image per model, not a benchmark. The name floats: pin the dated snapshot
+# ("gpt-image-2.5-sunburst-2026-09-08") if a silent update ever shifts the tuned prompts.
+IMAGE_MODEL = "gpt-image-2.5-sunburst"
 
 # Reading what a decoration is, for the reference-photo matching in Product.md 8.3c. A
 # separate, much cheaper model than the image one: this only has to name a colour, a finish

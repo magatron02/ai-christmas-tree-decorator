@@ -32,7 +32,7 @@
 - ~~ไม่ทำ multi-element ในภาพเดียว~~ **→ ย้ายเข้า V1.1 แล้ว (2026-08-05) ดูข้อ 8**
 
 ## 6. Decisions Log (ปิดครบทุกข้อ — พร้อมเข้า Architect phase)
-- [x] Engine: **GPT image (gpt-image-2)** — ตัวล่าสุด (เม.ย. 2026), OpenAI แนะนำเป็น default production, edit-instruction แม่นขึ้น + คุมความสม่ำเสมอ lighting/composition ข้ามภาพดีขึ้นกว่า gpt-image-1/1.5 — ตรงกับ pain point เรื่อง background/compositing ของโปรเจกต์นี้
+- [x] Engine: **GPT image (gpt-image-2.5-sunburst — เปลี่ยนจาก gpt-image-2 เมื่อ 2026-09-24 ตามที่เจ้าของโปรเจกต์ตัดสินใจ; ข้อความเดิมด้านล่างเขียนตอนเลือก gpt-image-2)** — ตัวล่าสุด (เม.ย. 2026), OpenAI แนะนำเป็น default production, edit-instruction แม่นขึ้น + คุมความสม่ำเสมอ lighting/composition ข้ามภาพดีขึ้นกว่า gpt-image-1/1.5 — ตรงกับ pain point เรื่อง background/compositing ของโปรเจกต์นี้
 - [x] รูปแบบ element input: **ตัด background ก่อน (pre-process)** — remove background ให้เหลือ PNG โปร่งใส (alpha channel) ก่อนส่งเข้า GPT image เพื่อความแม่นยำ/สม่ำเสมอ (ใช้ rembg หรือ Photoshop ที่มีอยู่แล้ว)
 - [x] จำนวน element ต่อครั้ง: **ทีละ 1 element ก่อนใน MVP** — เพื่อคุมตัวแปร ทำ prompt ให้นิ่ง วัด success rate ได้ชัด ก่อนขยายเป็น multi-element ใน V1.1
 - [x] Output resolution/aspect ratio: **4:5 แนวตั้ง เป็น default → 1536x1920 px** (หารด้วย 16 ลงตัวทั้งสองด้าน, ตรง constraint ของ gpt-image-2, ดูรายละเอียดใน [[Spec.md]] ข้อ 5); เก็บทรงต้นสูงได้ดีกว่า 1:1; MVP ให้ user เลือก ratio อื่นได้เอง ไม่ fix ตายตัว
