@@ -1226,3 +1226,45 @@ td.shrink { width: 96px }
   margin-bottom: var(--space-3);
   font-style: italic;
 }
+
+/* ---- workspace shell (SPEC layout v2): one sidebar + one stage shared by every mode ----
+   The sidebar body scrolls on its own; the footer (size, density, Generate) never scrolls
+   away, at any window height. The height is the viewport minus .topbar. */
+.workspace { display: flex; align-items: stretch; height: calc(100vh - 64px); min-width: 0; flex: 1 }
+.work-side {
+  width: 400px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--surface-0);
+  border-right: 1px solid var(--border);
+}
+.work-body { flex: 1; min-height: 0; overflow-y: auto; padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-4) }
+.work-footer {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--surface-1);
+  border-top: 1px solid var(--border);
+}
+.work-footer .btn.primary { width: 100%; min-height: var(--space-12) }
+/* the decoration panel's two columns were sized for a full-width card; in a 400px sidebar they stack */
+.work-side .decoration-columns { grid-template-columns: minmax(0, 1fr) }
+.work-side .decoration-controls-col { overflow-y: visible }
+/* the prompt chat shell is centred in a 760px column on its own; here it just fills the sidebar */
+.work-side .chat-shell { max-width: none; margin: 0 }
+/* Prompt mode still owns its own composer and send button until its panel moves over */
+.workspace:has(#mode-prompt:not([hidden])) .work-footer { display: none }
+
+.stage { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-4) var(--space-6); overflow-y: auto }
+.stage-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3) }
+.stage-canvas { display: flex; flex-direction: column; align-items: center; gap: var(--space-3) }
+.stage-frame { max-width: 528px; width: 100% }
+.stage-frame .thumb, .stage-result .thumb { aspect-ratio: 4 / 5; max-height: 660px; width: auto; max-width: 100%; margin: 0 auto }
+/* shown only while the frame above it is hidden (no base picked yet) */
+.stage-empty { display: none }
+.stage-frame[hidden] + .stage-empty { display: block }
+.stage-result { align-items: center }

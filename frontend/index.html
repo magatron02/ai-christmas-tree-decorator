@@ -5,16 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tree Decorator</title>
 <link rel="icon" href="/static/icon.ico">
-<link rel="stylesheet" href="/static/styles/tokens.css?v=8.51">
-<link rel="stylesheet" href="/static/styles/components.css?v=8.51">
-<script src="/static/store.js?v=8.51"></script>
-<script src="/static/theme.js?v=8.51"></script>
-<script src="/static/sidebar.js?v=8.51"></script>
+<link rel="stylesheet" href="/static/styles/tokens.css?v=8.52">
+<link rel="stylesheet" href="/static/styles/components.css?v=8.52">
+<script src="/static/store.js?v=8.52"></script>
+<script src="/static/theme.js?v=8.52"></script>
+<script src="/static/sidebar.js?v=8.52"></script>
 </head>
 <body>
 
 <header class="topbar">
   <span class="logo">Tree Decorator</span>
+  <div class="mode-switch" role="tablist" aria-label="โหมดสร้างภาพ">
+    <button type="button" class="row active" id="mode-btn-custom" aria-pressed="true">กำหนดเอง</button>
+    <button type="button" class="row" id="mode-btn-prompt" aria-pressed="false">Prompt mode</button>
+    <button type="button" class="row" id="mode-btn-auto" aria-pressed="false">Auto ตามโทน</button>
+  </div>
   <span class="spacer"></span>
   <div class="tile">
     <span class="k caption">สร้างไปแล้ว</span>
@@ -50,24 +55,13 @@
     </a>
   </nav>
 
-  <main class="page stack">
+  <main class="workspace">
 
-    <!-- Three ways in: "กำหนดเอง" is the panels below, unchanged. "Auto ตามโทน" is a simple
-         helper for a customer who doesn't know what to pick — one question, the tone, then a
-         fixed recipe of decorations auto-filled into the same panels via auto.js. "Prompt mode"
-         is a chat-style page (prompt.js): attach the same tree/decorations/scene as chips,
-         type a free description instead of picking a density, send once. None of the three
-         replaces another. -->
-    <div class="mode-switch" role="tablist" aria-label="โหมดสร้างภาพ">
-      <button type="button" class="row active" id="mode-btn-custom" aria-pressed="true">กำหนดเอง</button>
-      <button type="button" class="row" id="mode-btn-prompt" aria-pressed="false">Prompt mode</button>
-      <button type="button" class="row" id="mode-btn-auto" aria-pressed="false">Auto ตามโทน</button>
-    </div>
+  <aside class="work-side">
+    <div class="work-body">
 
-    <!-- The three-panel flow the design is built around: bare tree in, decorations in,
-         result out. Generate lives inside the result panel — it is the button that fills
-         this panel, so it sits where its effect appears rather than in a card of its own. -->
-    <div class="panels" id="mode-custom">
+
+    <div class="stack" id="mode-custom">
 
       <section class="card stack">
         <span class="panel-title">1 — ต้นเปล่า / ผนัง</span>
@@ -98,10 +92,6 @@
             </div>
             <div class="sample-strip" id="tree-samples" hidden></div>
           </div>
-        </div>
-        <div class="thumb-frame" id="tree-preview-frame" hidden>
-          <img class="thumb" id="tree-preview" alt="ต้นเปล่า">
-          <span class="thumb-code" id="tree-code-badge" hidden></span>
         </div>
         <div id="tree-size-gate" hidden></div>
       </section>
@@ -159,34 +149,6 @@
         </div>
       </section>
 
-      <section class="card stack role-result">
-        <span class="panel-title">3 — ผลลัพธ์</span>
-        <select class="input option-name" id="size-select" disabled aria-label="ขนาดภาพผลลัพธ์"></select>
-        <select class="input" id="density-select" disabled aria-label="ความหนาแน่นของตกแต่ง"></select>
-        <div class="chip" id="status-chip">รอต้นเปล่ากับของตกแต่งอย่างน้อย 1 ชิ้น</div>
-        <div class="btn-row">
-          <button class="btn primary" id="generate-btn" disabled>สร้างภาพ</button>
-        </div>
-        <div class="notice" id="error-box" hidden></div>
-        <span class="hint" id="result-empty">ภาพที่ได้จะปรากฏตรงนี้</span>
-        <img class="thumb" id="out-result" alt="ต้นที่แต่งแล้ว" hidden>
-        <div class="btn-row" id="count-actions" hidden>
-          <button class="btn" id="count-btn">นับของในรูปนี้</button>
-          <span class="hint">เสียเงินเพิ่มเล็กน้อย</span>
-        </div>
-        <ul class="hint" id="result-quantities" hidden></ul>
-        <span class="hint" id="count-note" hidden></span>
-        <span class="hint" id="stock-note" hidden>ของที่ต้องเบิก (คิดจากขนาดจริงในแคตตาล็อก ไม่ใช่การนับจากรูป)</span>
-        <ul class="hint" id="result-stock" hidden></ul>
-        <div class="btn-row" id="result-actions" hidden>
-          <a class="btn" id="download-btn" download>ดาวน์โหลด</a>
-          <!-- Full price breakdown now lives on its own page (quote.html/quote.js) — panels
-               1-3 were too cramped for it. href/hidden set by resumeFromHistory() and the
-               generate-btn handler in app.js once a request_id exists. -->
-          <a class="btn" id="quote-link" href="/quote" hidden>ดูราคาแบบเต็ม →</a>
-          <span class="hint mono" id="result-meta"></span>
-        </div>
-      </section>
 
     </div>
 
@@ -241,6 +203,54 @@
         </div>
       </div>
     </div>
+    </div>
+
+    <div class="work-footer" id="generate-footer">
+    <select class="input option-name" id="size-select" disabled aria-label="ขนาดภาพผลลัพธ์"></select>
+    <select class="input" id="density-select" disabled aria-label="ความหนาแน่นของตกแต่ง"></select>
+    <div class="chip" id="status-chip">รอต้นเปล่ากับของตกแต่งอย่างน้อย 1 ชิ้น</div>
+    <div class="btn-row">
+      <button class="btn primary" id="generate-btn" disabled>สร้างภาพ</button>
+    </div>
+    <div class="notice" id="error-box" hidden></div>
+    </div>
+  </aside>
+
+  <section class="stage">
+    <div class="stage-bar">
+      <div class="mode-switch" role="tablist" aria-label="มุมมองภาพ">
+        <button type="button" class="row active" id="stage-tab-original" aria-pressed="true">ต้นฉบับ</button>
+        <button type="button" class="row" id="stage-tab-result" aria-pressed="false">ผลลัพธ์</button>
+      </div>
+    </div>
+    <div class="stage-canvas" id="stage-view-original">
+    <div class="thumb-frame stage-frame" id="tree-preview-frame" hidden>
+      <img class="thumb" id="tree-preview" alt="ต้นเปล่า">
+      <span class="thumb-code" id="tree-code-badge" hidden></span>
+    </div>
+      <span class="hint stage-empty">ยังไม่ได้เลือกต้น — เลือกฐานภาพที่แถบซ้าย</span>
+    </div>
+    <div class="stack stage-result" id="stage-view-result" hidden>
+    <span class="hint" id="result-empty">ภาพที่ได้จะปรากฏตรงนี้</span>
+    <img class="thumb" id="out-result" alt="ต้นที่แต่งแล้ว" hidden>
+    <div class="btn-row" id="count-actions" hidden>
+      <button class="btn" id="count-btn">นับของในรูปนี้</button>
+      <span class="hint">เสียเงินเพิ่มเล็กน้อย</span>
+    </div>
+    <ul class="hint" id="result-quantities" hidden></ul>
+    <span class="hint" id="count-note" hidden></span>
+    <span class="hint" id="stock-note" hidden>ของที่ต้องเบิก (คิดจากขนาดจริงในแคตตาล็อก ไม่ใช่การนับจากรูป)</span>
+    <ul class="hint" id="result-stock" hidden></ul>
+    <div class="btn-row" id="result-actions" hidden>
+      <a class="btn" id="download-btn" download>ดาวน์โหลด</a>
+      <!-- Full price breakdown now lives on its own page (quote.html/quote.js) — panels
+           1-3 were too cramped for it. href/hidden set by resumeFromHistory() and the
+           generate-btn handler in app.js once a request_id exists. -->
+      <a class="btn" id="quote-link" href="/quote" hidden>ดูราคาแบบเต็ม →</a>
+      <span class="hint mono" id="result-meta"></span>
+    </div>
+    </div>
+  </section>
 
   </main>
 </div>
@@ -313,9 +323,10 @@
   <img id="lightbox-image" alt="">
 </dialog>
 
-<script src="/static/api.js?v=8.51"></script>
-<script src="/static/app.js?v=8.51"></script>
-<script src="/static/auto.js?v=8.51"></script>
-<script src="/static/prompt.js?v=8.51"></script>
+<script src="/static/api.js?v=8.52"></script>
+<script src="/static/app.js?v=8.52"></script>
+<script src="/static/auto.js?v=8.52"></script>
+<script src="/static/prompt.js?v=8.52"></script>
+<script src="/static/shell.js?v=8.52"></script>
 </body>
 </html>
