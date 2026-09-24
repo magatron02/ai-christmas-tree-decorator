@@ -351,6 +351,17 @@ select.select-native {
 .page { padding: var(--space-6); flex: 1; min-width: 0 }
 .stack   { display: flex; flex-direction: column; gap: var(--space-3) }
 .btn-row { display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap }
+/* A search box and its filters, all on one line however many there are: each control shares
+   the width and shrinks (min-width:0) rather than wrapping onto a second row, and sits a step
+   smaller than a form field since these are scanning aids, not the thing being filled in. */
+.filter-row { display: flex; gap: var(--space-2); align-items: center; flex-wrap: nowrap }
+.filter-row .input {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-xs);
+}
+.filter-row .btn { flex: none }
 .option-name { font-size: var(--text-lg) }
 
 /* the 3-panel flow: bare tree -> decorations -> result, side by side so the whole job is
