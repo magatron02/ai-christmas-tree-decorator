@@ -1172,7 +1172,7 @@ def api_auto_config(backdrop: str = ""):
     recipe = config.AUTO_RECIPES[backdrop]
     return {
         "tones": [
-            {"key": key, "label": preset["label"]}
+            {"key": key, "label": preset["label"], "colours": preset["colours"]}
             for key, preset in config.TONE_PRESETS.items()
             if backdrop == "tree"
             or any(catalog.auto_pool(category, preset["colours"]) for category, _n in recipe)

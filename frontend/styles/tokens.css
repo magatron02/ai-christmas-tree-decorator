@@ -186,6 +186,15 @@
   --text-xl: 20px;
   --text-2xl: 26px;
 
+  /* swatches: one per colour word in config.TONE_PRESETS, drawn as dots on the Auto tone cards.
+     Same in both themes — a swatch says which colour a tone means, it is not a surface. */
+  --swatch-gold: #C9A227;
+  --swatch-red: #B3312F;
+  --swatch-white: #F5F1E8;
+  --swatch-green: #2F6B45;
+  --swatch-brown: #7A5230;
+  --swatch-silver: #B8BCC2;
+
   /* motion */
   --transition-gentle: 200ms ease-out;
   --transition-press: 100ms ease-out;

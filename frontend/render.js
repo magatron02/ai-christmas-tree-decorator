@@ -277,7 +277,8 @@ function renderAutoPanel() {
     class: "tone-card",
     "aria-pressed": String(store.tone === tone.key),
     onclick: () => chooseTone(tone.key),
-  }, tone.label)));
+  }, tone.label, h("span", { class: "swatches", "aria-hidden": "true" },
+    (tone.colours || []).map((name) => h("span", { class: "swatch", style: `background: var(--swatch-${name})` }))))));
 
   const shortfalls = auto.pick
     ? [...auto.pick.missing, ...Object.keys(auto.pick.short)].map(autoCategoryLabel)

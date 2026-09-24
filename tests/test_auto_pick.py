@@ -58,6 +58,17 @@ def test_config_offers_tones_and_the_recipe(client):
     )
 
 
+def test_every_tone_colour_has_a_swatch_token(client):
+    """The tone cards draw a dot per colour from --swatch-<name> (tokens.css); a colour word
+    added to TONE_PRESETS without a token would render an empty dot."""
+    tokens = (config.FRONTEND_DIR / "styles" / "tokens.css").read_text(encoding="utf-8")
+    body = client.get("/api/auto/config").json()
+    for tone in body["tones"]:
+        assert tone["colours"] == config.TONE_PRESETS[tone["key"]]["colours"]
+        for name in tone["colours"]:
+            assert f"--swatch-{name}:" in tokens, name
+
+
 def test_config_no_longer_asks_about_size_budget_or_category(client):
     body = client.get("/api/auto/config").json()
     for gone in ("tree_heights", "categories", "history_counts"):
