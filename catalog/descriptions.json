@@ -30884,5 +30884,27 @@
   },
   "text": "figure, grey, white, cream, fabric, gnome figure, single",
   "tokens": 519
+ },
+ "90159": {
+  "code": "90159",
+  "pdf_page": 64,
+  "image": "90159.png",
+  "match": "directly_above",
+  "attributes": {
+   "kind": "santa",
+   "primary_colour": "red",
+   "other_colours": [
+    "white",
+    "green",
+    "gold"
+   ],
+   "finish": "fabric",
+   "shape": "figure",
+   "pattern": "mixed",
+   "packaging": "single",
+   "summary": "Seated Santa figure in a red velvet-style outfit with white trim, holding a small evergreen arrangement."
+  },
+  "text": "santa, red, white, green, gold, fabric, figure, mixed, single",
+  "tokens": 558
  }
 }

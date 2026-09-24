@@ -293,6 +293,28 @@
   "book": "Bangkok Christmas"
  },
  {
+  "code": "90672",
+  "size_raw": "2.5 inc.",
+  "size": {
+   "inches": 2.5,
+   "size_mm": 64,
+   "unit_printed": "inch"
+  },
+  "section": "Ornaments Gift boxes",
+  "page_headings": [
+   "Ornaments Gift boxes"
+  ],
+  "pdf_page": 84,
+  "bbox": [
+   99.9,
+   646.3,
+   184.2,
+   665.8
+  ],
+  "duplicate": true,
+  "book": "Bangkok Christmas"
+ },
+ {
   "code": "02035-1",
   "size_raw": "20 Ft.",
   "size": {
@@ -348,6 +370,26 @@
    622.3,
    475.0,
    641.7
+  ],
+  "duplicate": true,
+  "book": "Bangkok Christmas"
+ },
+ {
+  "code": "90159",
+  "size_raw": "28 inc.",
+  "size": {
+   "inches": 28.0,
+   "size_mm": 711,
+   "unit_printed": "inch"
+  },
+  "section": "Star Topper",
+  "page_headings": [],
+  "pdf_page": 103,
+  "bbox": [
+   326.3,
+   202.7,
+   407.2,
+   222.1
   ],
   "duplicate": true,
   "book": "Bangkok Christmas"

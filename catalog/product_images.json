@@ -14093,6 +14093,676 @@
   "shared_with": 0
  },
  {
+  "code": "01255",
+  "pdf_page": 5,
+  "image": "01255.png",
+  "rule": "above",
+  "gap_pt": 4.3,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "01810-1",
+  "pdf_page": 6,
+  "image": "01810-1.png",
+  "rule": "above",
+  "gap_pt": 18.1,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "0301",
+  "pdf_page": 36,
+  "image": "0301.png",
+  "rule": "above",
+  "gap_pt": 18.8,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "4300",
+  "pdf_page": 37,
+  "image": "4300.png",
+  "rule": "above",
+  "gap_pt": 19.3,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "4411",
+  "pdf_page": 44,
+  "image": "4411.png",
+  "rule": "above",
+  "gap_pt": 21.9,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "4700",
+  "pdf_page": 49,
+  "image": "4700.png",
+  "rule": "beside",
+  "gap_pt": 99.2,
+  "match": "beside",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "4720",
+  "pdf_page": 49,
+  "image": "4720.png",
+  "rule": "beside",
+  "gap_pt": 78.4,
+  "match": "beside",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "4724",
+  "pdf_page": 49,
+  "image": "4724.png",
+  "rule": "above",
+  "gap_pt": 73.8,
+  "match": "above_far",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "4725",
+  "pdf_page": 49,
+  "image": "4725.png",
+  "rule": "nearest",
+  "gap_pt": 148.3,
+  "match": "no_rule_fitted",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "4734",
+  "pdf_page": 49,
+  "image": "4734.png",
+  "rule": "nearest",
+  "gap_pt": 145.0,
+  "match": "no_rule_fitted",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "4735",
+  "pdf_page": 49,
+  "image": "4735.png",
+  "rule": "beside",
+  "gap_pt": 145.1,
+  "match": "beside",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "4738",
+  "pdf_page": 49,
+  "image": "4738.png",
+  "rule": "nearest",
+  "gap_pt": 210.9,
+  "match": "no_rule_fitted",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "4739",
+  "pdf_page": 49,
+  "image": "4739.png",
+  "rule": "beside",
+  "gap_pt": 14.7,
+  "match": "beside",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90159",
+  "pdf_page": 64,
+  "image": "90159.png",
+  "rule": "above",
+  "gap_pt": 5.5,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90341",
+  "pdf_page": 69,
+  "image": "90341.png",
+  "rule": "above",
+  "gap_pt": 15.2,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90342",
+  "pdf_page": 69,
+  "image": "90342.png",
+  "rule": "above",
+  "gap_pt": 26.8,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90324",
+  "pdf_page": 70,
+  "image": "90324.png",
+  "rule": "above",
+  "gap_pt": 11.4,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90335",
+  "pdf_page": 70,
+  "image": "90335.png",
+  "rule": "above",
+  "gap_pt": 15.6,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90315",
+  "pdf_page": 70,
+  "image": "90315.png",
+  "rule": "above",
+  "gap_pt": 7.4,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90336",
+  "pdf_page": 71,
+  "image": "90336.png",
+  "rule": "above",
+  "gap_pt": 7.3,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90529",
+  "pdf_page": 71,
+  "image": "90529.png",
+  "rule": "above",
+  "gap_pt": 14.5,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "6173",
+  "pdf_page": 72,
+  "image": "6173.png",
+  "rule": "above",
+  "gap_pt": 14.1,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "6161",
+  "pdf_page": 72,
+  "image": "6161.png",
+  "rule": "above",
+  "gap_pt": 15.3,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "6189",
+  "pdf_page": 72,
+  "image": "6189.png",
+  "rule": "above",
+  "gap_pt": 14.3,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90129",
+  "pdf_page": 73,
+  "image": "90129.png",
+  "rule": "above",
+  "gap_pt": 8.5,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "6110",
+  "pdf_page": 74,
+  "image": "6110.png",
+  "rule": "above",
+  "gap_pt": 14.5,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "6118",
+  "pdf_page": 74,
+  "image": "6118.png",
+  "rule": "above",
+  "gap_pt": 23.5,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90144",
+  "pdf_page": 76,
+  "image": "90144.png",
+  "rule": "above",
+  "gap_pt": 18.8,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90147",
+  "pdf_page": 76,
+  "image": "90147.png",
+  "rule": "above",
+  "gap_pt": 25.1,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90136",
+  "pdf_page": 76,
+  "image": "90136.png",
+  "rule": "above",
+  "gap_pt": 16.2,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90137",
+  "pdf_page": 76,
+  "image": "90137.png",
+  "rule": "above",
+  "gap_pt": 28.2,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90134",
+  "pdf_page": 76,
+  "image": "90134.png",
+  "rule": "above",
+  "gap_pt": 15.4,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90127",
+  "pdf_page": 76,
+  "image": "90127.png",
+  "rule": "above",
+  "gap_pt": 10.0,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90126",
+  "pdf_page": 76,
+  "image": "90126.png",
+  "rule": "above",
+  "gap_pt": 22.0,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90128",
+  "pdf_page": 77,
+  "image": "90128.png",
+  "rule": "above",
+  "gap_pt": 15.4,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90152",
+  "pdf_page": 77,
+  "image": "90152.png",
+  "rule": "above",
+  "gap_pt": 22.0,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90148",
+  "pdf_page": 77,
+  "image": "90148.png",
+  "rule": "above",
+  "gap_pt": 18.9,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90149",
+  "pdf_page": 77,
+  "image": "90149.png",
+  "rule": "above",
+  "gap_pt": 15.3,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90150",
+  "pdf_page": 77,
+  "image": "90150.png",
+  "rule": "above",
+  "gap_pt": 12.1,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90151",
+  "pdf_page": 77,
+  "image": "90151.png",
+  "rule": "above",
+  "gap_pt": 17.0,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90162",
+  "pdf_page": 78,
+  "image": "90162.png",
+  "rule": "above",
+  "gap_pt": 17.8,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90153",
+  "pdf_page": 80,
+  "image": "90153.png",
+  "rule": "above",
+  "gap_pt": 15.6,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90139",
+  "pdf_page": 80,
+  "image": "90139.png",
+  "rule": "above",
+  "gap_pt": 18.5,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90140",
+  "pdf_page": 80,
+  "image": "90140.png",
+  "rule": "above",
+  "gap_pt": 30.5,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90695",
+  "pdf_page": 82,
+  "image": "90695.png",
+  "rule": "above",
+  "gap_pt": 19.9,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90682",
+  "pdf_page": 82,
+  "image": "90682.png",
+  "rule": "nearest",
+  "gap_pt": 558.6,
+  "match": "no_rule_fitted",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "6100",
+  "pdf_page": 83,
+  "image": "6100.png",
+  "rule": "beside",
+  "gap_pt": 69.7,
+  "match": "beside",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90672",
+  "pdf_page": 84,
+  "image": "90672.png",
+  "rule": "above",
+  "gap_pt": 8.9,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90672",
+  "pdf_page": 84,
+  "image": "90672.png",
+  "rule": "above",
+  "gap_pt": 9.7,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90662",
+  "pdf_page": 84,
+  "image": "90662.png",
+  "rule": "above",
+  "gap_pt": 21.7,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90113",
+  "pdf_page": 91,
+  "image": "90113.png",
+  "rule": "above",
+  "gap_pt": 14.4,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90154",
+  "pdf_page": 91,
+  "image": "90154.png",
+  "rule": "above",
+  "gap_pt": 16.6,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90587",
+  "pdf_page": 94,
+  "image": "90587.png",
+  "rule": "above",
+  "gap_pt": 14.8,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90589",
+  "pdf_page": 94,
+  "image": "90589.png",
+  "rule": "above",
+  "gap_pt": 10.1,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90588",
+  "pdf_page": 94,
+  "image": "90588.png",
+  "rule": "above",
+  "gap_pt": 9.9,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90582",
+  "pdf_page": 95,
+  "image": "90582.png",
+  "rule": "above",
+  "gap_pt": 15.7,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90432",
+  "pdf_page": 97,
+  "image": "90432.png",
+  "rule": "above",
+  "gap_pt": 20.3,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90433",
+  "pdf_page": 97,
+  "image": "90433.png",
+  "rule": "above",
+  "gap_pt": 19.9,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90430",
+  "pdf_page": 97,
+  "image": "90430.png",
+  "rule": "above",
+  "gap_pt": 20.0,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90590",
+  "pdf_page": 97,
+  "image": "90590.png",
+  "rule": "above",
+  "gap_pt": 20.4,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90562",
+  "pdf_page": 98,
+  "image": "90562.png",
+  "rule": "above",
+  "gap_pt": 16.6,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90586",
+  "pdf_page": 98,
+  "image": "90586.png",
+  "rule": "above",
+  "gap_pt": 16.8,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90692",
+  "pdf_page": 101,
+  "image": "90692.png",
+  "rule": "above",
+  "gap_pt": 15.8,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "71215-4",
+  "pdf_page": 101,
+  "image": "71215-4.png",
+  "rule": "above",
+  "gap_pt": 7.3,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90159",
+  "pdf_page": 103,
+  "image": "90159.png",
+  "rule": "above",
+  "gap_pt": 9.8,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90160",
+  "pdf_page": 103,
+  "image": "90160.png",
+  "rule": "above",
+  "gap_pt": 7.7,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
+  "code": "90161",
+  "pdf_page": 103,
+  "image": "90161.png",
+  "rule": "above",
+  "gap_pt": 14.2,
+  "match": "directly_above",
+  "book": "Bangkok Christmas",
+  "shared_with": 0
+ },
+ {
   "code": "MSND-60478",
   "pdf_page": null,
   "image": "MSND-60478.png",

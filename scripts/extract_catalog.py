@@ -39,6 +39,9 @@ from _bootstrap import ROOT  # noqa: E402
 
 from backend.services.catalog import parse_size  # noqa: E402
 
+sys.path.insert(0, str(ROOT / "scripts"))
+import build_product_index as bpi  # noqa: E402
+
 # 71016-1/DG/66 and 74026-1/D are real codes; the suffix is part of the product identity.
 # 26022-2FK is the same thing with no slash (a finish letter glued straight onto the number,
 # 2026 book) — without the bare-letter branch this reads as plain 26022-2, which collided
@@ -95,9 +98,12 @@ def extract(pdf_path, pages=None, book=None):
             if size >= 28:
                 continue
             sizes = SIZE_AFTER_CODE.findall(text)
-            for position, match in enumerate(CODE.finditer(text)):
-                code = match.group(1)
-                raw = sizes[position] if position < len(sizes) else None
+            found = [(match.group(1), sizes[position] if position < len(sizes) else None)
+                     for position, match in enumerate(CODE.finditer(text))]
+            loose = bpi.caption_code(text)     # "90695 (Star 7 inc.)", "01810 -1 (1.5 Ft.)"
+            if loose:
+                found.insert(0, loose)
+            for code, raw in found:
                 parsed = parse_size(raw) if raw else None
 
                 if raw and parsed is None:

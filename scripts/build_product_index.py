@@ -29,7 +29,30 @@ from PIL import Image, ImageDraw
 ROOT = Path(__file__).resolve().parent.parent
 
 CODE = re.compile(r"\b(\d{3,5}-\d{1,3}(?:/[A-Za-z0-9]+)*(?:[A-Z]{1,3}\b)?)")
+# A caption that opens with a code CODE can't read: a hyphen-less one ("90695 (Star 7 inc.)",
+# "4700", "90144- (24 inc.)") or one typeset with a stray space around the hyphen ("01810 -1",
+# "71215- 4"). Only at the very start of a caption span and only when followed by its "(size)"
+# or nothing, so "New 2026" or "8 functions" never read as codes; 4-5 digits so a page
+# number never does either. 62 of the 66 codes this finds in the 2026 book are also in the
+# supplier's own price list (2026-09-24), which is what makes this reading, not guessing.
+CAPTION_CODE = re.compile(r"^(\d{4,5})(?:\s*-\s*(\d{1,3}))?-?\s*(?=\(|$)")
+CAPTION_SIZE = re.compile(r"\s*\(([^)]{1,40})\)")
 LABEL_MAX_PT = 28
+
+
+def caption_code(text):
+    """(code, printed size or None) for a caption opening with a CAPTION_CODE, else None.
+    A caption CODE already reads from its first character is left to CODE."""
+    strict = CODE.match(text)
+    if strict:
+        return None
+    match = CAPTION_CODE.match(text)
+    if not match:
+        return None
+    code = match.group(1) + (f"-{match.group(2)}" if match.group(2) else "")
+    size = CAPTION_SIZE.match(text, match.end())
+    return code, (size.group(1) if size else None)
+
 
 # a product photo is smaller than half the page (that is the background) and bigger than an
 # icon; the red price ribbons are wide and flat, so they are excluded by shape
@@ -55,6 +78,9 @@ def labels_on(page):
                 text = span["text"].strip()
                 if span["size"] >= LABEL_MAX_PT:
                     continue
+                loose = caption_code(text)
+                if loose:
+                    found.append((loose[0], span["bbox"]))
                 for match in CODE.finditer(text):
                     found.append((match.group(1), span["bbox"]))
     return found
