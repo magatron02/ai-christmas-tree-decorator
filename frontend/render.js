@@ -40,12 +40,13 @@ function StepHeader(number, title, { done = false, counter = "" } = {}) {
 
 /* Drop zone + [Catalogue] [อัปโหลดรูป]. `extra` is anything that belongs to the same choice
  * (the sample link on the base step, the auto-cut checkbox on decorations). */
-function AddZone({ hint, onCatalogue, onUpload, onFiles, extra = [] }) {
+function AddZone({ hint, onCatalogue, onUpload, onFiles, buttons = [], extra = [] }) {
   const zone = h("div", { class: "dropzone" },
     h("span", { class: "hint" }, hint),
     h("div", { class: "btn-row" },
       button("Catalogue", onCatalogue),
-      button("อัปโหลดรูป", onUpload)),
+      button("อัปโหลดรูป", onUpload),
+      ...buttons),
     ...extra);
   zone.addEventListener("dragover", (event) => { event.preventDefault(); zone.classList.add("is-over"); });
   zone.addEventListener("dragleave", () => zone.classList.remove("is-over"));
@@ -118,10 +119,8 @@ function BaseAddZone() {
     onCatalogue: () => openCatalogPicker("tree", useTreeFromCatalog),
     onUpload: () => $("base-file").click(),
     onFiles: (files) => setBaseFromFile(files[0]),
-    extra: [
-      button("หรือใช้รูปตัวอย่าง", () => setStore({ ui: { ...store.ui, samples: !samples } }), "btn ghost"),
-      samples ? SampleStrip("trees", SAMPLE_TREES, useSampleTree) : null,
-    ],
+    buttons: [button("รูปตัวอย่าง", () => setStore({ ui: { ...store.ui, samples: !samples } }))],
+    extra: [samples ? SampleStrip("trees", SAMPLE_TREES, useSampleTree) : null],
   });
 }
 
