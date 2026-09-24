@@ -191,6 +191,14 @@ ELEMENT_DENSITY_PHRASES = {
 # future billed check must have its numbers copied here too.
 ELEMENT_DENSITY_QTY_RANGE = {"light": (1, 6), "normal": (8, 12), "full": (18, 24)}
 
+# The whole-tree totals DENSITY_PRESETS asks the model for, as numbers — what a picture is
+# expected to SHOW, as against what a tree of that size could take. Measured 2026-09-24 on
+# gpt-image-2.5-sunburst, the model draws about this many pieces in total whatever the tree's
+# size, shared roughly evenly between the kinds (2-4 of each kind on an 8-kind tree), so the
+# quote's "in the picture" estimate is this total divided by the number of kinds. Kept in sync
+# with the prose above by hand; tests/test_quantity_estimate.py checks the numbers appear in it.
+TREE_DENSITY_QTY_RANGE = {"light": (8, 12), "normal": (12, 20), "full": (20, 30)}
+
 # What auto pick hangs on every tree: the same mix of hung categories and counts for every
 # tone and every tree size (ADR-0003). The tone decides which products fill these slots, never
 # what the slots are, and the tree's size does not enter into it — density already governs how

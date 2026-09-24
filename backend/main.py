@@ -298,6 +298,25 @@ def _estimate_for(tree_code, code, density, placement):
     )
 
 
+def _shown_estimate_for(density, placement, kinds):
+    """(min, max) of how many pieces of one decoration the finished picture is expected to
+    SHOW — the other half of _estimate_for, which says how many a tree of that size could take.
+
+    The two disagree on purpose, and by a lot on a big tree with several kinds. The model is
+    asked for a whole-tree total by density (config.DENSITY_PRESETS) and draws about that many
+    whatever the tree's size, shared roughly evenly between the kinds, so this is that total
+    divided by `kinds` — every decoration of the request that is not a wrapped garland. A
+    wrapped garland is exactly one, the same as in _estimate_for. Measured, not derived: see
+    config.TREE_DENSITY_QTY_RANGE.
+    """
+    if placement == "wrapped":
+        return 1, 1
+    lo, hi = config.TREE_DENSITY_QTY_RANGE[density or config.DEFAULT_DENSITY]
+    kinds = max(kinds, 1)
+    low = max(1, round(lo / kinds))
+    return low, max(low, round(hi / kinds))
+
+
 def _stock_for(tree_code, code):
     """What to pull off the shelf for one item of a finished run (issue #25): how many pieces
     that tree takes, and how many packs that is for a product sold by the pack.
@@ -352,6 +371,11 @@ def _row_json(row):
         _estimate_for(row["tree_code"], e.get("code"), e.get("density"), placement)
         for e, placement in zip(elements, placements)
     ]
+    kinds = sum(1 for placement in placements if placement != "wrapped")
+    shown_estimates = [
+        _shown_estimate_for(e.get("density"), placement, kinds)
+        for e, placement in zip(elements, placements)
+    ]
     return {
         "request_id": row["request_id"],
         "status": row["status"],
@@ -361,10 +385,11 @@ def _row_json(row):
                 "density": e.get("density"), "manual_mm": e.get("manual_mm"),
                 "quantity": quantity, "packs": packs,
                 "placement": placement, "estimate": list(estimate),
+                "estimate_shown": list(shown),
                 **extra,
             }
-            for e, extra, (quantity, packs), placement, estimate in zip(
-                elements, element_extras, stock, placements, estimates
+            for e, extra, (quantity, packs), placement, estimate, shown in zip(
+                elements, element_extras, stock, placements, estimates, shown_estimates
             )
         ],
         "price_total": price_total,

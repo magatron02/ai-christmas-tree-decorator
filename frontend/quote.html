@@ -73,6 +73,11 @@
         <div class="btn-row" style="justify-content: space-between">
           <span class="panel-title">สรุปราคา</span>
           <div class="btn-row">
+            <label class="hint" for="quote-basis">จำนวนที่ประมาณ อิงตาม</label>
+            <select class="input" id="quote-basis">
+              <option value="shown">ที่วาดในภาพ</option>
+              <option value="fits">ที่ต้นใส่ได้</option>
+            </select>
             <label class="hint" for="quote-multiplier">ตัวคูณ (ด้านที่มองไม่เห็น)</label>
             <input class="input mono" type="number" id="quote-multiplier" min="1" step="1" value="2" style="width:4rem">
           </div>
@@ -101,6 +106,6 @@
 </div>
 
 <script src="/static/api.js?v=8.49"></script>
-<script src="/static/quote.js?v=8.49"></script>
+<script src="/static/quote.js?v=8.50"></script>
 </body>
 </html>

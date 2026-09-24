@@ -5,9 +5,10 @@
  * Quantity per decoration comes from one of two sources, the exact one always winning once it
  * exists: an exact per-code count from "นับของในรูปนี้" (row.counted_items if one was already
  * persisted server-side, or a fresh click here — see request_log.set_counted, backend/main.py),
- * otherwise the backend's size-aware estimate (element.estimate — backend/main.py's
- * _estimate_for: tree and decoration sizes, scaled by density; exactly one for a wrapped
- * garland). Either is multiplied by a user-set multiplier, since the picture only shows the
+ * otherwise one of the backend's two estimates, the shop's choice: element.estimate_shown
+ * (_shown_estimate_for: how many the picture is expected to show — the density total shared
+ * between the kinds) or element.estimate (_estimate_for: how many a tree of that size could
+ * take, from tree and decoration sizes). Exactly one for a wrapped garland either way. Either is multiplied by a user-set multiplier, since the picture only shows the
  * tree's front — except a wrapped garland, which has no unseen back.
  *
  * Price/size for each line already came pre-resolved from the backend (catalogue first for
@@ -40,6 +41,11 @@ function money(amount) {
 let row = null; // the /api/request/{id} response, fetched once on load
 let counted = null; // code -> exact count, from row.counted_items or a fresh count click here
 let multiplier = 2; // both sides of the tree are decorated but only the front is in frame
+// Which estimate the piece counts follow until one is counted: "shown" is how many the picture
+// is expected to show (the density total shared between the kinds), "fits" how many a tree of
+// that size could take. Both come from the backend; the shop can switch, and each line always
+// says the other one underneath.
+let basis = "shown";
 let extras = []; // per-element (index-aligned with row.elements) manual add-on, default 0 —
                   // added *after* the multiplier, for a buffer/breakage allowance the shop
                   // wants to buy on top of what the picture actually needs
@@ -119,7 +125,9 @@ function render() {
     }
 
     const exact = counted ? counted[element.code] : null;
-    const [rangeMin, rangeMax] = element.estimate;
+    const shown = element.estimate_shown || element.estimate;
+    const [rangeMin, rangeMax] = basis === "fits" ? element.estimate : shown;
+    const other = basis === "fits" ? shown : element.estimate;
     // a wrapped garland is one strand round the whole trunk — there is no unseen back for a
     // multiplier to cover, whatever the tree's size
     const em = element.placement === "wrapped" ? 1 : m;
@@ -139,7 +147,11 @@ function render() {
     const qtyText = qtyMin === qtyMax
       ? `${qtyMin.toLocaleString("th-TH")} ชิ้น`
       : `${qtyMin.toLocaleString("th-TH")}–${qtyMax.toLocaleString("th-TH")} ชิ้น`;
-    const qtyNote = exact == null ? " (ประมาณ)" : "";
+    const otherText = other[0] === other[1] ? `${other[0]}` : `${other[0]}–${other[1]}`;
+    const otherNote = exact == null && element.placement !== "wrapped"
+      ? `<br><span class="hint">${basis === "fits" ? "ในภาพ" : "ต้นใส่ได้"} ${otherText} ชิ้น</span>`
+      : "";
+    const qtyNote = exact == null ? ` (ประมาณ)${otherNote}` : "";
     const extraCell = `<td><input type="number" class="input mono" min="0" step="1" ` +
       `value="${extra}" data-extra-index="${i}" style="width:4rem"></td>`;
 
@@ -221,7 +233,7 @@ function render() {
   const notes = [];
   if (anyEstimated) {
     notes.push(
-      "* จำนวนบางชิ้นยังเป็นการประมาณจากขนาดต้นและขนาดของ — กด \"นับของในรูปนี้\" ด้านซ้ายเพื่อความแม่นยำ"
+      `* จำนวนบางชิ้นยังเป็นการประมาณ (${basis === "fits" ? "จากขนาดต้นและขนาดของ ว่าต้นใส่ได้เท่าไร" : "จากจำนวนที่ภาพมักวาด แบ่งตามจำนวนประเภท"}) — กด "นับของในรูปนี้" ด้านซ้ายเพื่อความแม่นยำ`
     );
   }
   if (anyVendor) {
@@ -239,6 +251,11 @@ function applyCounted(items, note) {
   $("quote-count-note").hidden = !note;
   render();
 }
+
+$("quote-basis").addEventListener("change", (event) => {
+  basis = event.target.value;
+  render();
+});
 
 $("quote-multiplier").addEventListener("input", (event) => {
   const value = Number(event.target.value);

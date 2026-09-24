@@ -183,7 +183,8 @@ function decorationTotal(request) {
       continue;
     }
     const exact = counted ? counted[element.code] : null;
-    const [rangeMin, rangeMax] = element.estimate;
+    // the same default basis quote.js starts on: how many the picture is expected to show
+    const [rangeMin, rangeMax] = element.estimate_shown || element.estimate;
     const em = element.placement === "wrapped" ? 1 : m;
     if (exact == null) anyEstimated = true;
     if (element.price_source === "vendor") anyVendor = true;
