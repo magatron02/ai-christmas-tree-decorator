@@ -156,9 +156,7 @@ function DecorationList({ compact = false } = {}) {
 
     if (element.status === "ready") {
       if (!compact && element.colours) {
-        const select = buildColourSelect(element.colours, element.image, (image) => switchColour(element, image));
-        item.append(select);
-        enhanceSelect(select); // needs a parent to attach its popup to — must run after append
+        item.append(buildColourChips(element.colours, element.image, (image) => switchColour(element, image)));
       }
       item.append(buildSizeRow(element.sizeMm, element.manualMm, (value) => {
         const parsed = Number(value);

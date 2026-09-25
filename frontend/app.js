@@ -258,21 +258,28 @@ function colourLabel(name, position, total) {
   return name || `สี ${position} จาก ${total}`;
 }
 
-/* A dropdown of a decoration's other colours, by name (issue #15) — only ever built for an
- * item whose `colours` came back with more than one entry (a decoration's own "offer a
+/* A row of small buttons, one per colour or pattern of a decoration (issue #15), each with its
+ * own thumbnail — every option visible at once instead of behind a dropdown. Only ever built
+ * for an item whose `colours` came back with more than one entry (a decoration's own "offer a
  * switcher" rule), so callers never have to check that here too. */
-function buildColourSelect(colours, current, onPick) {
-  const select = document.createElement("select");
-  select.className = "input";
+function buildColourChips(colours, current, onPick) {
+  const wrap = document.createElement("div");
+  wrap.className = "colour-chips";
+  wrap.setAttribute("role", "group");
+  wrap.setAttribute("aria-label", "เลือกสี/ลายก่อนสร้างรูป");
   colours.forEach((colour, index) => {
-    const option = document.createElement("option");
-    option.value = colour.image;
-    option.textContent = colourLabel(colour.name, index + 1, colours.length);
-    option.selected = colour.image === current;
-    select.append(option);
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "colour-chip";
+    chip.setAttribute("aria-pressed", String(colour.image === current));
+    const dot = document.createElement("img");
+    dot.src = catalogImageUrl(colour.image);
+    dot.alt = "";
+    chip.append(dot, colourLabel(colour.name, index + 1, colours.length));
+    chip.addEventListener("click", () => onPick(colour.image));
+    wrap.append(chip);
   });
-  select.addEventListener("change", () => onPick(select.value));
-  return select;
+  return wrap;
 }
 
 function buildDensityPill(current, onPick) {

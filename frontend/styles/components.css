@@ -487,6 +487,40 @@ select.select-native {
   color: var(--btn-primary-text);
 }
 
+/* ---- colour / pattern buttons under an accepted decoration ---- */
+.colour-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.colour-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2) 2px 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+.colour-chip:hover { border-color: var(--text-muted) }
+.colour-chip:focus-visible { box-shadow: var(--focus-ring) }
+.colour-chip img {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  background: var(--surface-0);
+}
+.role-decoration .colour-chip[aria-pressed="true"] {
+  background: var(--fill-gold-block);
+  border-color: var(--fill-gold-block);
+  color: var(--btn-primary-text);
+}
+
 /* ---- blocking manual-size gate (tree slot + every accepted element) ----
    NonGoals.md 8: a code with no catalogue size must not be guessed at — Generate stays
    disabled (refreshGenerateButton/anyManualSizeMissing in app.js) until this row is filled.
