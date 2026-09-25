@@ -471,6 +471,7 @@ async function renderColourGallery(code) {
   });
   add.append(addTitle, firstName, newName, newFile, addButton);
   host.append(add);
+  if (!split) return; // nothing to clear on a code that was never split
 
   const clearAll = document.createElement("button");
   clearAll.className = "btn danger";

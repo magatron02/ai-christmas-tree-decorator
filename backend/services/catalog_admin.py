@@ -489,39 +489,62 @@ def add_variant(code, image_bytes, name_th, fmt="PNG", first_name_th=None):
     colours.append(new)
     names[new] = name_th
 
+    main_before = _main_photo_bytes(code)
     changes = {"colours": colours, "colour_names": names}
     speaks_for = ["colours", "colour_names"]
     if not fields.get("shop_photo"):
+        # marked, so clearing the split later knows this photo is ours to take back
         changes["shop_photo"] = _shop_photo_names(colours)[0]
-        speaks_for.append("shop_photo")
+        changes["shop_photo_from_split"] = True
+        speaks_for += ["shop_photo", "shop_photo_from_split"]
     if fields.get("supporting_photos"):
         changes["supporting_photos"] = fields["supporting_photos"]
         speaks_for.append("supporting_photos")
     shop_overlay.set_fields(code, changes, speaks_for=tuple(speaks_for))
     catalog.refresh()
+    _reindex_if_main_changed(code, main_before)
     return {"code": code, "image": new}
 
 
+def _main_photo_bytes(code):
+    photos = catalog.variants_of(code)
+    path = catalog.resolve_image_path(photos[0]) if photos else None
+    return path.read_bytes() if path and path.is_file() else None
+
+
+def _reindex_if_main_changed(code, before):
+    """Photo search describes a code by its main picture; rebuild it only when that picture's
+    content really changed — a split's seeded copy is the same picture, not a billed call."""
+    after = _main_photo_bytes(code)
+    if after and after != before:
+        _reindex_one(code, after, "JPEG" if after[:3] == b"\xff\xd8\xff" else "PNG")
+
+
 def clear_variants(code):
-    """Back to one plain code: drop every colour/pattern, name and supporting photo. Shop photos
-    the variants used are deleted, except the code's own `shop_photo`, which stays — it may be
-    a real photo the shop took (issue #12), and add_variant's copy of a book crop is only that
-    same picture, removable with the existing "ลบรูปนี้" link."""
+    """Back to one plain code: drop every colour/pattern, name and supporting photo, and the
+    shop photos they used. A `shop_photo` the shop set itself stays; one add_variant set
+    (`shop_photo_from_split`) goes too, so the code shows exactly what it showed before."""
     code = (code or "").strip().upper()
     catalog.find(code)
     fields = shop_overlay.fields_for(code)
-    keep = fields.get("shop_photo")
-    files = [c for c in fields.get("colours") or [] if c.startswith("/shop-photos/")]
+    if not fields.get("colours"):
+        return {"code": code}
+    main_before = _main_photo_bytes(code)
+    keep = None if fields.get("shop_photo_from_split") else fields.get("shop_photo")
+    files = [c for c in fields["colours"] if c.startswith("/shop-photos/")]
     for group in (fields.get("supporting_photos") or {}).values():
         files += group
-    for file in files:
-        if not keep or file.removeprefix("/shop-photos/") != keep:
+    if fields.get("shop_photo"):
+        files.append(f"/shop-photos/{fields['shop_photo']}")
+    for file in set(files):
+        if file.removeprefix("/shop-photos/") != keep:
             _delete_shop_photo(file)
     shop_overlay.set_fields(
         code, {"shop_photo": keep} if keep else {},
-        speaks_for=("colours", "colour_names", "supporting_photos", "shop_photo"),
+        speaks_for=("colours", "colour_names", "supporting_photos", "shop_photo", "shop_photo_from_split"),
     )
     catalog.refresh()
+    _reindex_if_main_changed(code, main_before)
     return {"code": code}
 
 
@@ -538,6 +561,7 @@ def remove_variant(code, image):
     if len(colours) == 1:
         raise ValidationError(f"'{image}' เป็นสี/ลายเดียวที่เหลือของ {code} — ลบไม่ได้")
 
+    main_before = _main_photo_bytes(code)
     colours.remove(key)
     names = {k: v for k, v in (fields.get("colour_names") or {}).items() if k != key}
     supporting = dict(fields.get("supporting_photos") or {})
@@ -551,11 +575,14 @@ def remove_variant(code, image):
         changes["supporting_photos"] = supporting
     shop_photo = fields.get("shop_photo")
     if shop_photo:
-        speaks_for.append("shop_photo")
+        speaks_for += ["shop_photo", "shop_photo_from_split"]
         if f"/shop-photos/{shop_photo}" != key:
             changes["shop_photo"] = shop_photo
         elif _shop_photo_names(colours):
             changes["shop_photo"] = _shop_photo_names(colours)[0]
+        if "shop_photo" in changes and fields.get("shop_photo_from_split"):
+            changes["shop_photo_from_split"] = True
     shop_overlay.set_fields(code, changes, speaks_for=tuple(speaks_for))
     catalog.refresh()
+    _reindex_if_main_changed(code, main_before)
     return {"code": code}

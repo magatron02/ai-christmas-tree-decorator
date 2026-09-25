@@ -271,6 +271,21 @@ def test_export_and_import_over_http(client, temp_catalog, local):
     assert applied.json()["imported"] == 2
 
 
+def test_a_base_row_missing_blank_fields_still_searches(client, temp_catalog):
+    seed()
+    path = config.CATALOG_PATH
+    rows = json.loads(path.read_text(encoding="utf-8"))
+    for key in ("size_raw", "size", "section"):
+        rows[0].pop(key, None)
+    path.write_text(json.dumps(rows), encoding="utf-8")
+    catalog.refresh()
+
+    response = client.get("/api/catalog/search?q=BALL-1")
+
+    assert response.status_code == 200
+    assert response.json()["results"][0]["size_raw"] is None
+
+
 def test_import_is_local_only(client, temp_catalog):
     assert client.get("/api/catalog/export").status_code == 403
 

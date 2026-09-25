@@ -68,8 +68,8 @@ IMPORTED_DIR = "xlsx"
 # Overlay opinions the sheet now owns for every code it imports: the sheet is the truth for
 # those, so an older opinion must not keep overriding it.
 SHEET_OWNED_OVERLAY_FIELDS = tuple(
-    sorted(catalog.EDITABLE_DISPLAY_FIELDS | {"size", "shop_photo", "colours", "colour_names",
-                                              "supporting_photos"})
+    sorted(catalog.EDITABLE_DISPLAY_FIELDS | {"size", "shop_photo", "shop_photo_from_split",
+                                              "colours", "colour_names", "supporting_photos"})
 )
 
 MAX_ZIP_BYTES = 2 * 1024 ** 3  # uncompressed total; the whole current catalogue is ~150 MB

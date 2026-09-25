@@ -1,9 +1,10 @@
 """Adding a colour or pattern to a code from the settings page (ADR-0002: still one code)."""
 
+import numpy as np
 import pytest
 
 from backend import config
-from backend.services import catalog, catalog_admin, settings
+from backend.services import catalog, catalog_admin, matching, settings
 from backend.validation import ValidationError
 
 from helpers import png_bytes
@@ -28,6 +29,11 @@ def temp_catalog(tmp_path, monkeypatch):
 @pytest.fixture
 def local(monkeypatch):
     monkeypatch.setattr(settings, "is_local", lambda request: True)
+
+
+@pytest.fixture
+def fake_embed(monkeypatch):
+    monkeypatch.setattr(matching, "embed", lambda texts: np.array([[1.0, 0.0]] * len(texts), dtype=np.float32))
 
 
 def test_first_split_keeps_the_existing_photo_as_variant_one(client, temp_catalog, local):
@@ -86,20 +92,42 @@ def test_the_last_variant_cannot_be_removed(temp_catalog):
         catalog_admin.remove_variant("4400-1", catalog.variants_of("4400-1")[0])
 
 
-def test_clearing_returns_the_code_to_a_single_plain_product(client, temp_catalog, local):
+def test_clearing_returns_the_code_to_its_original_picture(client, temp_catalog, local):
     catalog_admin.add_product("4400-1", "80 mm.", "garland", "2026", png_bytes())
-    catalog_admin.add_variant("4400-1", png_bytes(), "แดง", first_name_th="เดิม")
-    catalog_admin.add_variant("4400-1", png_bytes(), "เขียว")
-    extra = [p for p in config.SHOP_PHOTOS_DIR.iterdir()]
-    assert len(extra) == 3
+    original = catalog.image_for("4400-1")
+    catalog_admin.add_variant("4400-1", png_bytes(color=(200, 0, 0, 255)), "แดง", first_name_th="เดิม")
+    catalog_admin.add_variant("4400-1", png_bytes(color=(0, 200, 0, 255)), "เขียว")
+    assert len(list(config.SHOP_PHOTOS_DIR.iterdir())) == 3
 
     response = client.post("/api/catalog/products/4400-1/clear-variants")
 
     assert response.status_code == 200
     results = client.get("/api/catalog/search?q=4400-1").json()["results"]
     assert [(r["colours"], r["colour_name"]) for r in results] == [(1, None)]
-    # only the code's own shop_photo (the copy of the original picture) is left behind
-    assert len(list(config.SHOP_PHOTOS_DIR.iterdir())) == 1
+    assert catalog.image_for("4400-1") == original
+    assert list(config.SHOP_PHOTOS_DIR.iterdir()) == []
+
+
+def test_clearing_keeps_a_shop_photo_the_shop_took_itself(temp_catalog, fake_vision, fake_embed):
+    catalog_admin.add_product("4400-1", "80 mm.", "garland", "2026", png_bytes())
+    catalog_admin.set_shop_photo("4400-1", png_bytes(color=(9, 9, 9, 255)))
+    own = catalog.image_for("4400-1")
+    catalog_admin.add_variant("4400-1", png_bytes(color=(200, 0, 0, 255)), "แดง")
+
+    catalog_admin.clear_variants("4400-1")
+
+    assert catalog.image_for("4400-1") == own
+    assert catalog.resolve_image_path(own).is_file()
+
+
+def test_a_split_that_changes_the_main_picture_rebuilds_photo_search(temp_catalog, fake_vision, fake_embed):
+    catalog_admin.add_product("4400-1", "80 mm.", "garland", "2026", png_bytes())
+    catalog_admin.add_variant("4400-1", png_bytes(color=(200, 0, 0, 255)), "แดง")
+    assert fake_vision.count == 0  # the seeded first colour is the same picture
+
+    catalog_admin.remove_variant("4400-1", catalog.variants_of("4400-1")[0])
+
+    assert fake_vision.count == 1
 
 
 def test_clearing_a_plain_code_is_harmless(client, temp_catalog, local):

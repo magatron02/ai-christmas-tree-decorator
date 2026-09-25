@@ -49,7 +49,11 @@ def _rows():
             "รัน scripts/extract_catalog.py กับ PDF catalogue ก่อน"
         )
     base = json.loads(config.CATALOG_PATH.read_text(encoding="utf-8"))
-    return [{**row, **shop_overlay.fields_for(row["code"])} for row in base]
+    # a base written with a blank field left out (an older Excel import did) must still read
+    return [{**_ROW_FIELDS, **row, **shop_overlay.fields_for(row["code"])} for row in base]
+
+
+_ROW_FIELDS = dict.fromkeys(("size_raw", "size", "section", "category", "pack_size", "book"))
 
 
 @lru_cache(maxsize=1)
