@@ -1,19 +1,28 @@
-"""Price AND size, read exclusively from the supplier's own price list (2026-09-10 decision).
+"""The supplier's own price list: price, size, a Thai display name and pack info per code.
 
-Originally just a price fallback for codes the shop's own catalogue had none for. Widened the
-same day to also supply size, and to be the *only* source for both — not a fallback anymore —
-because a partner-facing deployment wants one consistent size/price authority per code rather
-than a patchwork of "some codes use the catalogue's own numbers, some use the vendor's". The
-catalogue (catalog.py) is still where a product is found, photographed and coded; it is simply
-no longer consulted for `price` or `size` once a code exists here — see backend/main.py's
-_priced_extra() and the size_lookup= parameter threaded through catalog.scale_sentence() /
-catalog.require_size() / matching.suggest_quantity() for where that switch actually happens.
+Read here, never from the catalogue. The two sources are blended per field, with opposite
+precedence, each decided and measured on 2026-09-10 (a single "vendor everywhere" rule was
+tried first and reverted; docs/NonGoals.md has the amendment):
+
+- **price** — the supplier's figure wins whenever it has one for the code, even over a price the
+  shop set itself in the catalogue overlay (this deployment is partner-facing, so the supplier's
+  cost is the number that matters). A catalogue price is only the fallback when the supplier has
+  none. See backend/main.py's _priced_extra(), whose `price_source` says which one it was.
+- **size** — the catalogue's own printed size wins; the supplier's parsed size only fills a gap
+  where the catalogue has none. The list carries a parseable size for only a small fraction of its
+  rows, so making it the exclusive source would have thrown away good catalogue numbers. See
+  backend/main.py's _resolved_size_mm(), which the scale sentence, quantity estimates and stock
+  figures all go through.
+- **name and pack** — supplier only: the catalogue has no name field, and a pack only means
+  something about a supplier price.
+
+So an edit is only worth making where it will be read: prices and pack info are edited on the
+settings page's supplier tab, sizes on the catalogue tab, and the supplier tab refuses a size the
+catalogue already has (vendor_admin.set_override).
 
 Deliberately its own file, never merged into catalog/products.json or catalog.py's own
 lookups — catalog.find() and catalog.longest_side_mm() stay exactly what they were (the
-catalogue's own printed numbers), so anything that still wants the catalogue's own reading of
-a code (there is no such caller left, by design, but nothing stops one existing later) is not
-quietly rewired just because this file exists.
+catalogue's own printed numbers), which is what _resolved_size_mm() reads first.
 
 `lookup.json` is itself a base, same shape as the catalogue's: regenerated wholesale by
 build_lookup.py, never hand-edited. `vendor_overlay.py` is its overlay, and `_entries()` below
