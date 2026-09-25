@@ -16,10 +16,23 @@ BACKEND_DIR = Path(__file__).resolve().parent
 # code lives inside _internal/, which is the wrong place for any of it: the installed copy has
 # to keep its data beside the exe, where the installer put the shipped catalogue and where a
 # per-user install can actually write.
-if getattr(sys, "frozen", False):
+FROZEN = bool(getattr(sys, "frozen", False))
+if FROZEN:
     ROOT = Path(sys.executable).resolve().parent
 else:
     ROOT = BACKEND_DIR.parent
+
+# Two admin actions re-run one of the project's own scripts as a subprocess of `sys.executable`
+# (catalogue sync: scripts/describe_catalog.py + embed_catalog.py; supplier price-list import:
+# the supplier's parse_pricelist.py + build_lookup.py). That is a Python interpreter only when
+# running from a source checkout. Frozen, `sys.executable` is TreeDecorator.exe itself, which
+# cannot run a .py path, and the scripts are not in the install anyway (issue #36) — so those
+# two actions are source-only, and say so instead of failing opaquely. Not a runtime-swappable
+# switch: the answer is a fact about how this copy was built.
+SOURCE_ONLY_NOTE = (
+    "{what} ใช้ได้เฉพาะตอนรันจากโฟลเดอร์ซอร์สโค้ด (เครื่องที่ติดตั้งด้วย installer ไม่มีสคริปต์ที่ต้องใช้) "
+    "— ทำที่เครื่องพัฒนาแล้วคัดลอกไฟล์ที่ได้มาแทน"
+)
 
 # Switched from gpt-image-2 to gpt-image-2.5-sunburst on 2026-09-24 (owner's decision, NonGoals #2).
 # One replayed request (tree 05021-1 + 8 decorations, same prompt) gave the same 1536x1920 output,

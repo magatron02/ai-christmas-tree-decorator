@@ -311,6 +311,8 @@ def import_pricelist(supplier, pdf_bytes, filename):
     overwrite" stance as catalog_admin.add_product on a duplicate code; delete or rename the
     old one by hand first if this really is meant to replace it.
     """
+    if config.FROZEN:
+        raise ValidationError(config.SOURCE_ONLY_NOTE.format(what="การนำเข้าไพรซ์ลิสต์"))
     vendor_dir, source_dir, parse_script, build_script = _paths_for(supplier)
 
     filename = (filename or "").strip()

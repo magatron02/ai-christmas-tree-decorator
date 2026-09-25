@@ -10,6 +10,7 @@ const $ = (id) => document.getElementById(id);
  * switch (app.js's MODES/showMode), reusing the sidebar nav's .row/.row.active pair rather
  * than inventing a second way to say "which is active" (test_ui_design_system.py rule 4 keeps
  * .btn.primary to one real action per page; a tab is navigation, not that). */
+let installedCopy = false; // set from /api/settings: an installer copy cannot run the two script-backed actions
 const SETTINGS_TABS = [
   { name: "general", btn: "settings-tab-general", panel: "settings-panel-general" },
   { name: "catalog", btn: "settings-tab-catalog", panel: "settings-panel-catalog" },
@@ -25,6 +26,7 @@ function showSettingsTab(name) {
   // "นำเข้าราคา" opens a dialog that only makes sense from the vendor tab — shown beside the
   // tabs rather than inside the panel (per request) but still scoped to that one tab.
   $("vendor-import-open").hidden = name !== "vendor";
+  $("vendor-import-note").hidden = name !== "vendor" || !installedCopy;
 }
 for (const tab of SETTINGS_TABS) {
   $(tab.btn).addEventListener("click", () => showSettingsTab(tab.name));
@@ -85,6 +87,16 @@ async function loadStatus() {
       { className: "mono", text: value },
     ]);
   }
+
+  // an installed copy has none of the scripts these two actions run (issue #36): show them
+  // switched off, with the reason, rather than let them fail when pressed
+  const sourceOnly = "ใช้ได้เฉพาะตอนรันจากซอร์สโค้ด — เครื่องที่ติดตั้งด้วย installer ไม่มีสคริปต์ที่ต้องใช้";
+  installedCopy = Boolean(status.frozen);
+  $("cat-sync").disabled = installedCopy;
+  $("cat-sync-note").textContent = installedCopy ? sourceOnly : "";
+  $("cat-sync-note").hidden = !installedCopy;
+  $("vendor-import-open").disabled = installedCopy;
+  $("vendor-import-note").textContent = installedCopy ? `นำเข้าราคา ${sourceOnly}` : "";
 
   if (status.catalog_conflicts) loadConflicts();
   if (status.catalog_orphans) loadOrphans();
