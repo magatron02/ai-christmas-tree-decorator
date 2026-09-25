@@ -49,6 +49,7 @@
         <button type="button" class="row" id="settings-tab-vendor" aria-pressed="false">ข้อมูลราคาจากซัพพลายเออร์</button>
       </div>
       <button type="button" class="btn" id="vendor-import-open" hidden>นำเข้าราคา</button>
+      <span class="hint" id="vendor-import-note" hidden></span>
     </div>
 
     <div class="stack" id="settings-panel-general">
@@ -116,6 +117,7 @@
           <div class="btn-row">
             <button class="btn btn-compact" id="cat-new">เพิ่มสินค้าใหม่</button>
             <button class="btn btn-compact" id="cat-sync">sync ดัชนีค้นหา</button>
+            <span class="hint" id="cat-sync-note" hidden></span>
           </div>
           <span class="panel-title">รายการสินค้า <span class="hint" id="cat-results-count"></span></span>
           <div class="scroll-x split-list">
@@ -345,7 +347,7 @@
 </dialog>
 
 <script src="/static/api.js?v=8.77"></script>
-<script src="/static/settings.js?v=8.78"></script>
-<script src="/static/vendor.js?v=8.78"></script>
+<script src="/static/settings.js?v=8.79"></script>
+<script src="/static/vendor.js?v=8.79"></script>
 </body>
 </html>

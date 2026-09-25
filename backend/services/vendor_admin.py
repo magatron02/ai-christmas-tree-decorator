@@ -311,7 +311,20 @@ def import_pricelist(supplier, pdf_bytes, filename):
     overwrite" stance as catalog_admin.add_product on a duplicate code; delete or rename the
     old one by hand first if this really is meant to replace it.
     """
+    if config.FROZEN:
+        raise ValidationError(config.SOURCE_ONLY_NOTE.format(what="การนำเข้าไพรซ์ลิสต์"))
     vendor_dir, source_dir, parse_script, build_script = _paths_for(supplier)
+    # Before anything is written: parse_pricelist.py is deliberately not in git (.gitignore keeps
+    # vendor-pricelists/ out except build_lookup.py and lookup.json — issue #39), so a machine
+    # that never processed this supplier's PDF has no converter. Saving the upload first and
+    # failing on the missing script left the PDF behind, and the next attempt then failed on
+    # "already exists".
+    missing = [script.name for script in (parse_script, build_script) if not script.is_file()]
+    if missing:
+        raise ValidationError(
+            f"เครื่องนี้ไม่มี {', '.join(missing)} ใน {vendor_dir} — ตัวแปลง PDF ไม่ได้เก็บไว้ใน git "
+            "(ข้อมูลของซัพพลายเออร์) จึงนำเข้าไพรซ์ลิสต์ที่เครื่องนี้ไม่ได้ ยังไม่ได้บันทึกไฟล์ PDF"
+        )
 
     filename = (filename or "").strip()
     if not filename.lower().endswith(".pdf"):

@@ -470,6 +470,8 @@ def api_settings():
         "catalog_searchable": (config.CATALOG_PATH.parent / "embeddings.npy").is_file(),
         "catalog_conflicts": len(catalog.conflicts()),
         "catalog_orphans": len(catalog.orphans()),
+        # an installed copy cannot run the scripts behind catalogue sync / price-list import
+        "frozen": config.FROZEN,
     }
 
 
@@ -979,6 +981,8 @@ def api_catalog_sync(request: Request):
 
     if not settings.is_local(request):
         raise HTTPException(403, "Catalogue sync can only be run from the machine running this.")
+    if config.FROZEN:
+        raise HTTPException(409, config.SOURCE_ONLY_NOTE.format(what="sync ดัชนีค้นหา"))
 
     for script in ("scripts/describe_catalog.py", "scripts/embed_catalog.py"):
         result = subprocess.run(

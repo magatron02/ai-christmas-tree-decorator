@@ -132,7 +132,7 @@ Never mint per-colour sub-codes.
 
 `vendor-pricelists/bangkok-christmas/cleaned/lookup.json` is price/size/name/pack data for the
 Bangkok Christmas book, extracted from the supplier's own PDF (`parse_pricelist.py` →
-`build_lookup.py`) and read exclusively by `backend/services/vendor_lookup.py` — never
+`build_lookup.py`; `parse_pricelist.py` is deliberately not in git — see issue #39) and read exclusively by `backend/services/vendor_lookup.py` — never
 `catalog.py`. It gets the exact same base+overlay treatment ADR-0001 gives the catalogue,
 applied to a second, unrelated pair of files: `data/vendor_overlay.json`
 (`vendor_overlay.py`) holds a shop's corrections and survives a `build_lookup.py` re-run the
