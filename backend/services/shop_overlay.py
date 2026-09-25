@@ -19,7 +19,7 @@ from backend import config
 from backend.validation import ValidationError
 
 __all__ = [
-    "overlay_path", "fields_for", "set_fields", "all_fields", "refresh", "NEVER_OVERLAYABLE",
+    "overlay_path", "fields_for", "set_fields", "all_fields", "refresh", "set_many", "NEVER_OVERLAYABLE",
 ]
 
 # `code` is the key the overlay, the generation history and the staff worksheet all join on —
@@ -62,16 +62,25 @@ def set_fields(code, fields, speaks_for=None):
     Fields outside `speaks_for` (another writer's — a photo, a colour name) are left exactly as
     they were.
     """
-    rejected = sorted(NEVER_OVERLAYABLE.intersection(fields))
-    if rejected:
-        raise ValidationError(f"แก้ทับฟิลด์ {', '.join(rejected)} ไม่ได้")
+    set_many({code: fields}, speaks_for)
 
-    existing = _overlay()
-    kept = {
-        name: value for name, value in existing.get(code, {}).items()
-        if name not in (speaks_for or ())
-    }
-    data = {**existing, code: {**kept, **fields}}
+
+def set_many(changes, speaks_for=None):
+    """set_fields() for many codes at once ({code: fields}), in one read and one write — a
+    whole-catalogue import (catalog_xlsx.py) would otherwise rewrite this file once per code.
+    Same `speaks_for` rule, applied to every code in `changes`."""
+    for fields in changes.values():
+        rejected = sorted(NEVER_OVERLAYABLE.intersection(fields))
+        if rejected:
+            raise ValidationError(f"แก้ทับฟิลด์ {', '.join(rejected)} ไม่ได้")
+
+    data = dict(_overlay())
+    for code, fields in changes.items():
+        kept = {
+            name: value for name, value in data.get(code, {}).items()
+            if name not in (speaks_for or ())
+        }
+        data[code] = {**kept, **fields}
 
     path = overlay_path()
     path.parent.mkdir(parents=True, exist_ok=True)

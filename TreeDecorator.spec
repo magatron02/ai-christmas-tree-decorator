@@ -33,6 +33,8 @@ for package in ("pymatting", "rembg", "onnxruntime", "numpy"):
 # uvicorn resolves its loop/protocol implementations from strings at startup
 hiddenimports += collect_submodules("uvicorn")
 hiddenimports += ["backend.main"]
+# the catalogue Excel import/export imports openpyxl inside its functions (ADR-0005)
+hiddenimports += collect_submodules("openpyxl")
 
 a = Analysis(
     ["scripts/launcher.py"],

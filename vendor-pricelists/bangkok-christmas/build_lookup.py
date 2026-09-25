@@ -64,7 +64,7 @@ OUTPUT = HERE / "cleaned" / "lookup.json"
 # this script lives outside backend/ on purpose (it is vendor-pricelists' own tool, not the
 # app's), the same reasoning scripts/extract_catalog.py already documents for parse_size.
 sys.path.insert(0, str(HERE.parents[1]))
-from backend.services.catalog import longest_side_mm, parse_size  # noqa: E402
+from backend.services.catalog import longest_side_mm, parse_size, to_english_units  # noqa: E402
 
 # parse_size()'s regexes only recognise English unit abbreviations — built against the
 # catalogue's own English-labelled book. The vendor's price list states the same handful of
@@ -74,19 +74,9 @@ from backend.services.catalog import longest_side_mm, parse_size  # noqa: E402
 # this, a Thai unit word parse_size() had never been taught, not sizes that genuinely don't
 # parse. None of these Thai words collides with another as a substring, so plain in-order
 # substitution is safe.
-_THAI_UNITS = [
-    (re.compile("มม\\.?"), "mm"),
-    (re.compile("ซม\\.?"), "cm"),
-    (re.compile("นิ้ว"), "inch"),
-    (re.compile("ฟุต"), "ft"),
-    (re.compile("เมตร"), "m."),
-]
-
-
-def _to_english_units(text):
-    for pattern, replacement in _THAI_UNITS:
-        text = pattern.sub(replacement, text)
-    return text
+# (the Thai unit table now lives in catalog.py as THAI_UNITS, and parse_size() applies it
+# itself — kept as a name here so the call below reads the same as it always did)
+_to_english_units = to_english_units
 
 
 # see the module docstring's 2026-09-10 note for why ชิ้น/ต้น/เส้น being offered as one of the

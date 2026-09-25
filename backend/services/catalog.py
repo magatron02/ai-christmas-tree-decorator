@@ -222,6 +222,22 @@ def _kinds():
     }
 
 
+CATEGORY_KEYS = frozenset(key for key, _label, _needles in CATEGORIES)
+
+
+def category_key(text):
+    """A category typed by a person — its key ("ornament") or its Thai label, as the Excel
+    catalogue writes it — as the key, or None for blank. Raises on anything else: an unknown
+    category is a typo to fix, not a new category to invent."""
+    text = (text or "").strip()
+    if not text:
+        return None
+    for key, label, _needles in CATEGORIES:
+        if text.lower() == key or text == label:
+            return key
+    raise ValidationError(f"ไม่รู้จักหมวด '{text}'")
+
+
 def label_for(category):
     """The Thai label a category is shown under, or the key itself if it isn't one of ours.
     Lives here rather than at the call site because CATEGORIES is catalogue data."""
@@ -267,7 +283,12 @@ def category_of(row):
     "other". Not folded into the main haystack: a shape word is far more likely to collide
     with an unrelated category's needle (topper's "star", ornament's own shapes) than a
     section heading or a specific "kind" ever is, so it only gets a say once those two have
-    both already failed to place the product anywhere."""
+    both already failed to place the product anywhere.
+
+    A category stated outright on the row (the Excel catalogue's หมวดหมู่หลัก, ADR-0005) wins over
+    all of that: a person chose it, and the needles only exist to guess one from PDF text."""
+    if row.get("category") in CATEGORY_KEYS:
+        return row["category"]
     haystack = f"{row.get('section') or ''} {_kinds().get(row['code'], '')}".lower()
     for key, _label, needles in CATEGORIES:
         if any(_needle_in(needle, haystack) for needle in needles):
@@ -293,6 +314,25 @@ def category_of(row):
 # most one of its claimants, so every other claim is a picture of the wrong product, which is
 # the thing NonGoals.md 7 exists to prevent.
 MAX_SHARED_CROP = 2
+
+
+# product_images.json's `match` for a photo that came in with the Excel catalogue (ADR-0005)
+IMPORTED_MATCH = "xlsx"
+
+
+@lru_cache(maxsize=1)
+def _imported_codes():
+    """Codes whose photo was supplied by a person through the Excel catalogue, not cropped out
+    of a PDF page. Every PDF crop failure mode below (a crop shared by several codes, page
+    furniture, a code printed twice in a book) is about the crop pipeline, so none of them
+    describes one of these — the same reasoning crop_is_showable() gives a shop photo."""
+    path = config.CATALOG_PATH.parent / "product_images.json"
+    if not path.is_file():
+        return frozenset()
+    return frozenset(
+        row["code"] for row in json.loads(path.read_text(encoding="utf-8"))
+        if row.get("match") == IMPORTED_MATCH
+    )
 
 
 @lru_cache(maxsize=1)
@@ -400,7 +440,8 @@ def _contested_codes():
     path = config.CATALOG_PATH.parent / "book_conflicts.json"
     if not path.is_file():
         return set()
-    return {row["code"] for row in json.loads(path.read_text(encoding="utf-8"))}
+    # a code the Excel catalogue restated was resolved by a person (ADR-0005)
+    return {row["code"] for row in json.loads(path.read_text(encoding="utf-8"))} - _imported_codes()
 
 
 def code_is_contested(code):
@@ -414,7 +455,8 @@ def conflicts():
     for row in json.loads(
         (config.CATALOG_PATH.parent / "book_conflicts.json").read_text(encoding="utf-8")
     ) if (config.CATALOG_PATH.parent / "book_conflicts.json").is_file() else []:
-        lost_by_code.setdefault(row["code"], []).append(row)
+        if code_is_contested(row["code"]):
+            lost_by_code.setdefault(row["code"], []).append(row)
 
     out = []
     for code, losers in lost_by_code.items():
@@ -439,7 +481,7 @@ def crop_is_showable(code):
     contested code no longer describes what is being shown. This is the mechanism by which
     photographing a product un-hides it.
     """
-    if shop_overlay.fields_for(code).get("shop_photo"):
+    if shop_overlay.fields_for(code).get("shop_photo") or code in _imported_codes():
         return True
     return (
         bool(image_for(code))
@@ -570,7 +612,9 @@ def auto_pool(category, tone_colours):
     return pool
 
 
-EDITABLE_DISPLAY_FIELDS = frozenset({"price", "size_raw", "section", "book", "pack_size"})
+EDITABLE_DISPLAY_FIELDS = frozenset(
+    {"price", "size_raw", "section", "book", "pack_size", "name", "category"}
+)
 
 
 def packs_for(code, pieces):
@@ -779,6 +823,7 @@ def refresh():
     _rows.cache_clear()
     _by_code.cache_clear()
     _images_by_code.cache_clear()
+    _imported_codes.cache_clear()
     _with_photos.cache_clear()
     _crop_users.cache_clear()
     _crop_verdicts.cache_clear()
@@ -819,7 +864,25 @@ def search(query, limit=20):
 # shared with scripts/extract_catalog.py (which imports parse_size from here) — one
 # implementation for "what does this size text mean", whether it came off a printed page or
 # was typed into the settings-page add/edit form
-_FEET = re.compile(r"([\d.]+)\s*Ft", re.I)
+# Thai unit words, as the supplier's price list and a person filling in the Excel catalogue both
+# write them (moved here from vendor-pricelists/.../build_lookup.py, which now imports it).
+# None of these collides with another as a substring, so in-order substitution is safe.
+THAI_UNITS = [
+    (re.compile("มม\\.?"), "mm"),
+    (re.compile("ซม\\.?"), "cm"),
+    (re.compile("นิ้ว"), "inch"),
+    (re.compile("ฟุต"), "ft"),
+    (re.compile("เมตร"), "m."),
+]
+
+
+def to_english_units(text):
+    for pattern, replacement in THAI_UNITS:
+        text = pattern.sub(replacement, text)
+    return text
+
+
+_FEET = re.compile(r"([\d.]+)\s*(?:Ft|feet|foot)", re.I)
 _INCHES = re.compile(r"([\d.]+)\s*in(?:c|ch|ches)?\b", re.I)
 # The unit is optional on every dimension but the last, here and in _LABELLED_SERIES below:
 # "29 x 150 cm." and "36 cm x 60 cm" are the same measurement written two ways, and reading
@@ -837,7 +900,9 @@ _LABELLED_SERIES = re.compile(
 _NUMBER = re.compile(r"[\d.]+")
 _CM = re.compile(r"([\d.]+)\s*cm", re.I)
 _MM = re.compile(r"([\d.]+)\s*mm", re.I)
-_METRES = re.compile(r"([\d.]+)\s*m\.", re.I)
+# "1.5 m." (the book's spelling) or a bare "1.5 m" / "2m" — the bare form only when nothing but
+# space or the end follows, so "mm" and "ม" never read as metres
+_METRES = re.compile(r"([\d.]+)\s*m(?:\.|(?=\s|$))", re.I)
 
 _MM_PER_FOOT = 304.8
 _MM_PER_INCH = 25.4
@@ -848,7 +913,7 @@ def parse_size(raw):
     '29 x 150 cm.' -> 290 x 1500 mm · 'H 215 x D 142 cm' -> 2150 x 1420 mm. Anything
     unrecognised returns None rather than a guess — NonGoals.md 8 forbids inventing a
     dimension, so an unparsed size stays absent, not a plausible-looking wrong number."""
-    text = " ".join(raw.split())
+    text = to_english_units(" ".join(raw.split()))
 
     if match := _LABELLED_SERIES.search(text):
         unit = match.group(1).lower()

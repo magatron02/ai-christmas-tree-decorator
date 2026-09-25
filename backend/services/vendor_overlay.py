@@ -20,7 +20,7 @@ from functools import lru_cache
 from backend import config
 from backend.validation import ValidationError
 
-__all__ = ["overlay_path", "OVERLAYABLE_FIELDS", "fields_for", "all_fields", "set_fields", "refresh"]
+__all__ = ["overlay_path", "OVERLAYABLE_FIELDS", "fields_for", "all_fields", "set_fields", "refresh", "set_many"]
 
 # The only fields a shop can hold an opinion on — everything vendor_lookup.py actually reads
 # (see its own docstring). Unlike shop_overlay's block-list (NEVER_OVERLAYABLE), this is an
@@ -66,16 +66,25 @@ def set_fields(code, fields, speaks_for=None):
     own sheet says returns to following it instead of freezing the old number in place forever
     (same rule as shop_overlay.set_fields).
     """
-    rejected = sorted(set(fields) - OVERLAYABLE_FIELDS)
-    if rejected:
-        raise ValidationError(f"แก้ทับฟิลด์ {', '.join(rejected)} ไม่ได้")
+    set_many({code: fields}, speaks_for)
 
-    existing = _overlay()
-    kept = {
-        name: value for name, value in existing.get(code, {}).items()
-        if name not in (speaks_for or ())
-    }
-    data = {**existing, code: {**kept, **fields}}
+
+def set_many(changes, speaks_for=None):
+    """set_fields() for many codes at once ({code: fields}), in one read and one write — a
+    whole-catalogue import (catalog_xlsx.py) would otherwise rewrite this file once per code.
+    Same `speaks_for` rule, applied to every code in `changes`."""
+    for fields in changes.values():
+        rejected = sorted(set(fields) - OVERLAYABLE_FIELDS)
+        if rejected:
+            raise ValidationError(f"แก้ทับฟิลด์ {', '.join(rejected)} ไม่ได้")
+
+    data = dict(_overlay())
+    for code, fields in changes.items():
+        kept = {
+            name: value for name, value in data.get(code, {}).items()
+            if name not in (speaks_for or ())
+        }
+        data[code] = {**kept, **fields}
 
     path = overlay_path()
     path.parent.mkdir(parents=True, exist_ok=True)

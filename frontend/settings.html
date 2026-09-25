@@ -117,6 +117,8 @@
           <div class="btn-row">
             <button class="btn btn-compact" id="cat-new">เพิ่มสินค้าใหม่</button>
             <button class="btn btn-compact" id="cat-sync">sync ดัชนีค้นหา</button>
+            <a class="btn btn-compact" id="cat-export" href="/api/catalog/export" download>ส่งออก Excel</a>
+            <button class="btn btn-compact" id="cat-import-open">นำเข้า Excel</button>
             <span class="hint" id="cat-sync-note" hidden></span>
           </div>
           <span class="panel-title">รายการสินค้า <span class="hint" id="cat-results-count"></span></span>
@@ -330,6 +332,35 @@
   </main>
 </div>
 
+<!-- The catalogue as products.xlsx + images/ in one zip (ADR-0005). Two steps: check the file
+     (nothing is written), then replace — so a person sees exactly what changes first. -->
+<dialog id="cat-import-dialog" class="import-dialog">
+  <button type="button" class="dialog-close" id="cat-import-close" aria-label="ปิด">✕</button>
+  <h2>นำเข้าสินค้าจาก Excel</h2>
+  <p class="hint">ใช้ไฟล์ .zip จากปุ่ม "ส่งออก Excel" (products.xlsx + โฟลเดอร์ images) ที่แก้แล้ว —
+    สินค้าทั้งหมดจะถูกแทนที่ด้วยข้อมูลในไฟล์ ยกเว้น MS Natural Design · ระบบสำรองข้อมูลเดิมไว้ก่อนเสมอ</p>
+  <div class="btn-row">
+    <input class="input" type="file" id="cat-import-file" accept=".zip,application/zip">
+    <button class="btn" id="cat-import-check">ตรวจไฟล์</button>
+  </div>
+  <span class="chip" id="cat-import-status" hidden></span>
+  <div class="notice" id="cat-import-error" hidden></div>
+  <div class="stack" id="cat-import-preview" hidden>
+    <ul class="hint" id="cat-import-summary"></ul>
+    <details id="cat-import-errors-box" hidden>
+      <summary class="section-title">แถวที่ต้องแก้ก่อนนำเข้า <span class="hint" id="cat-import-errors-count"></span></summary>
+      <ul class="hint" id="cat-import-errors"></ul>
+    </details>
+    <details id="cat-import-warnings-box" hidden>
+      <summary class="section-title">คำเตือน <span class="hint" id="cat-import-warnings-count"></span></summary>
+      <ul class="hint" id="cat-import-warnings"></ul>
+    </details>
+    <div class="btn-row">
+      <button class="btn danger" id="cat-import-apply" disabled>แทนที่สินค้าทั้งหมด (ยกเว้น MS Natural)</button>
+    </div>
+  </div>
+</dialog>
+
 <dialog id="vendor-import-dialog" class="import-dialog">
   <button type="button" class="dialog-close" id="vendor-import-close" aria-label="ปิด">✕</button>
   <h2>นำเข้าราคาใหม่จากซัพพลายเออร์</h2>
@@ -347,7 +378,7 @@
 </dialog>
 
 <script src="/static/api.js?v=8.77"></script>
-<script src="/static/settings.js?v=8.79"></script>
+<script src="/static/settings.js?v=8.80"></script>
 <script src="/static/vendor.js?v=8.79"></script>
 </body>
 </html>

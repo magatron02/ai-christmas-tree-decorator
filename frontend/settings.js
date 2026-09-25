@@ -656,6 +656,107 @@ $("cat-add").addEventListener("click", async () => {
   }
 });
 
+/* ---- Excel import/export (ADR-0005) ----
+ * Export is a plain download link. Import is check, then replace: the check writes nothing and
+ * says what would change; the replace is only offered when no row has an error, since the
+ * whole catalogue except MS Natural Design is swapped for the file's rows. */
+let catImportToken = null;
+
+function listInto(id, items, limit = 200) {
+  const host = $(id);
+  host.innerHTML = "";
+  for (const text of items.slice(0, limit)) {
+    const li = document.createElement("li");
+    li.textContent = text;
+    host.append(li);
+  }
+  if (items.length > limit) {
+    const li = document.createElement("li");
+    li.textContent = `… และอีก ${items.length - limit} รายการ`;
+    host.append(li);
+  }
+}
+
+function catImportStatus(text, cls) {
+  $("cat-import-status").hidden = !text;
+  $("cat-import-status").className = cls ? `chip ${cls}` : "chip";
+  $("cat-import-status").textContent = text || "";
+}
+
+$("cat-import-open").addEventListener("click", () => {
+  catImportToken = null;
+  clearFilePicker($("cat-import-file"));
+  catImportStatus("");
+  $("cat-import-error").hidden = true;
+  $("cat-import-preview").hidden = true;
+  $("cat-import-dialog").showModal();
+});
+$("cat-import-close").addEventListener("click", () => $("cat-import-dialog").close());
+
+$("cat-import-check").addEventListener("click", async () => {
+  const file = $("cat-import-file").files[0];
+  $("cat-import-error").hidden = true;
+  $("cat-import-preview").hidden = true;
+  catImportToken = null;
+  if (!file) {
+    $("cat-import-error").textContent = "เลือกไฟล์ .zip ก่อน";
+    $("cat-import-error").hidden = false;
+    return;
+  }
+  $("cat-import-check").disabled = true;
+  catImportStatus("กำลังตรวจไฟล์… ไฟล์ใหญ่อาจใช้เวลาสักครู่", "running");
+  try {
+    const body = new FormData();
+    body.append("package", file);
+    const result = await call("/api/catalog/import/preview", { method: "POST", body });
+    catImportToken = result.can_apply ? result.token : null;
+    listInto("cat-import-summary", [
+      `นำเข้า ${result.rows} รายการ`,
+      `เพิ่มใหม่ ${result.added.length}` + (result.added.length ? ` — ${result.added.slice(0, 20).join(", ")}` : ""),
+      `ลบออก ${result.removed.length}` + (result.removed.length ? ` — ${result.removed.slice(0, 20).join(", ")}` : ""),
+      `มีการเปลี่ยนแปลง ${result.changed.length} · ไม่เปลี่ยน ${result.unchanged}`,
+      `${result.kept_book}: คงไว้ ${result.kept} รายการ (ข้ามแถวในไฟล์ ${result.skipped_kept_book})`,
+    ]);
+    $("cat-import-errors-box").hidden = !result.errors.length;
+    $("cat-import-errors-box").open = result.errors.length > 0;
+    $("cat-import-errors-count").textContent = `(${result.errors.length})`;
+    listInto("cat-import-errors", result.errors);
+    $("cat-import-warnings-box").hidden = !result.warnings.length;
+    $("cat-import-warnings-count").textContent = `(${result.warnings.length})`;
+    listInto("cat-import-warnings", result.warnings);
+    $("cat-import-apply").disabled = !result.can_apply;
+    $("cat-import-preview").hidden = false;
+    catImportStatus(result.can_apply ? "ตรวจแล้ว — กดแทนที่เพื่อนำเข้า" : "ยังนำเข้าไม่ได้ — แก้แถวที่แจ้งแล้วอัปโหลดใหม่",
+      result.can_apply ? "done" : "failed");
+  } catch (err) {
+    catImportStatus("");
+    $("cat-import-error").textContent = err.message;
+    $("cat-import-error").hidden = false;
+  } finally {
+    $("cat-import-check").disabled = false;
+  }
+});
+
+$("cat-import-apply").addEventListener("click", async () => {
+  if (!catImportToken) return;
+  $("cat-import-apply").disabled = true;
+  catImportStatus("กำลังนำเข้า…", "running");
+  try {
+    const result = await call(`/api/catalog/import/apply/${catImportToken}`, { method: "POST" });
+    catImportToken = null;
+    catImportStatus(
+      `นำเข้าแล้ว ${result.imported} รายการ · ลบ ${result.removed} · คง MS Natural ${result.kept} · ` +
+      `สำรองข้อมูลเดิมไว้ที่ data/backups/${result.backup}`, "done");
+    await loadCatalogResults();
+    await loadCatalogLists();
+  } catch (err) {
+    catImportStatus("");
+    $("cat-import-error").textContent = err.message;
+    $("cat-import-error").hidden = false;
+    $("cat-import-apply").disabled = false;
+  }
+});
+
 $("cat-sync").addEventListener("click", async () => {
   $("cat-error").hidden = true;
   $("cat-sync").disabled = true;
