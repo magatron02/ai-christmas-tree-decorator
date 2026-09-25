@@ -86,6 +86,28 @@ def test_the_last_variant_cannot_be_removed(temp_catalog):
         catalog_admin.remove_variant("4400-1", catalog.variants_of("4400-1")[0])
 
 
+def test_clearing_returns_the_code_to_a_single_plain_product(client, temp_catalog, local):
+    catalog_admin.add_product("4400-1", "80 mm.", "garland", "2026", png_bytes())
+    catalog_admin.add_variant("4400-1", png_bytes(), "แดง", first_name_th="เดิม")
+    catalog_admin.add_variant("4400-1", png_bytes(), "เขียว")
+    extra = [p for p in config.SHOP_PHOTOS_DIR.iterdir()]
+    assert len(extra) == 3
+
+    response = client.post("/api/catalog/products/4400-1/clear-variants")
+
+    assert response.status_code == 200
+    results = client.get("/api/catalog/search?q=4400-1").json()["results"]
+    assert [(r["colours"], r["colour_name"]) for r in results] == [(1, None)]
+    # only the code's own shop_photo (the copy of the original picture) is left behind
+    assert len(list(config.SHOP_PHOTOS_DIR.iterdir())) == 1
+
+
+def test_clearing_a_plain_code_is_harmless(client, temp_catalog, local):
+    catalog_admin.add_product("4400-1", "80 mm.", "garland", "2026", png_bytes())
+
+    assert client.post("/api/catalog/products/4400-1/clear-variants").status_code == 200
+
+
 def test_variant_writes_are_local_only(client, temp_catalog, monkeypatch):
     monkeypatch.setattr(settings, "is_local", lambda request: False)
     catalog_admin.add_product("4400-1", "80 mm.", "garland", "2026", png_bytes())

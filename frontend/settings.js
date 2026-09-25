@@ -471,6 +471,22 @@ async function renderColourGallery(code) {
   });
   add.append(addTitle, firstName, newName, newFile, addButton);
   host.append(add);
+
+  const clearAll = document.createElement("button");
+  clearAll.className = "btn danger";
+  clearAll.textContent = "ล้างสี/ลายทั้งหมด (คืนเป็นรหัสเดี่ยว)";
+  clearAll.addEventListener("click", async () => {
+    if (!confirm(`ล้างสี/ลายทั้งหมดของ ${code}? รูปและชื่อของแต่ละสี/ลายจะถูกลบ`)) return;
+    $("cat-error").hidden = true;
+    try {
+      await call(`/api/catalog/products/${encodeURIComponent(code)}/clear-variants`, { method: "POST" });
+      renderColourGallery(code);
+      loadCatalogResults();
+    } catch (err) {
+      fail(err);
+    }
+  });
+  host.append(clearAll);
 }
 
 $("cat-photo-clear").addEventListener("click", async (event) => {

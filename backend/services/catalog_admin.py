@@ -502,6 +502,29 @@ def add_variant(code, image_bytes, name_th, fmt="PNG", first_name_th=None):
     return {"code": code, "image": new}
 
 
+def clear_variants(code):
+    """Back to one plain code: drop every colour/pattern, name and supporting photo. Shop photos
+    the variants used are deleted, except the code's own `shop_photo`, which stays — it may be
+    a real photo the shop took (issue #12), and add_variant's copy of a book crop is only that
+    same picture, removable with the existing "ลบรูปนี้" link."""
+    code = (code or "").strip().upper()
+    catalog.find(code)
+    fields = shop_overlay.fields_for(code)
+    keep = fields.get("shop_photo")
+    files = [c for c in fields.get("colours") or [] if c.startswith("/shop-photos/")]
+    for group in (fields.get("supporting_photos") or {}).values():
+        files += group
+    for file in files:
+        if not keep or file.removeprefix("/shop-photos/") != keep:
+            _delete_shop_photo(file)
+    shop_overlay.set_fields(
+        code, {"shop_photo": keep} if keep else {},
+        speaks_for=("colours", "colour_names", "supporting_photos", "shop_photo"),
+    )
+    catalog.refresh()
+    return {"code": code}
+
+
 def remove_variant(code, image):
     """Remove a whole colour/pattern: its main photo, supporting photos and name. At least one
     must remain. Book photos are never deleted from disk, only shop-owned ones."""

@@ -959,6 +959,16 @@ def api_remove_variant(code: str, request: Request, image: str):
     return catalog_admin.remove_variant(code, image)
 
 
+@app.post("/api/catalog/products/{code}/clear-variants")
+def api_clear_variants(code: str, request: Request):
+    """Return a code to one plain product: every colour/pattern and its name removed."""
+    from backend.services import catalog_admin, settings
+
+    if not settings.is_local(request):
+        raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
+    return catalog_admin.clear_variants(code)
+
+
 @app.post("/api/catalog/products/{code}/main-photo")
 def api_set_main_photo(code: str, request: Request, image: str = Form(...)):
     """Choose which of a colour's photos the generator gets, without removing anything (issue
