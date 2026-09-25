@@ -43,6 +43,11 @@ from backend.services.catalog import parse_size  # noqa: E402
 # 26022-2FK is the same thing with no slash (a finish letter glued straight onto the number,
 # 2026 book) — without the bare-letter branch this reads as plain 26022-2, which collided
 # with an unrelated real 26022-2 elsewhere on the same page and lost "flocked" silently.
+# Codes with no hyphen at all (a bare run of digits) are NOT matched, on purpose: the shop
+# confirmed on 2026-09-25 that those are products it does not use, so they are not extracted
+# and should not be added "to be complete" (about 54 turned up in the 2026 book). A code that
+# reaches the catalogue without a hyphen came in through another route (hand-added, or a
+# supplier-book code), not through this pattern.
 CODE = re.compile(r"\b(\d{3,5}-\d{1,3}(?:/[A-Za-z0-9]+)*(?:[A-Z]{1,3}\b)?)")
 SIZE_AFTER_CODE = re.compile(
     r"\b\d{3,5}-\d{1,3}(?:/[A-Za-z0-9]+)*(?:[A-Z]{1,3}\b)?\s*\(([^)]{1,40})\)"
