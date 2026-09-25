@@ -9,6 +9,8 @@ numpy
 pystray
 # vendor-pricelists/bangkok-christmas/parse_pricelist.py, invoked by /api/vendor/import
 pypdf
+# catalogue Excel import/export (backend/services/catalog_xlsx.py, ADR-0005)
+openpyxl
 
 # test only
 pytest

@@ -75,7 +75,7 @@ never run them speculatively; see README.md for what each one costs and why it's
 ```
 frontend/          static HTML + vanilla JS, DESIGN.md tokens, no build step
 backend/main.py    the generation pipeline plus catalogue search/admin endpoints (~1200 lines, all routes)
-backend/services/  image_gen · background_removal · storage · catalog · catalog_admin ·
+backend/services/  image_gen · background_removal · storage · catalog · catalog_admin · catalog_xlsx ·
                     matching · vision · settings · shop_overlay · vendor_lookup · vendor_overlay ·
                     vendor_admin
 backend/models/    request_log — the SQLite state machine and the spend record
@@ -123,6 +123,12 @@ never itself editable — fixing a wrong code means deleting and recreating the 
 overlay whose code no longer exists in any base after a re-import becomes an **orphan product**:
 kept and flagged, never silently dropped. See `backend/services/catalog.py`,
 `catalog_admin.py`, `shop_overlay.py`.
+
+Product data now comes in through the **Excel catalogue zip** (ADR-0005,
+`backend/services/catalog_xlsx.py`, settings → catalogue tab → ส่งออก/นำเข้า Excel): `products.xlsx` +
+`images/`, previewed then applied, replacing every product except MS Natural Design after backing
+up to `data/backups/`. The PDF extractor is legacy. "The purge" (wipe everything but MS Natural
+Design) is owner-triggered only — never start it unprompted.
 
 A **colour** (ADR-0002) is a named photo of a code, not a separate identifier — these catalogues
 photograph a whole colour range in one frame, and the app splits that into one card per colour.

@@ -248,9 +248,9 @@ def _priced_extra(code):
         "price": price,
         "label": catalog.describe(row) if row else None,
         "price_source": price_source,
-        # a Thai display name — the catalogue has no name field of its own at all, so this is
-        # vendor-exclusive by necessity, not by the same price/size precedence choice above
-        "name": vendor_lookup.name_for(code),
+        # a Thai display name: the one the Excel catalogue gave it (ADR-0005), else the
+        # supplier's — the PDF-extracted catalogue never had a name field of its own
+        "name": (row.get("name") if row else None) or vendor_lookup.name_for(code),
         # pack info only means anything about a vendor price — the shop's own catalogue price
         # (price_source "catalog") is whatever single-unit figure the shop typed in, never a
         # pack the app would need to round a purchase up to
@@ -966,6 +966,43 @@ def api_catalog_set_colour_name(
     if not settings.is_local(request):
         raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
     return catalog_admin.set_colour_name(code, image, name_th)
+
+
+@app.get("/api/catalog/export")
+def api_catalog_export(request: Request):
+    """The whole catalogue as products.xlsx + its photos, zipped (ADR-0005) — to edit in Excel
+    and import back here or on another machine. Localhost only, like every catalogue write:
+    it hands out every product photo and price in one file."""
+    from backend.services import catalog_xlsx, settings
+
+    if not settings.is_local(request):
+        raise HTTPException(403, "The catalogue can only be exported from the machine running this.")
+    path = catalog_xlsx.export_zip()
+    return FileResponse(path, filename=path.name, media_type="application/zip")
+
+
+@app.post("/api/catalog/import/preview")
+def api_catalog_import_preview(request: Request, package: UploadFile = File(...)):
+    """Check an uploaded catalogue zip and say what importing it would change. Writes nothing
+    but a staging folder; /api/catalog/import/apply/{token} does the actual replace."""
+    from backend.services import catalog_xlsx, settings
+
+    if not settings.is_local(request):
+        raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
+    if not (package.filename or "").lower().endswith(".zip"):
+        raise ValidationError("อัปโหลดไฟล์ .zip ที่ส่งออกจากหน้านี้ (products.xlsx + โฟลเดอร์ images)")
+    return catalog_xlsx.preview(package.file)
+
+
+@app.post("/api/catalog/import/apply/{token}")
+def api_catalog_import_apply(token: str, request: Request):
+    """Replace every product except MS Natural Design with a previewed package. Backs up the
+    catalogue and both overlays to data/backups/ first (catalog_xlsx.apply)."""
+    from backend.services import catalog_xlsx, settings
+
+    if not settings.is_local(request):
+        raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
+    return catalog_xlsx.apply(token)
 
 
 @app.post("/api/catalog/sync")
