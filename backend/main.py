@@ -30,7 +30,7 @@ import uuid
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from PIL import Image
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from backend import config, validation
@@ -1083,6 +1083,41 @@ def api_vendor_search(
         ),
         "total": vendor_admin.count(q, supplier, catalog_filter, missing_size, unmapped_char),
     }
+
+
+@app.get("/api/vendor/export")
+def api_vendor_export(request: Request, supplier: str):
+    """One supplier's merged price table as Excel — the price import that works on an installed
+    copy, where the PDF pipeline's scripts do not exist. Localhost only."""
+    from backend.services import settings, vendor_xlsx
+
+    if not settings.is_local(request):
+        raise HTTPException(403, "Vendor data can only be exported from the machine running this.")
+    return Response(
+        vendor_xlsx.export_xlsx(supplier),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{supplier}-prices.xlsx"'},
+    )
+
+
+@app.post("/api/vendor/import-xlsx/preview")
+def api_vendor_import_xlsx_preview(
+    request: Request, supplier: str = Form(...), package: UploadFile = File(...)
+):
+    from backend.services import settings, vendor_xlsx
+
+    if not settings.is_local(request):
+        raise HTTPException(403, "Vendor data can only be edited from the machine running this.")
+    return vendor_xlsx.preview(package.file, supplier)
+
+
+@app.post("/api/vendor/import-xlsx/apply/{token}")
+def api_vendor_import_xlsx_apply(token: str, request: Request):
+    from backend.services import settings, vendor_xlsx
+
+    if not settings.is_local(request):
+        raise HTTPException(403, "Vendor data can only be edited from the machine running this.")
+    return vendor_xlsx.apply(token)
 
 
 @app.get("/api/vendor/suppliers")

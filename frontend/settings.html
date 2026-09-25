@@ -49,7 +49,6 @@
         <button type="button" class="row" id="settings-tab-vendor" aria-pressed="false">ข้อมูลราคาจากซัพพลายเออร์</button>
       </div>
       <button type="button" class="btn" id="vendor-import-open" hidden>นำเข้าราคา</button>
-      <span class="hint" id="vendor-import-note" hidden></span>
     </div>
 
     <div class="stack" id="settings-panel-general">
@@ -364,11 +363,27 @@
 <dialog id="vendor-import-dialog" class="import-dialog">
   <button type="button" class="dialog-close" id="vendor-import-close" aria-label="ปิด">✕</button>
   <h2>นำเข้าราคาใหม่จากซัพพลายเออร์</h2>
-  <p class="hint">อัปโหลดไฟล์ PDF ราคาที่ได้รับใหม่ — ระบบจะแปลงและสร้างไฟล์ราคาให้อัตโนมัติ ใช้เวลาสักครู่</p>
   <div class="field-row">
     <span class="hint">ซัพพลายเออร์ :</span>
     <select class="input" id="vendor-import-supplier"></select>
   </div>
+
+  <h3 class="section-title">จาก Excel (ใช้ได้ทุกเครื่อง)</h3>
+  <p class="hint">ส่งออกตารางราคาปัจจุบัน แก้ในช่องราคา/ขนาด/จำนวนต่อแพ็ก/ชื่อ แล้วนำเข้ากลับ — ช่องที่เว้นว่างคือไม่เปลี่ยน · ค่าที่แก้เก็บเป็นการแก้ของร้าน ไม่ถูกทับเมื่อสร้างไฟล์ราคาใหม่</p>
+  <div class="btn-row">
+    <a class="btn" id="vendor-xlsx-export" href="#" download>ส่งออก Excel</a>
+    <input class="input" type="file" id="vendor-xlsx-file" accept=".xlsx">
+    <button class="btn" id="vendor-xlsx-check">ตรวจไฟล์</button>
+  </div>
+  <div class="stack" id="vendor-xlsx-preview" hidden>
+    <span class="chip" id="vendor-xlsx-summary"></span>
+    <ul class="hint" id="vendor-xlsx-list"></ul>
+    <div class="notice" id="vendor-xlsx-problems" hidden></div>
+    <button class="btn danger" id="vendor-xlsx-apply" disabled>ใช้ราคาที่แก้นี้</button>
+  </div>
+
+  <h3 class="section-title">จาก PDF ราคา</h3>
+  <p class="hint" id="vendor-pdf-hint">อัปโหลดไฟล์ PDF ราคาที่ได้รับใหม่ — ระบบจะแปลงและสร้างไฟล์ราคาให้อัตโนมัติ ใช้เวลาสักครู่ (เฉพาะเครื่องที่รันจากซอร์สโค้ด)</p>
   <div class="btn-row">
     <input class="input" type="file" id="vendor-import-file" accept="application/pdf">
     <button class="btn" id="vendor-import-btn">นำเข้า</button>
@@ -378,7 +393,7 @@
 </dialog>
 
 <script src="/static/api.js?v=8.77"></script>
-<script src="/static/settings.js?v=8.80"></script>
-<script src="/static/vendor.js?v=8.79"></script>
+<script src="/static/settings.js?v=8.81"></script>
+<script src="/static/vendor.js?v=8.80"></script>
 </body>
 </html>

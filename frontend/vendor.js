@@ -369,4 +369,71 @@ $("vendor-import-btn").addEventListener("click", async () => {
   }
 });
 
-loadVendorSuppliers().then(() => loadVendorResults(""));
+/* ---- import from Excel: works on an installed copy, unlike the PDF path above ---- */
+
+let vendorXlsxToken = null;
+
+function vendorXlsxReset() {
+  vendorXlsxToken = null;
+  $("vendor-xlsx-file").value = "";
+  $("vendor-xlsx-preview").hidden = true;
+  $("vendor-xlsx-apply").disabled = true;
+  $("vendor-xlsx-export").href = `/api/vendor/export?supplier=${encodeURIComponent($("vendor-import-supplier").value)}`;
+}
+$("vendor-import-open").addEventListener("click", vendorXlsxReset);
+$("vendor-import-supplier").addEventListener("change", vendorXlsxReset);
+
+$("vendor-xlsx-check").addEventListener("click", async () => {
+  const file = $("vendor-xlsx-file").files[0];
+  $("vendor-import-error").hidden = true;
+  if (!file) {
+    $("vendor-import-error").textContent = "เลือกไฟล์ .xlsx ก่อน";
+    $("vendor-import-error").hidden = false;
+    return;
+  }
+  try {
+    const body = new FormData();
+    body.append("supplier", $("vendor-import-supplier").value);
+    body.append("package", file);
+    const result = await call("/api/vendor/import-xlsx/preview", { method: "POST", body });
+    vendorXlsxToken = result.token;
+    $("vendor-xlsx-preview").hidden = false;
+    $("vendor-xlsx-summary").className = "chip";
+    $("vendor-xlsx-summary").textContent =
+      `${result.rows} แถว · เปลี่ยน ${result.changed} · เหมือนเดิม ${result.unchanged}`;
+    const list = $("vendor-xlsx-list");
+    list.innerHTML = "";
+    for (const item of result.listed) {
+      const li = document.createElement("li");
+      li.textContent = `${item.code}: ` + Object.entries(item.changes)
+        .map(([field, [before, after]]) => `${field} ${before ?? "-"} → ${after}`).join(", ");
+      list.append(li);
+    }
+    const problems = [...result.errors, ...result.warnings];
+    $("vendor-xlsx-problems").hidden = !problems.length;
+    $("vendor-xlsx-problems").textContent = problems.slice(0, 50).join("\n");
+    $("vendor-xlsx-apply").disabled = !result.can_apply;
+  } catch (err) {
+    $("vendor-import-error").textContent = err.message;
+    $("vendor-import-error").hidden = false;
+  }
+});
+
+$("vendor-xlsx-apply").addEventListener("click", async () => {
+  $("vendor-import-error").hidden = true;
+  $("vendor-xlsx-apply").disabled = true;
+  try {
+    const result = await call(`/api/vendor/import-xlsx/apply/${vendorXlsxToken}`, { method: "POST" });
+    vendorXlsxReset();
+    $("vendor-import-status").hidden = false;
+    $("vendor-import-status").className = "chip done";
+    $("vendor-import-status").textContent = `ใช้ราคาแล้ว — แก้ ${result.changed} รหัส`;
+    await loadVendorResults($("vendor-search").value.trim());
+  } catch (err) {
+    $("vendor-import-error").textContent = err.message;
+    $("vendor-import-error").hidden = false;
+    $("vendor-xlsx-apply").disabled = false;
+  }
+});
+
+loadVendorSuppliers().then(() => { loadVendorResults(""); vendorXlsxReset(); });

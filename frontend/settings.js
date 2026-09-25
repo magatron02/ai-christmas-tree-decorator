@@ -26,7 +26,6 @@ function showSettingsTab(name) {
   // "นำเข้าราคา" opens a dialog that only makes sense from the vendor tab — shown beside the
   // tabs rather than inside the panel (per request) but still scoped to that one tab.
   $("vendor-import-open").hidden = name !== "vendor";
-  $("vendor-import-note").hidden = name !== "vendor" || !installedCopy;
 }
 for (const tab of SETTINGS_TABS) {
   $(tab.btn).addEventListener("click", () => showSettingsTab(tab.name));
@@ -95,8 +94,12 @@ async function loadStatus() {
   $("cat-sync").disabled = installedCopy;
   $("cat-sync-note").textContent = installedCopy ? sourceOnly : "";
   $("cat-sync-note").hidden = !installedCopy;
-  $("vendor-import-open").disabled = installedCopy;
-  $("vendor-import-note").textContent = installedCopy ? `นำเข้าราคา ${sourceOnly}` : "";
+  // only the PDF half of the dialog needs the supplier's scripts; the Excel half works anywhere
+  $("vendor-import-btn").disabled = installedCopy;
+  $("vendor-import-file").disabled = installedCopy;
+  $("vendor-pdf-hint").textContent = installedCopy
+    ? `นำเข้าจาก PDF ${sourceOnly} — ใช้ Excel ด้านบนแทน`
+    : $("vendor-pdf-hint").textContent;
 
   if (status.catalog_conflicts) loadConflicts();
   if (status.catalog_orphans) loadOrphans();
