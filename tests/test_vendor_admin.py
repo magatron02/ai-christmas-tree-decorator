@@ -464,10 +464,12 @@ def temp_vendor_dir(tmp_path, monkeypatch):
     (vendor_dir / "cleaned").mkdir(parents=True)
     lookup_path = vendor_dir / "cleaned" / "lookup.json"
     lookup_path.write_text("{}", encoding="utf-8")
-    # parse_script/build_script (from _paths_for) stay pointed at the real repo files — every
-    # test here mocks subprocess.run, so those paths are never actually executed, only
-    # pattern-matched by name (see fake_run below); only source_dir is load-bearing
+    # parse_script/build_script (from _paths_for) are empty stand-ins: import_pricelist only
+    # checks they exist, and every test here mocks subprocess.run, so they are never executed,
+    # only pattern-matched by name (see fake_run below). source_dir is load-bearing too
     # (import_pricelist writes the uploaded PDF there and checks it for a name collision).
+    (vendor_dir / "parse_pricelist.py").write_text("", encoding="utf-8")
+    (vendor_dir / "build_lookup.py").write_text("", encoding="utf-8")
     monkeypatch.setattr(
         vendor_admin, "_build_lookup_paths",
         lambda build_script: (vendor_dir / "cleaned" / "all-products.csv", lookup_path),
@@ -570,3 +572,19 @@ def test_import_does_not_count_an_overridden_code_as_changed(temp_vendor_dir, mo
 
     assert result["changed"] == 1  # the base's own price did move, 89 -> 95
     assert vendor_lookup.price_for("071-11") == 120.0  # but the shop's override still wins
+
+
+def test_import_without_the_pdf_converter_says_so_and_saves_nothing(temp_vendor_dir, monkeypatch):
+    """parse_pricelist.py is not in git (issue #39). A machine without it must be told, and must
+    not be left with the uploaded PDF on disk — that made the next attempt fail on 'already exists'."""
+    (temp_vendor_dir / "parse_pricelist.py").unlink()
+
+    def boom(*args, **kwargs):
+        raise AssertionError("must not run a script that is not there")
+
+    monkeypatch.setattr("backend.services.vendor_admin.subprocess.run", boom)
+
+    with pytest.raises(ValidationError, match="parse_pricelist.py"):
+        vendor_admin.import_pricelist("bangkok-christmas", fake_pdf_bytes(), "list.pdf")
+
+    assert list((temp_vendor_dir / "source").iterdir()) == []
