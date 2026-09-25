@@ -563,8 +563,7 @@ def apply(token):
         code = row["code"]
         record = {"code": code}
         for field in ("name", "size_raw", "size", "section", "category", "pack_size", "book"):
-            if row.get(field) is not None:
-                record[field] = row[field]
+            record[field] = row.get(field)
         record.update({"page_headings": [], "pdf_page": None, "bbox": None, "duplicate": False})
         new_rows.append(record)
 
