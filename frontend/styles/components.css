@@ -822,13 +822,16 @@ dialog h2 {
   overflow: hidden;
   cursor: pointer;
   background: none;
+  /* the ratio lives on the card, not the img: an overflow:hidden grid item has a 0 automatic
+     minimum size, so with the ratio on the img the row collapsed to the button's 2px of border
+     and clipped every photo to a landscape strip */
+  aspect-ratio: 3 / 4;
 }
 .gallery-item img {
   display: block;
   width: 100%;
-  aspect-ratio: 3 / 4;
+  height: 100%;
   object-fit: cover;
-  border-radius: var(--radius-sm);
 }
 .gallery-item:hover {
   border-color: var(--text-muted);
