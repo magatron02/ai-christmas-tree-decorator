@@ -331,21 +331,65 @@ async function renderColourGallery(code) {
   } catch {
     return; // a lookup failure here shouldn't block the rest of the edit form
   }
-  if (colours.length <= 1 || code !== editingCode) return; // stale response from a code the shop already navigated away from
+  if (code !== editingCode) return; // stale response from a code the shop already navigated away from
 
   host.hidden = false;
   const title = document.createElement("span");
   title.className = "section-title";
-  title.textContent = "รูปแต่ละสี";
+  title.textContent = "สี / ลาย";
   host.append(title);
 
-  for (const colour of colours) {
+  const fail = (err) => {
+    $("cat-error").textContent = err.message;
+    $("cat-error").hidden = false;
+  };
+  const split = colours.length > 1;
+
+  // one card per colour/pattern is only meaningful once the code has more than one
+  for (const colour of split ? colours : []) {
     const row = document.createElement("div");
     row.className = "stack";
-    const label = document.createElement("span");
-    label.className = "hint";
-    label.textContent = colour.name || colour.image;
-    row.append(label);
+    const nameInput = document.createElement("input");
+    nameInput.className = "input";
+    nameInput.value = colour.name || "";
+    nameInput.placeholder = "ชื่อสี/ลาย";
+    const saveName = document.createElement("button");
+    saveName.className = "btn";
+    saveName.textContent = "บันทึกชื่อ";
+    saveName.addEventListener("click", async () => {
+      $("cat-error").hidden = true;
+      try {
+        const body = new FormData();
+        body.append("image", colour.image);
+        body.append("name_th", nameInput.value);
+        await call(`/api/catalog/products/${encodeURIComponent(code)}/colour-name`, {
+          method: "POST", body,
+        });
+        renderColourGallery(code);
+      } catch (err) {
+        fail(err);
+      }
+    });
+    const removeVariant = document.createElement("button");
+    removeVariant.className = "btn danger";
+    removeVariant.textContent = "ลบสี/ลายนี้";
+    removeVariant.addEventListener("click", async () => {
+      $("cat-error").hidden = true;
+      try {
+        await call(
+          `/api/catalog/products/${encodeURIComponent(code)}/variants?image=${encodeURIComponent(colour.image)}`,
+          { method: "DELETE" },
+        );
+        renderColourGallery(code);
+        loadCatalogResults();
+      } catch (err) {
+        fail(err);
+      }
+    });
+    const nameRow = document.createElement("div");
+    nameRow.className = "btn-row";
+    nameRow.append(nameInput, saveName, removeVariant);
+    row.append(nameRow);
 
     const gallery = document.createElement("div");
     gallery.className = "btn-row";
@@ -380,6 +424,50 @@ async function renderColourGallery(code) {
 
     host.append(row);
   }
+
+  const add = document.createElement("div");
+  add.className = "stack";
+  const addTitle = document.createElement("span");
+  addTitle.className = "hint";
+  addTitle.textContent = split
+    ? "เพิ่มสี/ลายใหม่ (รหัสเดิม)"
+    : "แบ่งรหัสนี้เป็นหลายสี/ลาย — รูปปัจจุบันจะเป็นสี/ลายแรก";
+  const firstName = document.createElement("input");
+  firstName.className = "input";
+  firstName.placeholder = "ชื่อของรูปปัจจุบัน (เช่น แดง)";
+  firstName.hidden = split;
+  const newName = document.createElement("input");
+  newName.className = "input";
+  newName.placeholder = "ชื่อสี/ลายใหม่ (เช่น ลายจุด)";
+  const newFile = document.createElement("input");
+  newFile.type = "file";
+  newFile.className = "input";
+  newFile.accept = "image/jpeg,image/png";
+  const addButton = document.createElement("button");
+  addButton.className = "btn";
+  addButton.textContent = "เพิ่ม";
+  addButton.addEventListener("click", async () => {
+    $("cat-error").hidden = true;
+    if (!newFile.files[0] || !newName.value.trim()) {
+      fail(new Error("เลือกรูปและใส่ชื่อสี/ลายก่อน"));
+      return;
+    }
+    try {
+      const body = new FormData();
+      body.append("image", newFile.files[0]);
+      body.append("name_th", newName.value);
+      body.append("first_name_th", firstName.value);
+      await call(`/api/catalog/products/${encodeURIComponent(code)}/variants`, {
+        method: "POST", body,
+      });
+      renderColourGallery(code);
+      loadCatalogResults();
+    } catch (err) {
+      fail(err);
+    }
+  });
+  add.append(addTitle, firstName, newName, newFile, addButton);
+  host.append(add);
 }
 
 $("cat-photo-clear").addEventListener("click", async (event) => {

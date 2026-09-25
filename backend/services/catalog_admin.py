@@ -10,6 +10,7 @@ silently replacing a row is exactly that guess.
 """
 
 import json
+import shutil
 import uuid
 
 from backend import config
@@ -444,5 +445,94 @@ def remove_photo(code, image):
         shop_overlay.set_fields(code, {"supporting_photos": supporting}, speaks_for=("supporting_photos",))
 
     _delete_shop_photo(key)
+    catalog.refresh()
+    return {"code": code}
+
+
+def _shop_photo_names(colours):
+    return [c.removeprefix("/shop-photos/") for c in colours if c.startswith("/shop-photos/")]
+
+
+def add_variant(code, image_bytes, name_th, fmt="PNG", first_name_th=None):
+    """Add one more colour or pattern (ลาย) to a code (ADR-0002: still one code, a named photo).
+
+    The first split of an unsplit code keeps today's photo as variant 1 — copied into
+    data/shop_photos/ so a re-import can never orphan it — and `first_name_th` names it. The
+    code's first shop-owned photo is also recorded as its `shop_photo`, which is what tells
+    catalog.crop_is_showable that a person chose these pictures.
+    """
+    code = (code or "").strip().upper()
+    catalog.find(code)
+    name_th = (name_th or "").strip()
+    if not name_th:
+        raise ValidationError("ใส่ชื่อสี/ลายด้วย")
+    fields = shop_overlay.fields_for(code)
+    colours = list(fields.get("colours") or [])
+    names = dict(fields.get("colour_names") or {})
+    config.SHOP_PHOTOS_DIR.mkdir(parents=True, exist_ok=True)
+
+    if not colours:
+        current = catalog.image_for(code)
+        if current:
+            if current.startswith("/shop-photos/"):
+                seed = current
+            else:
+                source = catalog.resolve_image_path(current)
+                seed = f"/shop-photos/{uuid.uuid4().hex}{source.suffix}"
+                shutil.copyfile(source, config.SHOP_PHOTOS_DIR / seed.removeprefix("/shop-photos/"))
+            colours.append(seed)
+            if (first_name_th or "").strip():
+                names[seed] = first_name_th.strip()
+
+    new = _shop_photo_filename(fmt)
+    (config.SHOP_PHOTOS_DIR / new.removeprefix("/shop-photos/")).write_bytes(image_bytes)
+    colours.append(new)
+    names[new] = name_th
+
+    changes = {"colours": colours, "colour_names": names}
+    speaks_for = ["colours", "colour_names"]
+    if not fields.get("shop_photo"):
+        changes["shop_photo"] = _shop_photo_names(colours)[0]
+        speaks_for.append("shop_photo")
+    if fields.get("supporting_photos"):
+        changes["supporting_photos"] = fields["supporting_photos"]
+        speaks_for.append("supporting_photos")
+    shop_overlay.set_fields(code, changes, speaks_for=tuple(speaks_for))
+    catalog.refresh()
+    return {"code": code, "image": new}
+
+
+def remove_variant(code, image):
+    """Remove a whole colour/pattern: its main photo, supporting photos and name. At least one
+    must remain. Book photos are never deleted from disk, only shop-owned ones."""
+    code = (code or "").strip().upper()
+    catalog.find(code)
+    key = image.removeprefix("variants/")
+    fields = shop_overlay.fields_for(code)
+    colours = list(fields.get("colours") or [])
+    if key not in colours:
+        raise ValidationError(f"'{image}' ไม่ใช่สี/ลายของ {code}")
+    if len(colours) == 1:
+        raise ValidationError(f"'{image}' เป็นสี/ลายเดียวที่เหลือของ {code} — ลบไม่ได้")
+
+    colours.remove(key)
+    names = {k: v for k, v in (fields.get("colour_names") or {}).items() if k != key}
+    supporting = dict(fields.get("supporting_photos") or {})
+    for file in supporting.pop(key, []):
+        _delete_shop_photo(file)
+    _delete_shop_photo(key)
+
+    changes = {"colours": colours, "colour_names": names}
+    speaks_for = ["colours", "colour_names", "supporting_photos"]
+    if supporting:
+        changes["supporting_photos"] = supporting
+    shop_photo = fields.get("shop_photo")
+    if shop_photo:
+        speaks_for.append("shop_photo")
+        if f"/shop-photos/{shop_photo}" != key:
+            changes["shop_photo"] = shop_photo
+        elif _shop_photo_names(colours):
+            changes["shop_photo"] = _shop_photo_names(colours)[0]
+    shop_overlay.set_fields(code, changes, speaks_for=tuple(speaks_for))
     catalog.refresh()
     return {"code": code}

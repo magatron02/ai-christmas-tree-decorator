@@ -932,6 +932,33 @@ def api_remove_photo(code: str, request: Request, image: str):
     return catalog_admin.remove_photo(code, image)
 
 
+@app.post("/api/catalog/products/{code}/variants")
+def api_add_variant(
+    code: str, request: Request, name_th: str = Form(...), first_name_th: str = Form(""),
+    image: UploadFile = File(...),
+):
+    """Add a colour or pattern to a code — still one code, one more named photo (ADR-0002).
+    `first_name_th` names the photo the code already had, the first time it is split. Localhost
+    only, like every catalogue write."""
+    from backend.services import catalog_admin, settings
+
+    if not settings.is_local(request):
+        raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
+    data = _read(image, "Product photo")
+    fmt, _dimensions = validation.check_image(data, image.filename, image.content_type, "Product photo")
+    return catalog_admin.add_variant(code, data, name_th, fmt, first_name_th)
+
+
+@app.delete("/api/catalog/products/{code}/variants")
+def api_remove_variant(code: str, request: Request, image: str):
+    """Remove a whole colour/pattern from a code; the last one cannot be removed."""
+    from backend.services import catalog_admin, settings
+
+    if not settings.is_local(request):
+        raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
+    return catalog_admin.remove_variant(code, image)
+
+
 @app.post("/api/catalog/products/{code}/main-photo")
 def api_set_main_photo(code: str, request: Request, image: str = Form(...)):
     """Choose which of a colour's photos the generator gets, without removing anything (issue
