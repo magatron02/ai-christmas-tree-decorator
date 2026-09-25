@@ -373,14 +373,14 @@ async function renderColourGallery(code) {
         fail(err);
       }
     });
-    const removeVariant = document.createElement("button");
-    removeVariant.className = "btn danger";
-    removeVariant.textContent = "ลบสี/ลายนี้";
-    removeVariant.addEventListener("click", async () => {
+    const removeColour = document.createElement("button");
+    removeColour.className = "btn danger";
+    removeColour.textContent = "ลบสี/ลายนี้";
+    removeColour.addEventListener("click", async () => {
       $("cat-error").hidden = true;
       try {
         await call(
-          `/api/catalog/products/${encodeURIComponent(code)}/variants?image=${encodeURIComponent(colour.image)}`,
+          `/api/catalog/products/${encodeURIComponent(code)}/colours?image=${encodeURIComponent(colour.image)}`,
           { method: "DELETE" },
         );
         renderColourGallery(code);
@@ -391,7 +391,7 @@ async function renderColourGallery(code) {
     });
     const nameRow = document.createElement("div");
     nameRow.className = "btn-row";
-    nameRow.append(nameInput, saveName, removeVariant);
+    nameRow.append(nameInput, saveName, removeColour);
     row.append(nameRow);
 
     const gallery = document.createElement("div");
@@ -460,7 +460,7 @@ async function renderColourGallery(code) {
       body.append("image", newFile.files[0]);
       body.append("name_th", newName.value);
       body.append("first_name_th", firstName.value);
-      await call(`/api/catalog/products/${encodeURIComponent(code)}/variants`, {
+      await call(`/api/catalog/products/${encodeURIComponent(code)}/colours`, {
         method: "POST", body,
       });
       renderColourGallery(code);
@@ -480,7 +480,7 @@ async function renderColourGallery(code) {
     if (!confirm(`ล้างสี/ลายทั้งหมดของ ${code}? รูปและชื่อของแต่ละสี/ลายจะถูกลบ`)) return;
     $("cat-error").hidden = true;
     try {
-      await call(`/api/catalog/products/${encodeURIComponent(code)}/clear-variants`, { method: "POST" });
+      await call(`/api/catalog/products/${encodeURIComponent(code)}/clear-colours`, { method: "POST" });
       renderColourGallery(code);
       loadCatalogResults();
     } catch (err) {

@@ -932,8 +932,8 @@ def api_remove_photo(code: str, request: Request, image: str):
     return catalog_admin.remove_photo(code, image)
 
 
-@app.post("/api/catalog/products/{code}/variants")
-def api_add_variant(
+@app.post("/api/catalog/products/{code}/colours")
+def api_add_colour(
     code: str, request: Request, name_th: str = Form(...), first_name_th: str = Form(""),
     image: UploadFile = File(...),
 ):
@@ -946,27 +946,27 @@ def api_add_variant(
         raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
     data = _read(image, "Product photo")
     fmt, _dimensions = validation.check_image(data, image.filename, image.content_type, "Product photo")
-    return catalog_admin.add_variant(code, data, name_th, fmt, first_name_th)
+    return catalog_admin.add_colour(code, data, name_th, fmt, first_name_th)
 
 
-@app.delete("/api/catalog/products/{code}/variants")
-def api_remove_variant(code: str, request: Request, image: str):
+@app.delete("/api/catalog/products/{code}/colours")
+def api_remove_colour(code: str, request: Request, image: str):
     """Remove a whole colour/pattern from a code; the last one cannot be removed."""
     from backend.services import catalog_admin, settings
 
     if not settings.is_local(request):
         raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
-    return catalog_admin.remove_variant(code, image)
+    return catalog_admin.remove_colour(code, image)
 
 
-@app.post("/api/catalog/products/{code}/clear-variants")
-def api_clear_variants(code: str, request: Request):
+@app.post("/api/catalog/products/{code}/clear-colours")
+def api_clear_colours(code: str, request: Request):
     """Return a code to one plain product: every colour/pattern and its name removed."""
     from backend.services import catalog_admin, settings
 
     if not settings.is_local(request):
         raise HTTPException(403, "The catalogue can only be edited from the machine running this.")
-    return catalog_admin.clear_variants(code)
+    return catalog_admin.clear_colours(code)
 
 
 @app.post("/api/catalog/products/{code}/main-photo")

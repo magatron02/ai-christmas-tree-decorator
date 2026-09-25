@@ -453,10 +453,10 @@ def _shop_photo_names(colours):
     return [c.removeprefix("/shop-photos/") for c in colours if c.startswith("/shop-photos/")]
 
 
-def add_variant(code, image_bytes, name_th, fmt="PNG", first_name_th=None):
+def add_colour(code, image_bytes, name_th, fmt="PNG", first_name_th=None):
     """Add one more colour or pattern (ลาย) to a code (ADR-0002: still one code, a named photo).
 
-    The first split of an unsplit code keeps today's photo as variant 1 — copied into
+    The first split of an unsplit code keeps today's photo as colour 1 — copied into
     data/shop_photos/ so a re-import can never orphan it — and `first_name_th` names it. The
     code's first shop-owned photo is also recorded as its `shop_photo`, which is what tells
     catalog.crop_is_showable that a person chose these pictures.
@@ -520,9 +520,9 @@ def _reindex_if_main_changed(code, before):
         _reindex_one(code, after, "JPEG" if after[:3] == b"\xff\xd8\xff" else "PNG")
 
 
-def clear_variants(code):
+def clear_colours(code):
     """Back to one plain code: drop every colour/pattern, name and supporting photo, and the
-    shop photos they used. A `shop_photo` the shop set itself stays; one add_variant set
+    shop photos they used. A `shop_photo` the shop set itself stays; one add_colour set
     (`shop_photo_from_split`) goes too, so the code shows exactly what it showed before."""
     code = (code or "").strip().upper()
     catalog.find(code)
@@ -548,7 +548,7 @@ def clear_variants(code):
     return {"code": code}
 
 
-def remove_variant(code, image):
+def remove_colour(code, image):
     """Remove a whole colour/pattern: its main photo, supporting photos and name. At least one
     must remain. Book photos are never deleted from disk, only shop-owned ones."""
     code = (code or "").strip().upper()
